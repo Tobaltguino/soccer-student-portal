@@ -1,0 +1,94 @@
+<div class="dashboard-container" [class.collapsed]="isCollapsed">
+    
+    <aside class="sidebar">
+        
+        <div class="brand">
+            <div class="logo-area" *ngIf="!isCollapsed">
+                <div class="logo-icon">
+                    <i class="pi pi-bolt"></i>
+                </div>
+                <div class="brand-text">
+                    <h2>ProFutbol</h2>
+                    <span>ADMIN PANEL</span>
+                </div>
+            </div>
+
+            <button class="toggle-btn" (click)="toggleSidebar()">
+                <i class="pi pi-bars"></i>
+            </button>
+        </div>
+        
+        <nav class="menu">
+            <div class="menu-label" *ngIf="!isCollapsed">PRINCIPAL</div>
+            
+            <a class="menu-item" routerLink="/admin/dashboard" routerLinkActive="active-link" 
+               title="Inicio"> <i class="pi pi-home"></i>
+                <span *ngIf="!isCollapsed">Inicio</span>
+            </a>
+
+            <div class="menu-label system" *ngIf="!isCollapsed">GESTIÓN</div>
+
+            <a class="menu-item" routerLink="/admin/users" routerLinkActive="active-link" title="Usuarios">
+                <i class="pi pi-users"></i>
+                <span *ngIf="!isCollapsed">Usuarios</span>
+            </a>
+
+            <a class="menu-item" routerLink="/admin/groups" routerLinkActive="active-link" title="Grupos">
+                <i class="pi pi-shield"></i>
+                <span *ngIf="!isCollapsed">Grupos</span>
+            </a>
+
+            <a class="menu-item" routerLink="/admin/classes" routerLinkActive="active-link" title="Clases">
+                <i class="pi pi-calendar"></i>
+                <span *ngIf="!isCollapsed">Clases</span>
+            </a>
+
+            <a class="menu-item" routerLink="/admin/evaluations" routerLinkActive="active-link" title="Evaluaciones">
+                <i class="pi pi-file-edit"></i>
+                <span *ngIf="!isCollapsed">Evaluaciones</span>
+            </a>
+
+            <div class="menu-label system" *ngIf="!isCollapsed">ÁREA MÉDICA</div>
+
+            <a class="menu-item" routerLink="/admin/kinesiology" routerLinkActive="active-link" title="Kinesiología">
+                <i class="pi pi-heart-fill"></i>
+                <span *ngIf="!isCollapsed">Kinesiología</span>
+            </a>
+
+            <a class="menu-item" routerLink="/admin/nutrition" routerLinkActive="active-link" title="Nutricionista">
+                <i class="pi pi-apple"></i>
+                <span *ngIf="!isCollapsed">Nutricionista</span>
+            </a>
+
+            <div class="menu-label system" *ngIf="!isCollapsed">SISTEMA</div>
+
+            <a class="menu-item" routerLink="/admin/payments" routerLinkActive="active-link" title="Pagos">
+                <i class="pi pi-wallet"></i>
+                <span *ngIf="!isCollapsed">Pagos</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="logout-btn" (click)="logout()" title="Cerrar Sesión">
+                <i class="pi pi-sign-out"></i>
+                <span *ngIf="!isCollapsed">Cerrar Sesión</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        
+        <header class="top-bar">
+            <div class="user-profile">
+                <div class="user-info">
+                    <span class="name">Administrador</span>
+                    <span class="role">Admin</span>
+                </div>
+                <div class="avatar">A</div>
+            </div>
+        </header>
+
+        <router-outlet></router-outlet> 
+    </main>
+
+</div>

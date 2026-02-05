@@ -1,0 +1,22 @@
+@import "primeicons/primeicons.css";
+
+/* --- VARIABLES GLOBALES (THEMING) --- */
+:root {
+    /* MODO CLARO (Por defecto) */
+    --bg-main: #f8f9fa;       /* Fondo pantalla */
+    --bg-card: #ffffff;       /* Fondo tarjetas */
+    --text-main: #1e293b;     /* Texto principal (Oscuro) */
+    --text-secondary: #64748b; /* Texto secundario (Gris) */
+    --border-color: #e2e8f0;  /* Bordes suaves */
+}
+
+/* MODO OSCURO (Se activa cuando pongas data-theme="dark" en el body) */
+[data-theme="dark"] {
+    --bg-main: #0f172a;       /* Fondo oscuro profundo */
+    --bg-card: #1e293b;       /* Tarjetas gris azulado oscuro */
+    --text-main: #f1f5f9;     /* Texto principal (Blanco) */
+    --text-secondary: #94a3b8; /* Texto secundario (Gris claro) */
+    --border-color: #334155;  /* Bordes oscuros */
+}
+
+/* IMPORTANTE: El sidebar lo dejamos fijo por ahora para mantener la marca */

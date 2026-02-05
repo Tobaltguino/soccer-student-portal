@@ -1,0 +1,167 @@
+/* --- FONDO Y CONTENEDOR PRINCIPAL --- */
+.login-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    
+    background-color: #f3f4f6;
+    padding: 1rem;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* --- ESTILOS DE LA TARJETA (PrimeNG Override) --- */
+:host ::ng-deep .login-card {
+    width: 100%;
+    max-width: 400px;
+    border: none;
+    border-radius: 16px; /* Bordes redondeados */
+    /* Sombra profunda (Shadow-8) */
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    /* Animación de entrada */
+    animation: zoomIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Espaciado interno */
+.login-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem; /* Separación entre elementos */
+}
+
+/* --- LOGO --- */
+.logo-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.logo-img {
+    height: 100px;
+    width: auto;
+    object-fit: contain;
+    display: block;
+}
+
+.logo-section h2 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #1f2937; /* Gris oscuro */
+    margin: 0;
+}
+
+/* --- FORMULARIO E INPUTS --- */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #374151; /* Gris medio */
+    margin-left: 4px;
+}
+
+/* Contenedor del Input + Icono */
+.input-container {
+    display: flex;
+    width: 100%;
+    align-items: stretch;
+}
+
+/* Cajita del Icono */
+.input-icon {
+    background-color: #eff6ff; /* Azul muy clarito */
+    border: 1px solid #bfdbfe; /* Borde azul suave */
+    border-right: none; /* Quitamos borde derecho para unir con input */
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2563eb; /* Icono azul */
+    transition: background-color 0.3s;
+}
+
+/* Hover en el grupo */
+.input-container:hover .input-icon {
+    background-color: #dbeafe;
+}
+
+/* Estilos para los Inputs de PrimeNG */
+:host ::ng-deep .p-inputtext {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    font-size: 0.95rem;
+    border: 1px solid #bfdbfe;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    box-shadow: none;
+    transition: all 0.2s;
+}
+
+/* Ajuste específico para Password (porque PrimeNG añade un div extra) */
+:host ::ng-deep .p-password {
+    width: 100%;
+}
+:host ::ng-deep .p-password input {
+    width: 100%;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+}
+
+/* Focus bonito (Resplandor azul) */
+:host ::ng-deep .p-inputtext:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    z-index: 10;
+}
+
+/* --- BOTÓN --- */
+:host ::ng-deep .btn-login-full .p-button {
+    width: 100%;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border: none;
+    padding: 1rem;
+    font-weight: bold;
+    font-size: 1rem;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+:host ::ng-deep .btn-login-full .p-button:hover {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+    transform: translateY(-2px);
+}
+
+/* --- LINK OLVIDÉ CONTRASEÑA --- */
+.forgot-password {
+    text-align: center;
+    margin-top: 0.5rem;
+}
+
+.forgot-password a {
+    color: #3b82f6;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.forgot-password a:hover {
+    color: #1d4ed8;
+}
+
+/* Animación Keyframes */
+@keyframes zoomIn {
+    from { opacity: 0; transform: scale(0.95) translateY(20px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
