@@ -1,48 +1,81 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { SupabaseService } from '../../../core/services/supabase.service';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule], 
+  imports: [CommonModule, RouterModule],
   templateUrl: './admin-dashboard.html',
   styleUrls: ['./admin-dashboard.css']
 })
 export class AdminDashboardComponent implements OnInit {
-
+  // Datos dinámicos
   userEmail: string | undefined;
-  nombreAdmin: string = 'Carlos Admin'; // Puedes dinamizar esto más adelante con la BD
+  totalEstudiantes: number = 0;
+  clasesHoy: any[] = [];
+  actividadReciente: any[] = [];
+  
+  // Estados
+  loading: boolean = true;
+  supabaseStatus: 'online' | 'offline' | 'checking' = 'checking';
 
   constructor(
     private supabaseService: SupabaseService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
+    await this.verificarConexion();
+    await this.cargarDatos();
+  }
+
+  async verificarConexion() {
     try {
-      // 1. Obtener el usuario autenticado actualmente
-      const { data: { user } } = await this.supabaseService.getUser();
+      this.supabaseStatus = 'checking';
+      const { data: { user }, error } = await this.supabaseService.getUser();
       
-      if (user) {
-        this.userEmail = user.email;
-        console.log('Admin logueado:', this.userEmail);
-      } else {
-        // Si no hay usuario, devolver al login (Seguridad extra)
+      if (error || !user) {
+        this.supabaseStatus = 'offline';
         this.router.navigate(['/login']);
+      } else {
+        this.userEmail = user.email;
+        this.supabaseStatus = 'online';
       }
+    } catch {
+      this.supabaseStatus = 'offline';
+    }
+    this.cdr.detectChanges();
+  }
+
+  async cargarDatos() {
+    this.loading = true;
+    try {
+      // 1. Total Estudiantes
+      const { count } = await this.supabaseService.getTotalEstudiantes();
+      this.totalEstudiantes = count || 0;
+
+      // 2. Clases de Hoy
+      const { data: clases } = await this.supabaseService.getClasesHoy();
+      this.clasesHoy = clases || [];
+
+      // 3. Actividad Reciente (Evaluaciones)
+      const { data: actividad } = await this.supabaseService.getActividadReciente();
+      this.actividadReciente = actividad || [];
+
     } catch (error) {
-      console.error('Error al cargar datos del usuario', error);
+      console.error('Error cargando estadísticas:', error);
+    } finally {
+      this.loading = false;
+      this.cdr.detectChanges();
     }
   }
 
-  async salir() {
-    try {
-      await this.supabaseService.logout();
-      this.router.navigate(['/login']);
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-    }
+  // Función para refrescar manualmente
+  async refrescar() {
+    await this.verificarConexion();
+    await this.cargarDatos();
   }
 }

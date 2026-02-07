@@ -1,0 +1,156 @@
+<div class="eval-container">
+  <p-toast></p-toast>
+  <p-confirmdialog></p-confirmdialog>
+
+  <header class="page-header">
+    <div class="header-content">
+      <h1>Evaluaciones Técnicas</h1>
+      <p>Gestión de pruebas físicas y resultados por grupo.</p>
+    </div>
+    <div class="header-actions">
+      <button pButton label="Configurar Test" icon="pi pi-cog" class="p-button-outlined p-button-secondary" (click)="abrirNuevoTipo()"></button>
+      <button pButton label="Nueva Sesión" icon="pi pi-plus" (click)="abrirNuevo()"></button>
+    </div>
+  </header>
+
+  <div class="card-table">
+    <p-table [value]="sesiones" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Fecha</th>
+          <th>Grupo</th>
+          <th>Prueba</th>
+          <th>Estado</th>
+          <th class="text-center" style="width: 200px;">Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-sesion>
+        <tr>
+          <td>{{ sesion.fecha | date:'dd/MM/yyyy' }}</td>
+          <td>{{ sesion.grupos?.nombre }}</td>
+          <td>
+            <span class="font-bold">{{ sesion.tipo_evaluacion?.nombre }}</span>
+            <div class="text-xs text-500">
+               ({{ sesion.tipo_evaluacion?.valor_min }} - {{ sesion.tipo_evaluacion?.valor_max }} {{ sesion.tipo_evaluacion?.unidad_medida }})
+            </div>
+          </td>
+          <td><p-tag [value]="sesion.estado" [severity]="sesion.estado === 'PENDIENTE' ? 'warn' : 'success'"></p-tag></td>
+          <td class="text-center">
+            <div class="flex justify-content-center gap-2">
+              <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-secondary" (click)="editarSesion(sesion)" title="Editar Logística"></button>
+              <button pButton icon="pi pi-user-edit" class="p-button-rounded p-button-success" (click)="abrirCalificador(sesion)" title="Calificar Alumnos"></button>
+              <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" (click)="eliminarSesion(sesion.id)" title="Eliminar"></button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <p-dialog [(visible)]="displayTipoDialog" header="Gestión de Tests Técnicos" [modal]="true" [style]="{width: '650px'}" styleClass="p-fluid">
+    <div class="grid">
+        <div class="col-12 md:col-6 border-right-1 surface-border pr-3">
+            <h3 class="mt-0">Nuevo Test</h3>
+            <div class="field mt-2">
+                <label class="font-bold">Nombre</label>
+                <input pInputText [(ngModel)]="tipoForm.nombre" placeholder="Ej: Salto Vertical">
+            </div>
+            <div class="field mt-3">
+                <label class="font-bold">Unidad</label>
+                <input pInputText [(ngModel)]="tipoForm.unidad_medida" placeholder="Ej: cm, seg">
+            </div>
+
+            <div class="formgrid grid mt-3">
+                <div class="field col">
+                    <label class="font-bold">Mínimo</label>
+                    <p-inputnumber [(ngModel)]="tipoForm.valor_min" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2"></p-inputnumber>
+                </div>
+                <div class="field col">
+                    <label class="font-bold">Máximo</label>
+                    <p-inputnumber [(ngModel)]="tipoForm.valor_max" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2"></p-inputnumber>
+                </div>
+            </div>
+
+            <button pButton label="Crear" icon="pi pi-plus" class="mt-3" (click)="guardarNuevoTipo()"></button>
+        </div>
+
+        <div class="col-12 md:col-6 pl-4">
+            <h3 class="mt-0">Tests Existentes</h3>
+            <div class="test-list-container" style="max-height: 300px; overflow-y: auto;">
+                <div *ngFor="let t of tiposEvaluacion" class="flex justify-content-between align-items-center mb-2 p-2 surface-100 border-round">
+                    <div>
+                        <span class="font-bold">{{ t.nombre }}</span>
+                        <div class="text-sm text-500">
+                             Rango: {{ t.valor_min }} - {{ t.valor_max }} {{ t.unidad_medida }}
+                        </div>
+                    </div>
+                    <button pButton icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text p-button-sm" 
+                            (click)="eliminarTipoTest(t.id)"></button>
+                </div>
+                <div *ngIf="tiposEvaluacion.length === 0" class="text-center text-secondary">
+                    No hay tests configurados.
+                </div>
+            </div>
+        </div>
+    </div>
+  </p-dialog>
+
+  <p-dialog [(visible)]="displayGradesDialog" [header]="'Evaluando: ' + (evalLogistica.tipo_evaluacion?.nombre || '')" [modal]="true" [style]="{width: '700px'}" styleClass="p-fluid">
+    <p-table [value]="estudiantesGrupo" scrollable="true" scrollHeight="400px" styleClass="p-datatable-striped p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Estudiante</th>
+          <th style="width: 170px;">Resultado ({{ evalLogistica.tipo_evaluacion?.unidad_medida }})</th>
+          <th>Observación</th>
+          <th style="width: 50px;"></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-est>
+        <tr>
+          <td>{{ est.apellido }}, {{ est.nombre }}</td>
+          <td>
+            <p-inputnumber [(ngModel)]="est.valor_numerico" 
+                           mode="decimal" 
+                           [minFractionDigits]="2" 
+                           [min]="evalLogistica.tipo_evaluacion?.valor_min" 
+                           [max]="evalLogistica.tipo_evaluacion?.valor_max"
+                           [placeholder]="evalLogistica.tipo_evaluacion?.valor_min + ' - ' + evalLogistica.tipo_evaluacion?.valor_max"
+                           [showButtons]="true"
+                           buttonLayout="horizontal"
+                           spinnerMode="horizontal"
+                           decrementButtonClass="p-button-secondary"
+                           incrementButtonClass="p-button-secondary" 
+                           incrementButtonIcon="pi pi-minus" 
+                           decrementButtonIcon="pi pi-plus">
+            </p-inputnumber>
+          </td>
+          <td><input pInputText [(ngModel)]="est.observacion" placeholder="..." class="p-inputtext-sm"></td>
+          <td>
+            <button pButton icon="pi pi-eraser" class="p-button-rounded p-button-danger p-button-text" (click)="limpiarFila(est)" title="Limpiar"></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+    <ng-template pTemplate="footer">
+      <button pButton label="Guardar Resultados" icon="pi pi-save" class="p-button-success" (click)="guardarNotasFinales()" style="width: auto;"></button>
+    </ng-template>
+  </p-dialog>
+
+  <p-dialog [(visible)]="displayMainDialog" [header]="evalLogistica.id ? 'Editar Sesión' : 'Nueva Sesión'" [modal]="true" [style]="{width: '400px'}" styleClass="p-fluid">
+    <div class="field mt-3">
+      <label class="font-bold">Grupo</label>
+      <p-select [options]="grupos" [(ngModel)]="evalLogistica.grupo_id" optionLabel="nombre" optionValue="id" placeholder="Seleccionar grupo" appendTo="body"></p-select>
+    </div>
+    <div class="field mt-3">
+      <label class="font-bold">Prueba</label>
+      <p-select [options]="tiposEvaluacion" [(ngModel)]="evalLogistica.tipo_evaluacion_id" optionLabel="nombre" optionValue="id" placeholder="Seleccionar prueba" appendTo="body"></p-select>
+    </div>
+    <div class="field mt-3">
+      <label class="font-bold">Fecha</label>
+      <p-datepicker [(ngModel)]="evalLogistica.fecha" dateFormat="dd/mm/yy" appendTo="body" [showIcon]="true"></p-datepicker>
+    </div>
+    <ng-template pTemplate="footer">
+      <button pButton [label]="evalLogistica.id ? 'Actualizar' : 'Crear'" icon="pi pi-check" (click)="crearSesionPlanificada()"></button>
+    </ng-template>
+  </p-dialog>
+</div>

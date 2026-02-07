@@ -1,0 +1,14 @@
+.classes-container { padding: 20px; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.filters-row { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; }
+.filter-item { flex: 1; min-width: 180px; }
+.button-item { flex: 0; min-width: 50px; }
+.card-table { background: white; padding: 10px; border-radius: 8px; }
+
+/* FIX para que los desplegables se vean bien sobre el modal */
+::ng-deep .p-dialog-content { overflow-y: visible !important; }
+::ng-deep .p-tabpanel-content { overflow: visible !important; }
+
+.field { display: flex; flex-direction: column; gap: 5px; }
+.gap-2 { gap: 0.5rem; }

@@ -1,79 +1,85 @@
-<div class="dashboard-container">
+<div class="main-content">
+  <header class="top-bar">
+    <div class="welcome-text">
+      <h1>Panel de Control</h1>
+      <p>Gestión de estudiantes y rendimiento técnico de ProFutbol.</p>
+    </div>
 
-    <div class="users-container">
-    <header class="page-header">...</header>
-    <div class="tabs-wrapper">...</div>
-</div>
+    <div class="header-tools">
+      <div class="status-indicator" (click)="refrescar()" title="Click para refrescar">
+        <span class="status-dot" [ngClass]="supabaseStatus"></span>
+        <span class="status-text">
+          {{ supabaseStatus === 'online' ? 'Servidor Online' : 
+             supabaseStatus === 'offline' ? 'Inestabilidad detectada' : 'Verificando...' }}
+        </span>
+      </div>
+    </div>
+  </header>
 
-    <main class="main-content">
-        <div class="stats-grid">
-            
-            <div class="card card-blue">
-                <div class="card-content">
-                    <span class="card-label">ESTUDIANTES</span>
-                    <h3 class="card-value">124</h3>
-                    <p class="card-trend positive">
-                        <i class="pi pi-arrow-up"></i> +4 nuevos esta semana
-                    </p>
-                </div>
-                <div class="card-icon icon-blue">
-                    <i class="pi pi-users"></i>
-                </div>
-            </div>
+  <div class="stats-grid">
+    <div class="card card-blue">
+      <div class="card-content">
+        <span class="card-label">Estudiantes</span>
+        <h3 class="card-value">{{ totalEstudiantes }}</h3>
+        <p class="card-trend positive">
+          <i class="pi pi-check-circle"></i> Registrados en sistema
+        </p>
+      </div>
+      <div class="card-icon icon-blue">
+        <i class="pi pi-users"></i>
+      </div>
+    </div>
 
-            <div class="card card-green">
-                <div class="card-content">
-                    <span class="card-label">CLASES HOY</span>
-                    <h3 class="card-value">8</h3>
-                    <p class="card-subtext">Próxima: Sub-17 (16:00 hrs)</p>
-                </div>
-                <div class="card-icon icon-green">
-                    <i class="pi pi-stopwatch"></i>
-                </div>
-            </div>
+    <div class="card card-green">
+      <div class="card-content">
+        <span class="card-label">Clases Hoy</span>
+        <h3 class="card-value">{{ clasesHoy.length }}</h3>
+        <p class="card-subtext" *ngIf="clasesHoy.length > 0">
+          Siguiente: {{ clasesHoy[0].grupos?.nombre }} ({{ clasesHoy[0].hora | slice:0:5 }})
+        </p>
+        <p class="card-subtext" *ngIf="clasesHoy.length === 0">Sin actividades hoy</p>
+      </div>
+      <div class="card-icon icon-green">
+        <i class="pi pi-calendar"></i>
+      </div>
+    </div>
 
-            <div class="card card-purple">
-                <div class="card-content">
-                    <span class="card-label">PENDIENTES</span>
-                    <h3 class="card-value">12</h3>
-                    <p class="card-trend negative">
-                        <i class="pi pi-exclamation-circle"></i> 3 urgentes
-                    </p>
-                </div>
-                <div class="card-icon icon-purple">
-                    <i class="pi pi-file-edit"></i>
-                </div>
-            </div>
+    <div class="card card-purple">
+      <div class="card-content">
+        <span class="card-label">Actividad</span>
+        <h3 class="card-value">{{ actividadReciente.length }}</h3>
+        <p class="card-subtext">Evaluaciones este periodo</p>
+      </div>
+      <div class="card-icon icon-purple">
+        <i class="pi pi-chart-bar"></i>
+      </div>
+    </div>
+  </div>
 
+  <section class="recent-activity">
+    <div class="activity-header">
+      <h3>Últimas Evaluaciones Registradas</h3>
+      <button class="btn-refresh" (click)="cargarDatos()" [disabled]="loading">
+        <i class="pi pi-refresh" [ngClass]="{'pi-spin': loading}"></i>
+      </button>
+    </div>
+
+    <div class="activity-list">
+      <div class="activity-item" *ngFor="let item of actividadReciente">
+        <div class="item-icon icon-blue">
+          <i class="pi pi-star-fill"></i>
         </div>
-
-        <div class="recent-activity">
-            <h3>Actividad Reciente</h3>
-            
-            <div class="activity-list">
-                <div class="activity-item">
-                    <div class="item-icon icon-green">
-                        <i class="pi pi-check"></i>
-                    </div>
-                    <div class="item-info">
-                        <p class="item-title">Alexis Sánchez completó su evaluación</p>
-                        <span class="item-time">Hace 2 horas</span>
-                    </div>
-                    <span class="badge badge-success">Completado</span>
-                </div>
-
-                <div class="activity-item">
-                    <div class="item-icon icon-blue">
-                        <i class="pi pi-user-plus"></i>
-                    </div>
-                    <div class="item-info">
-                        <p class="item-title">Nuevo alumno registrado: Arturo Vidal</p>
-                        <span class="item-time">Hace 5 horas</span>
-                    </div>
-                    <span class="badge badge-info">Nuevo</span>
-                </div>
-            </div>
+        <div class="item-info">
+          <p class="item-title">{{ item.estudiantes?.nombre }} {{ item.estudiantes?.apellido }}</p>
+          <span class="item-time">{{ item.tipo_evaluacion?.nombre }} - {{ item.fecha | date:'dd/MM/yyyy' }}</span>
         </div>
+        <span class="badge badge-info">{{ item.valor_numerico }} {{ item.tipo_evaluacion?.unit_medida || '' }}</span>
+      </div>
 
-    </main>
+      <div class="empty-msg" *ngIf="actividadReciente.length === 0 && !loading">
+        <i class="pi pi-inbox"></i>
+        <p>No hay evaluaciones registradas recientemente.</p>
+      </div>
+    </div>
+  </section>
 </div>
