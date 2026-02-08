@@ -273,15 +273,14 @@ async saveAsistencia(registros: any[]) {
       .order('nombre', { ascending: true });
   }
 
-  /** NUEVA: Obtiene las instancias de sesiones (La tabla principal ahora) */
   async getSesionesEvaluacion() {
     return await this.supabase
       .from('evaluaciones_sesiones')
       .select(`
         *,
-        grupos(nombre),
-        tipo_evaluacion(nombre, unidad_medida)
-      `)
+        grupos ( nombre ),
+        tipo_evaluacion ( nombre, unidad_medida ) 
+      `) // <--- CAMBIO: Solo pedimos nombre y unidad. Quitamos el (*)
       .order('fecha', { ascending: false });
   }
 
@@ -292,6 +291,15 @@ async saveAsistencia(registros: any[]) {
       .insert(datos)
       .select()
       .single();
+  }
+
+  // ✅ AGREGA ESTA FUNCIÓN NUEVA:
+  async updateSesionEvaluacion(id: string, datos: any) {
+    return await this.supabase
+      .from('evaluaciones_sesiones')
+      .update(datos)
+      .eq('id', id)
+      .select();
   }
 
   /** NUEVA: Obtiene los resultados específicos de una sesión */
@@ -306,9 +314,7 @@ async saveAsistencia(registros: any[]) {
   async guardarResultadosMasivos(resultados: any[]) {
     return await this.supabase
       .from('evaluaciones_resultados')
-      .upsert(resultados, { 
-        onConflict: 'sesion_id, estudiante_id' // Asegúrate que en SQL tengas un UNIQUE index en estos dos campos
-      });
+      .upsert(resultados); // <--- CAMBIO: Quitamos opciones extra para evitar errores de sintaxis SQL si no existe el constraint
   }
 
   /** ACTUALIZADA: Elimina una sesión completa (por cascada borrará sus resultados) */

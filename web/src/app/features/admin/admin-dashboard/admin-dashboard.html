@@ -1,84 +1,94 @@
 <div class="main-content">
+  
   <header class="top-bar">
     <div class="welcome-text">
       <h1>Panel de Control</h1>
-      <p>Gestión de estudiantes y rendimiento técnico de ProFutbol.</p>
+      <p>Gestión de estudiantes y rendimiento.</p>
     </div>
 
     <div class="header-tools">
-      <div class="status-indicator" (click)="refrescar()" title="Click para refrescar">
+      <div class="status-indicator" (click)="refrescar()" title="Estado del Servidor">
         <span class="status-dot" [ngClass]="supabaseStatus"></span>
         <span class="status-text">
-          {{ supabaseStatus === 'online' ? 'Servidor Online' : 
-             supabaseStatus === 'offline' ? 'Inestabilidad detectada' : 'Verificando...' }}
+          {{ supabaseStatus === 'online' ? 'Online' : 
+             supabaseStatus === 'offline' ? 'Offline' : '...' }}
         </span>
       </div>
     </div>
   </header>
 
   <div class="stats-grid">
+    
     <div class="card card-blue">
       <div class="card-content">
         <span class="card-label">Estudiantes</span>
-        <h3 class="card-value">{{ totalEstudiantes }}</h3>
-        <p class="card-trend positive">
-          <i class="pi pi-check-circle"></i> Registrados en sistema
+        <div class="card-value-wrapper">
+            <h3 class="card-value">{{ totalEstudiantes }}</h3>
+            <div class="card-icon icon-blue">
+                <i class="pi pi-users"></i>
+            </div>
+        </div>
+        <p class="card-subtext positive">
+          <i class="pi pi-check-circle"></i> Activos en sistema
         </p>
-      </div>
-      <div class="card-icon icon-blue">
-        <i class="pi pi-users"></i>
       </div>
     </div>
 
     <div class="card card-green">
       <div class="card-content">
         <span class="card-label">Clases Hoy</span>
-        <h3 class="card-value">{{ clasesHoy.length }}</h3>
+        <div class="card-value-wrapper">
+            <h3 class="card-value">{{ clasesHoy.length }}</h3>
+            <div class="card-icon icon-green">
+                <i class="pi pi-calendar"></i>
+            </div>
+        </div>
         <p class="card-subtext" *ngIf="clasesHoy.length > 0">
-          Siguiente: {{ clasesHoy[0].grupos?.nombre }} ({{ clasesHoy[0].hora | slice:0:5 }})
+          Próx: {{ clasesHoy[0].grupos?.nombre }} ({{ clasesHoy[0].hora | slice:0:5 }})
         </p>
-        <p class="card-subtext" *ngIf="clasesHoy.length === 0">Sin actividades hoy</p>
-      </div>
-      <div class="card-icon icon-green">
-        <i class="pi pi-calendar"></i>
+        <p class="card-subtext text-muted" *ngIf="clasesHoy.length === 0">
+          Sin actividades programadas
+        </p>
       </div>
     </div>
 
     <div class="card card-purple">
       <div class="card-content">
-        <span class="card-label">Actividad</span>
-        <h3 class="card-value">{{ actividadReciente.length }}</h3>
-        <p class="card-subtext">Evaluaciones este periodo</p>
-      </div>
-      <div class="card-icon icon-purple">
-        <i class="pi pi-chart-bar"></i>
+        <span class="card-label">Evaluaciones</span>
+        <div class="card-value-wrapper">
+            <h3 class="card-value">{{ actividadReciente.length }}</h3>
+            <div class="card-icon icon-purple">
+                <i class="pi pi-chart-bar"></i>
+            </div>
+        </div>
+        <p class="card-subtext">Registros recientes</p>
       </div>
     </div>
   </div>
 
-  <section class="recent-activity">
+  <section class="recent-activity-card">
     <div class="activity-header">
-      <h3>Últimas Evaluaciones Registradas</h3>
-      <button class="btn-refresh" (click)="cargarDatos()" [disabled]="loading">
+      <h3>Últimas Evaluaciones</h3>
+      <button class="p-button-rounded p-button-text" (click)="cargarDatos()" [disabled]="loading">
         <i class="pi pi-refresh" [ngClass]="{'pi-spin': loading}"></i>
       </button>
     </div>
 
     <div class="activity-list">
       <div class="activity-item" *ngFor="let item of actividadReciente">
-        <div class="item-icon icon-blue">
+        <div class="item-icon-wrapper icon-blue">
           <i class="pi pi-star-fill"></i>
         </div>
         <div class="item-info">
           <p class="item-title">{{ item.estudiantes?.nombre }} {{ item.estudiantes?.apellido }}</p>
-          <span class="item-time">{{ item.tipo_evaluacion?.nombre }} - {{ item.fecha | date:'dd/MM/yyyy' }}</span>
+          <span class="item-meta">{{ item.tipo_evaluacion?.nombre }} • {{ item.fecha | date:'dd/MM' }}</span>
         </div>
-        <span class="badge badge-info">{{ item.valor_numerico }} {{ item.tipo_evaluacion?.unit_medida || '' }}</span>
+        <span class="badge badge-score">{{ item.valor_numerico }} {{ item.tipo_evaluacion?.unidad_medida || '' }}</span>
       </div>
 
-      <div class="empty-msg" *ngIf="actividadReciente.length === 0 && !loading">
+      <div class="empty-state" *ngIf="actividadReciente.length === 0 && !loading">
         <i class="pi pi-inbox"></i>
-        <p>No hay evaluaciones registradas recientemente.</p>
+        <p>No hay actividad reciente.</p>
       </div>
     </div>
   </section>

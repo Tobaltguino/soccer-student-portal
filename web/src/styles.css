@@ -1,22 +1,151 @@
 @import "primeicons/primeicons.css";
 
-/* --- VARIABLES GLOBALES (THEMING) --- */
+/* =========================================
+   1. VARIABLES DE TEMA (MODO CLARO)
+   ========================================= */
 :root {
-    /* MODO CLARO (Por defecto) */
-    --bg-main: #f8f9fa;       /* Fondo pantalla */
-    --bg-card: #ffffff;       /* Fondo tarjetas */
-    --text-main: #1e293b;     /* Texto principal (Oscuro) */
-    --text-secondary: #64748b; /* Texto secundario (Gris) */
-    --border-color: #e2e8f0;  /* Bordes suaves */
+    --bg-main: #f8f9fa;       
+    --bg-card: #ffffff;       
+    --text-main: #1e293b;     
+    --text-secondary: #64748b; 
+    --border-color: #e2e8f0;  
+    --primary-color: #3b82f6; 
+    --accent-color: #3b82f6; 
+
+    /* Variables PrimeNG por defecto (Claro) */
+    --surface-ground: #f8f9fa;
+    --surface-card: #ffffff;
+    --surface-overlay: #ffffff;
+    --surface-border: #e2e8f0;
+    --text-color: #1e293b;
+    --text-color-secondary: #64748b;
 }
 
-/* MODO OSCURO (Se activa cuando pongas data-theme="dark" en el body) */
-[data-theme="dark"] {
-    --bg-main: #0f172a;       /* Fondo oscuro profundo */
-    --bg-card: #1e293b;       /* Tarjetas gris azulado oscuro */
-    --text-main: #f1f5f9;     /* Texto principal (Blanco) */
-    --text-secondary: #94a3b8; /* Texto secundario (Gris claro) */
-    --border-color: #334155;  /* Bordes oscuros */
+/* =========================================
+   2. MODO OSCURO (Override Maestro)
+   ========================================= */
+body.dark-mode {
+    /* Tus variables personalizadas */
+    --bg-main: #0f172a;       
+    --bg-card: #1e293b;       
+    --text-main: #f1f5f9;     
+    --text-secondary: #94a3b8; 
+    --border-color: #334155;  
+    --primary-color: #60a5fa; 
+    --accent-color: #60a5fa;
+
+    /* 🔥 HACK PRIMENG: Obligamos a la librería a usar nuestros colores 🔥 */
+    --surface-ground: var(--bg-main) !important;
+    --surface-card: var(--bg-card) !important;
+    --surface-overlay: var(--bg-card) !important;
+    --surface-border: var(--border-color) !important;
+    --surface-input: var(--bg-main) !important;
+    --text-color: var(--text-main) !important;
+    --text-color-secondary: var(--text-secondary) !important;
+    
+    /* Capas de profundidad PrimeNG */
+    --surface-a: var(--bg-card) !important;
+    --surface-b: var(--bg-main) !important;
+    --surface-c: var(--bg-card) !important;
+    --surface-d: var(--bg-card) !important;
 }
 
-/* IMPORTANTE: El sidebar lo dejamos fijo por ahora para mantener la marca */
+/* =========================================
+   3. ESTILOS BASE
+   ========================================= */
+html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+h1, h2, h3, h4, h5, h6 { color: var(--text-main); margin: 0; }
+p, small, span, div { color: inherit; }
+
+/* =========================================
+   4. FORMULARIOS (.field)
+   ========================================= */
+.field {
+    display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; width: 100%;
+}
+.field label {
+    font-weight: 600; color: var(--text-main); font-size: 0.9rem;
+}
+.field input, .field textarea, .field p-dropdown, .field p-calendar, 
+.field p-password, .field p-inputNumber, .field .p-inputtext, .field .p-component {
+    width: 100% !important;
+}
+
+/* =========================================
+   5. MODALES (Responsive y Color)
+   ========================================= */
+.p-dialog .p-dialog-content,
+.p-dialog .p-dialog-header,
+.p-dialog .p-dialog-footer {
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+.p-dialog-title { color: var(--text-main) !important; }
+.p-dialog-header-icon { color: var(--text-secondary) !important; }
+
+@media (max-width: 768px) {
+    .p-dialog { max-height: 95vh !important; margin: 10px; }
+    .p-dialog .p-dialog-content { max-height: calc(90vh - 120px) !important; padding: 1rem !important; }
+}
+
+/* =========================================
+   6. TABLAS (Fix Global Definitivo)
+   ========================================= */
+/* Fondo transparente para que tome el color del contenedor */
+.p-datatable .p-datatable-header,
+.p-datatable .p-datatable-thead > tr > th,
+.p-datatable .p-datatable-tbody > tr > td,
+.p-datatable .p-datatable-footer,
+.p-paginator {
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Filas alternas en modo oscuro */
+body.dark-mode .p-datatable .p-datatable-tbody > tr {
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+}
+
+body.dark-mode .p-datatable .p-datatable-tbody > tr:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Inputs de Filtro en Tablas */
+body.dark-mode .p-column-filter-row .p-inputtext {
+    background-color: var(--bg-main) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Dropdowns en modo oscuro */
+body.dark-mode .p-dropdown-panel, 
+body.dark-mode .p-dropdown-items-wrapper {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+body.dark-mode .p-dropdown-item {
+    color: var(--text-main) !important;
+}
+body.dark-mode .p-dropdown-item:hover {
+    background-color: var(--border-color) !important;
+}
+
+/* =========================================
+   7. TOAST (Notificaciones)
+   ========================================= */
+@media screen and (max-width: 768px) {
+    .p-toast {
+        width: 90vw !important; left: 50% !important; transform: translateX(-50%);
+        top: 20px !important; right: auto !important;
+    }
+}

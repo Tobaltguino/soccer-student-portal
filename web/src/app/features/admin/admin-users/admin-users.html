@@ -1,0 +1,217 @@
+<div class="users-container">
+    <p-toast position="top-right"></p-toast>
+    <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
+
+    <header class="page-header">
+        <div class="header-content">
+            <div>
+                <h1>Gestión de Usuarios</h1>
+                <p>Administra los roles y perfiles de la academia.</p>
+            </div>
+        </div>
+        <button pButton label="Nuevo Usuario" icon="pi pi-plus" class="btn-create" (click)="abrirDialogoCrear()"></button>
+    </header>
+
+    <div class="view-selector-container">
+        <div class="selector-wrapper">
+            <div class="icon-box">
+                <i class="pi pi-users"></i>
+            </div>
+            
+            <p-select [options]="tiposUsuario" [(ngModel)]="vistaActual" (onChange)="cambiarVista()" 
+                      optionLabel="label" optionValue="value" 
+                      styleClass="w-full" 
+                      appendTo="body"
+                      placeholder="Selecciona un Rol">
+            </p-select>
+        </div>
+    </div>
+
+    <div class="main-card">
+        
+        <div *ngIf="vistaActual === 'estudiantes'">
+            <div class="filters-bar">
+                <p-select [options]="listaGrupos" [(ngModel)]="filtroGrupoEst" (onChange)="filtrarEstudiantes()"
+                          optionLabel="nombre" optionValue="id" placeholder="Filtrar por Grupo" 
+                          [showClear]="true" class="filter-select" appendTo="body"></p-select>
+                
+                <p-select [options]="tiposJugador" [(ngModel)]="filtroTipoEst" (onChange)="filtrarEstudiantes()"
+                          optionLabel="label" optionValue="value" placeholder="Filtrar por Tipo" 
+                          [showClear]="true" class="filter-select" appendTo="body"></p-select>
+
+                <button pButton icon="pi pi-filter-slash" class="p-button-text clean-btn" (click)="limpiarFiltrosEst()" pTooltip="Limpiar Filtros"></button>
+            </div>
+
+            <div class="table-responsive">
+                <p-table [value]="estudiantesFiltrados" [loading]="loadingEstudiantes" [rows]="10" [paginator]="true" styleClass="p-datatable-sm">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>Nombre</th> <th class="hidden-mobile">RUT</th> <th class="hidden-mobile">Email</th> 
+                            <th>Grupo</th> <th class="hidden-mobile">Tipo</th> <th class="text-center">Acciones</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-item>
+                        <tr>
+                            <td>
+                                <div class="font-bold">{{ item.nombre }} {{ item.apellido }}</div>
+                                <div class="mobile-meta visible-mobile">{{ item.rut }}</div>
+                            </td>
+                            <td class="hidden-mobile">{{ item.rut }}</td>
+                            <td class="hidden-mobile">{{ item.email }}</td>
+                            <td><p-tag [value]="item.grupos?.nombre || 'Sin Grupo'" [severity]="item.grupos ? 'info' : 'secondary'"></p-tag></td>
+                            <td class="hidden-mobile"><p-tag [value]="item.tipo_alumno" severity="contrast"></p-tag></td>
+                            <td class="text-center">
+                                <div class="action-buttons">
+                                    <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning p-button-rounded" (click)="abrirDialogoEditar(item)"></button>
+                                    <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-rounded" (click)="eliminarUsuario(item.id, 'estudiantes')"></button>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage"><tr><td colspan="6" class="text-center p-4 text-secondary">No se encontraron estudiantes.</td></tr></ng-template>
+                </p-table>
+            </div>
+        </div>
+
+        <div *ngIf="vistaActual === 'profesores'">
+            <div class="filters-bar">
+                <p-select [options]="listaGrupos" [(ngModel)]="filtroGrupoProf" (onChange)="filtrarProfesores()"
+                          optionLabel="nombre" optionValue="id" placeholder="Grupo Asignado" 
+                          [showClear]="true" class="filter-select" appendTo="body"></p-select>
+
+                <p-select [options]="tiposJugador" [(ngModel)]="filtroTipoProf" (onChange)="filtrarProfesores()"
+                          optionLabel="label" optionValue="value" placeholder="Tipo de Profesor" 
+                          [showClear]="true" class="filter-select" appendTo="body"></p-select>
+
+                 <button pButton icon="pi pi-filter-slash" class="p-button-text clean-btn" (click)="limpiarFiltrosProf()" pTooltip="Limpiar Filtros"></button>
+            </div>
+            
+            <div class="table-responsive">
+                <p-table [value]="profesoresFiltrados" [loading]="loadingProfesores">
+                    <ng-template pTemplate="header">
+                        <tr><th>Nombre</th> <th class="hidden-mobile">RUT</th> <th>Grupos</th> <th>Tipo</th> <th class="text-center">Acciones</th></tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-item>
+                        <tr>
+                            <td>
+                                <div class="font-bold">{{ item.nombre }} {{ item.apellido }}</div>
+                                <div class="mobile-meta visible-mobile">{{ item.rut }}</div>
+                            </td>
+                            <td class="hidden-mobile">{{ item.rut }}</td>
+                            <td>
+                                <div class="flex gap-1 flex-wrap">
+                                    <span *ngIf="!item.grupos_profesores?.length" class="text-sm text-secondary">-</span>
+                                    <p-tag *ngFor="let gp of item.grupos_profesores" [value]="gp.grupos.nombre" severity="success"></p-tag>
+                                </div>
+                            </td>
+                            <td>{{ item.tipo_profesor || '-' }}</td>
+                            <td class="text-center">
+                                <div class="action-buttons">
+                                    <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning p-button-rounded" (click)="abrirDialogoEditar(item)"></button>
+                                    <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-rounded" (click)="eliminarUsuario(item.id, 'profesores')"></button>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage"><tr><td colspan="5" class="text-center p-4 text-secondary">No hay profesores registrados.</td></tr></ng-template>
+                </p-table>
+            </div>
+        </div>
+
+        <div *ngIf="vistaActual === 'admins'">
+            <div class="table-responsive">
+                <p-table [value]="admins" [loading]="loadingAdmins">
+                    <ng-template pTemplate="header"><tr><th>Nombre</th><th class="hidden-mobile">Email</th><th class="text-center">Acciones</th></tr></ng-template>
+                    <ng-template pTemplate="body" let-item>
+                        <tr>
+                            <td><div class="font-bold">{{ item.nombre }} {{ item.apellido }}</div><div class="mobile-meta visible-mobile">{{ item.email }}</div></td>
+                            <td class="hidden-mobile">{{ item.email }}</td>
+                            <td class="text-center">
+                                <div class="action-buttons">
+                                    <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning p-button-rounded" (click)="abrirDialogoEditar(item)"></button>
+                                    <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-rounded" (click)="eliminarUsuario(item.id, 'admins')"></button>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </div>
+
+        <div *ngIf="vistaActual === 'kinesiologos'">
+            <div class="table-responsive">
+                <p-table [value]="kines" [loading]="loadingKines">
+                    <ng-template pTemplate="header"><tr><th>Nombre</th><th class="hidden-mobile">RUT</th><th class="hidden-mobile">Email</th><th class="text-center">Acciones</th></tr></ng-template>
+                    <ng-template pTemplate="body" let-item>
+                        <tr>
+                            <td><div class="font-bold">{{ item.nombre }} {{ item.apellido }}</div><div class="mobile-meta visible-mobile">{{ item.rut }}</div></td>
+                            <td class="hidden-mobile">{{ item.rut }}</td> <td class="hidden-mobile">{{ item.email }}</td>
+                            <td class="text-center">
+                                <div class="action-buttons">
+                                    <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning p-button-rounded" (click)="abrirDialogoEditar(item)"></button>
+                                    <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-rounded" (click)="eliminarUsuario(item.id, 'kinesiologos')"></button>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </div>
+
+        <div *ngIf="vistaActual === 'nutricionistas'">
+            <div class="table-responsive">
+                <p-table [value]="nutris" [loading]="loadingNutris">
+                    <ng-template pTemplate="header"><tr><th>Nombre</th><th class="hidden-mobile">RUT</th><th class="hidden-mobile">Email</th><th class="text-center">Acciones</th></tr></ng-template>
+                    <ng-template pTemplate="body" let-item>
+                        <tr>
+                            <td><div class="font-bold">{{ item.nombre }} {{ item.apellido }}</div><div class="mobile-meta visible-mobile">{{ item.rut }}</div></td>
+                            <td class="hidden-mobile">{{ item.rut }}</td> <td class="hidden-mobile">{{ item.email }}</td>
+                            <td class="text-center">
+                                <div class="action-buttons">
+                                    <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning p-button-rounded" (click)="abrirDialogoEditar(item)"></button>
+                                    <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-rounded" (click)="eliminarUsuario(item.id, 'nutricionistas')"></button>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </div>
+
+    </div> <p-dialog [(visible)]="displayDialog" [header]="tituloDialogo" [modal]="true" [style]="{width: '90vw', maxWidth: '450px'}" styleClass="p-fluid">
+        <div class="flex flex-column gap-3 pt-2">
+            <div class="field"><label>Nombre</label><input pInputText [(ngModel)]="userForm.nombre" /></div>
+            <div class="field"><label>Apellido</label><input pInputText [(ngModel)]="userForm.apellido" /></div>
+            
+            <div class="field" *ngIf="vistaActual !== 'admins'"><label>RUT</label><input pInputText [(ngModel)]="userForm.rut" /></div>
+            
+            <div class="field"><label>Email</label><input pInputText [(ngModel)]="userForm.email" /></div>
+            <div class="field" *ngIf="!isEditing"><label>Contraseña</label><input pInputText type="password" [(ngModel)]="userForm.password" /></div>
+
+            <div class="field" *ngIf="vistaActual === 'estudiantes'">
+                <label>Tipo de Alumno</label>
+                <p-select [options]="tiposJugador" [(ngModel)]="userForm.tipo_alumno" optionLabel="label" optionValue="value" placeholder="Seleccione" appendTo="body"></p-select>
+            </div>
+            
+            <div class="field" *ngIf="vistaActual === 'estudiantes'">
+                <label>Asignar Grupo</label>
+                <p-select [options]="listaGrupos" [(ngModel)]="userForm.grupo_id" optionLabel="nombre" optionValue="id" placeholder="Selecciona grupo" appendTo="body" [showClear]="true"></p-select>
+            </div>
+
+            <div class="field" *ngIf="vistaActual === 'profesores'">
+                <label>Tipo de Profesor</label>
+                <p-select [options]="tiposJugador" [(ngModel)]="userForm.tipo_profesor" optionLabel="label" optionValue="value" placeholder="Seleccione" appendTo="body"></p-select>
+            </div>
+
+            <div class="field" *ngIf="vistaActual === 'profesores'">
+                <label>Grupos a Cargo</label>
+                <p-multiSelect [options]="listaGrupos" [(ngModel)]="userForm.grupos_profe" defaultLabel="Seleccionar grupos" optionLabel="nombre" optionValue="id" display="chip" appendTo="body"></p-multiSelect>
+            </div>
+        </div>
+        <ng-template pTemplate="footer">
+            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="displayDialog = false"></button>
+            <button pButton label="Guardar" icon="pi pi-check" (click)="guardarUsuario()"></button>
+        </ng-template>
+    </p-dialog>
+
+</div>

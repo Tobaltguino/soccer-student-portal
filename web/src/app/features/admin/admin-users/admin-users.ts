@@ -1,42 +1,29 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
-// PrimeNG Imports (v18+)
+// PrimeNG Imports
 import { TableModule } from 'primeng/table';
-import { TabsModule } from 'primeng/tabs';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { SelectModule } from 'primeng/select';       // Selector Simple
-import { MultiSelectModule } from 'primeng/multiselect'; // Selector Múltiple
-import { ToastModule } from 'primeng/toast';         // Notificaciones
-import { TooltipModule } from 'primeng/tooltip';     // Tooltips
+import { SelectModule } from 'primeng/select';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { ToastModule } from 'primeng/toast';
+import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService, MessageService } from 'primeng/api';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
+import { SupabaseService } from '../../../core/services/supabase.service';
 
 @Component({
   selector: 'app-admin-users',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
-    RouterLink,
-    TableModule,
-    TabsModule,
-    ButtonModule,
-    TagModule,
-    DialogModule,
-    InputTextModule,
-    ConfirmDialogModule,
-    SelectModule,
-    MultiSelectModule,
-    ToastModule,
-    TooltipModule
+    CommonModule, FormsModule, TableModule, ButtonModule, TagModule,
+    DialogModule, InputTextModule, ConfirmDialogModule, SelectModule,
+    MultiSelectModule, ToastModule, TooltipModule
   ],
   providers: [ConfirmationService, MessageService],
   templateUrl: './admin-users.html',
@@ -52,28 +39,37 @@ export class AdminUsersComponent implements OnInit {
   nutris: any[] = [];
   listaGrupos: any[] = [];
 
-  // --- LISTAS FILTRADAS (Vista de tabla) ---
+  // --- LISTAS FILTRADAS ---
   estudiantesFiltrados: any[] = [];
   profesoresFiltrados: any[] = [];
 
-  // --- VARIABLES DE FILTRO ---
+  // --- CONTROL DE VISTA (Reemplaza a Tabs) ---
+  vistaActual: string = 'estudiantes'; // Valor por defecto
+
+  tiposUsuario = [
+    { label: 'Estudiantes', value: 'estudiantes' },
+    { label: 'Profesores', value: 'profesores' },
+    { label: 'Administradores', value: 'admins' },
+    { label: 'Kinesiólogos', value: 'kinesiologos' },
+    { label: 'Nutricionistas', value: 'nutricionistas' }
+  ];
+
+  // --- FILTROS ---
   filtroGrupoEst: any = null;
   filtroTipoEst: any = null;
-  
   filtroGrupoProf: any = null;
   filtroTipoProf: any = null;
 
-  // --- ESTADOS ---
-  loadingEstudiantes: boolean = true;
-  loadingProfesores: boolean = true;
-  loadingAdmins: boolean = true;
-  loadingKines: boolean = true;
-  loadingNutris: boolean = true;
+  // --- ESTADOS DE CARGA ---
+  loadingEstudiantes: boolean = false;
+  loadingProfesores: boolean = false;
+  loadingAdmins: boolean = false;
+  loadingKines: boolean = false;
+  loadingNutris: boolean = false;
 
   displayDialog: boolean = false;
   isEditing: boolean = false;
   tituloDialogo: string = '';
-  activeTab: string = '0'; 
 
   // --- LISTAS ESTÁTICAS ---
   tiposJugador: any[] = [
@@ -83,16 +79,8 @@ export class AdminUsersComponent implements OnInit {
 
   // --- FORMULARIO ---
   userForm: any = {
-    id: null,
-    nombre: '',
-    apellido: '',
-    rut: '',
-    email: '',
-    password: '',
-    tipo_alumno: '',     
-    tipo_profesor: '',   
-    grupo_id: null,      
-    grupos_profe: []     
+    id: null, nombre: '', apellido: '', rut: '', email: '', password: '', 
+    tipo_alumno: '', tipo_profesor: '', grupo_id: null, grupos_profe: []
   };
 
   constructor(
@@ -103,19 +91,23 @@ export class AdminUsersComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.cargarTodo();
     this.cargarListaGrupos();
+    this.cambiarVista(); // Carga la vista inicial (estudiantes)
+  }
+
+  // ================= CONTROL DE VISTA =================
+  cambiarVista() {
+    // Cargar datos solo si es necesario al cambiar de vista
+    switch (this.vistaActual) {
+      case 'estudiantes': if(this.estudiantes.length === 0) this.cargarEstudiantes(); break;
+      case 'profesores': if(this.profesores.length === 0) this.cargarProfesores(); break;
+      case 'admins': if(this.admins.length === 0) this.cargarAdmins(); break;
+      case 'kinesiologos': if(this.kines.length === 0) this.cargarKines(); break;
+      case 'nutricionistas': if(this.nutris.length === 0) this.cargarNutris(); break;
+    }
   }
 
   // ================= CARGA DE DATOS =================
-  cargarTodo() {
-    this.cargarEstudiantes();
-    this.cargarProfesores();
-    this.cargarAdmins();
-    this.cargarKines();
-    this.cargarNutris();
-  }
-
   async cargarListaGrupos() {
     const { data } = await this.supabase.getGrupos();
     if (data) this.listaGrupos = data;
@@ -126,7 +118,7 @@ export class AdminUsersComponent implements OnInit {
     const { data } = await this.supabase.getEstudiantes();
     if (data) {
         this.estudiantes = data;
-        this.filtrarEstudiantes(); // Inicializar filtro
+        this.filtrarEstudiantes();
     }
     this.loadingEstudiantes = false;
     this.cdr.detectChanges();
@@ -137,7 +129,7 @@ export class AdminUsersComponent implements OnInit {
     const { data } = await this.supabase.getProfesores();
     if (data) {
         this.profesores = data;
-        this.filtrarProfesores(); // Inicializar filtro
+        this.filtrarProfesores();
     }
     this.loadingProfesores = false;
     this.cdr.detectChanges();
@@ -150,6 +142,7 @@ export class AdminUsersComponent implements OnInit {
     this.loadingAdmins = false;
     this.cdr.detectChanges();
   }
+
   async cargarKines() {
     this.loadingKines = true;
     const { data } = await this.supabase.getKinesiologos();
@@ -157,6 +150,7 @@ export class AdminUsersComponent implements OnInit {
     this.loadingKines = false;
     this.cdr.detectChanges();
   }
+
   async cargarNutris() {
     this.loadingNutris = true;
     const { data } = await this.supabase.getNutricionistas();
@@ -165,14 +159,11 @@ export class AdminUsersComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // ================= LÓGICA DE FILTROS =================
-  
+  // ================= FILTROS =================
   filtrarEstudiantes() {
     this.estudiantesFiltrados = this.estudiantes.filter(e => {
       const matchGrupo = this.filtroGrupoEst ? e.grupo_id === this.filtroGrupoEst : true;
-      
       const matchTipo = this.filtroTipoEst ? e.tipo_alumno === this.filtroTipoEst : true;
-      
       return matchGrupo && matchTipo;
     });
   }
@@ -185,7 +176,6 @@ export class AdminUsersComponent implements OnInit {
 
   filtrarProfesores() {
     this.profesoresFiltrados = this.profesores.filter(p => {
-      // Verifica si alguno de los grupos del profe coincide con el filtro
       const matchGrupo = this.filtroGrupoProf 
         ? p.grupos_profesores.some((gp: any) => gp.grupo_id === this.filtroGrupoProf)
         : true;
@@ -200,12 +190,14 @@ export class AdminUsersComponent implements OnInit {
     this.filtrarProfesores();
   }
 
-  // ================= DIÁLOGO =================
-  
+  // ================= DIÁLOGO (CRUD) =================
   abrirDialogoCrear() {
     this.isEditing = false;
     this.tituloDialogo = 'Nuevo Usuario';
     this.limpiarFormulario();
+    
+    // Pre-seleccionar tipo según la vista actual
+    // Nota: Para estudiantes/profesores el tipo específico se elige en el form
     this.displayDialog = true;
   }
 
@@ -213,18 +205,19 @@ export class AdminUsersComponent implements OnInit {
     this.isEditing = true;
     this.tituloDialogo = 'Editar Usuario';
     
+    // Copiar datos
     this.userForm = { ...usuario, password: '' };
 
-    // Rellenar Grupos
-    if (this.activeTab === '0') {
+    // Lógica específica por tipo
+    if (this.vistaActual === 'estudiantes') {
        this.userForm.grupo_id = usuario.grupo_id || null;
     }
-    if (this.activeTab === '1') {
-        if (usuario.grupos_profesores && usuario.grupos_profesores.length > 0) {
-            this.userForm.grupos_profe = usuario.grupos_profesores.map((g: any) => g.grupo_id);
-        } else {
-            this.userForm.grupos_profe = [];
-        }
+    if (this.vistaActual === 'profesores') {
+       if (usuario.grupos_profesores && usuario.grupos_profesores.length > 0) {
+           this.userForm.grupos_profe = usuario.grupos_profesores.map((g: any) => g.grupo_id);
+       } else {
+           this.userForm.grupos_profe = [];
+       }
     }
     this.displayDialog = true;
   }
@@ -236,7 +229,6 @@ export class AdminUsersComponent implements OnInit {
     };
   }
 
-  // ================= CRUD =================
   async guardarUsuario() {
     if (!this.userForm.email) {
       this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'El email es obligatorio' });
@@ -247,7 +239,7 @@ export class AdminUsersComponent implements OnInit {
       return;
     }
 
-    const tabla = this.obtenerNombreTabla(this.activeTab);
+    const tabla = this.vistaActual; // La tabla coincide con el value del dropdown
     
     const datosBase: any = {
       nombre: this.userForm.nombre,
@@ -255,11 +247,11 @@ export class AdminUsersComponent implements OnInit {
       rut: this.userForm.rut
     };
 
-    if (this.activeTab === '0') {
+    if (this.vistaActual === 'estudiantes') {
         datosBase['tipo_alumno'] = this.userForm.tipo_alumno;
         datosBase['grupo_id'] = this.userForm.grupo_id;
     } 
-    else if (this.activeTab === '1') {
+    else if (this.vistaActual === 'profesores') {
         datosBase['tipo_profesor'] = this.userForm.tipo_profesor;
     }
 
@@ -270,14 +262,21 @@ export class AdminUsersComponent implements OnInit {
       if (this.isEditing) {
         const { error } = await this.supabase.adminUpdateUsuario(tabla, this.userForm.id, this.userForm.email, datosBase);
         errorResult = error;
+        
+        // Actualización especial para grupos de profesores
+        if (!error && this.vistaActual === 'profesores') {
+            await this.supabase.actualizarGruposProfesor(this.userForm.id, this.userForm.grupos_profe);
+        }
+
       } else {
         const res: any = await this.supabase.crearUsuarioCompleto(this.userForm.email, this.userForm.password, datosBase, tabla);
         userIdResult = res.data?.user?.id;
         errorResult = res.error;
-      }
 
-      if (!errorResult && this.activeTab === '1' && userIdResult) {
-          await this.supabase.actualizarGruposProfesor(userIdResult, this.userForm.grupos_profe);
+        // Creación especial para grupos de profesores
+        if (!errorResult && this.vistaActual === 'profesores' && userIdResult) {
+            await this.supabase.actualizarGruposProfesor(userIdResult, this.userForm.grupos_profe);
+        }
       }
 
       if (errorResult) {
@@ -285,10 +284,11 @@ export class AdminUsersComponent implements OnInit {
       } else {
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: this.isEditing ? 'Usuario actualizado.' : 'Usuario creado.' });
         this.displayDialog = false;
-        this.recargarTabla(this.activeTab);
+        this.recargarTablaActual();
       }
 
     } catch (e) {
+      console.error(e);
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error inesperado.' });
     }
   }
@@ -307,28 +307,19 @@ export class AdminUsersComponent implements OnInit {
             this.messageService.add({ severity: 'error', summary: 'Error', detail: error.message });
         } else {
             this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Usuario eliminado.' });
-            this.recargarTabla(this.obtenerIndiceTabla(tabla));
+            this.recargarTablaActual();
         }
       }
     });
   }
 
-  // ================= UTILS =================
-  obtenerNombreTabla(index: string): string {
-    const map = ['estudiantes', 'profesores', 'admins', 'kinesiologos', 'nutricionistas'];
-    return map[parseInt(index)] || 'estudiantes';
-  }
-
-  obtenerIndiceTabla(nombre: string): string {
-    const map: any = { 'estudiantes': '0', 'profesores': '1', 'admins': '2', 'kinesiologos': '3', 'nutricionistas': '4' };
-    return map[nombre] || '0';
-  }
-
-  recargarTabla(index: string) {
-    if(index === '0') this.cargarEstudiantes();
-    if(index === '1') this.cargarProfesores();
-    if(index === '2') this.cargarAdmins();
-    if(index === '3') this.cargarKines();
-    if(index === '4') this.cargarNutris();
+  recargarTablaActual() {
+    switch(this.vistaActual) {
+        case 'estudiantes': this.cargarEstudiantes(); break;
+        case 'profesores': this.cargarProfesores(); break;
+        case 'admins': this.cargarAdmins(); break;
+        case 'kinesiologos': this.cargarKines(); break;
+        case 'nutricionistas': this.cargarNutris(); break;
+    }
   }
 }

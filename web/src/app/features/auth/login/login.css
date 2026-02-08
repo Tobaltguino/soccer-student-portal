@@ -1,167 +1,184 @@
-/* --- FONDO Y CONTENEDOR PRINCIPAL --- */
+/* --- LAYOUT PRINCIPAL --- */
 .login-wrapper {
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    
-    background-color: #f3f4f6;
+    background-color: var(--bg-main);
     padding: 1rem;
-    font-family: 'Segoe UI', sans-serif;
+    position: relative;
+    overflow: hidden;
+    transition: background-color 0.3s ease;
 }
 
-/* --- ESTILOS DE LA TARJETA (PrimeNG Override) --- */
+/* Decoración de fondo */
+.login-wrapper::before {
+    content: '';
+    position: absolute;
+    top: -10%; right: -10%;
+    width: 50%; height: 50%;
+    background: radial-gradient(circle, var(--primary-color) 0%, transparent 70%);
+    opacity: 0.05;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* --- TARJETA DE LOGIN --- */
 :host ::ng-deep .login-card {
+    position: relative;
+    z-index: 1;
     width: 100%;
-    max-width: 400px;
-    border: none;
-    border-radius: 16px; /* Bordes redondeados */
-    /* Sombra profunda (Shadow-8) */
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    /* Animación de entrada */
-    animation: zoomIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    max-width: 420px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-/* Espaciado interno */
-.login-content {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem; /* Separación entre elementos */
+:host ::ng-deep .p-card-body {
+    padding: 2.5rem;
 }
 
-/* --- LOGO --- */
+/* --- LOGO Y TÍTULOS --- */
 .logo-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
+    text-align: center;
+    margin-bottom: 2.5rem;
 }
 
+/* Estilo base para ambas imágenes */
 .logo-img {
-    height: 100px;
+    height: 80px;
     width: auto;
     object-fit: contain;
-    display: block;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+    transition: all 0.3s ease;
 }
+
+/* =========================================
+   🔥 LÓGICA DE DOBLE LOGO (CORREGIDA) 🔥
+   Usamos :host-context para "escapar" del componente
+   y leer la clase del body.
+   ========================================= */
+
+/* 1. POR DEFECTO (Modo Claro): */
+.logo-light { display: block; margin: 0 auto 1rem auto; }
+.logo-dark { display: none; }
+
+/* 2. SI EL BODY TIENE DARK-MODE: */
+:host-context(body.dark-mode) .logo-light {
+    display: none !important;
+}
+
+:host-context(body.dark-mode) .logo-dark {
+    display: block !important;
+    margin: 0 auto 1rem auto;
+    
+    /* Si tu imagen 'logo-dark' sigue siendo negra, usa este filtro para volverla blanca.
+       Si ya subiste una imagen blanca real, BORRA la línea de filter. */
+    filter: invert(1) brightness(200%);
+    opacity: 0.9;
+}
+/* ========================================= */
 
 .logo-section h2 {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #1f2937; /* Gris oscuro */
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-main);
     margin: 0;
+    letter-spacing: -0.5px;
 }
 
-/* --- FORMULARIO E INPUTS --- */
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.form-group label {
-    font-weight: 600;
-    color: #374151; /* Gris medio */
-    margin-left: 4px;
-}
-
-/* Contenedor del Input + Icono */
-.input-container {
-    display: flex;
-    width: 100%;
-    align-items: stretch;
-}
-
-/* Cajita del Icono */
-.input-icon {
-    background-color: #eff6ff; /* Azul muy clarito */
-    border: 1px solid #bfdbfe; /* Borde azul suave */
-    border-right: none; /* Quitamos borde derecho para unir con input */
-    border-top-left-radius: 8px;
-    border-bottom-left-radius: 8px;
-    padding: 0 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #2563eb; /* Icono azul */
-    transition: background-color 0.3s;
-}
-
-/* Hover en el grupo */
-.input-container:hover .input-icon {
-    background-color: #dbeafe;
-}
-
-/* Estilos para los Inputs de PrimeNG */
-:host ::ng-deep .p-inputtext {
-    width: 100%;
-    padding: 0.8rem 1rem;
+.subtitle {
+    color: var(--text-secondary);
+    margin: 0.5rem 0 0 0;
     font-size: 0.95rem;
-    border: 1px solid #bfdbfe;
-    border-top-right-radius: 8px;
-    border-bottom-right-radius: 8px;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    box-shadow: none;
-    transition: all 0.2s;
 }
 
-/* Ajuste específico para Password (porque PrimeNG añade un div extra) */
-:host ::ng-deep .p-password {
-    width: 100%;
-}
-:host ::ng-deep .p-password input {
-    width: 100%;
-    border-top-left-radius: 0 !important;
-    border-bottom-left-radius: 0 !important;
+/* --- CAMPOS DEL FORMULARIO --- */
+.form-section {
+    display: flex; flex-direction: column; gap: 1.5rem;
 }
 
-/* Focus bonito (Resplandor azul) */
-:host ::ng-deep .p-inputtext:focus {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
-    z-index: 10;
+.field {
+    display: flex; flex-direction: column; gap: 0.5rem;
 }
+
+.field label {
+    font-weight: 600; color: var(--text-main); font-size: 0.9rem; margin-left: 4px;
+}
+
+/* Input Group */
+.input-group {
+    display: flex; align-items: stretch;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-main);
+    transition: all 0.2s ease;
+    overflow: hidden;
+}
+
+.input-group:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.input-icon {
+    display: flex; align-items: center; justify-content: center;
+    width: 45px; background-color: transparent;
+    color: var(--text-secondary);
+}
+
+.input-group:focus-within .input-icon {
+    color: var(--primary-color);
+}
+
+/* Inputs Clean */
+:host ::ng-deep .custom-input,
+:host ::ng-deep .custom-input-password {
+    border: none !important; background: transparent !important;
+    box-shadow: none !important; width: 100%; padding: 0.9rem;
+    color: var(--text-main); font-weight: 500;
+}
+
+:host ::ng-deep .p-password, :host ::ng-deep .p-password-input { width: 100%; }
 
 /* --- BOTÓN --- */
-:host ::ng-deep .btn-login-full .p-button {
-    width: 100%;
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    border: none;
-    padding: 1rem;
-    font-weight: bold;
-    font-size: 1rem;
-    border-radius: 8px;
-    margin-top: 0.5rem;
-    transition: transform 0.2s, box-shadow 0.2s;
+:host ::ng-deep .btn-login {
+    width: 100%; padding: 1rem; font-size: 1rem; font-weight: 700;
+    border-radius: 12px; background: var(--primary-color);
+    border: none; box-shadow: 0 4px 14px 0 rgba(0,0,0,0.15);
+    color: white; transition: transform 0.2s;
 }
 
-:host ::ng-deep .btn-login-full .p-button:hover {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
-    transform: translateY(-2px);
+:host ::ng-deep .btn-login:hover {
+    transform: translateY(-2px); filter: brightness(0.9);
 }
 
-/* --- LINK OLVIDÉ CONTRASEÑA --- */
-.forgot-password {
-    text-align: center;
-    margin-top: 0.5rem;
-}
-
+/* --- LINK RECUPERAR --- */
+.forgot-password { text-align: center; margin-top: 1rem; }
 .forgot-password a {
-    color: #3b82f6;
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: color 0.2s;
+    color: var(--text-secondary); font-size: 0.9rem; text-decoration: none;
+    cursor: pointer; transition: color 0.2s;
 }
+.forgot-password a:hover { color: var(--primary-color); text-decoration: underline; }
 
-.forgot-password a:hover {
-    color: #1d4ed8;
-}
+/* --- UTILS --- */
+.text-main { color: var(--text-main); }
+.text-secondary { color: var(--text-secondary); }
 
-/* Animación Keyframes */
-@keyframes zoomIn {
-    from { opacity: 0; transform: scale(0.95) translateY(20px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
+/* --- MOBILE --- */
+@media (max-width: 576px) {
+    .login-wrapper { align-items: flex-start; padding-top: 4rem; }
+    :host ::ng-deep .login-card {
+        border-radius: 0; box-shadow: none; background: transparent; border: none;
+    }
+    :host ::ng-deep .p-card-body { padding: 0 1rem; }
+    .logo-img { height: 70px; }
+    .logo-section h2 { font-size: 1.6rem; }
+    :host ::ng-deep .custom-input, :host ::ng-deep .custom-input-password {
+        padding: 1rem; font-size: 16px;
+    }
 }

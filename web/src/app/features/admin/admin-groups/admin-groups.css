@@ -1,0 +1,151 @@
+/* --- CONFIGURACIÓN BASE --- */
+:host {
+    display: block;
+    min-height: 100vh;
+    padding: 1rem;
+    /* Usamos variables globales */
+}
+
+.groups-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* --- HEADER --- */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-content h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.header-content p {
+    margin: 0.25rem 0 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.btn-create {
+    white-space: nowrap;
+}
+
+/* --- TABLA --- */
+.card-table {
+    background-color: var(--bg-card);
+    padding: 0.5rem;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    overflow-x: auto; /* Scroll horizontal si es necesario */
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.text-secondary { color: var(--text-secondary); }
+
+/* --- UTILIDADES RESPONSIVAS --- */
+.hidden-mobile { display: table-cell; }
+.visible-mobile { display: none; }
+
+.mobile-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    font-style: italic;
+}
+
+/* --- ESTILOS DEL FORMULARIO (CORREGIDO PARA MÓVIL) --- */
+.field {
+    display: block !important;
+    width: 100%;
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.field label {
+    display: block !important;
+    margin-bottom: 0.5rem !important;
+    font-weight: 600;
+    color: var(--text-main);
+    font-size: 0.95rem;
+}
+
+.field input, 
+.field textarea {
+    width: 100% !important;
+    display: block;
+}
+
+/* Padding extra para el modal */
+:host ::ng-deep .p-dialog-content {
+    overflow-y: auto;
+    padding-top: 1rem !important;
+}
+
+/* --- PRIMENG OVERRIDES --- */
+:host ::ng-deep .p-datatable .p-datatable-header {
+    background: transparent; border: none; padding: 1rem 0;
+}
+
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+    background: var(--bg-main) !important;
+    color: var(--text-secondary) !important;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--bg-main);
+    color: var(--text-main);
+    vertical-align: middle;
+}
+
+/* =========================================
+   MEDIA QUERIES (MÓVIL < 768px)
+   ========================================= */
+@media (max-width: 768px) {
+    :host { padding: 0.5rem; }
+
+    /* Header */
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    .header-content { width: 100%; }
+    .btn-create { width: 100%; justify-content: center; }
+
+    /* Tabla */
+    .hidden-mobile { display: none !important; }
+    .visible-mobile { display: block !important; }
+    
+    :host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+        padding: 0.8rem 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .action-buttons { gap: 0.2rem; }
+}

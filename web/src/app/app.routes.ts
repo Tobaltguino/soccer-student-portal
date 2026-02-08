@@ -1,9 +1,9 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './features/auth/login/login';
-import { AdminLayoutComponent } from './features/admin/layout/admin-layout/admin-layout';
+import { AdminLayoutComponent } from './features/admin/admin-layout/admin-layout';
 import { AdminDashboardComponent } from './features/admin/admin-dashboard/admin-dashboard'; // Tu componente de Inicio
-import { AdminUsersComponent } from './features/admin/users/admin-users/admin-users';
-import { AdminGroupsComponent } from './features/admin/groups/admin-groups/admin-groups';
+import { AdminUsersComponent } from './features/admin/admin-users/admin-users';
+import { AdminGroupsComponent } from './features/admin/admin-groups/admin-groups';
 import { AdminClassesComponent } from './features/admin/admin-classes/admin-classes';
 import { AdminEvaluationsComponent } from './features/admin/admin-evaluations/admin-evaluations';
 

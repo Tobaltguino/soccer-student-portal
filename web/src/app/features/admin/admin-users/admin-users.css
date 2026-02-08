@@ -1,0 +1,97 @@
+/* --- LAYOUT GENERAL --- */
+.users-container {
+    padding: 1rem;
+    min-height: 100vh;
+}
+
+/* --- HEADER --- */
+.page-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
+}
+.header-content h1 { margin: 0; font-size: 1.5rem; font-weight: 700; color: var(--text-main); }
+.header-content p { margin: 0.25rem 0 0; color: var(--text-secondary); font-size: 0.9rem; }
+
+/* --- SELECTOR DE VISTA (Icono + Select Alineados) --- */
+.view-selector-container {
+    margin-bottom: 1.5rem;
+}
+
+.selector-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem; /* Separación entre el icono y el select */
+    width: 100%;
+    max-width: 400px; /* Ancho máximo en PC */
+}
+
+/* Caja del Icono (Decorativa) */
+.icon-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    flex-shrink: 0; /* No encoger en móviles */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+/* Ajuste del Select para llenar el espacio */
+:host ::ng-deep .selector-wrapper .p-select {
+    width: 100% !important;
+    flex-grow: 1;
+}
+
+/* --- TARJETA PRINCIPAL --- */
+.main-card {
+    background-color: var(--bg-card);
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    min-height: 300px;
+}
+
+/* --- BARRA DE FILTROS --- */
+.filters-bar {
+    display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;
+    align-items: center;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+.filter-select { width: 220px; }
+
+.clean-btn { color: var(--text-secondary); cursor: pointer; }
+.clean-btn:hover { color: var(--text-main); background: rgba(0,0,0,0.05); }
+
+/* --- UTILIDADES --- */
+.table-responsive { overflow-x: auto; }
+.action-buttons { display: flex; justify-content: center; gap: 0.5rem; }
+.font-bold { font-weight: 600; }
+.text-center { text-align: center; }
+
+/* --- RESPONSIVE --- */
+@media (max-width: 768px) {
+    .page-header { flex-direction: column; align-items: flex-start; }
+    .btn-create { width: 100%; }
+    
+    /* El selector ocupa todo el ancho en móvil */
+    .selector-wrapper { max-width: 100%; }
+    
+    /* Filtros en columna */
+    .filters-bar { flex-direction: column; align-items: stretch; gap: 0.8rem; }
+    .filter-select { width: 100% !important; }
+    .clean-btn { width: 100%; justify-content: center; border: 1px solid var(--border-color); }
+    
+    /* Tabla Móvil */
+    .hidden-mobile { display: none !important; }
+    .visible-mobile { display: block !important; }
+    .mobile-meta { font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px; }
+    
+    .main-card { padding: 1rem 0.5rem; }
+}

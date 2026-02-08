@@ -1,21 +1,21 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // <--- 1. IMPORTAR ESTO
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-// PrimeNG
+// PrimeNG Imports
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber'; 
 import { SelectModule } from 'primeng/select';
-import { ToastModule } from 'primeng/toast';
-import { InputNumberModule } from 'primeng/inputnumber';
 import { DatePickerModule } from 'primeng/datepicker';
 import { TagModule } from 'primeng/tag';
-import { MessageService, ConfirmationService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { TextareaModule } from 'primeng/textarea';
+import { TooltipModule } from 'primeng/tooltip';
 
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { SupabaseService } from '../../../core/services/supabase.service';
 
 @Component({
@@ -23,209 +23,250 @@ import { SupabaseService } from '../../../core/services/supabase.service';
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, ButtonModule, DialogModule,
-    InputTextModule, SelectModule, ToastModule, InputNumberModule,
-    DatePickerModule, TagModule, ConfirmDialogModule, TextareaModule
+    InputTextModule, InputNumberModule, SelectModule, DatePickerModule,
+    TagModule, ToastModule, ConfirmDialogModule, TooltipModule
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './admin-evaluations.html',
   styleUrls: ['./admin-evaluations.css']
 })
 export class AdminEvaluationsComponent implements OnInit {
+
+  // Datos
   sesiones: any[] = [];
   grupos: any[] = [];
   tiposEvaluacion: any[] = [];
-  estudiantesGrupo: any[] = []; 
-  
-  loading: boolean = true;
-  displayTipoDialog: boolean = false;   
-  displayMainDialog: boolean = false;   
-  displayGradesDialog: boolean = false; 
-  currentUserId: string | null = null;
+  estudiantesGrupo: any[] = [];
 
-  // ACTUALIZADO: Se agregan valores por defecto para min y max
-  tipoForm: any = { nombre: '', descripcion: '', unidad_medida: '', valor_min: 0, valor_max: 100 };
-  
-  evalLogistica: any = { id: null, grupo_id: null, tipo_evaluacion_id: null, fecha: new Date() };
+  // Estados
+  loading: boolean = true;
+  displayMainDialog: boolean = false;
+  displayTipoDialog: boolean = false;
+  displayGradesDialog: boolean = false;
+
+  // Formularios
+  tipoForm: any = { nombre: '', unidad_medida: '' };
+
+  evalLogistica: any = {
+    id: null,
+    grupo_id: null,
+    tipo_evaluacion_id: null,
+    fecha: new Date(),
+    estado: 'PENDIENTE'
+  };
 
   constructor(
-    private supabase: SupabaseService, 
+    private supabase: SupabaseService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef // <--- 2. INYECTAR ESTO
   ) {}
 
-  async ngOnInit() { 
-    await this.obtenerUsuarioActual();
-    await this.cargarDatos(); 
+  ngOnInit() {
+    this.cargarDatosIniciales();
   }
 
-  async obtenerUsuarioActual() {
-    const { data: { user } } = await this.supabase.getUser();
-    if (user) this.currentUserId = user.id;
-  }
-
-  async cargarDatos() {
+  // --- CARGA DE DATOS (Con actualización forzada) ---
+  async cargarDatosIniciales() {
     this.loading = true;
+    this.cdr.detectChanges(); // Forzamos que se muestre el spinner
+
     try {
-      const { data: sesionesData } = await this.supabase.getSesionesEvaluacion();
-      this.sesiones = sesionesData || [];
-      const { data: tipos } = await this.supabase.getTiposEvaluacion();
-      this.tiposEvaluacion = tipos || [];
-      const { data: gps } = await this.supabase.getGrupos();
-      this.grupos = gps || [];
+      const [g, t, s] = await Promise.all([
+        this.supabase.getGrupos(),
+        this.supabase.getTiposEvaluacion(),
+        this.supabase.getSesionesEvaluacion()
+      ]);
+
+      this.grupos = g.data || [];
+      this.tiposEvaluacion = t.data || [];
+      this.sesiones = s.data || [];
+
+    } catch (error: any) {
+      console.error('Error cargando datos:', error);
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Fallo de conexión' });
     } finally {
+      // 3. LA SOLUCIÓN MÁGICA:
       this.loading = false;
-      this.cdr.detectChanges();
+      this.cdr.detectChanges(); // <--- OBLIGA A ANGULAR A QUITAR EL SPINNER
     }
   }
 
-  // --- CONFIGURAR TEST (TIPOS) ---
+  // ==========================================
+  //      GESTIÓN DE TIPOS
+  // ==========================================
   abrirNuevoTipo() {
-    // Reseteamos el formulario incluyendo min y max
-    this.tipoForm = { nombre: '', descripcion: '', unidad_medida: '', valor_min: 0, valor_max: 100 };
+    this.tipoForm = { nombre: '', unidad_medida: '' };
     this.displayTipoDialog = true;
-    this.cdr.detectChanges();
   }
 
   async guardarNuevoTipo() {
     if (!this.tipoForm.nombre || !this.tipoForm.unidad_medida) {
-      this.messageService.add({ severity: 'warn', detail: 'Nombre y Unidad son obligatorios' });
+      this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Faltan datos' });
       return;
     }
-
-    // NUEVO: Validación de rangos
-    if (this.tipoForm.valor_min >= this.tipoForm.valor_max) {
-      this.messageService.add({ severity: 'error', detail: 'El valor mínimo debe ser menor al máximo.' });
-      return;
-    }
-
     const { error } = await this.supabase.createTipoEvaluacion(this.tipoForm);
-    if (!error) {
-      this.messageService.add({ severity: 'success', detail: 'Test configurado correctamente' });
-      this.displayTipoDialog = false;
-      await this.cargarDatos();
+    if (error) {
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: error.message });
     } else {
-      this.messageService.add({ severity: 'error', detail: error.message });
+      this.messageService.add({ severity: 'success', summary: 'Creado', detail: 'Test creado' });
+      this.displayTipoDialog = false;
+      
+      // Recarga parcial
+      const { data } = await this.supabase.getTiposEvaluacion();
+      this.tiposEvaluacion = data || [];
+      this.cdr.detectChanges(); // <--- Actualizar vista
     }
   }
 
-  async eliminarTipoTest(id: number) {
+  eliminarTipoTest(id: number) {
     this.confirmationService.confirm({
-      message: '¿Eliminar este tipo de test? Esto solo funcionará si no hay sesiones registradas con él.',
-      header: 'Confirmar Eliminación de Test',
-      icon: 'pi pi-exclamation-circle',
+      message: '¿Borrar este test?',
       accept: async () => {
         const { error } = await this.supabase.eliminarTipoEvaluacion(id);
-        if (error) {
-          this.messageService.add({ 
-            severity: 'error', 
-            summary: 'No se puede eliminar', 
-            detail: 'Este test ya tiene sesiones grabadas y no puede borrarse.' 
-          });
-        } else {
-          this.messageService.add({ severity: 'success', detail: 'Test eliminado correctamente' });
-          await this.cargarDatos(); 
+        if (!error) {
+          const { data } = await this.supabase.getTiposEvaluacion();
+          this.tiposEvaluacion = data || [];
+          this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Test borrado' });
+          this.cdr.detectChanges(); // <--- Actualizar vista
         }
       }
     });
   }
 
-  // --- SESIONES (LOGÍSTICA) ---
+  // ==========================================
+  //      GESTIÓN DE SESIONES
+  // ==========================================
   abrirNuevo() {
-    this.evalLogistica = { id: null, grupo_id: null, tipo_evaluacion_id: null, fecha: new Date() };
+    this.evalLogistica = { id: null, grupo_id: null, tipo_evaluacion_id: null, fecha: new Date(), estado: 'PENDIENTE' };
     this.displayMainDialog = true;
   }
 
   editarSesion(sesion: any) {
-    this.evalLogistica = { ...sesion, fecha: new Date(sesion.fecha + 'T00:00:00') };
+    const fechaObj = new Date(sesion.fecha + 'T00:00:00');
+    this.evalLogistica = { ...sesion, fecha: fechaObj };
     this.displayMainDialog = true;
   }
 
+  // En admin-evaluations.ts
+
   async crearSesionPlanificada() {
-    const datosSesion = {
-      grupo_id: this.evalLogistica.grupo_id,
-      tipo_evaluacion_id: this.evalLogistica.tipo_evaluacion_id,
-      fecha: this.formatearFecha(this.evalLogistica.fecha),
-      profesor_id: this.currentUserId,
-      estado: this.evalLogistica.estado || 'PENDIENTE'
+    if (!this.evalLogistica.grupo_id || !this.evalLogistica.tipo_evaluacion_id) {
+        this.messageService.add({ severity: 'warn', summary: 'Faltan datos', detail: 'Selecciona grupo y prueba' });
+        return;
+    }
+
+    // Convertir fecha a string YYYY-MM-DD
+    const fechaStr = this.evalLogistica.fecha.toISOString().split('T')[0];
+
+    const payload = {
+        grupo_id: this.evalLogistica.grupo_id,
+        tipo_evaluacion_id: this.evalLogistica.tipo_evaluacion_id,
+        fecha: fechaStr,
+        estado: this.evalLogistica.estado || 'PENDIENTE' // Mantener estado actual si se edita
     };
 
-    let res;
+    let result;
+
+    // ✅ LÓGICA DE EDICIÓN CORREGIDA:
     if (this.evalLogistica.id) {
-      res = await this.supabase.supabase.from('evaluaciones_sesiones').update(datosSesion).eq('id', this.evalLogistica.id);
+       // Si existe ID, actualizamos
+       result = await this.supabase.updateSesionEvaluacion(this.evalLogistica.id, payload);
     } else {
-      res = await this.supabase.crearSesionEvaluacion(datosSesion);
+       // Si no, creamos
+       result = await this.supabase.crearSesionEvaluacion(payload);
     }
 
-    if (!res.error) {
-      this.messageService.add({ severity: 'success', detail: 'Sesión guardada' });
-      this.displayMainDialog = false;
-      await this.cargarDatos();
+    if (result.error) {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: result.error.message });
+    } else {
+        const accion = this.evalLogistica.id ? 'actualizada' : 'creada';
+        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: `Sesión ${accion} correctamente` });
+        
+        this.displayMainDialog = false;
+        this.cargarDatosIniciales(); // Recargar tabla
     }
-  }
-
-  // --- CALIFICACIÓN ---
-  async abrirCalificador(sesion: any) {
-    this.evalLogistica = { ...sesion, fecha: new Date(sesion.fecha + 'T00:00:00') };
-    this.loading = true;
-    const { data: alumnos } = await this.supabase.getAlumnosPorGrupo(sesion.grupo_id);
-    const { data: notas } = await this.supabase.getResultadosPorSesion(sesion.id);
-
-    if (alumnos) {
-      this.estudiantesGrupo = alumnos.map(est => {
-        const notaPrev = notas?.find(n => n.estudiante_id === est.id);
-        return {
-          id: est.id, nombre: est.nombre, apellido: est.apellido,
-          valor_numerico: notaPrev ? notaPrev.valor_numerico : null,
-          observacion: notaPrev ? notaPrev.observacion : ''
-        };
-      });
-      this.displayGradesDialog = true;
-    }
-    this.loading = false;
-    this.cdr.detectChanges();
-  }
-
-  limpiarFila(est: any) {
-    est.valor_numerico = null;
-    est.observacion = '';
-  }
-
-  async guardarNotasFinales() {
-    const registros = this.estudiantesGrupo
-      .filter(est => est.valor_numerico !== null)
-      .map(est => ({
-        sesion_id: this.evalLogistica.id,
-        estudiante_id: est.id,
-        valor_numerico: est.valor_numerico,
-        observacion: est.observacion || ''
-      }));
-
-    this.loading = true;
-    const { error } = await this.supabase.guardarResultadosMasivos(registros);
-    if (!error) {
-      await this.supabase.supabase.from('evaluaciones_sesiones').update({ estado: 'COMPLETADA' }).eq('id', this.evalLogistica.id);
-      this.messageService.add({ severity: 'success', detail: 'Notas guardadas' });
-      this.displayGradesDialog = false;
-      await this.cargarDatos();
-    }
-    this.loading = false;
   }
 
   eliminarSesion(id: string) {
-    this.confirmationService.confirm({
-      message: '¿Eliminar sesión permanentemente?',
-      accept: async () => {
-        await this.supabase.eliminarSesionEvaluacion(id);
-        await this.cargarDatos();
-      }
-    });
+      this.confirmationService.confirm({
+          message: '¿Eliminar sesión y notas?',
+          accept: async () => {
+              await this.supabase.eliminarSesionEvaluacion(id);
+              this.cargarDatosIniciales();
+              this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Sesión borrada' });
+          }
+      });
   }
 
-  formatearFecha(date: Date): string {
-    const y = date.getFullYear();
-    const m = ('0' + (date.getMonth() + 1)).slice(-2);
-    const d = ('0' + date.getDate()).slice(-2);
-    return `${y}-${m}-${d}`;
+  // ==========================================
+  //      CALIFICACIÓN (Con actualización forzada)
+  // ==========================================
+  async abrirCalificador(sesion: any) {
+    this.evalLogistica = { ...sesion };
+    this.loading = true;
+    this.cdr.detectChanges(); // <--- Mostrar spinner inmediatamente
+
+    try {
+      const { data: alumnos } = await this.supabase.getAlumnosPorGrupo(sesion.grupo_id);
+      const { data: resultados } = await this.supabase.getResultadosPorSesion(sesion.id);
+
+      this.estudiantesGrupo = (alumnos || []).map((alumno: any) => {
+          const notaExistente = resultados?.find((r: any) => r.estudiante_id === alumno.id);
+          return {
+              estudiante_id: alumno.id,
+              nombre: alumno.nombre,
+              apellido: alumno.apellido,
+              valor_numerico: notaExistente ? notaExistente.valor_numerico : null,
+              observacion: notaExistente ? notaExistente.observacion : ''
+          };
+      });
+      
+      this.displayGradesDialog = true;
+
+    } catch (e) {
+      console.error(e);
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error cargando alumnos' });
+    } finally {
+      this.loading = false;
+      this.cdr.detectChanges(); // <--- OBLIGAR A QUE APAREZCA EL MODAL Y SE VAYA EL SPINNER
+    }
+  }
+
+  limpiarFila(estudiante: any) {
+    estudiante.valor_numerico = null;
+    estudiante.observacion = '';
+  }
+
+  async guardarNotasFinales() {
+    const notasAGuardar = this.estudiantesGrupo
+        .filter(e => e.valor_numerico !== null || (e.observacion && e.observacion.trim() !== ''))
+        .map(e => ({
+            sesion_id: this.evalLogistica.id,
+            estudiante_id: e.estudiante_id,
+            valor_numerico: e.valor_numerico,
+            observacion: e.observacion
+        }));
+
+    if (notasAGuardar.length === 0) {
+        this.messageService.add({ severity: 'info', summary: 'Vacío', detail: 'Nada que guardar' });
+        return;
+    }
+
+    this.loading = true;
+    this.cdr.detectChanges(); // Mostrar spinner
+
+    const { error } = await this.supabase.guardarResultadosMasivos(notasAGuardar);
+    
+    this.loading = false; // Apagar spinner
+    
+    if (error) {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Fallo al guardar' });
+    } else {
+        this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Notas actualizadas' });
+        this.displayGradesDialog = false;
+        this.cargarDatosIniciales();
+    }
+    this.cdr.detectChanges(); // <--- Actualización final forzada
   }
 }

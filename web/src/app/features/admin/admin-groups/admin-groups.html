@@ -1,38 +1,45 @@
 <div class="groups-container">
     
+    <p-toast position="top-right"></p-toast>
+    <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
+
     <header class="page-header">
         <div class="header-content">
-            <button pButton icon="pi pi-arrow-left" class="p-button-text p-button-rounded" routerLink="/admin-dashboard"></button>
             <div>
                 <h1>Gestión de Grupos</h1>
-                <p>Administra las categorías y equipos de la academia.</p>
+                <p>Administra las categorías y equipos.</p>
             </div>
         </div>
         <button pButton label="Nuevo Grupo" icon="pi pi-plus" class="btn-create" (click)="abrirNuevo()"></button>
     </header>
 
-    <div class="card-table">
+    <div class="card-table table-responsive">
         <p-table [value]="grupos" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm">
             <ng-template pTemplate="header">
                 <tr>
-                    <th style="width: 25%">Nombre</th>
-                    <th style="width: 15%">Alumnos</th> <th style="width: 40%">Descripción</th>
-                    <th style="width: 20%">Acciones</th>
+                    <th style="width: 30%">Nombre</th>
+                    <th style="width: 20%" class="text-center">Alumnos</th> 
+                    <th style="width: 30%" class="hidden-mobile">Descripción</th>
+                    <th style="width: 20%" class="text-center">Acciones</th>
                 </tr>
             </ng-template>
             <ng-template pTemplate="body" let-grupo>
                 <tr>
-                    <td class="font-bold text-lg">{{ grupo.nombre }}</td>
-                    
                     <td>
+                        <span class="font-bold text-lg">{{ grupo.nombre }}</span>
+                        <div class="mobile-desc visible-mobile" *ngIf="grupo.descripcion">{{ grupo.descripcion }}</div>
+                    </td>
+                    
+                    <td class="text-center">
                         <p-tag [value]="grupo.cantidad_alumnos" 
                                [severity]="grupo.cantidad_alumnos > 0 ? 'info' : 'secondary'"
                                [rounded]="true">
                         </p-tag>
                     </td>
 
-                    <td class="text-gray-600">{{ grupo.descripcion || 'Sin descripción' }}</td>
-                    <td>
+                    <td class="hidden-mobile text-secondary">{{ grupo.descripcion || 'Sin descripción' }}</td>
+                    
+                    <td class="text-center">
                         <div class="action-buttons">
                             <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning p-button-rounded" (click)="abrirEditar(grupo)"></button>
                             <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-rounded" (click)="eliminarGrupo(grupo.id)"></button>
@@ -42,15 +49,18 @@
             </ng-template>
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="4" class="text-center p-4">No hay grupos creados aún.</td>
+                    <td colspan="4" class="text-center p-4 text-secondary">
+                        <i class="pi pi-folder-open block mb-2" style="font-size: 2rem"></i>
+                        No hay grupos creados aún.
+                    </td>
                 </tr>
             </ng-template>
         </p-table>
     </div>
 
-    <p-dialog [(visible)]="displayDialog" [header]="tituloDialogo" [modal]="true" [style]="{width: '450px'}" styleClass="p-fluid">
+    <p-dialog [(visible)]="displayDialog" [header]="tituloDialogo" [modal]="true" [style]="{width: '90vw', maxWidth: '450px'}" styleClass="p-fluid">
         <ng-template pTemplate="content">
-            <div class="flex flex-column gap-3 pt-2">
+            <div class="flex flex-column pt-2">
                 <div class="field">
                     <label>Nombre del Grupo</label>
                     <input pInputText [(ngModel)]="grupoForm.nombre" placeholder="Ej: Sub-17 A" />
@@ -67,5 +77,4 @@
         </ng-template>
     </p-dialog>
 
-    <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
 </div>

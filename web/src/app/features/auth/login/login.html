@@ -3,65 +3,71 @@
 <div class="login-wrapper">
     
     <p-card styleClass="login-card">
-        
         <div class="login-content">
             
             <div class="logo-section">
                 <img src="assets/images/ProFutbol_Transparentenegro.png" 
-                     alt="Logo ProFutbol" 
-                     class="logo-img">
+                     alt="Logo ProFutbol Light" 
+                     class="logo-img logo-light">
+
+                <img src="assets/images/ProFutbol_Transparentenegro.png" 
+                     alt="Logo ProFutbol Dark" 
+                     class="logo-img logo-dark">
+
                 <h2>Acceso ProFutbol</h2>
+                <p class="subtitle">Gestión Deportiva Integral</p>
             </div>
 
-            <div class="form-group">
-                <label for="email">Correo Electrónico</label>
+            <div class="form-section">
                 
-                <div class="input-container">
-                    <div class="input-icon">
-                        <i class="pi pi-envelope"></i>
+                <div class="field">
+                    <label for="email">Correo Electrónico</label>
+                    <div class="input-group">
+                        <div class="input-icon">
+                            <i class="pi pi-envelope"></i>
+                        </div>
+                        <input pInputText 
+                               id="email" 
+                               type="email" 
+                               [(ngModel)]="email" 
+                               placeholder="ejemplo@profutbol.cl" 
+                               class="custom-input"/>
                     </div>
-                    
-                    <input pInputText 
-                           id="email" 
-                           type="email" 
-                           [(ngModel)]="email" 
-                           placeholder="ejemplo@profutbol.cl" />
+                </div>
+
+                <div class="field">
+                    <label for="password">Contraseña</label>
+                    <div class="input-group">
+                        <div class="input-icon">
+                            <i class="pi pi-lock"></i>
+                        </div>
+                        <p-password 
+                            id="password" 
+                            [(ngModel)]="password" 
+                            [feedback]="false" 
+                            [toggleMask]="true" 
+                            placeholder="••••••••"
+                            styleClass="w-full"
+                            inputStyleClass="custom-input-password"
+                            (keyup.enter)="ingresar()">
+                        </p-password>
+                    </div>
+                </div>
+
+                <button pButton 
+                        label="Iniciar Sesión" 
+                        (click)="ingresar()" 
+                        [loading]="loading"
+                        icon="pi pi-sign-in" 
+                        class="btn-login w-full mt-3">
+                </button>
+
+                <div class="forgot-password">
+                    <a (click)="abrirDialogoRecuperacion()">
+                        ¿Olvidaste tu contraseña?
+                    </a>
                 </div>
             </div>
-
-            <div class="form-group">
-                <label for="password">Contraseña</label>
-                
-                <div class="input-container">
-                    <div class="input-icon">
-                        <i class="pi pi-lock"></i>
-                    </div>
-                    
-                    <p-password 
-                        id="password" 
-                        [(ngModel)]="password" 
-                        [feedback]="false" 
-                        [toggleMask]="true" 
-                        placeholder="••••••••"
-                        (keyup.enter)="ingresar()">
-                    </p-password>
-                </div>
-            </div>
-
-            <p-button 
-                label="Iniciar Sesión" 
-                (onClick)="ingresar()" 
-                [loading]="loading"
-                icon="pi pi-sign-in" 
-                styleClass="btn-login-full">
-            </p-button>
-
-            <div class="forgot-password">
-                <a (click)="abrirDialogoRecuperacion()" style="cursor: pointer;">
-                    ¿Olvidaste tu contraseña?
-                </a>
-            </div>
-
         </div>
     </p-card>
 
@@ -69,17 +75,18 @@
         header="Recuperar Contraseña" 
         [(visible)]="displayResetDialog" 
         [modal]="true" 
-        [style]="{ width: '400px' }" 
-        [breakpoints]="{ '960px': '75vw', '640px': '90vw' }"
+        [style]="{ width: '90vw', maxWidth: '400px' }" 
+        [draggable]="false"
+        [resizable]="false"
         styleClass="p-fluid">
         
         <div class="flex flex-column gap-3 pt-2">
-            <p class="text-600 text-sm mb-3" style="line-height: 1.5;">
+            <p class="text-secondary text-sm mb-3 line-height-3">
                 Ingresa tu correo electrónico asociado y te enviaremos un enlace para crear una nueva contraseña.
             </p>
             
             <div class="field">
-                <label for="resetEmail" class="font-bold mb-2 block text-sm">Correo Electrónico</label>
+                <label for="resetEmail" class="font-bold mb-2 block text-sm text-main">Correo Electrónico</label>
                 <div class="p-input-icon-left w-full">
                     <i class="pi pi-envelope"></i>
                     <input pInputText id="resetEmail" [(ngModel)]="resetEmail" placeholder="ejemplo@profutbol.cl" class="w-full"/>
@@ -88,8 +95,10 @@
         </div>
 
         <ng-template pTemplate="footer">
-            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="displayResetDialog = false"></button>
-            <button pButton label="Enviar Enlace" icon="pi pi-send" [loading]="loadingReset" (click)="enviarCorreoRecuperacion()"></button>
+            <div class="flex justify-content-end gap-2">
+                <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="displayResetDialog = false"></button>
+                <button pButton label="Enviar" icon="pi pi-send" [loading]="loadingReset" (click)="enviarCorreoRecuperacion()"></button>
+            </div>
         </ng-template>
     </p-dialog>
 

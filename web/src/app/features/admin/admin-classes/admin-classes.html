@@ -7,61 +7,69 @@
             <h1>Gestión de Clases</h1>
             <p>Planificación y Asistencia</p>
         </div>
-        <button pButton label="Nueva Clase" icon="pi pi-plus" (click)="abrirNuevo()"></button>
+        <button pButton label="Nueva Clase" icon="pi pi-plus" class="btn-create" (click)="abrirNuevo()"></button>
     </header>
 
-    <div class="filters-container mb-4 card">
-        <div class="filters-row p-fluid">
+    <div class="filters-container card mb-4">
+        <div class="filters-row">
             <div class="filter-item">
-                <p-datepicker [(ngModel)]="filtroFecha" placeholder="Fecha" (onSelect)="aplicarFiltros()" [showClear]="true" (onClear)="aplicarFiltros()" dateFormat="dd/mm/yy"></p-datepicker>
+                <p-datepicker [(ngModel)]="filtroFecha" placeholder="Fecha" (onSelect)="aplicarFiltros()" [showClear]="true" (onClear)="aplicarFiltros()" dateFormat="dd/mm/yy" [style]="{'width':'100%'}"></p-datepicker>
             </div>
             <div class="filter-item">
-                <p-select [options]="grupos" [(ngModel)]="filtroGrupoId" optionLabel="nombre" optionValue="id" placeholder="Grupo" (onChange)="aplicarFiltros()" [showClear]="true" appendTo="body"></p-select>
+                <p-select [options]="grupos" [(ngModel)]="filtroGrupoId" optionLabel="nombre" optionValue="id" placeholder="Grupo" (onChange)="aplicarFiltros()" [showClear]="true" appendTo="body" [style]="{'width':'100%'}"></p-select>
             </div>
             <div class="filter-item">
-                <p-select [options]="profesores" [(ngModel)]="filtroProfesorId" optionLabel="nombreCompleto" optionValue="id" placeholder="Profesor" (onChange)="aplicarFiltros()" [showClear]="true" appendTo="body"></p-select>
+                <p-select [options]="profesores" [(ngModel)]="filtroProfesorId" optionLabel="nombreCompleto" optionValue="id" placeholder="Profesor" (onChange)="aplicarFiltros()" [showClear]="true" appendTo="body" [style]="{'width':'100%'}"></p-select>
             </div>
             <div class="filter-item button-item">
-                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary" (click)="limpiarFiltros()"></button>
+                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary w-full" (click)="limpiarFiltros()" pTooltip="Limpiar Filtros"></button>
             </div>
         </div>
     </div>
 
-    <div class="card-table">
+    <div class="card-table table-responsive">
         <p-table [value]="clases" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm">
             <ng-template pTemplate="header">
                 <tr>
-                    <th>Fecha / Hora</th>
-                    <th>Grupo</th>
-                    <th>Tipo</th>
-                    <th>Lugar</th>
-                    <th>Profesor</th>
-                    <th style="width: 160px; text-align: center;">Acciones</th>
+                    <th style="width: 20%">Fecha / Hora</th>
+                    <th style="width: 15%">Grupo</th>
+                    <th style="width: 15%" class="hidden-mobile">Tipo</th>
+                    <th style="width: 20%" class="hidden-mobile">Lugar</th>
+                    <th style="width: 15%" class="hidden-mobile">Profesor</th>
+                    <th style="width: 15%" class="text-center">Acciones</th>
                 </tr>
             </ng-template>
             <ng-template pTemplate="body" let-item>
                 <tr>
                     <td>
-                        <div class="font-bold">{{ item.fecha | date: 'dd/MM/yyyy' }}</div>
-                        <div class="text-sm text-gray-500">{{ item.hora | slice:0:5 }}</div>
+                        <div class="font-bold text-main">{{ item.fecha | date: 'dd/MM/yyyy' }}</div>
+                        <div class="text-sm text-secondary">{{ item.hora | slice:0:5 }}</div>
+                        <div class="mobile-meta visible-mobile">
+                            <span class="text-primary font-semibold">{{ item.profesores?.nombre }} {{ item.profesores?.apellido }}</span>
+                            <br>
+                            <span class="text-secondary text-xs">{{ item.lugar }}</span>
+                        </div>
                     </td>
                     <td><p-tag [value]="item.grupos?.nombre" severity="info"></p-tag></td>
-                    <td><p-tag [value]="item.tipo_entrenamiento" [severity]="item.tipo_entrenamiento === 'ARQUEROS' ? 'warn' : 'success'"></p-tag></td>
-                    <td>{{ item.lugar }}</td>
-                    <td>{{ item.profesores?.nombre }} {{ item.profesores?.apellido }}</td>
+                    <td class="hidden-mobile"><p-tag [value]="item.tipo_entrenamiento" [severity]="item.tipo_entrenamiento === 'ARQUEROS' ? 'warn' : 'success'"></p-tag></td>
+                    <td class="hidden-mobile text-main">{{ item.lugar }}</td>
+                    <td class="hidden-mobile text-main">{{ item.profesores?.nombre }} {{ item.profesores?.apellido }}</td>
                     <td class="text-center">
-                        <div class="flex justify-content-center gap-2">
-                            <button pButton icon="pi pi-check-square" class="p-button-text p-button-info" (click)="verAsistencia(item)"></button>
-                            <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning" (click)="abrirEditar(item)"></button>
-                            <button pButton icon="pi pi-trash" class="p-button-text p-button-danger" (click)="eliminarClase(item.id)"></button>
+                        <div class="action-buttons">
+                            <button pButton icon="pi pi-check-square" class="p-button-text p-button-info p-button-rounded" (click)="verAsistencia(item)"></button>
+                            <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning p-button-rounded" (click)="abrirEditar(item)"></button>
+                            <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-rounded" (click)="eliminarClase(item.id)"></button>
                         </div>
                     </td>
                 </tr>
             </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr><td colspan="6" class="text-center p-4 text-secondary">No hay clases registradas con estos filtros.</td></tr>
+            </ng-template>
         </p-table>
     </div>
 
-    <p-dialog [(visible)]="displayAttendanceDialog" [header]="'Asistencia: ' + (claseSeleccionada?.grupos?.nombre)" [modal]="true" [style]="{width: '450px'}" styleClass="p-fluid">
+    <p-dialog [(visible)]="displayAttendanceDialog" [header]="'Asistencia: ' + (claseSeleccionada?.grupos?.nombre)" [modal]="true" [style]="{width: '90vw', maxWidth: '450px'}" styleClass="p-fluid">
         <ng-template pTemplate="content">
             <p-table [value]="alumnosAsistencia" [loading]="loadingAsistencia" scrollable="true" scrollHeight="300px" styleClass="p-datatable-sm">
                 <ng-template pTemplate="header">
@@ -72,73 +80,91 @@
                 </ng-template>
                 <ng-template pTemplate="body" let-alumno>
                     <tr>
-                        <td class="text-sm">{{ alumno.nombre }} {{ alumno.apellido }}</td>
+                        <td class="text-sm text-main">{{ alumno.nombre }} {{ alumno.apellido }}</td>
                         <td class="text-center"><p-checkbox [(ngModel)]="alumno.presente" [binary]="true"></p-checkbox></td>
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="emptymessage">
-                    <tr><td colspan="2" class="text-center p-3 text-sm">No hay estudiantes en este grupo.</td></tr>
+                    <tr><td colspan="2" class="text-center p-3 text-sm text-secondary">No hay estudiantes en este grupo.</td></tr>
                 </ng-template>
             </p-table>
         </ng-template>
         <ng-template pTemplate="footer">
-            <button pButton label="Guardar" (click)="guardarAsistencia()" [loading]="loadingAsistencia" [disabled]="alumnosAsistencia.length === 0"></button>
+            <button pButton label="Guardar Asistencia" icon="pi pi-check" (click)="guardarAsistencia()" [loading]="loadingAsistencia" [disabled]="alumnosAsistencia.length === 0"></button>
         </ng-template>
     </p-dialog>
 
-    <p-dialog [(visible)]="displayDialog" [header]="tituloDialogo" [modal]="true" [style]="{width: '500px'}" styleClass="p-fluid">
+    <p-dialog [(visible)]="displayDialog" [header]="tituloDialogo" [modal]="true" [style]="{width: '90vw', maxWidth: '550px'}" styleClass="p-fluid">
         <ng-template pTemplate="content">
             <p-tabs [(value)]="activeTab">
-                <p-tablist><p-tab value="0">Logística</p-tab><p-tab value="1">Planificación</p-tab></p-tablist>
+                <p-tablist>
+                    <p-tab value="0">Logística</p-tab>
+                    <p-tab value="1">Planificación</p-tab>
+                </p-tablist>
+                
                 <p-tabpanels>
                     <p-tabpanel value="0">
-                        <div class="flex flex-column gap-3 pt-3">
-                            <div class="field"><label>Fecha</label><p-datepicker [(ngModel)]="claseForm.fecha" dateFormat="dd/mm/yy" appendTo="body"></p-datepicker></div>
-                            <div class="field"><label>Hora</label><p-datepicker [(ngModel)]="claseForm.hora" [timeOnly]="true" appendTo="body"></p-datepicker></div>
-                            <div class="field"><label>Lugar</label><input pInputText [(ngModel)]="claseForm.lugar" /></div>
-                            <hr>
-                            
-                            <div class="field">
-                                <label>Grupo</label>
-                                <p-select [options]="grupos" 
-                                          [(ngModel)]="claseForm.grupo_id" 
-                                          optionLabel="nombre" 
-                                          optionValue="id"
-                                          (onChange)="onGrupoChange($event.value)"
-                                          placeholder="Seleccionar grupo"
-                                          appendTo="body">
-                                </p-select>
+                        <div class="flex flex-column pt-3">
+                            <div class="formgrid grid">
+                                <div class="field col-6">
+                                    <label>Fecha</label>
+                                    <p-datepicker [(ngModel)]="claseForm.fecha" dateFormat="dd/mm/yy" appendTo="body" [showIcon]="true"></p-datepicker>
+                                </div>
+                                <div class="field col-6">
+                                    <label>Hora</label>
+                                    <p-datepicker [(ngModel)]="claseForm.hora" [timeOnly]="true" appendTo="body" [showIcon]="true" icon="pi pi-clock"></p-datepicker>
+                                </div>
                             </div>
 
                             <div class="field">
-                                <label>Profesor</label>
-                                <p-select [options]="profesoresFiltrados" 
-                                          [(ngModel)]="claseForm.profesor_id" 
-                                          optionLabel="nombreCompleto" 
-                                          optionValue="id"
-                                          [disabled]="!claseForm.grupo_id"
-                                          placeholder="Seleccione grupo primero"
-                                          appendTo="body">
-                                </p-select>
-                                <small *ngIf="!claseForm.grupo_id" class="text-secondary block mt-1">
+                                <label>Lugar de Entrenamiento</label>
+                                <input pInputText [(ngModel)]="claseForm.lugar" placeholder="Ej: Cancha 3" />
+                            </div>
+                            
+                            <hr class="border-top-1 border-gray-200 my-3">
+                            
+                            <div class="field">
+                                <label>Grupo</label>
+                                <p-select [options]="grupos" [(ngModel)]="claseForm.grupo_id" optionLabel="nombre" optionValue="id" (onChange)="onGrupoChange($event.value)" placeholder="Seleccionar grupo" appendTo="body"></p-select>
+                            </div>
+
+                            <div class="field">
+                                <label>Profesor a Cargo</label>
+                                <p-select [options]="profesoresFiltrados" [(ngModel)]="claseForm.profesor_id" optionLabel="nombreCompleto" optionValue="id" [disabled]="!claseForm.grupo_id" placeholder="Seleccione grupo primero" appendTo="body"></p-select>
+                                <small *ngIf="!claseForm.grupo_id" class="text-secondary block mt-1 text-xs">
                                     * Seleccione un grupo para ver sus profesores asignados.
                                 </small>
                             </div>
                         </div>
                     </p-tabpanel>
+
                     <p-tabpanel value="1">
-                        <div class="flex flex-column gap-3 pt-3">
-                            <div class="field"><label class="font-bold">Objetivo</label><input pInputText [(ngModel)]="claseForm.objetivo" /></div>
-                            <div class="field"><label>🔥 Calentamiento</label><textarea pTextarea [(ngModel)]="claseForm.calentamiento" rows="3"></textarea></div>
-                            <div class="field"><label>⚽ Parte Principal</label><textarea pTextarea [(ngModel)]="claseForm.parte_principal" rows="5"></textarea></div>
-                            <div class="field"><label>❄️ Vuelta a la Calma</label><textarea pTextarea [(ngModel)]="claseForm.vuelta_calma" rows="2"></textarea></div>
+                        <div class="flex flex-column pt-3">
+                            <div class="field">
+                                <label class="font-bold text-primary">Objetivo Principal</label>
+                                <input pInputText [(ngModel)]="claseForm.objetivo" placeholder="Ej: Mejora del pase corto" />
+                            </div>
+                            <div class="field">
+                                <label>🔥 Calentamiento</label>
+                                <textarea pTextarea [(ngModel)]="claseForm.calentamiento" rows="3"></textarea>
+                            </div>
+                            <div class="field">
+                                <label>⚽ Parte Principal</label>
+                                <textarea pTextarea [(ngModel)]="claseForm.parte_principal" rows="5"></textarea>
+                            </div>
+                            <div class="field">
+                                <label>❄️ Vuelta a la Calma</label>
+                                <textarea pTextarea [(ngModel)]="claseForm.vuelta_calma" rows="2"></textarea>
+                            </div>
                         </div>
                     </p-tabpanel>
                 </p-tabpanels>
             </p-tabs>
         </ng-template>
         <ng-template pTemplate="footer">
-            <button pButton label="Guardar" (click)="guardarClase()"></button>
+            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="displayDialog = false"></button>
+            <button pButton label="Guardar Clase" icon="pi pi-check" (click)="guardarClase()"></button>
         </ng-template>
     </p-dialog>
+
 </div>
