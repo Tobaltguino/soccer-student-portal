@@ -387,30 +387,30 @@ export class AdminEvaluationsComponent implements OnInit {
 
   async guardarNotasFinales() {
     const notasAGuardar = this.estudiantesGrupo
-        .filter(e => e.valor_numerico !== null || (e.observacion && e.observacion.trim() !== ''))
-        .map(e => ({
-            sesion_id: this.evalLogistica.id,
-            estudiante_id: e.estudiante_id,
-            valor_numerico: e.valor_numerico,
-            observacion: e.observacion
-        }));
+      .filter(e => e.valor_numerico !== null || (e.observacion && e.observacion.trim() !== ''))
+      .map(e => ({
+        sesion_id: this.evalLogistica.id, // ✅ Asegúrate que este ID sea el correcto
+        estudiante_id: e.estudiante_id,
+        valor_numerico: e.valor_numerico,
+        observacion: e.observacion || ''
+      }));
 
     if (notasAGuardar.length === 0) {
-        this.messageService.add({ severity: 'info', summary: 'Sin cambios', detail: 'No hay notas para guardar.' });
-        return;
+      this.messageService.add({ severity: 'info', summary: 'Sin cambios', detail: 'No hay notas para guardar.' });
+      return;
     }
 
     this.loading = true;
     try {
       const { error } = await this.supabase.guardarResultadosMasivos(notasAGuardar);
-      if (error) throw error;
+      if (error) throw error; // ✅ Si hay error 409, saltará al catch
 
       this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Resultados actualizados correctamente' });
       this.displayGradesDialog = false;
       this.cargarDatosIniciales(); 
-
     } catch (error: any) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Fallo al guardar resultados' });
+      console.error("Error al guardar:", error); // ✅ Agregado para ver el error real en consola
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Fallo al guardar: posible duplicado o error de conexión.' });
     } finally {
       this.loading = false;
       this.cdr.detectChanges();

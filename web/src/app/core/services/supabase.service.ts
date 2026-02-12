@@ -430,7 +430,11 @@ async eliminarRangosPorTipo(tipoId: number) {
   }
 
   async guardarResultadosMasivos(resultados: any[]) {
-    return await this.supabase.from('evaluaciones_resultados').upsert(resultados);
+  return await this.supabase
+    .from('evaluaciones_resultados')
+    .upsert(resultados, { 
+      onConflict: 'sesion_id, estudiante_id' // ✅ Esto le dice a la DB que actualice si el alumno ya tiene nota en esta sesión
+    });
   }
 
   // ==========================================
@@ -445,4 +449,125 @@ async eliminarRangosPorTipo(tipoId: number) {
     if (tabla === 'nutricionistas') return 'nutricionista';
     return 'user';
   }
+
+  // --- FUNCIONES PARA ESTUDIANTES ---
+
+  /**
+   * Obtiene las clases del grupo al que pertenece el alumno,
+   * cruzando los datos con su asistencia personal y limitando el tiempo para optimizar.
+   * @param uid ID del estudiante (UUID del auth)
+   * @param fechaDesde Fecha opcional (YYYY-MM-DD) para limitar la carga histórica
+   */
+  async getClasesAlumno(uid: string, fechaDesde?: string) {
+    try {
+      // 1. Primero identificamos a qué grupo pertenece el estudiante
+      const { data: estudiante, error: errEst } = await this.supabase
+        .from('estudiantes')
+        .select('grupo_id')
+        .eq('id', uid)
+        .single();
+
+      if (errEst || !estudiante?.grupo_id) {
+        console.error('Error al buscar grupo del estudiante:', errEst);
+        return { data: [], error: errEst };
+      }
+
+      // 2. Construimos la consulta base a la tabla clases
+      // Traemos todos los campos (*), el nombre del grupo y la asistencia de este alumno específico
+      let query = this.supabase
+        .from('clases')
+        .select(`
+          *,
+          grupos ( nombre ),
+          asistencias!left ( presente ) 
+        `)
+        .eq('grupo_id', estudiante.grupo_id)
+        .eq('asistencias.estudiante_id', uid); // Filtro para traer solo TU asistencia
+
+      // 3. Aplicamos filtro de fecha si se proporciona para evitar colapsos por exceso de datos
+      if (fechaDesde) {
+        query = query.gte('fecha', fechaDesde);
+      }
+
+      // 4. Ejecutamos y ordenamos por fecha descendente (la DB ayuda al orden inicial)
+      const { data, error } = await query.order('fecha', { ascending: false });
+
+      if (error) throw error;
+
+      // 5. Formateamos la respuesta para que 'presente' sea una propiedad directa
+      const clasesFormateadas = data?.map(clase => ({
+        ...clase,
+        // Extraemos el valor del primer (y único) registro de asistencia encontrado
+        presente: clase.asistencias && clase.asistencias.length > 0 
+                  ? clase.asistencias[0].presente 
+                  : null
+      }));
+
+      return { data: clasesFormateadas, error: null };
+
+    } catch (error) {
+      console.error('Error crítico en getClasesAlumno:', error);
+      return { data: null, error };
+    }
+  }
+
+  /**
+   * Obtiene las evaluaciones del alumno con límite de tiempo.
+   * @param uid ID del estudiante
+   * @param fechaDesde Fecha límite (YYYY-MM-DD)
+   */
+  async getEvaluacionesAlumno(uid: string, fechaDesde?: string) {
+  try {
+    let query = this.supabase
+      .from('evaluaciones_resultados')
+      .select(`
+        *,
+        evaluaciones_sesiones!inner (
+          fecha,
+          tipo_evaluacion!inner (
+            id,
+            nombre,
+            unidad_medida,
+            evaluacion_rangos (*) 
+          )
+        )
+      `)
+      .eq('estudiante_id', uid);
+
+    if (fechaDesde) {
+      query = query.gte('evaluaciones_sesiones.fecha', fechaDesde);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const dataFormateada = data?.map(res => {
+      const valor = res.valor_numerico;
+      const rangos = res.evaluaciones_sesiones?.tipo_evaluacion?.evaluacion_rangos || [];
+      
+      // ✅ Buscamos en qué rango cae el resultado
+      const rangoEncontrado = rangos.find((r: any) => 
+        valor >= r.valor_min && valor <= r.valor_max
+      );
+
+      return {
+        id: res.id,
+        resultado: valor,
+        observacion: res.observacion,
+        fecha: res.evaluaciones_sesiones?.fecha,
+        created_at: res.created_at,
+        test_nombre: res.evaluaciones_sesiones?.tipo_evaluacion?.nombre,
+        unidad: res.evaluaciones_sesiones?.tipo_evaluacion?.unidad_medida,
+        // Si no hay rango, mostramos un estado neutro
+        nivel: rangoEncontrado ? rangoEncontrado.nombre_etiqueta : 'Sin Rango',
+        color: rangoEncontrado ? rangoEncontrado.color_sugerido : '#64748b'
+      };
+    });
+
+    return { data: dataFormateada, error: null };
+  } catch (error) {
+    console.error('Error en getEvaluacionesAlumno:', error);
+    return { data: null, error };
+  }
+}
 }
