@@ -127,6 +127,8 @@ export class AdminUsersComponent implements OnInit {
     
     const resPos = await this.supabase.getPosiciones();
     if(resPos.data) this.listaPosiciones = resPos.data;
+
+    this.cdr.detectChanges();
   }
 
   cambiarVista() { 

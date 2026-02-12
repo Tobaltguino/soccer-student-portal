@@ -165,7 +165,9 @@ export class SupabaseService {
   async getNutricionistas() { return await this.supabase.from('nutricionistas').select('*').order('apellido'); }
 
   // --- CREAR USUARIO (AUTH + DB) ---
+  // --- CREAR USUARIO (AUTH + DB) ---
   async crearUsuarioCompleto(email: string, password: string, datosPersonales: any, tabla: string) {
+    // 1. Instancia temporal para no cerrar sesión del admin actual
     const tempSupabase = createClient(environment.supabaseUrl, environment.supabaseKey, {
       auth: { 
         autoRefreshToken: false, 
@@ -174,12 +176,13 @@ export class SupabaseService {
       }
     });
 
-    // ✅ LIMPIEZA DE SEGURIDAD: Solo estudiantes tienen fecha_nacimiento
+    // ✅ LIMPIEZA DE SEGURIDAD
     if (tabla !== 'estudiantes') {
       delete datosPersonales.fecha_nacimiento;
-      delete datosPersonales.grupo_id; // Profesores y otros no usan grupo_id directo
+      delete datosPersonales.grupo_id;
     }
 
+    // 2. Crear usuario en Auth
     const { data: authData, error: authError } = await tempSupabase.auth.signUp({
       email: email,
       password: password,
@@ -197,18 +200,22 @@ export class SupabaseService {
     if (authError) return { data: null, error: authError };
     if (!authData.user) return { data: null, error: { message: 'Error creando usuario Auth' } };
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // 3. Insertar/Actualizar datos en la tabla pública
+    // Usamos UPSERT en lugar de UPDATE para evitar el error 406 si el trigger es lento
+    const datosParaGuardar = {
+        id: authData.user.id, // Forzamos el ID del usuario creado
+        ...datosPersonales
+    };
 
-    // Al actualizar, nos aseguramos de que el objeto 'datosPersonales' ya no lleve la fecha
     const { data: dbData, error: dbError } = await this.supabase
       .from(tabla)
-      .update(datosPersonales)
-      .eq('id', authData.user.id)
+      .upsert(datosParaGuardar) // ✅ CAMBIO CLAVE: Upsert arregla la condición de carrera
       .select()
       .maybeSingle(); 
 
     if (dbError) {
         console.warn("Error en DB:", dbError.message);
+        // Aunque falle la DB, el usuario Auth se creó, devolvemos el usuario
         return { data: { user: authData.user, perfil: null }, error: dbError };
     }
 

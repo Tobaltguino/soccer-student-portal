@@ -111,26 +111,39 @@
                  <div *ngIf="usarRangos" class="surface-100 border-round p-3 mt-2 animation-duration-200 fadein">
                      <h4 class="m-0 mb-3 text-700 font-bold text-sm">NUEVO RANGO</h4>
                      <div class="field mb-3">
-                         <label class="font-bold text-xs block mb-1 text-600">Etiqueta</label>
-                         <input pInputText [(ngModel)]="nuevoRango.nombre_etiqueta" placeholder="Ej: Excelente" class="w-full">
-                     </div>
-                     <div class="range-inline-row">
-                         <div class="field">
-                             <label class="font-bold text-xs block mb-1 text-600">Mín</label>
-                             <p-inputNumber [(ngModel)]="nuevoRango.valor_min" [showButtons]="false" styleClass="w-full" inputStyleClass="w-full text-center"></p-inputNumber>
-                         </div>
-                         <div class="field">
-                             <label class="font-bold text-xs block mb-1 text-600">Máx</label>
-                             <p-inputNumber [(ngModel)]="nuevoRango.valor_max" [showButtons]="false" styleClass="w-full" inputStyleClass="w-full text-center"></p-inputNumber>
-                         </div>
-                         <div class="field color-fixed">
-                             <label class="font-bold text-xs block mb-1 text-600">Color</label>
-                             <input type="color" [(ngModel)]="nuevoRango.color_sugerido" class="color-input-custom">
-                         </div>
-                         <div class="btn-fixed">
-                             <button pButton icon="pi pi-plus" class="p-button-primary" (click)="agregarRangoALista()" pTooltip="Añadir"></button>
-                         </div>
-                     </div>
+                        <label class="font-bold text-xs block mb-2 text-600">Color Sugerido</label>
+                        
+                        <div class="flex gap-2 mb-2 flex-wrap">
+                            <div *ngFor="let color of coloresPredefinidos" 
+                                class="w-2rem h-2rem border-circle cursor-pointer border-1 border-300 transition-duration-200 hover:surface-300 shadow-1"
+                                [style.background-color]="color"
+                                [class.border-2]="nuevoRango.color_sugerido === color"
+                                [class.border-primary]="nuevoRango.color_sugerido === color"
+                                (click)="seleccionarColor(color)"
+                                pTooltip="Seleccionar">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="range-inline-row">
+                        <div class="field">
+                            <label class="font-bold text-xs block mb-1 text-600">Mín</label>
+                            <p-inputNumber [(ngModel)]="nuevoRango.valor_min" [showButtons]="false" styleClass="w-full" inputStyleClass="w-full text-center"></p-inputNumber>
+                        </div>
+                        <div class="field">
+                            <label class="font-bold text-xs block mb-1 text-600">Máx</label>
+                            <p-inputNumber [(ngModel)]="nuevoRango.valor_max" [showButtons]="false" styleClass="w-full" inputStyleClass="w-full text-center"></p-inputNumber>
+                        </div>
+                        
+                        <div class="field color-fixed">
+                            <label class="font-bold text-xs block mb-1 text-600">Personal</label>
+                            <input type="color" [(ngModel)]="nuevoRango.color_sugerido" class="color-input-custom" pTooltip="Color personalizado">
+                        </div>
+                        
+                        <div class="btn-fixed">
+                            <button pButton icon="pi pi-plus" class="p-button-primary" (click)="agregarRangoALista()" pTooltip="Añadir Rango"></button>
+                        </div>
+                    </div>
                      <div class="mt-3 border-top-1 border-300 pt-3" *ngIf="rangosForm.length > 0">
                          <span class="text-xs font-bold text-600 mb-2 block">Rangos definidos:</span>
                          <p-table [value]="rangosForm" styleClass="p-datatable-sm custom-compact-table" responsiveLayout="scroll">
@@ -224,50 +237,57 @@
  
      <p-dialog [(visible)]="displayGradesDialog" header="Registro de Resultados" [modal]="true" [style]="{width: '90vw', maxWidth: '900px'}" [maximizable]="true" styleClass="p-fluid">
         <ng-template pTemplate="content">
-         <div class="surface-100 p-3 border-round mb-3 flex justify-content-between align-items-center">
-             <div class="flex flex-column">
-                 <span class="text-sm text-600">Evaluación Seleccionada</span>
-                 <span class="text-xl font-bold text-900">{{evalLogistica.tipo_evaluacion?.nombre}}</span>
-             </div>
-             <div class="text-right">
-                 <span class="text-sm text-600 block">Grupo</span>
-                 <p-tag [value]="evalLogistica.grupos?.nombre" severity="info" styleClass="text-base"></p-tag>
-             </div>
-         </div>
-         <p-table [value]="estudiantesGrupo" [scrollable]="true" scrollHeight="500px" styleClass="p-datatable-gridlines p-datatable-sm" responsiveLayout="scroll">
-             <ng-template pTemplate="header">
-                 <tr>
-                     <th style="width: 30%">Estudiante</th>
-                     <th style="width: 25%">Resultado ({{evalLogistica.tipo_evaluacion?.unidad_medida}})</th>
-                     <th style="width: 35%">Observación</th>
-                     <th style="width: 10%" class="text-center"></th>
-                 </tr>
-             </ng-template>
-             <ng-template pTemplate="body" let-estudiante>
-                 <tr>
-                     <td><span class="font-bold text-900">{{estudiante.apellido}}</span>, {{estudiante.nombre}}</td>
-                     <td>
-                         <p-inputnumber [(ngModel)]="estudiante.valor_numerico" [minFractionDigits]="0" [maxFractionDigits]="2" [showButtons]="true" buttonLayout="horizontal" decrementButtonClass="p-button-secondary p-button-text" incrementButtonClass="p-button-secondary p-button-text" incrementButtonIcon="pi pi-plus" decrementButtonIcon="pi pi-minus" placeholder="0.00"></p-inputnumber>
-                     </td>
-                     <td><input pInputText [(ngModel)]="estudiante.observacion" placeholder="Opcional"></td>
-                     <td class="text-center">
-                         <button pButton icon="pi pi-eraser" class="p-button-rounded p-button-text p-button-secondary" (click)="limpiarFila(estudiante)" pTooltip="Limpiar nota"></button>
-                     </td>
-                 </tr>
-             </ng-template>
-             <ng-template pTemplate="emptymessage">
-                 <tr><td colspan="4" class="text-center p-4">No hay estudiantes en este grupo.</td></tr>
-             </ng-template>
-         </p-table>
+            <div class="surface-100 p-3 border-round mb-3 flex justify-content-between align-items-center">
+                <div class="flex flex-column">
+                    <span class="text-sm text-600">Evaluación Seleccionada</span>
+                    <span class="text-xl font-bold text-900">{{evalLogistica.tipo_evaluacion?.nombre}}</span>
+                </div>
+                <div class="text-right">
+                    <span class="text-sm text-600 block">Grupo</span>
+                    <p-tag [value]="evalLogistica.grupos?.nombre" severity="info" styleClass="text-base"></p-tag>
+                </div>
+            </div>
+            <p-table [value]="estudiantesGrupo" [scrollable]="true" scrollHeight="500px" styleClass="p-datatable-gridlines p-datatable-sm" responsiveLayout="scroll">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 30%">Estudiante</th>
+                        <th style="width: 25%">Resultado ({{evalLogistica.tipo_evaluacion?.unidad_medida}})</th>
+                        <th style="width: 35%">Observación</th>
+                        <th style="width: 10%" class="text-center"></th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-estudiante>
+                    <tr>
+                        <td><span class="font-bold text-900">{{estudiante.apellido}}</span>, {{estudiante.nombre}}</td>
+                        <td>
+                            <p-inputNumber 
+                                [(ngModel)]="estudiante.valor_numerico" 
+                                [minFractionDigits]="0" 
+                                [maxFractionDigits]="2" 
+                                [showButtons]="false" 
+                                placeholder="0.00"
+                                styleClass="w-full">
+                            </p-inputNumber>
+                        </td>
+                        <td><input pInputText [(ngModel)]="estudiante.observacion" placeholder="Opcional"></td>
+                        <td class="text-center">
+                            <button pButton icon="pi pi-eraser" class="p-button-rounded p-button-text p-button-secondary" (click)="limpiarFila(estudiante)" pTooltip="Limpiar nota"></button>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr><td colspan="4" class="text-center p-4">No hay estudiantes en este grupo.</td></tr>
+                </ng-template>
+            </p-table>
         </ng-template>
-         <ng-template pTemplate="footer">
-             <div class="flex justify-content-between align-items-center w-full">
-                 <small class="text-600">Se guardarán solo los registros modificados.</small>
-                 <div class="flex gap-2">
-                     <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text" (click)="displayGradesDialog = false"></button>
-                     <button pButton label="Guardar Todo" icon="pi pi-save" (click)="guardarNotasFinales()"></button>
-                 </div>
-             </div>
-         </ng-template>
-     </p-dialog>
+        <ng-template pTemplate="footer">
+            <div class="flex justify-content-between align-items-center w-full">
+                <small class="text-600">Se guardarán solo los registros modificados.</small>
+                <div class="flex gap-2">
+                    <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text" (click)="displayGradesDialog = false"></button>
+                    <button pButton label="Guardar Todo" icon="pi pi-save" (click)="guardarNotasFinales()"></button>
+                </div>
+            </div>
+        </ng-template>
+    </p-dialog>
 </div>

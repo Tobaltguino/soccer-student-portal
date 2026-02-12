@@ -1,61 +1,61 @@
 <div class="layout-container" [class.collapsed]="isCollapsed">
-
-    <div class="mobile-overlay" 
-         [class.active]="isMobileMenuOpen" 
-         (click)="closeMobileMenu()">
-    </div>
-
+    <div class="mobile-overlay" [class.active]="isMobileMenuOpen" (click)="closeMobileMenu()"></div>
     <aside class="sidebar" [class.mobile-active]="isMobileMenuOpen">
-        
         <div class="brand">
             <div class="logo-area">
                 <div class="logo-icon">
-                    <i class="pi pi-bolt"></i>
+                    <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="ProFutbol Logo" style="width: 100%; height: 100%; object-fit: contain;">
                 </div>
                 <div class="brand-text">
                     <h2>ProFutbol</h2>
                     <span>ADMIN PANEL</span>
                 </div>
             </div>
-
             <button class="toggle-btn desktop-only" (click)="toggleSidebar()">
                 <i class="pi pi-bars"></i>
             </button>
-            
             <button class="toggle-btn mobile-only" (click)="closeMobileMenu()">
                 <i class="pi pi-times"></i>
             </button>
         </div>
-        
         <nav class="menu">
             <div class="menu-label">PRINCIPAL</div>
             <a class="menu-item" routerLink="/admin/dashboard" routerLinkActive="active-link" (click)="closeMobileMenu()">
-                <i class="pi pi-home"></i><span>Inicio</span>
+                <i class="pi pi-home"></i>
+                <span class="label">Inicio</span>
             </a>
-            
-            <div class="menu-label system">GESTIÓN</div>
+            <div class="menu-label system">ADMINISTRACIÓN</div>
             <a class="menu-item" routerLink="/admin/users" routerLinkActive="active-link" (click)="closeMobileMenu()">
-                <i class="pi pi-users"></i><span>Usuarios</span>
+                <i class="pi pi-users"></i>
+                <span class="label">Usuarios</span>
             </a>
             <a class="menu-item" routerLink="/admin/groups" routerLinkActive="active-link" (click)="closeMobileMenu()">
-                <i class="pi pi-shield"></i><span>Grupos</span>
+                <i class="pi pi-th-large"></i>
+                <span class="label">Grupos</span>
             </a>
+            <a class="menu-item" routerLink="/admin/payments" routerLinkActive="active-link" (click)="closeMobileMenu()">
+                <i class="pi pi-wallet"></i>
+                <span class="label">Pagos</span>
+            </a>
+            <div class="menu-label system">DEPORTIVO</div>
             <a class="menu-item" routerLink="/admin/classes" routerLinkActive="active-link" (click)="closeMobileMenu()">
-                <i class="pi pi-calendar"></i><span>Clases</span>
+                <i class="pi pi-calendar"></i>
+                <span class="label">Clases</span>
             </a>
             <a class="menu-item" routerLink="/admin/evaluations" routerLinkActive="active-link" (click)="closeMobileMenu()">
-                <i class="pi pi-file-edit"></i><span>Evaluaciones</span>
+                <i class="pi pi-chart-line"></i>
+                <span class="label">Evaluaciones</span>
             </a>
-
             <div class="menu-label system">ÁREA MÉDICA</div>
             <a class="menu-item" routerLink="/admin/kinesiology" routerLinkActive="active-link" (click)="closeMobileMenu()">
-                <i class="pi pi-heart-fill"></i><span>Kinesiología</span>
+                <i class="pi pi-heart-fill"></i>
+                <span class="label">Kinesiología</span>
             </a>
             <a class="menu-item" routerLink="/admin/nutrition" routerLinkActive="active-link" (click)="closeMobileMenu()">
-                <i class="pi pi-apple"></i><span>Nutricionista</span>
+                <i class="pi pi-apple"></i>
+                <span class="label">Nutrición</span>
             </a>
         </nav>
-
         <div class="sidebar-footer">
             <button class="logout-btn" (click)="logout()">
                 <i class="pi pi-sign-out"></i>
@@ -63,20 +63,15 @@
             </button>
         </div>
     </aside>
-
     <main class="main-content">
-        
         <header class="top-bar">
             <button class="mobile-menu-btn" (click)="toggleMobileMenu()">
                 <i class="pi pi-bars"></i>
             </button>
-
             <div class="header-right">
-                
                 <button class="theme-toggle-btn" (click)="toggleTheme()" [title]="isDarkMode ? 'Modo Claro' : 'Modo Oscuro'">
                     <i class="pi" [class.pi-moon]="!isDarkMode" [class.pi-sun]="isDarkMode"></i>
                 </button>
-
                 <div class="user-profile">
                     <div class="user-info">
                         <span class="name">{{ userName }}</span>
@@ -84,13 +79,10 @@
                     </div>
                     <div class="avatar">{{ userInitial }}</div>
                 </div>
-
             </div>
         </header>
-
         <div class="page-content">
-            <router-outlet></router-outlet> 
+            <router-outlet></router-outlet>
         </div>
     </main>
-
 </div>

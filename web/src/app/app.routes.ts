@@ -6,6 +6,9 @@ import { AdminUsersComponent } from './features/admin/admin-users/admin-users';
 import { AdminGroupsComponent } from './features/admin/admin-groups/admin-groups';
 import { AdminClassesComponent } from './features/admin/admin-classes/admin-classes';
 import { AdminEvaluationsComponent } from './features/admin/admin-evaluations/admin-evaluations';
+import { AdminKineComponent } from './features/admin/admin-kine/admin-kine';
+import { AdminNutriComponent } from './features/admin/admin-nutri/admin-nutri';
+import { AdminPaymentsComponent } from './features/admin/admin-payments/admin-payments';
 
 export const routes: Routes = [
     { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -22,11 +25,9 @@ export const routes: Routes = [
             { path: 'groups', component: AdminGroupsComponent },
             { path: 'classes', component: AdminClassesComponent },
             { path: 'evaluations', component: AdminEvaluationsComponent },
-        
-            // pendientes
-            //{ path: 'kinesiology', component: AdminKinesiologyComponent },
-            //{ path: 'nutrition', component: AdminNutritionComponent },
-            //{ path: 'payments', component: AdminPaymentsComponent },
+            { path: 'kinesiology', component: AdminKineComponent },
+            { path: 'nutrition', component: AdminNutriComponent },
+            { path: 'payments', component: AdminPaymentsComponent },
         ]
     }
 ];

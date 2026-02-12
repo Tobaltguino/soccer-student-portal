@@ -18,7 +18,6 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { RadioButtonModule } from 'primeng/radiobutton';
 
-// Servicios
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { SupabaseService } from '../../../core/services/supabase.service';
 
@@ -38,11 +37,11 @@ import { SupabaseService } from '../../../core/services/supabase.service';
 export class AdminEvaluationsComponent implements OnInit {
 
   // --- DATOS ---
-  sesiones: any[] = [];            // Datos visibles en la tabla (filtrados)
-  sesionesOriginales: any[] = [];  // Copia de seguridad de todos los datos
+  sesiones: any[] = [];            
+  sesionesOriginales: any[] = [];  
   grupos: any[] = [];
   tiposEvaluacion: any[] = [];
-  estudiantesGrupo: any[] = [];    // Alumnos a calificar
+  estudiantesGrupo: any[] = [];    
 
   // --- FILTROS ---
   filtroFecha: Date | null = null;
@@ -55,17 +54,26 @@ export class AdminEvaluationsComponent implements OnInit {
     { label: 'Finalizado', value: 'FINALIZADO' }
   ];
 
+  // --- PALETA DE COLORES (RANGOS) ---
+  // Prioridad: Rojo, Naranja, Verde
+  coloresPredefinidos: string[] = [
+    '#ef4444', // Rojo (Mal/Bajo)
+    '#f97316', // Naranja (Regular/Medio)
+    '#22c55e', // Verde (Bien/Alto)
+    '#3b82f6', // Azul (Extra)
+    '#a855f7', // Púrpura (Extra)
+    '#64748b'  // Gris (Neutro)
+  ];
+
   // --- ESTADOS UI ---
   loading: boolean = true;
-  displayMainDialog: boolean = false;   // Modal Sesión (Logística)
-  displayTipoDialog: boolean = false;   // Modal Configuración Tests
-  displayGradesDialog: boolean = false; // Modal Calificaciones
+  displayMainDialog: boolean = false;   
+  displayTipoDialog: boolean = false;   
+  displayGradesDialog: boolean = false; 
   
-  usarRangos: boolean = false; // Checkbox para rangos en configuración
+  usarRangos: boolean = false;
 
   // --- FORMULARIOS ---
-  
-  // Formulario de Configuración de Test
   tipoForm: any = { nombre: '', unidad_medida: '' };
   rangosForm: any[] = [];
   nuevoRango: any = { 
@@ -75,7 +83,6 @@ export class AdminEvaluationsComponent implements OnInit {
     color_sugerido: '#3b82f6' 
   };
 
-  // Formulario de Sesión (Logística)
   evalLogistica: any = {
     id: null,
     grupo_id: null,
@@ -101,7 +108,6 @@ export class AdminEvaluationsComponent implements OnInit {
   async cargarDatosIniciales() {
     this.loading = true;
     try {
-      // Carga paralela de maestros y datos
       const [g, t, s] = await Promise.all([
         this.supabase.getGrupos(),
         this.supabase.getTiposEvaluacion(),
@@ -110,12 +116,8 @@ export class AdminEvaluationsComponent implements OnInit {
 
       this.grupos = g.data || [];
       this.tiposEvaluacion = t.data || [];
-      
-      // Guardamos la data cruda en "Originales" y la copia en "sesiones"
       this.sesionesOriginales = s.data || [];
       this.sesiones = [...this.sesionesOriginales];
-      
-      // Si ya habían filtros seleccionados, los re-aplicamos sobre la nueva data
       this.aplicarFiltros(); 
 
     } catch (error: any) {
@@ -127,7 +129,7 @@ export class AdminEvaluationsComponent implements OnInit {
   }
 
   // ==========================================
-  // 2. LÓGICA DE FILTRADO (Frontend)
+  // 2. LÓGICA DE FILTRADO
   // ==========================================
   aplicarFiltros() {
     this.sesiones = this.sesionesOriginales.filter(sesion => {
@@ -136,25 +138,17 @@ export class AdminEvaluationsComponent implements OnInit {
         let cumplePrueba = true;
         let cumpleEstado = true;
 
-        // 1. Filtro Fecha
         if (this.filtroFecha) {
             const fechaFiltroStr = this.formatearFecha(this.filtroFecha);
-            // Tomamos los primeros 10 caracteres (YYYY-MM-DD) de la fecha de la sesión
             const fechaSesionStr = (sesion.fecha || '').substring(0, 10); 
             cumpleFecha = fechaSesionStr === fechaFiltroStr;
         }
-
-        // 2. Filtro Grupo (Objeto seleccionado del dropdown)
         if (this.filtroGrupo) {
             cumpleGrupo = sesion.grupo_id === this.filtroGrupo.id;
         }
-
-        // 3. Filtro Prueba (Objeto seleccionado del dropdown)
         if (this.filtroPrueba) {
             cumplePrueba = sesion.tipo_evaluacion_id === this.filtroPrueba.id;
         }
-
-        // 4. Filtro Estado (Valor directo 'PENDIENTE' | 'FINALIZADO')
         if (this.filtroEstado) {
             cumpleEstado = sesion.estado === this.filtroEstado;
         }
@@ -168,32 +162,35 @@ export class AdminEvaluationsComponent implements OnInit {
     this.filtroGrupo = null;
     this.filtroPrueba = null;
     this.filtroEstado = null;
-    // Restauramos la lista completa
     this.sesiones = [...this.sesionesOriginales];
   }
 
-  // Auxiliar para convertir Date a 'YYYY-MM-DD' local
   formatearFecha(date: Date): string {
     const d = new Date(date);
     let month = '' + (d.getMonth() + 1);
     let day = '' + d.getDate();
     const year = d.getFullYear();
-
     if (month.length < 2) month = '0' + month;
     if (day.length < 2) day = '0' + day;
-
     return [year, month, day].join('-');
   }
 
   // ==========================================
   // 3. GESTIÓN DE TIPOS DE EVALUACIÓN Y RANGOS
   // ==========================================
+  
   abrirNuevoTipo() {
     this.tipoForm = { nombre: '', unidad_medida: '' };
     this.rangosForm = [];
     this.usarRangos = false;
+    // Por defecto sugerimos azul, pero el usuario puede cambiarlo
     this.nuevoRango = { nombre_etiqueta: '', valor_min: null, valor_max: null, color_sugerido: '#3b82f6' };
     this.displayTipoDialog = true;
+  }
+
+  // ✅ Función para seleccionar color rápido desde la paleta
+  seleccionarColor(color: string) {
+    this.nuevoRango.color_sugerido = color;
   }
 
   agregarRangoALista() {
@@ -202,7 +199,7 @@ export class AdminEvaluationsComponent implements OnInit {
       return;
     }
     this.rangosForm.push({ ...this.nuevoRango });
-    // Resetear formulario de rango
+    // Resetear formulario de rango manteniendo el último color (opcional) o volviendo al default
     this.nuevoRango = { nombre_etiqueta: '', valor_min: null, valor_max: null, color_sugerido: '#3b82f6' };
   }
 
@@ -218,18 +215,15 @@ export class AdminEvaluationsComponent implements OnInit {
 
     this.loading = true;
     try {
-      // 1. Crear el Tipo de Evaluación
       const { data, error } = await this.supabase.createTipoEvaluacion(this.tipoForm);
       if (error) throw error;
 
-      // 2. Si se activaron rangos, crearlos asociados al ID retornado
       if (this.usarRangos && data && Array.isArray(data) && data.length > 0 && this.rangosForm.length > 0) {
         const testId = (data as any[])[0].id;
         const rangosParaDB = this.rangosForm.map(r => ({
           ...r,
           tipo_evaluacion_id: testId
         }));
-        
         const { error: errorRangos } = await this.supabase.createRango(rangosParaDB);
         if (errorRangos) throw errorRangos;
       }
@@ -249,21 +243,18 @@ export class AdminEvaluationsComponent implements OnInit {
 
   async eliminarTipoTest(id: number) {
     this.confirmationService.confirm({
-      message: '¿Eliminar este test y sus escalas? Esto no borrará resultados históricos.',
-      header: 'Confirmar Eliminación',
+      message: '¿Estás seguro de eliminar este test?\n\n⚠️ IMPORTANTE: Se eliminarán todas las sesiones planificadas y TODOS LOS RESULTADOS históricos de los alumnos asociados a esta prueba.\n\nEsta acción no se puede deshacer.',
+      header: 'Confirmar Eliminación Crítica',
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Sí, eliminar',
-      acceptButtonStyleClass: 'p-button-danger p-button-text',
+      acceptLabel: 'Sí, eliminar todo',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-danger', 
       accept: async () => {
         try {
-          // Primero eliminar rangos hijos (si no hay cascade en DB)
           await this.supabase.eliminarRangosPorTipo(id);
-          // Luego eliminar el padre
           const { error } = await this.supabase.eliminarTipoEvaluacion(id);
-          
           if (error) throw error;
-          
-          this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Test eliminado' });
+          this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Test y datos asociados eliminados' });
           this.cargarDatosIniciales();
         } catch (err: any) {
           this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el test.' });
@@ -276,18 +267,11 @@ export class AdminEvaluationsComponent implements OnInit {
   // 4. GESTIÓN DE SESIONES (CRUD LOGÍSTICA)
   // ==========================================
   abrirNuevo() {
-    this.evalLogistica = { 
-      id: null, 
-      grupo_id: null, 
-      tipo_evaluacion_id: null, 
-      fecha: new Date(), 
-      estado: 'PENDIENTE' 
-    };
+    this.evalLogistica = { id: null, grupo_id: null, tipo_evaluacion_id: null, fecha: new Date(), estado: 'PENDIENTE' };
     this.displayMainDialog = true;
   }
 
   editarSesion(sesion: any) {
-    // Convertir string de fecha a objeto Date para el picker
     const fechaObj = new Date(sesion.fecha + 'T00:00:00');
     this.evalLogistica = { ...sesion, fecha: fechaObj };
     this.displayMainDialog = true;
@@ -299,9 +283,7 @@ export class AdminEvaluationsComponent implements OnInit {
         return;
     }
 
-    // Formatear fecha para enviar a Supabase (YYYY-MM-DD)
     const fechaStr = this.evalLogistica.fecha.toISOString().split('T')[0];
-    
     const payload = {
         grupo_id: this.evalLogistica.grupo_id,
         tipo_evaluacion_id: this.evalLogistica.tipo_evaluacion_id,
@@ -312,10 +294,8 @@ export class AdminEvaluationsComponent implements OnInit {
     try {
       let result;
       if (this.evalLogistica.id) {
-          // Actualizar
           result = await this.supabase.updateSesionEvaluacion(this.evalLogistica.id, payload);
       } else {
-          // Crear
           result = await this.supabase.crearSesionEvaluacion(payload);
       }
 
@@ -323,7 +303,7 @@ export class AdminEvaluationsComponent implements OnInit {
 
       this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Sesión guardada' });
       this.displayMainDialog = false;
-      this.cargarDatosIniciales(); // Recargar tabla
+      this.cargarDatosIniciales(); 
     } catch (error: any) {
       this.messageService.add({ severity: 'error', summary: 'Error', detail: error.message });
     }
@@ -339,7 +319,6 @@ export class AdminEvaluationsComponent implements OnInit {
           accept: async () => {
               const { error } = await this.supabase.eliminarSesionEvaluacion(id);
               if (error) throw error;
-              
               this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Sesión borrada' });
               this.cargarDatosIniciales();
           }
@@ -350,35 +329,52 @@ export class AdminEvaluationsComponent implements OnInit {
   // 5. CALIFICACIÓN DE ESTUDIANTES
   // ==========================================
   async abrirCalificador(sesion: any) {
-    this.evalLogistica = { ...sesion }; // Guardar ref de la sesión actual
+    this.evalLogistica = { ...sesion };
     this.loading = true;
-    this.cdr.detectChanges();
+    this.cdr.detectChanges(); // Forzar spinner visualmente
 
     try {
-      // 1. Traer alumnos del grupo
-      const { data: alumnos } = await this.supabase.getAlumnosPorGrupo(sesion.grupo_id);
-      
-      // 2. Traer notas ya existentes para esta sesión
-      const { data: resultados } = await this.supabase.getResultadosPorSesion(sesion.id);
+      // Usamos Promise.allSettled para que si una falla, no bloquee la otra
+      // (aunque idealmente necesitamos ambas)
+      const [resAlumnos, resResultados] = await Promise.all([
+         this.supabase.getAlumnosPorGrupo(sesion.grupo_id),
+         this.supabase.getResultadosPorSesion(sesion.id)
+      ]);
 
-      // 3. Fusionar datos (Alumno + Nota si existe)
-      this.estudiantesGrupo = (alumnos || []).map((alumno: any) => {
-          const notaExistente = (resultados as any[])?.find((r: any) => r.estudiante_id === alumno.id);
+      // Validar si hubo errores en las peticiones (opcional, pero útil para debug)
+      if (resAlumnos.error) console.error("Error cargando alumnos:", resAlumnos.error);
+      if (resResultados.error) console.error("Error cargando notas:", resResultados.error);
+
+      const alumnos = resAlumnos.data || [];
+      const resultados = resResultados.data || [];
+
+      // Mapeo seguro: Si no hay alumnos, alumnos será [], el map no se ejecuta y no hay error
+      this.estudiantesGrupo = alumnos.map((alumno: any) => {
+          // Buscamos si este alumno ya tiene nota guardada
+          const notaExistente = resultados.find((r: any) => r.estudiante_id === alumno.id);
+          
           return {
               estudiante_id: alumno.id,
               nombre: alumno.nombre,
               apellido: alumno.apellido,
-              // Si existe nota, la ponemos, sino null
+              // Asignamos valor o null/vacío por defecto
               valor_numerico: notaExistente ? notaExistente.valor_numerico : null,
               observacion: notaExistente ? notaExistente.observacion : ''
           };
       });
-
+      
+      // Mostrar el diálogo SOLO si terminamos todo el proceso
       this.displayGradesDialog = true;
 
-    } catch (e) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error cargando listado de alumnos' });
+    } catch (e: any) {
+      console.error("Error CRÍTICO en abrirCalificador:", e);
+      this.messageService.add({ 
+        severity: 'error', 
+        summary: 'Error', 
+        detail: 'No se pudo cargar la lista de estudiantes. Intente nuevamente.' 
+      });
     } finally {
+      // ESTO ES LO IMPORTANTE: Siempre apagar el loading, pase lo que pase
       this.loading = false;
       this.cdr.detectChanges();
     }
@@ -390,7 +386,6 @@ export class AdminEvaluationsComponent implements OnInit {
   }
 
   async guardarNotasFinales() {
-    // Filtramos solo los que tienen algún valor para no enviar basura a la BD
     const notasAGuardar = this.estudiantesGrupo
         .filter(e => e.valor_numerico !== null || (e.observacion && e.observacion.trim() !== ''))
         .map(e => ({
@@ -407,14 +402,12 @@ export class AdminEvaluationsComponent implements OnInit {
 
     this.loading = true;
     try {
-      // Upsert masivo (guardar o actualizar)
       const { error } = await this.supabase.guardarResultadosMasivos(notasAGuardar);
-      
       if (error) throw error;
 
       this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Resultados actualizados correctamente' });
       this.displayGradesDialog = false;
-      this.cargarDatosIniciales(); // Refrescar para actualizar contadores o estados si los hubiera
+      this.cargarDatosIniciales(); 
 
     } catch (error: any) {
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Fallo al guardar resultados' });

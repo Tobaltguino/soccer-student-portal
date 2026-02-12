@@ -1,0 +1,15 @@
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+
+@Component({
+  selector: 'app-admin-payments', // Cambia a 'app-admin-nutri' en el otro
+  standalone: true,
+  imports: [CommonModule, RouterModule, ButtonModule],
+  templateUrl: './admin-nutri.html', // Cambia al html correspondiente
+  styleUrls: ['./admin-nutri.css']   // Cambia al css correspondiente
+})
+export class AdminNutriComponent { 
+  // No necesitas lógica extra por ahora
+}
