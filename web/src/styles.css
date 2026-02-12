@@ -140,6 +140,52 @@ body.dark-mode .p-dropdown-item:hover {
     background-color: var(--border-color) !important;
 }
 
+/* ============================================================
+   FULLCALENDAR: CONFIGURACIÓN MAESTRA (Header + Líneas Finas)
+   ============================================================ */
+
+/* 1. CABECERA TRANSPARENTE (Arreglo para Modo Oscuro/Claro) */
+.fc-theme-standard th,
+.fc-theme-standard .fc-scrollgrid-section-header,
+.fc-theme-standard .fc-scrollgrid-section-header th,
+.fc-theme-standard .fc-scrollgrid-section-header td {
+    background: transparent !important;
+    background-color: transparent !important;
+    /* Solo dejamos una línea fina abajo para separar los días de las horas */
+    border: none !important;
+    border-bottom: 1px solid var(--surface-border) !important;
+}
+
+/* 2. TEXTO DEL HEADER (Lunes, Martes...) - ADAPTABLE */
+.fc-col-header-cell-cushion,
+a.fc-col-header-cell-cushion {
+    color: var(--text-color) !important; 
+    text-decoration: none !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+}
+
+/* 3. LÍNEAS DE LA ESTRUCTURA (Bordes externos) */
+.fc-theme-standard .fc-scrollgrid {
+    border: 1px solid var(--surface-border) !important;
+}
+
+/* 4. LÍNEAS DE LA CUADRÍCULA (Verticales y Horizontales) */
+/* Usamos 1px con el color de borde suave del tema */
+.fc-theme-standard td,
+.fc-theme-standard th {
+    border: 1px solid var(--surface-border) !important;
+}
+
+/* 5. LÍNEAS HORIZONTALES DE LAS HORAS */
+.fc-timegrid-slot {
+    border-bottom: 1px solid var(--surface-border) !important;
+}
+
+/* ============================================================
+   AJUSTES PARA CELULAR (MÓVIL)
+   ============================================================ */
+
 /* =========================================
    7. TOAST (Notificaciones)
    ========================================= */
@@ -148,4 +194,34 @@ body.dark-mode .p-dropdown-item:hover {
         width: 90vw !important; left: 50% !important; transform: translateX(-50%);
         top: 20px !important; right: auto !important;
     }
+
+    /* 1. Reducir el tamaño de la letra de Lunes, Martes... */
+    .fc-col-header-cell-cushion,
+    a.fc-col-header-cell-cushion {
+        font-size: 0.7rem !important; /* Letra más pequeña */
+        padding: 5px 0 !important;    /* Menos espacio arriba y abajo */
+        font-weight: 700 !important;
+    }
+
+    /* 2. Reducir la altura de la fila del encabezado */
+    .fc-theme-standard .fc-scrollgrid-section-header th {
+        height: auto !important;
+    }
+
+    /* 3. Reducir el tamaño de las horas a la izquierda (08:00...) */
+    .fc-timegrid-slot-label-cushion {
+        font-size: 0.65rem !important;
+    }
+
+    /* 4. Ajustar el título del mes (ej: febrero de 2026) */
+    .fc-toolbar-title {
+        font-size: 1.1rem !important;
+    }
+    
+    /* 5. Hacer los botones de navegación más compactos */
+    .fc-button {
+        padding: 0.4rem 0.6rem !important;
+        font-size: 0.8rem !important;
+    }
+
 }
