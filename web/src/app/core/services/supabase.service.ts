@@ -48,23 +48,38 @@ export class SupabaseService {
     const tablas = ['admins', 'estudiantes', 'profesores', 'kinesiologos', 'nutricionistas'];
     
     for (const tabla of tablas) {
-      // Agregamos un console.log para ver qué está pasando realmente
-      const { data, error, status } = await this.supabase
+      const { data } = await this.supabase
         .from(tabla)
-        .select('email, rut')
+        .select('email')
         .eq('rut', rutInput.trim())
         .maybeSingle();
 
-      console.log(`Buscando en ${tabla}:`, { data, error, status });
-
       if (data?.email) {
-        return await this.supabase.auth.signInWithPassword({ 
+        // Intentamos loguear con el email encontrado
+        const authResponse = await this.supabase.auth.signInWithPassword({ 
           email: data.email, 
           password 
         });
+
+        // Si la contraseña es incorrecta, devolvemos el error inmediatamente
+        if (authResponse.error) {
+           return { data: null, error: authResponse.error, role: null };
+        }
+
+        // ✅ ÉXITO: Devolvemos la data de auth Y el nombre de la tabla (rol)
+        return { 
+            data: authResponse.data, 
+            error: null, 
+            role: tabla // 'admins', 'estudiantes', etc.
+        };
       }
     }
-    return { data: null, error: { message: `El RUT ${rutInput} no está registrado en ProFutbol.` } };
+    
+    return { 
+        data: null, 
+        error: { message: `El RUT ${rutInput} no está registrado en ProFutbol.` },
+        role: null
+    };
   }
 
   // ==========================================
@@ -164,7 +179,6 @@ export class SupabaseService {
   async getKinesiologos() { return await this.supabase.from('kinesiologos').select('*').order('apellido'); }
   async getNutricionistas() { return await this.supabase.from('nutricionistas').select('*').order('apellido'); }
 
-  // --- CREAR USUARIO (AUTH + DB) ---
   // --- CREAR USUARIO (AUTH + DB) ---
   async crearUsuarioCompleto(email: string, password: string, datosPersonales: any, tabla: string) {
     // 1. Instancia temporal para no cerrar sesión del admin actual

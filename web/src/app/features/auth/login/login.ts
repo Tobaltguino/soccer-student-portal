@@ -55,6 +55,7 @@ export class LoginComponent {
    * Proceso de inicio de sesión usando el RUT como identificador
    */
   async ingresar() {
+    // 1. Validación básica de campos vacíos
     if (!this.rut || !this.password) {
       this.messageService.add({ 
         severity: 'warn', 
@@ -67,38 +68,48 @@ export class LoginComponent {
     this.loading = true;
 
     try {
-      // Limpiamos el RUT: removemos puntos y espacios pero mantenemos el guion para coincidir con la BD (ej: 1-1)
-      const rutBusqueda = this.rut.replace(/[\.\s]/g, '').toUpperCase().trim();
+      // 2. Preparar el RUT:
+      // Solo hacemos trim() para quitar espacios al inicio/final por si acaso.
+      // YA NO quitamos los puntos, se envía tal cual (ej: "12.345.678-9")
+      const rutBusqueda = this.rut.trim();
 
-      // Buscamos el email asociado al RUT e intentamos el login
-      const { data, error } = await this.supabaseService.loginConRut(rutBusqueda, this.password);
+      console.log("Enviando a Supabase:", rutBusqueda); 
+
+      // 3. Llamada al servicio
+      // Recuerda que tu servicio ahora debe devolver { data, error, role }
+      const { data, error, role } = await this.supabaseService.loginConRut(rutBusqueda, this.password);
 
       if (error) {
         this.messageService.add({ 
           severity: 'error', 
-          summary: 'Acceso Denegado', 
-          detail: error.message || 'Credenciales inválidas.' 
+          summary: 'Error', 
+          detail: 'Credenciales inválidas o usuario no encontrado.' 
         });
         this.loading = false;
         return;
       }
 
-      if (data?.user) {
-        // Verificamos si es administrador para redirigir a la ruta correcta
-        const esAdministrador = await this.supabaseService.esAdmin(data.user.id);
-        
+      // 4. Éxito: Redirección según Rol
+      if (data?.user && role) {
         this.messageService.add({ 
           severity: 'success', 
           summary: 'Bienvenido', 
-          detail: 'Validando acceso al sistema...' 
+          detail: 'Ingresando al sistema...' 
         });
 
+        // Mapa de rutas: Nombre de la Tabla -> Ruta de Angular
+        const rutasPorRol: any = {
+            'admins': '/admin/dashboard',
+            'estudiantes': '/student/dashboard',
+            'profesores': '/professor/dashboard',
+            'kinesiologos': '/kine/dashboard',
+            'nutricionistas': '/nutri/dashboard'
+        };
+
+        const rutaDestino = rutasPorRol[role] || '/login'; 
+
         setTimeout(() => {
-          if (esAdministrador) {
-            this.router.navigate(['admin/dashboard']);
-          } else {
-            this.router.navigate(['/dashboard']); 
-          }
+            this.router.navigate([rutaDestino]);
         }, 1000);
       }
 
@@ -107,7 +118,7 @@ export class LoginComponent {
       this.messageService.add({ 
         severity: 'error', 
         summary: 'Error', 
-        detail: 'Fallo de conexión con el servidor.' 
+        detail: 'Fallo de conexión inesperado.' 
       });
       this.loading = false;
     }
