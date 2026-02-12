@@ -10,9 +10,11 @@ import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
-import { DialogModule } from 'primeng/dialog'; // ✅ Importante para el modal
+import { DialogModule } from 'primeng/dialog';
 
+// Servicios y Directivas
 import { SupabaseService } from '../../../core/services/supabase.service';
+import { RutFormatDirective } from '../../../shared/directives/rut-format.directive';
 
 @Component({
   selector: 'app-login',
@@ -25,15 +27,16 @@ import { SupabaseService } from '../../../core/services/supabase.service';
     ButtonModule, 
     InputTextModule, 
     ToastModule,
-    DialogModule
+    DialogModule,
+    RutFormatDirective
   ],
   providers: [MessageService],
-  templateUrl: './login.html', // Asegúrate que coincida con tu archivo
+  templateUrl: './login.html',
   styleUrls: ['./login.css']
 })
 export class LoginComponent {
 
-  email = '';
+  rut = '';
   password = '';
   loading = false;
 
@@ -48,30 +51,47 @@ export class LoginComponent {
     private messageService: MessageService
   ) {}
 
-  // ✅ 1. FUNCIÓN DE LOGIN (Restaurada)
+  /**
+   * Proceso de inicio de sesión usando el RUT como identificador
+   */
   async ingresar() {
-    if (!this.email || !this.password) {
-      this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Completa los campos.' });
+    if (!this.rut || !this.password) {
+      this.messageService.add({ 
+        severity: 'warn', 
+        summary: 'Atención', 
+        detail: 'Por favor, completa todos los campos.' 
+      });
       return;
     }
 
     this.loading = true;
 
     try {
-      // Login con Supabase
-      const { data, error } = await this.supabaseService.login(this.email, this.password);
+      // Limpiamos el RUT: removemos puntos y espacios pero mantenemos el guion para coincidir con la BD (ej: 1-1)
+      const rutBusqueda = this.rut.replace(/[\.\s]/g, '').toUpperCase().trim();
+
+      // Buscamos el email asociado al RUT e intentamos el login
+      const { data, error } = await this.supabaseService.loginConRut(rutBusqueda, this.password);
 
       if (error) {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Credenciales incorrectas.' });
+        this.messageService.add({ 
+          severity: 'error', 
+          summary: 'Acceso Denegado', 
+          detail: error.message || 'Credenciales inválidas.' 
+        });
         this.loading = false;
         return;
       }
 
-      // Verificar Rol y Redirigir
-      if (data.user) {
+      if (data?.user) {
+        // Verificamos si es administrador para redirigir a la ruta correcta
         const esAdministrador = await this.supabaseService.esAdmin(data.user.id);
         
-        this.messageService.add({ severity: 'success', summary: 'Bienvenido', detail: 'Ingresando...' });
+        this.messageService.add({ 
+          severity: 'success', 
+          summary: 'Bienvenido', 
+          detail: 'Validando acceso al sistema...' 
+        });
 
         setTimeout(() => {
           if (esAdministrador) {
@@ -82,19 +102,24 @@ export class LoginComponent {
         }, 1000);
       }
 
-    } catch (e) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Fallo de conexión.' });
+    } catch (e: any) {
+      console.error('Error de Login:', e);
+      this.messageService.add({ 
+        severity: 'error', 
+        summary: 'Error', 
+        detail: 'Fallo de conexión con el servidor.' 
+      });
       this.loading = false;
     }
   }
 
-  // ✅ 2. ABRIR DIÁLOGO DE RECUPERACIÓN
+  // --- Métodos de Recuperación de Contraseña ---
+
   abrirDialogoRecuperacion() {
-    this.resetEmail = this.email; // Copia el email si ya lo escribió
+    this.resetEmail = ''; 
     this.displayResetDialog = true;
   }
 
-  // ✅ 3. ENVIAR CORREO DE RECUPERACIÓN
   async enviarCorreoRecuperacion() {
     if (!this.resetEmail) {
       this.messageService.add({ severity: 'warn', summary: 'Falta Email', detail: 'Ingresa tu correo para continuar.' });

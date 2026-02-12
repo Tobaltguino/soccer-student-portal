@@ -25,10 +25,10 @@
 .filter-item { flex: 1; min-width: 200px; }
 .button-item { flex: 0 0 auto; }
 
-/* --- ESTILOS DEL FORMULARIO (SOLUCIÓN VISUAL) --- */
+/* --- ESTILOS DEL FORMULARIO --- */
 .field {
     display: flex !important;
-    flex-direction: column !important; /* Apilado vertical estricto */
+    flex-direction: column !important;
     gap: 8px !important;
     margin-bottom: 24px !important;
     width: 100% !important;
@@ -39,29 +39,44 @@
     color: var(--text-main);
     font-size: 0.9rem;
     margin: 0 !important;
+    display: flex;
+    align-items: center;
 }
 
-/* Inputs, Textareas y Pickers */
 .field input, 
 .field textarea,
 .field p-select,
 .field p-datepicker,
-.field p-calendar {
+.field p-calendar,
+.field p-multiSelect {
     width: 100% !important;
     display: flex;
 }
 
-/* Fix para Textarea específico */
 .field textarea {
-    min-height: 80px; /* Altura mínima para escribir cómodo */
+    min-height: 80px;
 }
 
-/* Espaciado del modal */
 :host ::ng-deep .p-dialog-content {
-    overflow-y: visible !important; /* Permitir que los dropdowns salgan */
+    overflow-y: visible !important;
     padding: 1.5rem 1.5rem 2rem 1.5rem !important;
 }
-:host ::ng-deep .p-tabpanel-content { overflow: visible !important; padding-top: 1rem; }
+
+/* --- ANIMACIONES Y SWITCHER --- */
+.animation-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+:host ::ng-deep .p-selectbutton {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
 
 /* --- TABLA & UTILS --- */
 .card-table {
@@ -70,6 +85,13 @@
     overflow-x: auto;
 }
 .action-buttons { display: flex; justify-content: center; gap: 0.5rem; }
+
+.text-main { color: var(--text-main); }
+.text-secondary { color: var(--text-secondary); }
+.text-xs { font-size: 0.75rem; }
+.font-bold { font-weight: 700; }
+.text-primary { color: var(--primary-color); }
+
 .hidden-mobile { display: table-cell; }
 .visible-mobile { display: none; }
 .mobile-meta { font-size: 0.85rem; margin-top: 4px; line-height: 1.3; }
@@ -85,7 +107,39 @@
     padding: 1rem; border-bottom: 1px solid var(--bg-main); color: var(--text-main);
 }
 
-/* MEDIA QUERIES */
+/* --- NUEVAS REGLAS DE ESPACIADO --- */
+
+/* Margen derecho para iconos en botones y labels */
+.field label i, 
+.btn-create i,
+:host ::ng-deep p-button i,
+:host ::ng-deep .p-button i,
+.action-buttons button i {
+    margin-right: 8px !important;
+}
+
+/* Margen para iconos informativos en tabla */
+.text-main i, 
+.text-sm i,
+.mobile-meta i {
+    margin-right: 6px !important;
+}
+
+/* Margen para emojis en labels de planificación */
+.field label span {
+    margin-right: 10px;
+    font-size: 1.1rem;
+    display: inline-block;
+    width: 20px;
+    text-align: center;
+}
+
+/* Espacio interno en el SelectButton entre icono y texto */
+:host ::ng-deep .p-selectbutton .p-button .p-button-label i {
+    margin-right: 8px;
+}
+
+/* --- MEDIA QUERIES --- */
 @media (max-width: 768px) {
     :host { padding: 0.5rem; }
     .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
@@ -96,7 +150,6 @@
     .visible-mobile { display: block !important; }
     :host ::ng-deep .p-datatable .p-datatable-tbody > tr > td { padding: 0.8rem 0.5rem; font-size: 0.9rem; }
     
-    /* En móvil, forzamos que las columnas del grid (fecha/hora) sean 100% ancho */
     .formgrid.grid .col-6 {
         width: 100% !important;
         display: block !important;

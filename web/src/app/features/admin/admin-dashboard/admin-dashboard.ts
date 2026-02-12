@@ -15,7 +15,10 @@ export class AdminDashboardComponent implements OnInit {
   userEmail: string | undefined;
   totalEstudiantes: number = 0;
   clasesHoy: any[] = [];
-  actividadReciente: any[] = [];
+  
+  // Listas de datos
+  actividadReciente: any[] = []; // Para la tarjeta de arriba (Evaluaciones)
+  cumpleanosList: any[] = [];    // Para la lista de abajo (Cumpleaños)
   
   // Estados
   loading: boolean = true;
@@ -53,15 +56,25 @@ export class AdminDashboardComponent implements OnInit {
   async cargarDatos() {
     this.loading = true;
     try {
-      // 1. Total Estudiantes
-      const { count } = await this.supabaseService.getTotalEstudiantes();
-      this.totalEstudiantes = count || 0;
+      // 1. Estudiantes: Traemos la lista completa
+      // CORRECCIÓN: Usamos 'data' directamente y contamos el largo del array (.length)
+      const { data: estudiantes, error } = await this.supabaseService.getEstudiantes();
+      
+      if (estudiantes) {
+        // ✅ AQUÍ ESTABA EL ERROR: Usamos .length porque 'count' venía vacío del servicio
+        this.totalEstudiantes = estudiantes.length;
+        
+        // Procesamos los cumpleaños con la lista obtenida
+        this.cumpleanosList = this.filtrarProximosCumpleanos(estudiantes);
+      } else {
+        this.totalEstudiantes = 0;
+      }
 
       // 2. Clases de Hoy
       const { data: clases } = await this.supabaseService.getClasesHoy();
       this.clasesHoy = clases || [];
 
-      // 3. Actividad Reciente (Evaluaciones)
+      // 3. Evaluaciones (Para la tarjeta morada)
       const { data: actividad } = await this.supabaseService.getActividadReciente();
       this.actividadReciente = actividad || [];
 
@@ -73,7 +86,45 @@ export class AdminDashboardComponent implements OnInit {
     }
   }
 
-  // Función para refrescar manualmente
+  // Lógica para filtrar cumpleaños próximos (0 a 7 días)
+  filtrarProximosCumpleanos(estudiantes: any[]): any[] {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    const listaProcesada = estudiantes
+      .map(est => {
+        if (!est.fecha_nacimiento) return null;
+
+        // Asegurar formato fecha (YYYY-MM-DD T00:00:00) para evitar desfases
+        const nacimiento = new Date(est.fecha_nacimiento + 'T00:00:00');
+        
+        const cumpleEsteAno = new Date(hoy.getFullYear(), nacimiento.getMonth(), nacimiento.getDate());
+        
+        let proximoCumple = cumpleEsteAno;
+        // Si ya pasó el cumpleaños este año, calculamos el del próximo
+        if (proximoCumple < hoy) {
+            proximoCumple = new Date(hoy.getFullYear() + 1, nacimiento.getMonth(), nacimiento.getDate());
+        }
+
+        const diffTime = proximoCumple.getTime() - hoy.getTime();
+        const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const nuevaEdad = proximoCumple.getFullYear() - nacimiento.getFullYear();
+
+        return {
+          ...est,
+          proximoCumple: proximoCumple,
+          diasRestantes: diasRestantes,
+          nuevaEdad: nuevaEdad
+        };
+      })
+      // Filtramos solo los que son hoy o en los próximos 7 días
+      .filter(item => item !== null && item.diasRestantes >= 0 && item.diasRestantes <= 7)
+      // Ordenamos del más cercano al más lejano
+      .sort((a, b) => a.diasRestantes - b.diasRestantes);
+
+    return listaProcesada;
+  }
+
   async refrescar() {
     await this.verificarConexion();
     await this.cargarDatos();

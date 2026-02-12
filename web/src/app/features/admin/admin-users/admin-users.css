@@ -1,97 +1,238 @@
-/* --- LAYOUT GENERAL --- */
-.users-container {
-    padding: 1rem;
-    min-height: 100vh;
+/* =========================================
+   1. CONTENEDOR PRINCIPAL Y LAYOUT
+   ========================================= */
+.users-container { 
+    padding: 1rem; 
+    min-height: 100vh; 
 }
 
-/* --- HEADER --- */
-.page-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
+/* --- ENCABEZADO --- */
+.page-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 1.5rem; 
+    gap: 1rem; 
+    flex-wrap: wrap; 
 }
-.header-content h1 { margin: 0; font-size: 1.5rem; font-weight: 700; color: var(--text-main); }
-.header-content p { margin: 0.25rem 0 0; color: var(--text-secondary); font-size: 0.9rem; }
 
-/* --- SELECTOR DE VISTA (Icono + Select Alineados) --- */
-.view-selector-container {
+.header-content h1 { 
+    margin: 0; 
+    font-size: 1.5rem; 
+    font-weight: 700; 
+    color: var(--text-main); 
+}
+
+.header-content p { 
+    margin: 0.25rem 0 0; 
+    color: var(--text-secondary); 
+    font-size: 0.9rem; 
+}
+
+/* =========================================
+   2. SELECTOR DE VISTA (TIPO DE USUARIO)
+   ========================================= */
+.view-selector-container { 
+    margin-bottom: 1rem; 
+}
+
+.selector-wrapper { 
+    display: flex; 
+    align-items: center; 
+    gap: 1rem; 
+    width: 100%; 
+    max-width: 400px; 
+}
+
+.icon-box { 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    width: 42px; 
+    height: 42px; 
+    background: var(--bg-card); 
+    border: 1px solid var(--border-color); 
+    border-radius: 8px; 
+    color: var(--primary-color); 
+}
+
+/* =========================================
+   3. BARRA DE FILTROS (HORIZONTAL)
+   ========================================= */
+.filter-bar {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
     margin-bottom: 1.5rem;
 }
 
-.selector-wrapper {
+/* Contenedor flexible para la fila de filtros */
+.filter-row {
     display: flex;
-    align-items: center;
-    gap: 1rem; /* Separación entre el icono y el select */
+    align-items: flex-end; /* Alinea los inputs con el botón al fondo */
+    gap: 1rem;
     width: 100%;
-    max-width: 400px; /* Ancho máximo en PC */
 }
 
-/* Caja del Icono (Decorativa) */
-.icon-box {
+/* Cada bloque de filtro (Label + Input) */
+.filter-item {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 42px;
-    height: 42px;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Estilo de las etiquetas de los filtros */
+.filter-item label {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0; /* Reseteo de margen */
+}
+
+/* Contenedor del botón para ajuste fino */
+.filter-item-btn {
+    flex: none;
+    padding-bottom: 1px; /* Pequeño ajuste visual para alineación óptica con inputs */
+}
+
+/* --- CLASES DE UTILIDAD PARA ANCHOS FLEXIBLES --- */
+.flex-grow-2 {
+    flex: 2;
+    min-width: 200px; /* El buscador no será muy pequeño */
+}
+
+.flex-grow-1 {
+    flex: 1;
+    min-width: 150px;
+}
+
+.w-10rem {
+    width: 10rem;
+    min-width: 120px;
+    flex: none; /* Tamaño fijo para Estado */
+}
+
+/* --- AJUSTES PROFUNDOS (PRIMENG) --- */
+/* Forza a los componentes de PrimeNG a llenar el ancho de su contenedor .filter-item */
+:host ::ng-deep .filter-bar .p-multiselect,
+:host ::ng-deep .filter-bar .p-select,
+:host ::ng-deep .filter-bar .p-dropdown,
+:host ::ng-deep .filter-bar .p-inputtext {
+    width: 100%;
+}
+
+/* =========================================
+   4. TARJETA PRINCIPAL (TABLA)
+   ========================================= */
+.main-card { 
+    background: var(--bg-card); 
+    border-radius: 16px; 
+    border: 1px solid var(--border-color); 
+    padding: 1.5rem; 
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03); 
+}
+
+.row-inactive { 
+    background-color: rgba(0, 0, 0, 0.02) !important; 
+    opacity: 0.7; 
+}
+
+/* Columna Fecha/Edad */
+.fecha-nac-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px; 
+}
+
+.fecha-nac-text {
+    font-weight: 700;
+    color: var(--text-main);
+    font-size: 0.95rem;
+}
+
+.edad-text {
+    font-size: 0.75rem; 
     color: var(--primary-color);
-    font-size: 1.2rem;
-    flex-shrink: 0; /* No encoger en móviles */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    font-weight: 600;
 }
 
-/* Ajuste del Select para llenar el espacio */
-:host ::ng-deep .selector-wrapper .p-select {
-    width: 100% !important;
-    flex-grow: 1;
+/* =========================================
+   5. MODALES Y FORMULARIOS
+   ========================================= */
+.field label { 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    font-weight: 600; 
+    margin-bottom: 8px; 
 }
 
-/* --- TARJETA PRINCIPAL --- */
-.main-card {
-    background-color: var(--bg-card);
-    border-radius: 16px;
-    border: 1px solid var(--border-color);
-    padding: 1.5rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-    min-height: 300px;
+.field label i { 
+    color: var(--primary-color); 
+    font-size: 1rem; 
 }
 
-/* --- BARRA DE FILTROS --- */
-.filters-bar {
-    display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;
-    align-items: center;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border-color);
+.text-secondary i.pi-id-card { 
+    margin-right: 10px !important; 
+    color: var(--primary-color); 
 }
-.filter-select { width: 220px; }
 
-.clean-btn { color: var(--text-secondary); cursor: pointer; }
-.clean-btn:hover { color: var(--text-main); background: rgba(0,0,0,0.05); }
+.btn-create i, 
+:host ::ng-deep .p-button i { 
+    margin-right: 8px !important; 
+}
 
-/* --- UTILIDADES --- */
-.table-responsive { overflow-x: auto; }
-.action-buttons { display: flex; justify-content: center; gap: 0.5rem; }
-.font-bold { font-weight: 600; }
-.text-center { text-align: center; }
+.action-buttons { 
+    display: flex; 
+    justify-content: center; 
+    gap: 0.25rem; 
+}
 
-/* --- RESPONSIVE --- */
+/* =========================================
+   6. RESPONSIVE
+   ========================================= */
+@media (max-width: 992px) {
+    /* En tablets/laptops pequeñas, permitimos que bajen si no caben */
+    .filter-row {
+        flex-wrap: wrap; 
+    }
+    
+    .filter-item {
+        min-width: 45%; /* Dos columnas */
+        flex-grow: 1;
+    }
+}
+
 @media (max-width: 768px) {
-    .page-header { flex-direction: column; align-items: flex-start; }
-    .btn-create { width: 100%; }
+    .page-header { 
+        flex-direction: column; 
+        align-items: flex-start; 
+    }
     
-    /* El selector ocupa todo el ancho en móvil */
-    .selector-wrapper { max-width: 100%; }
+    .btn-create { 
+        width: 100%; 
+    }
     
-    /* Filtros en columna */
-    .filters-bar { flex-direction: column; align-items: stretch; gap: 0.8rem; }
-    .filter-select { width: 100% !important; }
-    .clean-btn { width: 100%; justify-content: center; border: 1px solid var(--border-color); }
-    
-    /* Tabla Móvil */
-    .hidden-mobile { display: none !important; }
-    .visible-mobile { display: block !important; }
-    .mobile-meta { font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px; }
-    
-    .main-card { padding: 1rem 0.5rem; }
+    .hidden-mobile { 
+        display: none !important; 
+    }
+
+    /* En móviles, pila vertical completa para filtros */
+    .filter-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .filter-item, 
+    .filter-item-btn,
+    .w-10rem {
+        width: 100%;
+        min-width: 100%;
+        flex: none;
+    }
 }

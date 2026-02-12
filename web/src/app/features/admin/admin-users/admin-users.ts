@@ -1,52 +1,51 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 // PrimeNG Imports
-import { TableModule } from 'primeng/table';
+import { TableModule, Table } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
-import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SelectModule } from 'primeng/select';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { ToastModule } from 'primeng/toast';
+import { TagModule } from 'primeng/tag';
+import { CheckboxModule } from 'primeng/checkbox';
 import { TooltipModule } from 'primeng/tooltip';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { DatePickerModule } from 'primeng/datepicker'; 
 
+// Services & Directives
+import { FilterService, ConfirmationService, MessageService } from 'primeng/api';
 import { SupabaseService } from '../../../core/services/supabase.service';
+import { RutFormatDirective } from '../../../shared/directives/rut-format.directive';
 
 @Component({
   selector: 'app-admin-users',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, TableModule, ButtonModule, TagModule,
-    DialogModule, InputTextModule, ConfirmDialogModule, SelectModule,
-    MultiSelectModule, ToastModule, TooltipModule
+    CommonModule, FormsModule, TableModule, ButtonModule, DialogModule, 
+    InputTextModule, ConfirmDialogModule, SelectModule, MultiSelectModule, 
+    ToastModule, TagModule, CheckboxModule, TooltipModule, DatePickerModule,
+    RutFormatDirective
   ],
-  providers: [ConfirmationService, MessageService],
+  providers: [ConfirmationService, MessageService, FilterService],
   templateUrl: './admin-users.html',
   styleUrls: ['./admin-users.css']
 })
 export class AdminUsersComponent implements OnInit {
+  @ViewChild('dt') dt: Table | undefined;
 
-  // --- DATOS MAESTROS ---
-  estudiantes: any[] = [];
-  profesores: any[] = [];
-  admins: any[] = [];
-  kines: any[] = [];
-  nutris: any[] = [];
+  // --- DATOS ---
+  dataList: any[] = []; 
   listaGrupos: any[] = [];
-
-  // --- LISTAS FILTRADAS ---
-  estudiantesFiltrados: any[] = [];
-  profesoresFiltrados: any[] = [];
-
-  // --- CONTROL DE VISTA (Reemplaza a Tabs) ---
-  vistaActual: string = 'estudiantes'; // Valor por defecto
-
-  tiposUsuario = [
+  listaPosiciones: any[] = [];
+  
+  // --- CONFIGURACIÓN DE VISTA ---
+  vistaActual: string = 'estudiantes';
+  
+  opcionesVista = [
     { label: 'Estudiantes', value: 'estudiantes' },
     { label: 'Profesores', value: 'profesores' },
     { label: 'Administradores', value: 'admins' },
@@ -54,272 +53,320 @@ export class AdminUsersComponent implements OnInit {
     { label: 'Nutricionistas', value: 'nutricionistas' }
   ];
 
+  opcionesEstado = [
+    { label: 'Activos', value: true },
+    { label: 'Inactivos', value: false }
+  ];
+
+  listaTiposProfesor = [
+    { label: 'Profesor de Fútbol', value: 'Profesor de futbol' },
+    { label: 'Preparador Físico', value: 'Preparador fisico' },
+    { label: 'Preparador de Arqueros', value: 'Preparador de arqueros' }
+  ];
+
   // --- FILTROS ---
-  filtroGrupoEst: any = null;
-  filtroTipoEst: any = null;
-  filtroGrupoProf: any = null;
-  filtroTipoProf: any = null;
+  filtros: any = {
+    global: '',
+    grupo: null,
+    posicion: null,
+    tipoProfesor: null,
+    estado: null
+  };
 
-  // --- ESTADOS DE CARGA ---
-  loadingEstudiantes: boolean = false;
-  loadingProfesores: boolean = false;
-  loadingAdmins: boolean = false;
-  loadingKines: boolean = false;
-  loadingNutris: boolean = false;
-
+  // --- ESTADOS UI ---
+  loading: boolean = false;
   displayDialog: boolean = false;
   isEditing: boolean = false;
   tituloDialogo: string = '';
-
-  // --- LISTAS ESTÁTICAS ---
-  tiposJugador: any[] = [
-    { label: 'Jugador de Campo', value: 'Jugador de Campo' },
-    { label: 'Arquero', value: 'Arquero' }
-  ];
+  maxDate: Date = new Date(); // Para limitar fecha nacimiento a hoy
 
   // --- FORMULARIO ---
   userForm: any = {
-    id: null, nombre: '', apellido: '', rut: '', email: '', password: '', 
-    tipo_alumno: '', tipo_profesor: '', grupo_id: null, grupos_profe: []
+    id: null, 
+    nombre: '', 
+    apellido: '', 
+    rut: '', 
+    email: '', 
+    password: '', 
+    fecha_nacimiento: null, 
+    activo: true, 
+    grupo_id: null, 
+    tipo_profesor: '',
+    posicionesIds: [], // Array de IDs para el MultiSelect
+    gruposIds: []      // Array de IDs para el MultiSelect (Profesores)
   };
 
   constructor(
     private supabase: SupabaseService,
     private cdr: ChangeDetectorRef,
+    private messageService: MessageService,
     private confirmationService: ConfirmationService,
-    private messageService: MessageService
+    private filterService: FilterService
   ) {}
 
   ngOnInit() {
-    this.cargarListaGrupos();
-    this.cambiarVista(); // Carga la vista inicial (estudiantes)
+    this.configurarFiltrosPersonalizados();
+    this.cargarMaestros();
+    this.cargarDatos();
   }
 
-  // ================= CONTROL DE VISTA =================
-  cambiarVista() {
-    // Cargar datos solo si es necesario al cambiar de vista
-    switch (this.vistaActual) {
-      case 'estudiantes': if(this.estudiantes.length === 0) this.cargarEstudiantes(); break;
-      case 'profesores': if(this.profesores.length === 0) this.cargarProfesores(); break;
-      case 'admins': if(this.admins.length === 0) this.cargarAdmins(); break;
-      case 'kinesiologos': if(this.kines.length === 0) this.cargarKines(); break;
-      case 'nutricionistas': if(this.nutris.length === 0) this.cargarNutris(); break;
-    }
-  }
-
-  // ================= CARGA DE DATOS =================
-  async cargarListaGrupos() {
-    const { data } = await this.supabase.getGrupos();
-    if (data) this.listaGrupos = data;
-  }
-
-  async cargarEstudiantes() {
-    this.loadingEstudiantes = true;
-    const { data } = await this.supabase.getEstudiantes();
-    if (data) {
-        this.estudiantes = data;
-        this.filtrarEstudiantes();
-    }
-    this.loadingEstudiantes = false;
-    this.cdr.detectChanges();
-  }
-  
-  async cargarProfesores() {
-    this.loadingProfesores = true;
-    const { data } = await this.supabase.getProfesores();
-    if (data) {
-        this.profesores = data;
-        this.filtrarProfesores();
-    }
-    this.loadingProfesores = false;
-    this.cdr.detectChanges();
-  }
-
-  async cargarAdmins() {
-    this.loadingAdmins = true;
-    const { data } = await this.supabase.getAdmins();
-    if (data) this.admins = data;
-    this.loadingAdmins = false;
-    this.cdr.detectChanges();
-  }
-
-  async cargarKines() {
-    this.loadingKines = true;
-    const { data } = await this.supabase.getKinesiologos();
-    if (data) this.kines = data;
-    this.loadingKines = false;
-    this.cdr.detectChanges();
-  }
-
-  async cargarNutris() {
-    this.loadingNutris = true;
-    const { data } = await this.supabase.getNutricionistas();
-    if (data) this.nutris = data;
-    this.loadingNutris = false;
-    this.cdr.detectChanges();
-  }
-
-  // ================= FILTROS =================
-  filtrarEstudiantes() {
-    this.estudiantesFiltrados = this.estudiantes.filter(e => {
-      const matchGrupo = this.filtroGrupoEst ? e.grupo_id === this.filtroGrupoEst : true;
-      const matchTipo = this.filtroTipoEst ? e.tipo_alumno === this.filtroTipoEst : true;
-      return matchGrupo && matchTipo;
+  // Permite filtrar por "contiene una posición" en el array de posiciones
+  configurarFiltrosPersonalizados() {
+    this.filterService.register('contienePosicion', (value: any, filter: any): boolean => {
+      if (filter === undefined || filter === null || filter.length === 0) return true;
+      if (value === undefined || value === null) return false;
+      // value es el array de objetos {posicion_id, ...}
+      // filter es el array de IDs seleccionados [1, 2]
+      return value.some((p: any) => filter.includes(p.posicion_id));
     });
   }
 
-  limpiarFiltrosEst() {
-    this.filtroGrupoEst = null;
-    this.filtroTipoEst = null;
-    this.filtrarEstudiantes();
+  async cargarMaestros() {
+    const resGrupos = await this.supabase.getGrupos();
+    if(resGrupos.data) this.listaGrupos = resGrupos.data;
+    
+    const resPos = await this.supabase.getPosiciones();
+    if(resPos.data) this.listaPosiciones = resPos.data;
   }
 
-  filtrarProfesores() {
-    this.profesoresFiltrados = this.profesores.filter(p => {
-      const matchGrupo = this.filtroGrupoProf 
-        ? p.grupos_profesores.some((gp: any) => gp.grupo_id === this.filtroGrupoProf)
-        : true;
-      const matchTipo = this.filtroTipoProf ? p.tipo_profesor === this.filtroTipoProf : true;
-      return matchGrupo && matchTipo;
-    });
+  cambiarVista() { 
+    this.limpiarFiltros();
+    this.cargarDatos(); 
   }
 
-  limpiarFiltrosProf() {
-    this.filtroGrupoProf = null;
-    this.filtroTipoProf = null;
-    this.filtrarProfesores();
+  limpiarFiltros() {
+    this.filtros = { global: '', grupo: null, posicion: null, tipoProfesor: null, estado: null };
+    if (this.dt) this.dt.reset();
   }
 
-  // ================= DIÁLOGO (CRUD) =================
-  abrirDialogoCrear() {
+  async cargarDatos() {
+    this.loading = true;
+    this.dataList = [];
+    try {
+      let res: any;
+      switch(this.vistaActual) {
+        case 'estudiantes': res = await this.supabase.getEstudiantes(); break;
+        case 'profesores': res = await this.supabase.getProfesores(); break;
+        case 'admins': res = await this.supabase.getAdmins(); break;
+        case 'kinesiologos': res = await this.supabase.getKinesiologos(); break;
+        case 'nutricionistas': res = await this.supabase.getNutricionistas(); break;
+      }
+      if (res?.data) this.dataList = res.data;
+    } finally {
+      this.loading = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  calcularEdad(fecha: string | Date): number | null {
+    if (!fecha) return null;
+    const born = new Date(fecha); // Ojo: aquí asume formato YYYY-MM-DD estándar
+    const today = new Date();
+    let age = today.getFullYear() - born.getFullYear();
+    const monthDiff = today.getMonth() - born.getMonth();
+    // Ajuste fino por día
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < born.getDate())) age--;
+    return age;
+  }
+
+  // --- ABM (CRUD) ---
+
+  abrirNuevo() {
     this.isEditing = false;
     this.tituloDialogo = 'Nuevo Usuario';
-    this.limpiarFormulario();
-    
-    // Pre-seleccionar tipo según la vista actual
-    // Nota: Para estudiantes/profesores el tipo específico se elige en el form
+    this.limpiarForm();
     this.displayDialog = true;
   }
 
-  abrirDialogoEditar(usuario: any) {
+  abrirEditar(usuario: any) {
     this.isEditing = true;
     this.tituloDialogo = 'Editar Usuario';
-    
-    // Copiar datos
-    this.userForm = { ...usuario, password: '' };
+    this.limpiarForm();
 
-    // Lógica específica por tipo
-    if (this.vistaActual === 'estudiantes') {
-       this.userForm.grupo_id = usuario.grupo_id || null;
+    // 1. Manejo seguro de FECHA (Evita error de zona horaria)
+    let fechaNac = null;
+    if (usuario.fecha_nacimiento) {
+        // Convertimos '2010-05-15' a una fecha local correcta [Año, Mes (0-index), Día]
+        const parts = usuario.fecha_nacimiento.split('-'); 
+        // new Date(año, mes-1, dia) crea la fecha en hora local (00:00:00 local)
+        if(parts.length === 3) {
+            fechaNac = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+        }
     }
-    if (this.vistaActual === 'profesores') {
-       if (usuario.grupos_profesores && usuario.grupos_profesores.length > 0) {
-           this.userForm.grupos_profe = usuario.grupos_profesores.map((g: any) => g.grupo_id);
-       } else {
-           this.userForm.grupos_profe = [];
-       }
+
+    // 2. Cargar datos básicos
+    this.userForm = { 
+        ...usuario, 
+        fecha_nacimiento: fechaNac, 
+        password: '', // No cargamos la contraseña hash
+        activo: usuario.activo ?? true 
+    };
+
+    // 3. Cargar relaciones (Estudiantes -> Posiciones)
+    if (this.vistaActual === 'estudiantes' && usuario.estudiantes_posiciones) {
+        // Mapeamos el array de objetos [{posicion_id:1}] a array de números [1]
+        this.userForm.posicionesIds = usuario.estudiantes_posiciones.map((p: any) => p.posicion_id);
     }
+
+    // 4. Cargar relaciones (Profesores -> Grupos)
+    if (this.vistaActual === 'profesores' && usuario.grupos_profesores) {
+        this.userForm.gruposIds = usuario.grupos_profesores.map((g: any) => g.grupo_id);
+    }
+
     this.displayDialog = true;
   }
 
-  limpiarFormulario() {
-    this.userForm = {
-      id: null, nombre: '', apellido: '', rut: '', email: '', password: '', 
-      tipo_alumno: '', tipo_profesor: '', grupo_id: null, grupos_profe: []
+  limpiarForm() {
+    this.userForm = { 
+        id: null, nombre: '', apellido: '', rut: '', email: '', password: '', 
+        fecha_nacimiento: null, activo: true, grupo_id: null, tipo_profesor: '', 
+        posicionesIds: [], gruposIds: [] 
     };
   }
 
-  async guardarUsuario() {
+  async guardar() {
     if (!this.userForm.email) {
-      this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'El email es obligatorio' });
-      return;
+        this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'El email es obligatorio' });
+        return;
     }
-    if (!this.isEditing && !this.userForm.password) {
-      this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'La contraseña es obligatoria' });
-      return;
-    }
-
-    const tabla = this.vistaActual; // La tabla coincide con el value del dropdown
     
-    const datosBase: any = {
-      nombre: this.userForm.nombre,
-      apellido: this.userForm.apellido,
-      rut: this.userForm.rut
-    };
-
-    if (this.vistaActual === 'estudiantes') {
-        datosBase['tipo_alumno'] = this.userForm.tipo_alumno;
-        datosBase['grupo_id'] = this.userForm.grupo_id;
-    } 
-    else if (this.vistaActual === 'profesores') {
-        datosBase['tipo_profesor'] = this.userForm.tipo_profesor;
-    }
-
-    let userIdResult = this.userForm.id;
-    let errorResult = null;
+    this.loading = true;
+    this.cdr.detectChanges();
 
     try {
-      if (this.isEditing) {
-        const { error } = await this.supabase.adminUpdateUsuario(tabla, this.userForm.id, this.userForm.email, datosBase);
-        errorResult = error;
+        const { nombre, apellido, rut, activo } = this.userForm;
         
-        // Actualización especial para grupos de profesores
-        if (!error && this.vistaActual === 'profesores') {
-            await this.supabase.actualizarGruposProfesor(this.userForm.id, this.userForm.grupos_profe);
+        // Objeto base que irá a la tabla específica
+        const datosBase: any = { nombre, apellido, rut, activo };
+
+        // Lógica específica por Rol
+        if (this.vistaActual === 'estudiantes') {
+            let fechaDb = null;
+            if (this.userForm.fecha_nacimiento) {
+                // Formatear Date object a string YYYY-MM-DD usando hora local
+                const d = this.userForm.fecha_nacimiento;
+                const year = d.getFullYear();
+                const month = ('0' + (d.getMonth() + 1)).slice(-2);
+                const day = ('0' + d.getDate()).slice(-2);
+                fechaDb = `${year}-${month}-${day}`;
+            }
+            datosBase.fecha_nacimiento = fechaDb;
+            datosBase.grupo_id = this.userForm.grupo_id;
+        
+        } else if (this.vistaActual === 'profesores') {
+            datosBase.tipo_profesor = this.userForm.tipo_profesor;
         }
 
-      } else {
-        const res: any = await this.supabase.crearUsuarioCompleto(this.userForm.email, this.userForm.password, datosBase, tabla);
-        userIdResult = res.data?.user?.id;
-        errorResult = res.error;
+        let userId = this.userForm.id;
 
-        // Creación especial para grupos de profesores
-        if (!errorResult && this.vistaActual === 'profesores' && userIdResult) {
-            await this.supabase.actualizarGruposProfesor(userIdResult, this.userForm.grupos_profe);
+        if (this.isEditing) {
+            // EDITAR
+            const { error } = await this.supabase.updateUsuario(
+                this.vistaActual, 
+                userId, 
+                datosBase, 
+                this.userForm.email.toLowerCase()
+            );
+            if (error) throw error;
+
+        } else {
+            // CREAR (Auth + DB)
+            const { data, error } = await this.supabase.crearUsuarioCompleto(
+                this.userForm.email.toLowerCase(), 
+                this.userForm.password, 
+                datosBase, 
+                this.vistaActual
+            );
+            if (error) throw error;
+            userId = data?.user?.id; // Capturamos el nuevo ID
         }
-      }
 
-      if (errorResult) {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: errorResult.message });
-      } else {
-        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: this.isEditing ? 'Usuario actualizado.' : 'Usuario creado.' });
+        // --- ACTUALIZAR RELACIONES MANY-TO-MANY ---
+        if (userId) {
+            if (this.vistaActual === 'estudiantes') {
+                await this.supabase.actualizarPosicionesEstudiante(userId, this.userForm.posicionesIds);
+            }
+            if (this.vistaActual === 'profesores') {
+                await this.supabase.actualizarGruposProfesor(userId, this.userForm.gruposIds);
+            }
+        }
+
+        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario guardado correctamente' });
         this.displayDialog = false;
-        this.recargarTablaActual();
-      }
+        
+        // Recargar datos (pequeño delay para asegurar consistencia DB)
+        setTimeout(() => this.cargarDatos(), 100);
 
-    } catch (e) {
-      console.error(e);
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error inesperado.' });
+    } catch (error: any) {
+        console.error(error);
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: error.message || 'Error al guardar usuario' });
+    } finally {
+        this.loading = false;
+        this.cdr.markForCheck(); 
     }
   }
 
-  eliminarUsuario(id: any, tabla: string) {
+  // --- ACCIONES DE ESTADO Y ELIMINAR ---
+
+  async toggleEstado(usuario: any) {
+    const accion = usuario.activo ? 'desactivar' : 'activar';
     this.confirmationService.confirm({
-      message: '¿Estás seguro de eliminar este usuario?',
-      header: 'Confirmar Eliminación',
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Sí, eliminar',
+      message: `¿Estás seguro de que deseas ${accion} la cuenta de ${usuario.nombre} ${usuario.apellido}?`,
+      header: 'Confirmar estado',
+      icon: usuario.activo ? 'pi pi-exclamation-triangle' : 'pi pi-check-circle',
+      acceptLabel: 'Sí, cambiar',
       rejectLabel: 'Cancelar',
-      acceptButtonStyleClass: 'p-button-danger p-button-text',
+      acceptButtonStyleClass: usuario.activo ? 'p-button-danger' : 'p-button-success',
       accept: async () => {
-        const { error } = await this.supabase.deleteUsuario(tabla, id);
-        if (error) {
-            this.messageService.add({ severity: 'error', summary: 'Error', detail: error.message });
-        } else {
-            this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Usuario eliminado.' });
-            this.recargarTablaActual();
+        const nuevoEstado = !usuario.activo;
+        
+        // Reconstruimos el objeto update mínimo necesario
+        const datosUpdate: any = { 
+            nombre: usuario.nombre, 
+            apellido: usuario.apellido, 
+            rut: usuario.rut, 
+            activo: nuevoEstado 
+        };
+
+        // Si es estudiante, necesitamos pasar campos obligatorios si la DB los exige en update (raro, pero seguro)
+        if (this.vistaActual === 'estudiantes') {
+          datosUpdate.fecha_nacimiento = usuario.fecha_nacimiento;
+          datosUpdate.grupo_id = usuario.grupo_id;
+        } else if (this.vistaActual === 'profesores') {
+          datosUpdate.tipo_profesor = usuario.tipo_profesor;
+        }
+
+        try {
+          const { error } = await this.supabase.updateUsuario(this.vistaActual, usuario.id, datosUpdate, usuario.email);
+          if (error) throw error;
+          
+          usuario.activo = nuevoEstado; // Actualizar vista localmente
+          this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Estado actualizado.' });
+          this.cdr.detectChanges();
+        } catch (err) {
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el estado.' });
         }
       }
     });
   }
 
-  recargarTablaActual() {
-    switch(this.vistaActual) {
-        case 'estudiantes': this.cargarEstudiantes(); break;
-        case 'profesores': this.cargarProfesores(); break;
-        case 'admins': this.cargarAdmins(); break;
-        case 'kinesiologos': this.cargarKines(); break;
-        case 'nutricionistas': this.cargarNutris(); break;
-    }
+  async eliminar(usuario: any) {
+    this.confirmationService.confirm({
+      message: `¿Eliminar permanentemente a ${usuario.nombre} ${usuario.apellido}?`,
+      header: 'Confirmar Eliminación',
+      icon: 'pi pi-trash',
+      acceptLabel: 'Sí, eliminar',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectLabel: 'Cancelar',
+      accept: async () => {
+        const { error } = await this.supabase.deleteUsuario(this.vistaActual, usuario.id);
+        if (!error) {
+          this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Usuario borrado permanentemente.' });
+          this.cargarDatos();
+        } else {
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el usuario.' });
+        }
+      }
+    });
   }
 }

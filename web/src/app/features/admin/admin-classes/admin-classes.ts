@@ -9,14 +9,12 @@ import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DatePickerModule } from 'primeng/datepicker';
-import { TabsModule } from 'primeng/tabs';
-import { InputGroupModule } from 'primeng/inputgroup';
-import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { CheckboxModule } from 'primeng/checkbox';
 
 import { SupabaseService } from '../../../core/services/supabase.service';
@@ -27,11 +25,10 @@ import { SupabaseService } from '../../../core/services/supabase.service';
   imports: [
     CommonModule, FormsModule, TableModule, ButtonModule, DialogModule, 
     InputTextModule, TextareaModule, SelectModule, TagModule, ToastModule, 
-    ConfirmDialogModule, DatePickerModule, TabsModule, InputGroupModule, 
-    InputGroupAddonModule, CheckboxModule
+    ConfirmDialogModule, DatePickerModule, CheckboxModule, SelectButtonModule
   ],
   providers: [ConfirmationService, MessageService],
-  templateUrl: './admin-classes.html', // <--- ¡AQUÍ ESTABA EL ERROR, YA ESTÁ CORREGIDO!
+  templateUrl: './admin-classes.html',
   styleUrls: ['./admin-classes.css']
 })
 export class AdminClassesComponent implements OnInit {
@@ -39,29 +36,34 @@ export class AdminClassesComponent implements OnInit {
   clases: any[] = [];           
   clasesOriginales: any[] = []; 
   grupos: any[] = [];
-  profesores: any[] = [];
-  profesoresFiltrados: any[] = []; // Lista filtrada para el modal
-  loading: boolean = true;
   
+  loading: boolean = true;
   displayDialog: boolean = false;
   displayAttendanceDialog: boolean = false;
   isEditing: boolean = false;
   tituloDialogo: string = '';
-  activeTab: string = '0';
+
+  // Control de Vistas del Formulario
+  vistaFormulario: string = 'logistica'; // 'logistica' | 'planificacion'
+  opcionesVistaForm = [
+      { label: 'Logística', value: 'logistica', icon: 'pi pi-map-marker' },
+      { label: 'Planificación', value: 'planificacion', icon: 'pi pi-list' }
+  ];
 
   // Filtros
   filtroFecha: Date | null = null;
   filtroGrupoId: any = null;
-  filtroProfesorId: any = null;
+  filtroLugar: string = ''; 
 
   // Asistencia
   claseSeleccionada: any = null;
   alumnosAsistencia: any[] = [];
   loadingAsistencia: boolean = false;
 
+  // Formulario (Sin profesor_id, Sin tipo_entrenamiento)
   claseForm: any = {
-    id: null, grupo_id: null, profesor_id: null, fecha: null, hora: null, lugar: '',
-    tipo_entrenamiento: 'GENERAL', objetivo: '', calentamiento: '', parte_principal: '', vuelta_calma: ''
+    id: null, grupo_id: null, fecha: null, hora: null, lugar: '',
+    objetivo: '', calentamiento: '', parte_principal: '', vuelta_calma: ''
   };
 
   constructor(
@@ -77,67 +79,70 @@ export class AdminClassesComponent implements OnInit {
 
   async cargarDatos() {
     this.loading = true;
+    
+    // Cargar Clases
     const { data: dataClases } = await this.supabase.getClases();
     this.clasesOriginales = dataClases || [];
     this.aplicarFiltros(); 
     
+    // Cargar Grupos
     const { data: dataGrupos } = await this.supabase.getGrupos();
     this.grupos = dataGrupos || [];
-    
-    const { data: dataProfes } = await this.supabase.getProfesores();
-    this.profesores = (dataProfes || []).map((p: any) => ({
-      ...p, nombreCompleto: `${p.nombre} ${p.apellido}`
-    }));
     
     this.loading = false;
     this.cdr.detectChanges();
   }
 
-  // --- LÓGICA DE FILTRADO DE PROFESORES ---
-  onGrupoChange(grupoId: number) {
-    if (!grupoId) {
-      this.profesoresFiltrados = [];
-      this.claseForm.profesor_id = null;
-      return;
-    }
-    // Filtramos solo los profes que tengan asignado este grupo
-    this.profesoresFiltrados = this.profesores.filter(profe => 
-      profe.grupos_profesores?.some((gp: any) => gp.grupo_id === grupoId)
-    );
-    // Si el profe seleccionado no pertenece al nuevo grupo, lo quitamos
-    if (this.claseForm.profesor_id && !this.profesoresFiltrados.some(p => p.id === this.claseForm.profesor_id)) {
-      this.claseForm.profesor_id = null;
-    }
-  }
-
   aplicarFiltros() {
     this.clases = this.clasesOriginales.filter(clase => {
-      let cumpleFecha = true, cumpleGrupo = true, cumpleProfe = true;
-      if (this.filtroFecha) cumpleFecha = clase.fecha === this.formatearFecha(this.filtroFecha);
-      if (this.filtroGrupoId) cumpleGrupo = clase.grupo_id === this.filtroGrupoId;
-      if (this.filtroProfesorId) cumpleProfe = clase.profesor_id === this.filtroProfesorId;
-      return cumpleFecha && cumpleGrupo && cumpleProfe;
+      let cumpleFecha = true; let cumpleGrupo = true; let cumpleLugar = true;
+      
+      if (this.filtroFecha) {
+          cumpleFecha = clase.fecha === this.formatearFecha(this.filtroFecha);
+      }
+      if (this.filtroGrupoId) {
+          cumpleGrupo = clase.grupo_id === this.filtroGrupoId;
+      }
+      if (this.filtroLugar && this.filtroLugar.trim() !== '') {
+          const lugarClase = (clase.lugar || '').toLowerCase();
+          const busqueda = this.filtroLugar.toLowerCase();
+          cumpleLugar = lugarClase.includes(busqueda);
+      }
+      
+      return cumpleFecha && cumpleGrupo && cumpleLugar;
     });
   }
 
   limpiarFiltros() {
     this.filtroFecha = null;
     this.filtroGrupoId = null;
-    this.filtroProfesorId = null;
+    this.filtroLugar = '';
     this.aplicarFiltros();
   }
 
+  // --- ASISTENCIA ---
   async verAsistencia(clase: any) {
     this.claseSeleccionada = clase;
     this.displayAttendanceDialog = true;
     this.loadingAsistencia = true;
-    const { data } = await this.supabase.getAlumnosPorGrupo(clase.grupo_id);
-    if (data) {
-       // Aquí podrías cargar la asistencia real si ya existe en BD, 
-       // por ahora asumimos 'todos presentes' o vacíos para marcar.
-       // Si quieres cargar lo guardado, necesitarías un getAsistenciaPorClase(clase.id)
-       this.alumnosAsistencia = data.map(a => ({ ...a, presente: true }));
+
+    // 1. Obtener alumnos del grupo
+    const { data: alumnosGrupo } = await this.supabase.getAlumnosPorGrupo(clase.grupo_id);
+    
+    // 2. Obtener asistencia ya guardada (si existe)
+    const { data: asistenciaGuardada } = await this.supabase.getAsistenciaPorClase(clase.id);
+
+    if (alumnosGrupo) {
+       // Fusionar
+       this.alumnosAsistencia = alumnosGrupo.map(alumno => {
+           const registro = asistenciaGuardada?.find((r: any) => r.estudiante_id === alumno.id);
+           return { 
+               ...alumno, 
+               presente: registro ? registro.presente : false 
+           };
+       });
     }
+    
     this.loadingAsistencia = false;
     this.cdr.detectChanges();
   }
@@ -145,44 +150,52 @@ export class AdminClassesComponent implements OnInit {
   async guardarAsistencia() {
     const registros = this.alumnosAsistencia.map(a => ({
       clase_id: this.claseSeleccionada.id,
-      alumno_id: a.id,
-      estado: a.presente ? 'PRESENTE' : 'AUSENTE'
+      estudiante_id: a.id,
+      presente: a.presente
     }));
+
     const { error } = await this.supabase.saveAsistencia(registros);
+    
     if (!error) {
-      this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Asistencia guardada' });
+      this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Asistencia actualizada correctamente' });
       this.displayAttendanceDialog = false;
+    } else {
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar la asistencia' });
     }
   }
 
+  // --- CRUD CLASES ---
   abrirNuevo() { 
     this.isEditing = false; 
     this.tituloDialogo = 'Nueva Clase'; 
     this.limpiarForm(); 
+    this.vistaFormulario = 'logistica';
     this.displayDialog = true; 
   }
   
   abrirEditar(clase: any) {
     this.isEditing = true;
     this.tituloDialogo = 'Editar Clase';
+    this.vistaFormulario = 'logistica';
+    
     const fechaObj = new Date(clase.fecha + 'T00:00:00');
     const horaObj = new Date(`2000-01-01T${clase.hora}`);
+    
     this.claseForm = { ...clase, fecha: fechaObj, hora: horaObj };
-    
-    // Al editar, cargamos los profes del grupo seleccionado
-    this.onGrupoChange(clase.grupo_id);
-    
     this.displayDialog = true;
   }
 
   async guardarClase() {
+    if (!this.claseForm.grupo_id || !this.claseForm.fecha || !this.claseForm.hora) {
+        this.messageService.add({ severity: 'warn', summary: 'Faltan datos', detail: 'Complete Grupo, Fecha y Hora' });
+        return;
+    }
+
     const datosParaEnviar: any = {
       grupo_id: this.claseForm.grupo_id,
-      profesor_id: this.claseForm.profesor_id,
       fecha: this.formatearFecha(this.claseForm.fecha),
       hora: this.formatearHora(this.claseForm.hora),
       lugar: this.claseForm.lugar || '',
-      tipo_entrenamiento: this.claseForm.tipo_entrenamiento || 'GENERAL',
       objetivo: this.claseForm.objetivo || '',
       calentamiento: this.claseForm.calentamiento || '',
       parte_principal: this.claseForm.parte_principal || '',
@@ -206,15 +219,32 @@ export class AdminClassesComponent implements OnInit {
   }
 
   eliminarClase(id: number) {
-    this.confirmationService.confirm({ message: '¿Eliminar clase?', accept: async () => { await this.supabase.deleteClase(id); this.cargarDatos(); } });
+    this.confirmationService.confirm({
+        message: '¿Estás seguro de eliminar esta clase y su asistencia?',
+        header: 'Confirmar Eliminación',
+        icon: 'pi pi-exclamation-triangle',
+        acceptButtonStyleClass: 'p-button-danger p-button-text',
+        accept: async () => { 
+            await this.supabase.deleteClase(id); 
+            this.cargarDatos(); 
+        } 
+    });
   }
 
   limpiarForm() { 
-    this.claseForm = { id: null, grupo_id: null, profesor_id: null, fecha: null, hora: null, lugar: '', tipo_entrenamiento: 'GENERAL' }; 
-    this.profesoresFiltrados = [];
-    this.activeTab = '0'; 
+    this.claseForm = { 
+        id: null, grupo_id: null, fecha: null, hora: null, lugar: '', 
+        objetivo: '', calentamiento: '', parte_principal: '', vuelta_calma: '' 
+    }; 
   }
 
-  formatearFecha(date: Date | null): string { if (!date) return ''; return `${date.getFullYear()}-${('0' + (date.getMonth() + 1)).slice(-2)}-${('0' + date.getDate()).slice(-2)}`; }
-  formatearHora(date: Date | null): string { if (!date) return ''; return ('0' + date.getHours()).slice(-2) + ':' + ('0' + date.getMinutes()).slice(-2); }
+  formatearFecha(date: Date | null): string { 
+      if (!date) return ''; 
+      return `${date.getFullYear()}-${('0' + (date.getMonth() + 1)).slice(-2)}-${('0' + date.getDate()).slice(-2)}`; 
+  }
+  
+  formatearHora(date: Date | null): string { 
+      if (!date) return ''; 
+      return ('0' + date.getHours()).slice(-2) + ':' + ('0' + date.getMinutes()).slice(-2); 
+  }
 }

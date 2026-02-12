@@ -68,28 +68,49 @@
 
   <section class="recent-activity-card">
     <div class="activity-header">
-      <h3>Últimas Evaluaciones</h3>
+      <div class="flex align-items-center gap-2">
+          <i class="pi pi-gift text-primary text-xl" style="color: #f97316;"></i>
+          <h3 class="m-0">Próximos Cumpleaños (Semana)</h3>
+      </div>
       <button class="p-button-rounded p-button-text" (click)="cargarDatos()" [disabled]="loading">
         <i class="pi pi-refresh" [ngClass]="{'pi-spin': loading}"></i>
       </button>
     </div>
 
     <div class="activity-list">
-      <div class="activity-item" *ngFor="let item of actividadReciente">
-        <div class="item-icon-wrapper icon-blue">
-          <i class="pi pi-star-fill"></i>
+      
+      <div class="activity-item" *ngFor="let est of cumpleanosList">
+        <div class="item-icon-wrapper" [ngClass]="est.diasRestantes === 0 ? 'icon-orange' : 'icon-blue'">
+          <i class="pi pi-user"></i>
         </div>
+        
         <div class="item-info">
-          <p class="item-title">{{ item.estudiantes?.nombre }} {{ item.estudiantes?.apellido }}</p>
-          <span class="item-meta">{{ item.tipo_evaluacion?.nombre }} • {{ item.fecha | date:'dd/MM' }}</span>
+          <p class="item-title text-900 font-bold">
+              {{ est.nombre }} {{ est.apellido }}
+          </p>
+          <span class="item-meta">
+              {{ est.grupos?.nombre || 'Sin Grupo' }} • {{ est.proximoCumple | date:'d \'de\' MMMM' }}
+          </span>
         </div>
-        <span class="badge badge-score">{{ item.valor_numerico }} {{ item.tipo_evaluacion?.unidad_medida || '' }}</span>
+
+        <div class="flex flex-column align-items-end">
+            <span class="badge" [ngClass]="{
+                'badge-success': est.diasRestantes === 0, 
+                'badge-score': est.diasRestantes > 0
+            }">
+                {{ est.diasRestantes === 0 ? '¡ES HOY!' : 
+                   est.diasRestantes === 1 ? 'Mañana' : 
+                   'En ' + est.diasRestantes + ' días' }}
+            </span>
+            <small class="text-secondary text-xs mt-1">Cumplirá {{ est.nuevaEdad }} años</small>
+        </div>
       </div>
 
-      <div class="empty-state" *ngIf="actividadReciente.length === 0 && !loading">
-        <i class="pi pi-inbox"></i>
-        <p>No hay actividad reciente.</p>
+      <div class="empty-state" *ngIf="cumpleanosList.length === 0 && !loading">
+        <i class="pi pi-calendar-times" style="font-size: 2rem; color: var(--text-secondary); margin-bottom: 1rem;"></i>
+        <p class="text-secondary m-0">No hay cumpleaños en los próximos 7 días.</p>
       </div>
+
     </div>
   </section>
 </div>

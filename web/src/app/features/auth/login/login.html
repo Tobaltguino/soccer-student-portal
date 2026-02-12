@@ -7,12 +7,8 @@
             
             <div class="logo-section">
                 <img src="assets/images/ProFutbol_Transparentenegro.png" 
-                     alt="Logo ProFutbol Light" 
-                     class="logo-img logo-light">
-
-                <img src="assets/images/ProFutbol_Transparentenegro.png" 
-                     alt="Logo ProFutbol Dark" 
-                     class="logo-img logo-dark">
+                     alt="Logo ProFutbol" 
+                     class="logo-img">
 
                 <h2>Acceso ProFutbol</h2>
                 <p class="subtitle">Gestión Deportiva Integral</p>
@@ -21,17 +17,19 @@
             <div class="form-section">
                 
                 <div class="field">
-                    <label for="email">Correo Electrónico</label>
+                    <label for="rut">RUT del Usuario</label>
                     <div class="input-group">
                         <div class="input-icon">
-                            <i class="pi pi-envelope"></i>
+                            <i class="pi pi-id-card"></i>
                         </div>
                         <input pInputText 
-                               id="email" 
-                               type="email" 
-                               [(ngModel)]="email" 
-                               placeholder="ejemplo@profutbol.cl" 
-                               class="custom-input"/>
+                               id="rut" 
+                               type="text" 
+                               appRutFormat
+                               [(ngModel)]="rut" 
+                               placeholder="1-1" 
+                               class="custom-input"
+                               (keyup.enter)="ingresar()"/>
                     </div>
                 </div>
 
@@ -76,29 +74,25 @@
         [(visible)]="displayResetDialog" 
         [modal]="true" 
         [style]="{ width: '90vw', maxWidth: '400px' }" 
-        [draggable]="false"
-        [resizable]="false"
         styleClass="p-fluid">
         
         <div class="flex flex-column gap-3 pt-2">
-            <p class="text-secondary text-sm mb-3 line-height-3">
-                Ingresa tu correo electrónico asociado y te enviaremos un enlace para crear una nueva contraseña.
+            <p class="text-secondary text-sm mb-3">
+                Ingresa el <b>correo electrónico</b> vinculado a tu cuenta. Te enviaremos un enlace para crear una contraseña nueva.
             </p>
             
             <div class="field">
-                <label for="resetEmail" class="font-bold mb-2 block text-sm text-main">Correo Electrónico</label>
+                <label for="resetEmail" class="font-bold mb-2 block">Correo Electrónico</label>
                 <div class="p-input-icon-left w-full">
                     <i class="pi pi-envelope"></i>
-                    <input pInputText id="resetEmail" [(ngModel)]="resetEmail" placeholder="ejemplo@profutbol.cl" class="w-full"/>
+                    <input pInputText id="resetEmail" [(ngModel)]="resetEmail" placeholder="ejemplo@profutbol.cl"/>
                 </div>
             </div>
         </div>
 
         <ng-template pTemplate="footer">
-            <div class="flex justify-content-end gap-2">
-                <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="displayResetDialog = false"></button>
-                <button pButton label="Enviar" icon="pi pi-send" [loading]="loadingReset" (click)="enviarCorreoRecuperacion()"></button>
-            </div>
+            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="displayResetDialog = false"></button>
+            <button pButton label="Enviar Enlace" icon="pi pi-send" [loading]="loadingReset" (click)="enviarCorreoRecuperacion()"></button>
         </ng-template>
     </p-dialog>
 

@@ -13,7 +13,10 @@ export class SupabaseService {
     this.supabase = createClient(environment.supabaseUrl, environment.supabaseKey);
   }
 
-  // --- AUTENTICACIÓN ---
+  // ==========================================
+  // 1. AUTENTICACIÓN Y SEGURIDAD
+  // ==========================================
+  
   async login(email: string, password: string) {
     return await this.supabase.auth.signInWithPassword({ email, password });
   }
@@ -41,117 +44,59 @@ export class SupabaseService {
     });
   }
 
-  // --- AdminDashboard
+  async loginConRut(rutInput: string, password: string) {
+    const tablas = ['admins', 'estudiantes', 'profesores', 'kinesiologos', 'nutricionistas'];
+    
+    for (const tabla of tablas) {
+      // Agregamos un console.log para ver qué está pasando realmente
+      const { data, error, status } = await this.supabase
+        .from(tabla)
+        .select('email, rut')
+        .eq('rut', rutInput.trim())
+        .maybeSingle();
 
-  // En supabase.service.ts
+      console.log(`Buscando en ${tabla}:`, { data, error, status });
 
-/** Obtiene el conteo total de estudiantes */
-async getTotalEstudiantes() {
-  return await this.supabase
-    .from('estudiantes')
-    .select('*', { count: 'exact', head: true });
-}
+      if (data?.email) {
+        return await this.supabase.auth.signInWithPassword({ 
+          email: data.email, 
+          password 
+        });
+      }
+    }
+    return { data: null, error: { message: `El RUT ${rutInput} no está registrado en ProFutbol.` } };
+  }
 
-/** Obtiene las clases programadas para el día de hoy */
-async getClasesHoy() {
-  const hoy = new Date().toISOString().split('T')[0];
-  return await this.supabase
-    .from('clases')
-    .select('*, grupos(nombre)')
-    .eq('fecha', hoy)
-    .order('hora', { ascending: true });
-}
+  // ==========================================
+  // 2. DASHBOARD (DATOS RESUMIDOS)
+  // ==========================================
 
-/** Obtiene las últimas evaluaciones realizadas */
-async getActividadReciente() {
-  return await this.supabase
-    .from('evaluaciones_sesiones')
-    .select('*, grupos(nombre), tipo_evaluacion(nombre)')
-    .order('created_at', { ascending: false })
-    .limit(5);
-}
-
-  // --- GESTIÓN DE USUARIOS (GETTERS CON RELACIONES) ---
-
-  // 1. Estudiantes: Traemos también el nombre del grupo
-  async getEstudiantes() { 
+  async getTotalEstudiantes() {
     return await this.supabase
       .from('estudiantes')
-      .select('*, grupos(nombre)') // 👈 JOIN con Grupos
-      .order('apellido'); 
+      .select('*', { count: 'exact', head: true });
   }
 
-  // 2. Profesores: Traemos la lista anidada de grupos
-  async getProfesores() { 
+  async getClasesHoy() {
+    const hoy = new Date().toISOString().split('T')[0];
     return await this.supabase
-      .from('profesores')
-      .select(`
-        *,
-        grupos_profesores (
-          grupo_id,
-          grupos ( id, nombre )
-        )
-      `) // 👈 JOIN Complejo (Tabla intermedia)
-      .order('apellido'); 
+      .from('clases')
+      .select('*, grupos(nombre)')
+      .eq('fecha', hoy)
+      .order('hora', { ascending: true });
   }
 
-  async getAdmins() { return await this.supabase.from('admins').select('*').order('apellido'); }
-  async getKinesiologos() { return await this.supabase.from('kinesiologos').select('*').order('apellido'); }
-  async getNutricionistas() { return await this.supabase.from('nutricionistas').select('*').order('apellido'); }
-
-  // Eliminar Genérico
-  async deleteUsuario(tabla: string, id: any) {
-    return await this.supabase.from(tabla).delete().eq('id', id);
+  async getActividadReciente() {
+    return await this.supabase
+      .from('evaluaciones_sesiones')
+      .select('*, grupos(nombre), tipo_evaluacion(nombre)')
+      .order('created_at', { ascending: false })
+      .limit(5);
   }
 
-  // --- CREAR USUARIO (Auth + DB) ---
-  // Corregido para devolver estructura consistente { data, error }
-  async crearUsuarioCompleto(email: string, password: string, datosPersonales: any, tabla: string) {
-    // Cliente temporal para no cerrar sesión del admin actual
-    const tempSupabase = createClient(environment.supabaseUrl, environment.supabaseKey, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    });
-
-    // 1. Crear en Auth
-    const { data: authData, error: authError } = await tempSupabase.auth.signUp({
-      email: email,
-      password: password
-    });
-
-    if (authError) return { data: null, error: authError };
-    if (!authData.user) return { data: null, error: { message: 'Error creando usuario Auth' } };
-
-    // 2. Crear en Base de Datos (Tabla específica)
-    const { data: dbData, error: dbError } = await this.supabase
-      .from(tabla)
-      .insert({
-        id: authData.user.id, // Vinculamos el ID
-        email: email,
-        ...datosPersonales
-      })
-      .select()
-      .single();
-
-    if (dbError) {
-      return { data: null, error: dbError };
-    }
-
-    // Retornamos todo junto
-    return { data: { user: authData.user, perfil: dbData }, error: null };
-  }
-
-  // --- EDITAR MAESTRO (RPC) ---
-  async adminUpdateUsuario(tabla: string, id: string, email: string, datos: any) {
-    const { error } = await this.supabase.rpc('admin_actualizar_usuario', {
-      id_usuario: id,
-      nuevo_email: email,
-      tabla_nombre: tabla,
-      nuevos_datos: datos
-    });
-    return { error };
-  }
-
-  // --- GESTIÓN DE GRUPOS (CRUD Básico) ---
+  // ==========================================
+  // 3. MAESTROS (CONFIGURACIÓN GLOBAL)
+  // ==========================================
 
   async getGrupos() {
     return await this.supabase
@@ -172,119 +117,270 @@ async getActividadReciente() {
     return await this.supabase.from('grupos').delete().eq('id', id);
   }
 
-  // --- GESTIÓN DE RELACIONES (PROFESOR <-> GRUPOS) ---
-  // ✅ ESTA ES LA FUNCIÓN NUEVA QUE FALTABA
-  async actualizarGruposProfesor(profesorId: string, gruposIds: any[]) {
-    // 1. Borrar asignaciones viejas
-    const { error: deleteError } = await this.supabase
-      .from('grupos_profesores')
-      .delete()
-      .eq('profesor_id', profesorId);
+  // ✅ NUEVO: Para el selector de posiciones de estudiantes
+  async getPosiciones() {
+  return await this.supabase
+    .from('posiciones')
+    .select('*')
+    .order('orden', { ascending: true }); // <--- Ordena de 1 a 8
+}
 
-    if (deleteError) {
-      console.error('Error limpiando grupos antiguos:', deleteError);
-      return { error: deleteError };
+  // ==========================================
+  // 4. GESTIÓN DE USUARIOS (CRUD + RELACIONES)
+  // ==========================================
+
+  // --- GETTERS (LECTURA) ---
+  
+  // ✅ ACTUALIZADO: Trae el Grupo Y las Posiciones (Relación Muchos a Muchos)
+  async getEstudiantes() { 
+    return await this.supabase
+      .from('estudiantes')
+      .select(`
+        *,
+        grupos ( id, nombre ),
+        estudiantes_posiciones (
+          posicion_id,
+          posiciones ( nombre, orden )
+        )
+      `) 
+      .order('apellido', { ascending: true }); 
+  }
+
+  // ✅ ACTUALIZADO: Trae los Grupos a cargo del profesor
+  async getProfesores() { 
+    return await this.supabase
+      .from('profesores')
+      .select(`
+        *,
+        grupos_profesores (
+          grupo_id,
+          grupos ( id, nombre )
+        )
+      `)
+      .order('apellido'); 
+  }
+
+  async getAdmins() { return await this.supabase.from('admins').select('*').order('apellido'); }
+  async getKinesiologos() { return await this.supabase.from('kinesiologos').select('*').order('apellido'); }
+  async getNutricionistas() { return await this.supabase.from('nutricionistas').select('*').order('apellido'); }
+
+  // --- CREAR USUARIO (AUTH + DB) ---
+  async crearUsuarioCompleto(email: string, password: string, datosPersonales: any, tabla: string) {
+    const tempSupabase = createClient(environment.supabaseUrl, environment.supabaseKey, {
+      auth: { 
+        autoRefreshToken: false, 
+        persistSession: false,
+        detectSessionInUrl: false 
+      }
+    });
+
+    // ✅ LIMPIEZA DE SEGURIDAD: Solo estudiantes tienen fecha_nacimiento
+    if (tabla !== 'estudiantes') {
+      delete datosPersonales.fecha_nacimiento;
+      delete datosPersonales.grupo_id; // Profesores y otros no usan grupo_id directo
     }
 
-    // 2. Si hay nuevos grupos, insertarlos
+    const { data: authData, error: authError } = await tempSupabase.auth.signUp({
+      email: email,
+      password: password,
+      options: {
+        data: {
+          role: this.mapTablaToRole(tabla),
+          nombre: datosPersonales.nombre,
+          apellido: datosPersonales.apellido,
+          rut: datosPersonales.rut,
+          ...(datosPersonales.tipo_profesor && { tipo_profesor: datosPersonales.tipo_profesor })
+        }
+      }
+    });
+
+    if (authError) return { data: null, error: authError };
+    if (!authData.user) return { data: null, error: { message: 'Error creando usuario Auth' } };
+
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Al actualizar, nos aseguramos de que el objeto 'datosPersonales' ya no lleve la fecha
+    const { data: dbData, error: dbError } = await this.supabase
+      .from(tabla)
+      .update(datosPersonales)
+      .eq('id', authData.user.id)
+      .select()
+      .maybeSingle(); 
+
+    if (dbError) {
+        console.warn("Error en DB:", dbError.message);
+        return { data: { user: authData.user, perfil: null }, error: dbError };
+    }
+
+    return { data: { user: authData.user, perfil: dbData }, error: null };
+  }
+
+  // --- EDITAR / ELIMINAR ---
+
+  async updateUsuario(tabla: string, id: string, datos: any, email: string) {
+    // ✅ LIMPIEZA DE SEGURIDAD antes de enviar al RPC
+    if (tabla !== 'estudiantes') {
+      delete datos.fecha_nacimiento;
+      delete datos.grupo_id;
+    }
+
+    return await this.supabase.rpc('admin_actualizar_usuario', {
+      id_usuario: id,
+      nuevo_email: email,     
+      tabla_nombre: tabla,
+      nuevos_datos: datos
+    });
+  }
+
+  async deleteUsuario(tabla: string, id: string) {
+    // Llamamos al RPC para borrar en cascada (Auth + Perfil)
+    return await this.supabase.rpc('admin_eliminar_usuario', {
+      id_usuario: id,
+      tabla_nombre: tabla
+    });
+  }
+
+  // --- GESTIÓN DE RELACIONES (TABLAS INTERMEDIAS) ---
+
+  // ✅ NUEVO: Gestionar Estudiantes <-> Posiciones
+  async actualizarPosicionesEstudiante(estudianteId: string, posicionesIds: number[]) {
+    // 1. Borrar anteriores
+    await this.supabase.from('estudiantes_posiciones').delete().eq('estudiante_id', estudianteId);
+    
+    // 2. Insertar nuevas si existen
+    if (posicionesIds && posicionesIds.length > 0) {
+      const inserts = posicionesIds.map(pid => ({
+        estudiante_id: estudianteId,
+        posicion_id: pid
+      }));
+      return await this.supabase.from('estudiantes_posiciones').insert(inserts);
+    }
+    return { error: null };
+  }
+
+  // ✅ NUEVO: Gestionar Profesores <-> Grupos
+  async actualizarGruposProfesor(profesorId: string, gruposIds: number[]) {
+    // 1. Borrar anteriores
+    await this.supabase.from('grupos_profesores').delete().eq('profesor_id', profesorId);
+
+    // 2. Insertar nuevos
     if (gruposIds && gruposIds.length > 0) {
       const inserts = gruposIds.map(gid => ({
         profesor_id: profesorId,
         grupo_id: gid
       }));
-      
-      return await this.supabase
-        .from('grupos_profesores')
-        .insert(inserts);
+      return await this.supabase.from('grupos_profesores').insert(inserts);
     }
-    
-    return { data: true, error: null };
+    return { error: null };
   }
 
   // ==========================================
-  //      MÓDULO DE CLASES (ENTRENAMIENTOS)
+  // 5. ENTRENAMIENTOS (CLASES Y ASISTENCIA)
   // ==========================================
 
   async getClases() {
     return await this.supabase
       .from('clases')
-      .select('*, grupos(nombre), profesores(nombre, apellido)')
+      .select(`
+        *,
+        grupos (
+          id,
+          nombre
+        )
+      `)
       .order('fecha', { ascending: false })
       .order('hora', { ascending: true });
   }
 
   async createClase(datos: any) {
-    // Añadimos .select() para confirmar la creación y obtener el objeto creado
-    return await this.supabase
-      .from('clases')
-      .insert(datos)
-      .select();
+    return await this.supabase.from('clases').insert(datos).select();
   }
 
   async updateClase(id: number, datos: any) {
-    return await this.supabase
-      .from('clases')
-      .update(datos)
-      .eq('id', id)
-      .select();
+    return await this.supabase.from('clases').update(datos).eq('id', id).select();
   }
 
   async deleteClase(id: number) {
-    return await this.supabase
-      .from('clases')
-      .delete()
-      .eq('id', id);
+    return await this.supabase.from('clases').delete().eq('id', id);
   }
 
-  // ==========================================
-  //      MÓDULO DE ASISTENCIA Y ALUMNOS
-  // ==========================================
-
   async getAlumnosPorGrupo(grupoId: number) {
-  return await this.supabase
-    .from('estudiantes') // ✅ Nombre corregido
-    .select('id, nombre, apellido, grupo_id')
-    .eq('grupo_id', grupoId)
-    .order('apellido', { ascending: true });
-}
+    return await this.supabase
+      .from('estudiantes')
+      .select('id, nombre, apellido, grupo_id')
+      .eq('grupo_id', grupoId)
+      .eq('activo', true) // Solo alumnos activos
+      .order('apellido', { ascending: true });
+  }
 
-async saveAsistencia(registros: any[]) {
-  return await this.supabase
-    .from('asistencias')
-    .upsert(registros, { onConflict: 'clase_id, alumno_id' });
-}
+  async saveAsistencia(registros: any[]) {
+    return await this.supabase
+      .from('asistencias')
+      .upsert(registros, { onConflict: 'clase_id, estudiante_id' }); // Ojo: campo 'estudiante_id' según tu SQL
+  }
 
   async getAsistenciaPorClase(claseId: number) {
     return await this.supabase
       .from('asistencias')
-      .select('alumno_id, estado')
+      .select('estudiante_id, presente')
       .eq('clase_id', claseId);
   }
 
   // ==========================================
-  //      MÓDULO DE EVALUACIONES (RELACIONAL)
+  // 6. EVALUACIONES (SALUD Y RENDIRMIENTO)
   // ==========================================
 
-  /** Obtiene los tipos de evaluación configurados (Velocidad, Salto, etc.) */
   async getTiposEvaluacion() {
-    return await this.supabase
-      .from('tipo_evaluacion')
-      .select('*')
-      .order('nombre', { ascending: true });
+    return await this.supabase.from('tipo_evaluacion').select('*').order('nombre');
   }
+
+  async createTipoEvaluacion(dato: any) {
+    return await this.supabase.from('tipo_evaluacion').insert(dato).select();
+  }
+
+  async eliminarTipoEvaluacion(id: number) {
+    return await this.supabase.from('tipo_evaluacion').delete().eq('id', id);
+  }
+
+  // Obtener rangos de un test específico
+  async getRangosPorTipo(tipoId: number) {
+    return await this.supabase
+      .from('evaluacion_rangos')
+      .select('*')
+      .eq('tipo_evaluacion_id', tipoId)
+      .order('valor_min', { ascending: true });
+  }
+
+  // Guardar un rango
+  async createRango(rango: any) {
+    return await this.supabase.from('evaluacion_rangos').insert(rango);
+  }
+
+  // Eliminar un rango
+  async eliminarRango(id: number) {
+    return await this.supabase.from('evaluacion_rangos').delete().eq('id', id);
+  }
+
+  // En src/app/core/services/supabase.service.ts
+
+async eliminarRangosPorTipo(tipoId: number) {
+  return await this.supabase
+    .from('evaluacion_rangos')
+    .delete()
+    .eq('tipo_evaluacion_id', tipoId); // Borra todos los que pertenezcan a ese test
+}
 
   async getSesionesEvaluacion() {
     return await this.supabase
       .from('evaluaciones_sesiones')
       .select(`
         *,
-        grupos ( nombre ),
-        tipo_evaluacion ( nombre, unidad_medida ) 
-      `) // <--- CAMBIO: Solo pedimos nombre y unidad. Quitamos el (*)
+        grupos!evaluaciones_sesiones_grupo_id_fkey ( nombre ),
+        tipo_evaluacion!evaluaciones_sesiones_tipo_evaluacion_id_fkey ( nombre, unidad_medida )
+      `)
       .order('fecha', { ascending: false });
   }
 
-  /** NUEVA: Crea la cabecera de la sesión (Planificación) */
   async crearSesionEvaluacion(datos: any) {
     return await this.supabase
       .from('evaluaciones_sesiones')
@@ -293,7 +389,6 @@ async saveAsistencia(registros: any[]) {
       .single();
   }
 
-  // ✅ AGREGA ESTA FUNCIÓN NUEVA:
   async updateSesionEvaluacion(id: string, datos: any) {
     return await this.supabase
       .from('evaluaciones_sesiones')
@@ -302,7 +397,10 @@ async saveAsistencia(registros: any[]) {
       .select();
   }
 
-  /** NUEVA: Obtiene los resultados específicos de una sesión */
+  async eliminarSesionEvaluacion(id: string) {
+    return await this.supabase.from('evaluaciones_sesiones').delete().eq('id', id);
+  }
+
   async getResultadosPorSesion(sesionId: string) {
     return await this.supabase
       .from('evaluaciones_resultados')
@@ -310,32 +408,20 @@ async saveAsistencia(registros: any[]) {
       .eq('sesion_id', sesionId);
   }
 
-  /** ACTUALIZADA: Guarda o actualiza notas vinculadas a una sesion_id */
   async guardarResultadosMasivos(resultados: any[]) {
-    return await this.supabase
-      .from('evaluaciones_resultados')
-      .upsert(resultados); // <--- CAMBIO: Quitamos opciones extra para evitar errores de sintaxis SQL si no existe el constraint
+    return await this.supabase.from('evaluaciones_resultados').upsert(resultados);
   }
 
-  /** ACTUALIZADA: Elimina una sesión completa (por cascada borrará sus resultados) */
-  async eliminarSesionEvaluacion(id: string) {
-    return await this.supabase
-      .from('evaluaciones_sesiones')
-      .delete()
-      .eq('id', id);
+  // ==========================================
+  // 7. HELPERS PRIVADOS
+  // ==========================================
+  
+  private mapTablaToRole(tabla: string): string {
+    if (tabla === 'estudiantes') return 'estudiante';
+    if (tabla === 'profesores') return 'profesor';
+    if (tabla === 'admins') return 'admin';
+    if (tabla === 'kinesiologos') return 'kinesiologo';
+    if (tabla === 'nutricionistas') return 'nutricionista';
+    return 'user';
   }
-
-  /** Guarda un nuevo tipo de test técnico */
-  async createTipoEvaluacion(dato: any) {
-    return await this.supabase
-      .from('tipo_evaluacion')
-      .insert(dato);
-  }
-
-  async eliminarTipoEvaluacion(id: number) {
-  return await this.supabase
-    .from('tipo_evaluacion')
-    .delete()
-    .eq('id', id);
-}
 }
