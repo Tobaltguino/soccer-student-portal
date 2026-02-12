@@ -1,35 +1,41 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { DatePickerModule } from 'primeng/datepicker';
-import { FormsModule } from '@angular/forms';
+import { SelectModule } from 'primeng/select';
+import { TooltipModule } from 'primeng/tooltip';
 import { SupabaseService } from '../../../core/services/supabase.service';
 
 @Component({
   selector: 'app-student-classes',
   standalone: true,
   imports: [
-    CommonModule, 
-    TableModule, 
-    TagModule, 
-    ButtonModule, 
-    DialogModule, 
-    InputTextModule, 
-    DatePickerModule, 
-    FormsModule
+    CommonModule, FormsModule, TableModule, TagModule, ButtonModule, 
+    DialogModule, InputTextModule, DatePickerModule, SelectModule, TooltipModule
   ],
   templateUrl: './student-classes.html',
   styleUrls: ['./student-classes.css']
 })
 export class StudentClassesComponent implements OnInit {
   clases: any[] = [];
+  clasesOriginales: any[] = [];
   loading: boolean = true;
-  filtroFecha: Date | null = null;
   
+  filtroFecha: Date | null = null;
+  filtroLugar: string = '';
+  filtroAsistencia: any = null;
+
+  opcionesAsistencia = [
+    { label: 'Presente', value: true },
+    { label: 'Ausente', value: false },
+    { label: 'Pendiente', value: 'null' }
+  ];
+
   displayPlan: boolean = false;
   selectedClase: any = null;
 
@@ -47,22 +53,20 @@ export class StudentClassesComponent implements OnInit {
     try {
       const { data: { user } } = await this.supabaseService.getUser();
       if (user) {
-        // 1. Calculamos la fecha límite (6 meses atrás desde hoy)
         const seisMesesAtras = new Date();
         seisMesesAtras.setMonth(seisMesesAtras.getMonth() - 6);
         const fechaLimiteStr = seisMesesAtras.toISOString().split('T')[0];
 
-        // 2. Pedimos los datos filtrados por fecha desde el servidor
         const { data, error } = await this.supabaseService.getClasesAlumno(user.id, fechaLimiteStr);
-        
         if (error) throw error;
 
-        // 3. Ordenamiento cronológico descendente (Más reciente arriba)
-        this.clases = (data || []).sort((a, b) => {
+        this.clasesOriginales = (data || []).sort((a, b) => {
           const tiempoA = new Date(`${a.fecha}T${a.hora}`).getTime();
           const tiempoB = new Date(`${b.fecha}T${b.hora}`).getTime();
           return tiempoB - tiempoA;
         });
+
+        this.aplicarFiltros();
       }
     } catch (error) {
       console.error('Error al cargar clases:', error);
@@ -70,6 +74,53 @@ export class StudentClassesComponent implements OnInit {
       this.loading = false;
       this.cdr.detectChanges();
     }
+  }
+
+  aplicarFiltros() {
+    this.clases = this.clasesOriginales.filter(clase => {
+      let cumpleFecha = true;
+      let cumpleLugar = true;
+      let cumpleAsistencia = true;
+
+      if (this.filtroFecha) {
+        const fechaBusqueda = this.formatearFecha(this.filtroFecha);
+        const fechaClase = clase.fecha ? clase.fecha.substring(0, 10) : '';
+        cumpleFecha = fechaClase === fechaBusqueda;
+      }
+
+      if (this.filtroLugar && this.filtroLugar.trim() !== '') {
+        const lugarClase = (clase.lugar || '').toLowerCase();
+        const busqueda = this.filtroLugar.toLowerCase();
+        cumpleLugar = lugarClase.includes(busqueda);
+      }
+
+      if (this.filtroAsistencia !== null) {
+        if (this.filtroAsistencia === 'null') {
+          cumpleAsistencia = clase.presente === null || clase.presente === undefined;
+        } else {
+          cumpleAsistencia = clase.presente === this.filtroAsistencia;
+        }
+      }
+
+      return cumpleFecha && cumpleLugar && cumpleAsistencia;
+    });
+    
+    this.cdr.detectChanges();
+  }
+
+  limpiarFiltros() {
+    this.filtroFecha = null;
+    this.filtroLugar = '';
+    this.filtroAsistencia = null;
+    this.clases = [...this.clasesOriginales];
+    this.cdr.detectChanges();
+  }
+
+  formatearFecha(date: Date): string {
+    const year = date.getFullYear();
+    const month = ('0' + (date.getMonth() + 1)).slice(-2);
+    const day = ('0' + date.getDate()).slice(-2);
+    return `${year}-${month}-${day}`;
   }
 
   verPlanificacion(clase: any) {

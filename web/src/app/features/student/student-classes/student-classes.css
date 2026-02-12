@@ -50,7 +50,7 @@
 
 .filter-item { 
     flex: 1; 
-    min-width: 200px; 
+    min-width: 150px; /* Reducido de 200px para acomodar 3 filtros y el botón */
 }
 
 .button-item { 
