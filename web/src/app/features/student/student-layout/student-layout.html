@@ -1,1 +1,92 @@
-<p>student-layout works!</p>
+<div class="layout-container" [class.collapsed]="isCollapsed">
+    <div class="mobile-overlay" [class.active]="isMobileMenuOpen" (click)="closeMobileMenu()"></div>
+
+    <aside class="sidebar" [class.mobile-active]="isMobileMenuOpen">
+        
+        <div class="brand">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+                </div>
+                <div class="brand-text">
+                    <h2>ProFutbol</h2>
+                    <span>PORTAL ALUMNO</span> </div>
+            </div>
+            <button class="toggle-btn desktop-only" (click)="toggleSidebar()">
+                <i class="pi pi-bars"></i>
+            </button>
+            <button class="toggle-btn mobile-only" (click)="closeMobileMenu()">
+                <i class="pi pi-times"></i>
+            </button>
+        </div>
+
+        <nav class="menu">
+            <div class="menu-label">PRINCIPAL</div>
+            <a class="menu-item" routerLink="/student/dashboard" routerLinkActive="active-link" (click)="closeMobileMenu()">
+                <i class="pi pi-home"></i>
+                <span class="label">Inicio</span>
+            </a>
+
+            <div class="menu-label system">ACADÉMICO</div>
+            <a class="menu-item" routerLink="/student/schedule" routerLinkActive="active-link" (click)="closeMobileMenu()">
+                <i class="pi pi-calendar"></i>
+                <span class="label">Horario</span>
+            </a>
+            <a class="menu-item" routerLink="/student/classes" routerLinkActive="active-link" (click)="closeMobileMenu()">
+                <i class="pi pi-book"></i>
+                <span class="label">Mis Clases</span>
+            </a>
+            <a class="menu-item" routerLink="/student/attendance" routerLinkActive="active-link" (click)="closeMobileMenu()">
+                <i class="pi pi-check-circle"></i>
+                <span class="label">Asistencia</span>
+            </a>
+             <a class="menu-item" routerLink="/student/evaluations" routerLinkActive="active-link" (click)="closeMobileMenu()">
+                <i class="pi pi-chart-line"></i>
+                <span class="label">Evaluaciones</span>
+            </a>
+
+            <div class="menu-label system">SALUD</div>
+            <a class="menu-item" routerLink="/student/kine" routerLinkActive="active-link" (click)="closeMobileMenu()">
+                <i class="pi pi-heart-fill"></i>
+                <span class="label">Kinesiología</span>
+            </a>
+            <a class="menu-item" routerLink="/student/nutri" routerLinkActive="active-link" (click)="closeMobileMenu()">
+                <i class="pi pi-apple"></i>
+                <span class="label">Nutrición</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="logout-btn" (click)="logout()">
+                <i class="pi pi-sign-out"></i>
+                <span>Cerrar Sesión</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-bar">
+            <button class="mobile-menu-btn" (click)="toggleMobileMenu()">
+                <i class="pi pi-bars"></i>
+            </button>
+
+            <div class="header-right">
+                <button class="theme-toggle-btn" (click)="toggleTheme()" [title]="isDarkMode ? 'Modo Claro' : 'Modo Oscuro'">
+                    <i class="pi" [class.pi-moon]="!isDarkMode" [class.pi-sun]="isDarkMode"></i>
+                </button>
+
+                <div class="user-profile">
+                    <div class="user-info">
+                        <span class="name">{{ userName }}</span>
+                        <span class="role">{{ userRole }}</span>
+                    </div>
+                    <div class="avatar">{{ userInitial }}</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-content">
+            <router-outlet></router-outlet>
+        </div>
+    </main>
+</div>

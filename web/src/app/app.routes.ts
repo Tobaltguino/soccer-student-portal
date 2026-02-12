@@ -17,6 +17,13 @@ import { AdminPaymentsComponent } from './features/admin/admin-payments/admin-pa
 // --- STUDENT IMPORTS (Portal Alumno) ---
 import { StudentLayoutComponent } from './features/student/student-layout/student-layout';
 import { StudentDashboardComponent } from './features/student/student-dashboard/student-dashboard';
+import { StudentScheduleComponent } from './features/student/student-schedule/student-schedule';
+import { StudentClassesComponent } from './features/student/student-classes/student-classes';
+import { StudentAttendanceComponent } from './features/student/student-attendance/student-attendance';
+import { StudentEvaluationsComponent } from './features/student/student-evaluations/student-evaluations';
+import { StudentKineComponent } from './features/student/student-kine/student-kine';
+import { StudentNutriComponent } from './features/student/student-nutri/student-nutri';
+
 
 // --- PROFESSOR IMPORTS (Portal Profesor) ---
 import { ProfessorLayoutComponent } from './features/professor/professor-layout/professor-layout';
@@ -58,10 +65,17 @@ export const routes: Routes = [
     // ==========================================
     {
         path: 'student',
-        component: StudentLayoutComponent, // Menú lateral del Estudiante
+        component: StudentLayoutComponent,
         children: [
             { path: 'dashboard', component: StudentDashboardComponent },
-            // Aquí agregarás: { path: 'mis-clases', ... }, { path: 'mis-pagos', ... }
+            
+            { path: 'schedule', component: StudentScheduleComponent },
+            { path: 'classes', component: StudentClassesComponent },
+            { path: 'attendance', component: StudentAttendanceComponent },
+            { path: 'evaluations', component: StudentEvaluationsComponent },
+            { path: 'kine', component: StudentKineComponent },
+            { path: 'nutri', component: StudentNutriComponent },
+
         ]
     },
 

@@ -4,12 +4,12 @@ import { RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 
 @Component({
-  selector: 'app-admin-nutri', // Cambia a 'app-admin-nutri' en el otro
+  selector: 'app-student-kine', // Cambia a 'app-admin-nutri' en el otro
   standalone: true,
   imports: [CommonModule, RouterModule, ButtonModule],
-  templateUrl: './admin-nutri.html', // Cambia al html correspondiente
-  styleUrls: ['./admin-nutri.css']   // Cambia al css correspondiente
+  templateUrl: './student-kine.html', // Cambia al html correspondiente
+  styleUrls: ['./student-kine.css']   // Cambia al css correspondiente
 })
-export class AdminNutriComponent { 
+export class StudentKineComponent { 
   // No necesitas lógica extra por ahora
 }
