@@ -517,57 +517,103 @@ async eliminarRangosPorTipo(tipoId: number) {
    * @param fechaDesde Fecha límite (YYYY-MM-DD)
    */
   async getEvaluacionesAlumno(uid: string, fechaDesde?: string) {
-  try {
-    let query = this.supabase
-      .from('evaluaciones_resultados')
-      .select(`
-        *,
-        evaluaciones_sesiones!inner (
-          fecha,
-          tipo_evaluacion!inner (
+    try {
+      let query = this.supabase
+        .from('evaluaciones_resultados')
+        .select(`
+          *,
+          evaluaciones_sesiones!inner (
+            fecha,
+            tipo_evaluacion!inner (
+              id,
+              nombre,
+              unidad_medida,
+              evaluacion_rangos (*) 
+            )
+          )
+        `)
+        .eq('estudiante_id', uid);
+
+      if (fechaDesde) {
+        query = query.gte('evaluaciones_sesiones.fecha', fechaDesde);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const dataFormateada = data?.map(res => {
+        const valor = res.valor_numerico;
+        const rangos = res.evaluaciones_sesiones?.tipo_evaluacion?.evaluacion_rangos || [];
+        
+        // ✅ Buscamos en qué rango cae el resultado
+        const rangoEncontrado = rangos.find((r: any) => 
+          valor >= r.valor_min && valor <= r.valor_max
+        );
+
+        return {
+          id: res.id,
+          resultado: valor,
+          observacion: res.observacion,
+          fecha: res.evaluaciones_sesiones?.fecha,
+          created_at: res.created_at,
+          test_nombre: res.evaluaciones_sesiones?.tipo_evaluacion?.nombre,
+          unidad: res.evaluaciones_sesiones?.tipo_evaluacion?.unidad_medida,
+          // Si no hay rango, mostramos un estado neutro
+          nivel: rangoEncontrado ? rangoEncontrado.nombre_etiqueta : 'Sin Rango',
+          color: rangoEncontrado ? rangoEncontrado.color_sugerido : '#64748b'
+        };
+      });
+
+      return { data: dataFormateada, error: null };
+    } catch (error) {
+      console.error('Error en getEvaluacionesAlumno:', error);
+      return { data: null, error };
+    }
+  }
+
+  /**
+   * Obtiene los profesores asignados al grupo del estudiante.
+   * Realiza el cruce: Estudiante -> Grupo -> Profesores_Grupos -> Profesores
+   */
+  async getProfesoresDeEstudiante(uid: string) {
+    try {
+      // 1. Obtener grupo del alumno
+      const { data: estudiante, error: errEst } = await this.supabase
+        .from('estudiantes')
+        .select('grupo_id')
+        .eq('id', uid)
+        .single();
+
+      if (errEst || !estudiante?.grupo_id) {
+        return { data: [], error: null };
+      }
+
+      // 2. Buscar los profesores usando las columnas REALES
+      const { data, error } = await this.supabase
+        .from('grupos_profesores') // Tabla intermedia correcta
+        .select(`
+          profesores (
             id,
             nombre,
-            unidad_medida,
-            evaluacion_rangos (*) 
+            apellido,
+            email,
+            tipo_profesor
           )
-        )
-      `)
-      .eq('estudiante_id', uid);
+        `)
+        .eq('grupo_id', estudiante.grupo_id);
 
-    if (fechaDesde) {
-      query = query.gte('evaluaciones_sesiones.fecha', fechaDesde);
+      if (error) throw error;
+
+      // 3. Mapear respuesta
+      const profesoresLimpios = data
+        ?.map((item: any) => item.profesores)
+        .filter((p: any) => p !== null) || [];
+
+      return { data: profesoresLimpios, error: null };
+
+    } catch (error) {
+      console.error('Error en getProfesoresDeEstudiante:', error);
+      return { data: null, error };
     }
-
-    const { data, error } = await query;
-    if (error) throw error;
-
-    const dataFormateada = data?.map(res => {
-      const valor = res.valor_numerico;
-      const rangos = res.evaluaciones_sesiones?.tipo_evaluacion?.evaluacion_rangos || [];
-      
-      // ✅ Buscamos en qué rango cae el resultado
-      const rangoEncontrado = rangos.find((r: any) => 
-        valor >= r.valor_min && valor <= r.valor_max
-      );
-
-      return {
-        id: res.id,
-        resultado: valor,
-        observacion: res.observacion,
-        fecha: res.evaluaciones_sesiones?.fecha,
-        created_at: res.created_at,
-        test_nombre: res.evaluaciones_sesiones?.tipo_evaluacion?.nombre,
-        unidad: res.evaluaciones_sesiones?.tipo_evaluacion?.unidad_medida,
-        // Si no hay rango, mostramos un estado neutro
-        nivel: rangoEncontrado ? rangoEncontrado.nombre_etiqueta : 'Sin Rango',
-        color: rangoEncontrado ? rangoEncontrado.color_sugerido : '#64748b'
-      };
-    });
-
-    return { data: dataFormateada, error: null };
-  } catch (error) {
-    console.error('Error en getEvaluacionesAlumno:', error);
-    return { data: null, error };
   }
-}
 }

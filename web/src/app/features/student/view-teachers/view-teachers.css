@@ -1,0 +1,170 @@
+:host {
+    display: block;
+    width: 100%;
+}
+
+/* --- LAYOUT GENERAL --- */
+.main-content {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.top-bar {
+    margin-bottom: 2rem;
+}
+
+.welcome-text h1 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-color, #1e293b);
+}
+
+.welcome-text p {
+    margin: 0.5rem 0 0;
+    color: var(--text-secondary-color, #64748b);
+}
+
+/* --- GRID RESPONSIVO --- */
+.stats-grid {
+    display: grid;
+    /* Crea columnas automáticas que no bajen de 300px */
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* --- TARJETA DEL PROFESOR --- */
+.card {
+    background: var(--surface-card, #ffffff);
+    border: 1px solid var(--surface-border, #dfe7ef);
+    border-radius: 20px; /* Bordes más redondeados */
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.teacher-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    border-color: #3b82f6; /* Borde azul al pasar el mouse */
+}
+
+/* Contenido interno de la tarjeta */
+.card-content {
+    display: flex;
+    align-items: flex-start; /* Alineación superior */
+    gap: 1.25rem;
+}
+
+/* --- AVATAR (Foto o Iniciales) --- */
+.teacher-avatar {
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0; /* Evita que se aplaste */
+}
+
+/* Estilo para cuando son iniciales (div) */
+.avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%; /* Círculo perfecto */
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); /* Degradado azul suave */
+    color: #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    font-weight: 700;
+    border: 4px solid #fff; /* Anillo blanco */
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
+/* Estilo para cuando es imagen (img) */
+.teacher-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* --- INFORMACIÓN DEL PROFESOR --- */
+.item-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+}
+
+.item-info h3 {
+    color: var(--text-color, #0f172a);
+    margin-bottom: 0.25rem;
+}
+
+/* Badge del Rol (Entrenador, etc) */
+.badge-score {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 99px; /* Forma de píldora */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    align-self: flex-start; /* Pegado a la izquierda */
+}
+
+/* Iconos de contacto */
+.item-info i {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* --- ESTADO VACÍO --- */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    background: var(--surface-ground, #f8fafc);
+    border-radius: 16px;
+    border: 2px dashed var(--surface-border, #e2e8f0);
+}
+
+.icon-circle {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* --- ANIMACIONES --- */
+.fadein {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- RESPONSIVIDAD --- */
+@media (max-width: 768px) {
+    .main-content {
+        padding: 1rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr; /* Una sola columna en móvil */
+    }
+
+    .teacher-avatar {
+        width: 60px;
+        height: 60px;
+    }
+
+    .avatar-placeholder {
+        font-size: 1.25rem;
+    }
+}

@@ -36,6 +36,7 @@ import { KineDashboardComponent } from './features/kine/kine-dashboard/kine-dash
 // --- NUTRI IMPORTS (Portal Especialista Nutricionista) ---
 import { NutriLayoutComponent } from './features/nutri/nutri-layout/nutri-layout';
 import { NutriDashboardComponent } from './features/nutri/nutri-dashboard/nutri-dashboard';
+import { ViewTeachersComponent } from './features/student/view-teachers/view-teachers';
 
 export const routes: Routes = [
     // Redirección inicial
@@ -75,6 +76,7 @@ export const routes: Routes = [
             { path: 'evaluations', component: StudentEvaluationsComponent },
             { path: 'kine', component: StudentKineComponent },
             { path: 'nutri', component: StudentNutriComponent },
+            { path: 'view-professor', component: ViewTeachersComponent },
 
         ]
     },
