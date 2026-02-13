@@ -30,7 +30,7 @@ export class StudentScheduleComponent implements OnInit {
   
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
-    initialView: 'timeGridWeek',
+    initialView: 'listWeek',
     locale: esLocale,
     
     // --- CONFIGURACIÓN DE HORAS (24 HORAS COMPLETAS) ---
@@ -65,7 +65,7 @@ export class StudentScheduleComponent implements OnInit {
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
-      right: 'timeGridWeek,dayGridMonth,listWeek'
+      right: 'listWeek,dayGridMonth'
     },
     
     eventTimeFormat: {

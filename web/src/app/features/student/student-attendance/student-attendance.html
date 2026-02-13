@@ -1,1 +1,89 @@
-<p>student-attendance works!</p>
+<div class="attendance-container fadein animation-duration-500">
+    
+    <header class="page-header">
+        <div class="header-content">
+            <h1>Estadísticas de Asistencia</h1>
+            <p>Seguimiento de desempeño deportivo</p>
+        </div>
+        
+        <div class="filters-group">
+            <p-select [options]="years" [(ngModel)]="selectedYear" 
+                      optionLabel="label" optionValue="value"
+                      (onChange)="cargarDatosEstadisticos()" 
+                      [style]="{'min-width': '100px'}" placeholder="Año"></p-select>
+            
+            <p-select [options]="months" [(ngModel)]="selectedMonth" 
+                      optionLabel="label" optionValue="value"
+                      (onChange)="cargarDatosEstadisticos()" 
+                      [style]="{'min-width': '150px'}" placeholder="Mes"></p-select>
+
+            <button pButton icon="pi pi-refresh" class="p-button-rounded p-button-text" 
+                    (click)="cargarDatosEstadisticos()" [loading]="loading"></button>
+        </div>
+    </header>
+
+    <div class="grid mb-4">
+        <div class="col-12 md:col-6">
+            <div class="card summary-card asistidas">
+                <div class="flex justify-content-between align-items-center">
+                    <div>
+                        <span class="block text-500 font-medium mb-2">Asistidas ({{ selectedMonth === null ? 'Año' : 'Mes' }})</span>
+                        <div class="text-900 font-bold text-3xl">{{ totalAsistidas }}</div>
+                    </div>
+                    <div class="icon-circle bg-green-100">
+                        <i class="pi pi-check-circle text-green-500 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 md:col-6">
+            <div class="card summary-card porcentaje">
+                <div class="flex justify-content-between align-items-center">
+                    <div>
+                        <span class="block text-500 font-medium mb-2">Índice de Asistencia</span>
+                        <div class="text-900 font-bold text-3xl">{{ porcentajeAsistencia }}%</div>
+                    </div>
+                    <div class="icon-circle bg-blue-100">
+                        <i class="pi pi-chart-line text-blue-500 text-2xl"></i>
+                    </div>
+                </div>
+                <p-progressBar [value]="porcentajeAsistencia" [showValue]="false" styleClass="mt-3 custom-progress"></p-progressBar>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid align-items-start">
+        <div class="col-12 lg:col-4">
+            <div class="card">
+                <h3 class="text-center mb-4">Distribución de {{ selectedMonth === null ? 'Todo el Año' : 'Mes' }}</h3>
+                <div class="chart-container-pie">
+                    @if (hasData) {
+                        <p-chart type="doughnut" [data]="pieData" [options]="pieOptions"></p-chart>
+                    } @else {
+                        <div class="empty-state">
+                            <i class="pi pi-calendar-times mb-3"></i>
+                            <p>Sin clases registradas</p>
+                            <span>en este periodo</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 lg:col-8">
+            <div class="card">
+                <h3 class="mb-4">Evolución Anual ({{ selectedYear }})</h3>
+                <div class="chart-container-bar">
+                    @if (hasYearlyData) {
+                        <p-chart type="bar" [data]="barData" [options]="barOptions"></p-chart>
+                    } @else {
+                        <div class="empty-state">
+                            <i class="pi pi-chart-bar mb-3"></i>
+                            <p>No hay asistencias en {{ selectedYear }}</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

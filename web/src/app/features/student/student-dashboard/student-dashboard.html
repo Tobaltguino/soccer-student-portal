@@ -1,1 +1,128 @@
-<p>student-dashboard works!</p>
+<div class="main-content fadein">
+  
+  <header class="top-bar">
+    <div class="welcome-text">
+      <h1>Panel de Control</h1>
+      <p>Gestión de tu rendimiento y actividades en ProFutbol.</p>
+    </div>
+
+    <div class="header-tools">
+      <div class="status-indicator" (click)="refrescar()" title="Actualizar datos">
+        <span class="status-dot" [ngClass]="supabaseStatus"></span>
+        <span class="status-text">
+          {{ supabaseStatus === 'online' ? 'Online' : 'Offline' }}
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <div class="stats-grid">
+    
+    <div class="card card-blue">
+      <div class="card-content">
+        <span class="card-label">Siguiente Clase</span>
+        <div class="card-value-wrapper mb-2">
+            <h3 class="card-value" style="font-size: 1.3rem; text-transform: capitalize;" *ngIf="proximaClase">
+                {{ fechaFormateada }}
+            </h3>
+            <h3 class="card-value" style="font-size: 1.2rem;" *ngIf="!proximaClase">Sin clases</h3>
+            <div class="card-icon icon-blue">
+                <i class="pi pi-calendar"></i>
+            </div>
+        </div>
+        
+        <div *ngIf="proximaClase" class="flex flex-column gap-1">
+          <p class="card-subtext flex align-items-center gap-2">
+            <i class="pi pi-clock text-blue-500"></i> {{ proximaClase.hora | slice:0:5 }} hrs
+          </p>
+          <p class="card-subtext flex align-items-center gap-2">
+            <i class="pi pi-map-marker text-blue-500"></i> {{ proximaClase.lugar || 'Cancha Principal' }}
+          </p>
+        </div>
+        
+        <p class="card-subtext text-muted" *ngIf="!proximaClase">No hay actividades programadas</p>
+      </div>
+    </div>
+
+    <div class="card card-green">
+      <div class="card-content">
+        <span class="card-label">Asistencia Anual</span>
+        <div class="card-value-wrapper">
+            <h3 class="card-value">{{ asistenciaAnual }}%</h3>
+            <div class="card-icon icon-green">
+                <i class="pi pi-check-circle"></i>
+            </div>
+        </div>
+        <p class="card-subtext positive">
+          <i class="pi pi-chart-line"></i> {{ asistenciaAnual >= 80 ? 'Ritmo excelente' : 'Sigue constante' }}
+        </p>
+      </div>
+    </div>
+
+    <div class="card card-purple">
+      <div class="card-content">
+        <span class="card-label">Último Rendimiento</span>
+        <div class="card-value-wrapper">
+            <h3 class="card-value" *ngIf="ultimaEvaluacion">
+                {{ ultimaEvaluacion.resultado }} <small style="font-size: 0.9rem; opacity: 0.7;">{{ ultimaEvaluacion.unidad }}</small>
+            </h3>
+            <h3 class="card-value" style="font-size: 1.2rem;" *ngIf="!ultimaEvaluacion">Sin registros</h3>
+            
+            <div class="card-icon" 
+                 [style.background]="ultimaEvaluacion ? ultimaEvaluacion.color + '20' : 'rgba(139,92,246,0.1)'" 
+                 [style.color]="ultimaEvaluacion ? ultimaEvaluacion.color : '#8b5cf6'">
+                <i class="pi pi-chart-bar"></i>
+            </div>
+        </div>
+        
+        <div *ngIf="ultimaEvaluacion" class="mt-1">
+            <p class="card-subtext font-bold" [style.color]="ultimaEvaluacion.color">
+                Nivel: {{ ultimaEvaluacion.nivel }}
+            </p>
+            <p class="card-subtext text-xs text-muted">Test: {{ ultimaEvaluacion.test_nombre }}</p>
+        </div>
+        <p class="card-subtext" *ngIf="!ultimaEvaluacion">Pendiente de evaluación</p>
+      </div>
+    </div>
+  </div>
+
+  <section class="recent-activity-card">
+    <div class="activity-header">
+      <div class="flex align-items-center gap-2">
+          <h3 class="m-0">Próximos Eventos</h3>
+      </div>
+      <button class="p-button-rounded p-button-text" (click)="cargarDatosDashboard()" [disabled]="loading">
+        <i class="pi pi-refresh" [ngClass]="{'pi-spin': loading}"></i>
+      </button>
+    </div>
+
+    <div class="activity-list">
+      
+      <div class="activity-item" *ngFor="let evento of proximosEventos">
+        <div class="item-icon-wrapper icon-blue">
+          <i class="pi" [ngClass]="evento.icono"></i>
+        </div>
+        
+        <div class="item-info">
+          <p class="item-title text-900 font-bold">{{ evento.nombre }}</p>
+          <span class="item-meta">
+              {{ evento.tipo }} • {{ evento.fecha | date:'d \'de\' MMMM' }}
+          </span>
+        </div>
+
+        <div class="flex flex-column align-items-end">
+            <span class="badge badge-score">Programado</span>
+            <small class="text-secondary text-xs mt-1">ProFutbol</small>
+        </div>
+      </div>
+
+      <div class="empty-state py-5" *ngIf="proximosEventos.length === 0">
+        <div class="icon-circle bg-blue-50 m-auto mb-3" style="width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <i class="pi pi-bolt text-blue-500" style="font-size: 1.5rem;"></i>
+        </div>
+        <h4 class="text-900 font-bold m-0">Nuevos desafíos próximamente</h4>
+      </div>
+
+    </div>
+  </section>
+</div>

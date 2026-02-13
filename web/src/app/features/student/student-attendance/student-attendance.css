@@ -1,0 +1,94 @@
+:host {
+    display: block;
+    padding: 1rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Encabezado y Filtros */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.header-content h1 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-color);
+}
+
+.header-content p {
+    margin: 0.25rem 0 0;
+    color: var(--text-secondary-color);
+}
+
+.filters-group {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    background: var(--surface-card);
+    padding: 0.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--surface-border);
+}
+
+/* Tarjetas */
+.card {
+    background: var(--surface-card);
+    padding: 1.5rem;
+    border-radius: 20px;
+    border: 1px solid var(--surface-border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.summary-card {
+    transition: all 0.3s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.icon-circle {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Contenedor Maestro de Gráficos (Esto evita que se achiquen) */
+.chart-container {
+    position: relative;
+    height: 350px; /* Altura fija para que el gráfico respire */
+    width: 100%;
+}
+
+h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.custom-progress {
+    height: 8px !important;
+    border-radius: 10px;
+}
+
+
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+
+
