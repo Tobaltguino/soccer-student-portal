@@ -84,7 +84,17 @@
                         <span class="name">{{ userName }}</span>
                         <span class="role">{{ userRole }}</span>
                     </div>
-                    <div class="avatar">{{ userInitial }}</div>
+
+                    <div class="avatar-container shadow-1">
+                        <img *ngIf="userPhotoUrl" 
+                            [src]="userPhotoUrl" 
+                            alt="Perfil Alumno" 
+                            class="avatar-img">
+
+                        <div *ngIf="!userPhotoUrl" class="avatar-initials">
+                            {{ userInitial }}
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>

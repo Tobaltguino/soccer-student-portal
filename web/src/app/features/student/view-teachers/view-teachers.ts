@@ -26,31 +26,26 @@ export class ViewTeachersComponent implements OnInit {
   async cargarProfesores() {
     this.loading = true;
     this.errorMessage = '';
+    this.cdr.detectChanges(); // ✅ Despierta a Angular para mostrar el spinner
 
     try {
-      // 1. Obtener usuario actual
       const { data: { user } } = await this.supabaseService.getUser();
-      
-      if (!user) {
-        this.errorMessage = 'Sesión no válida.';
-        return;
-      }
+      if (!user) return;
 
-      // 2. Usar la NUEVA función del servicio
       const { data, error } = await this.supabaseService.getProfesoresDeEstudiante(user.id);
 
       if (error) {
-        this.errorMessage = 'No pudimos cargar la información de tus profesores.';
+        this.errorMessage = 'Error al cargar profesores';
       } else {
         this.profesores = data || [];
+        // ✅ IMPORTANTE: Despierta a Angular aquí para que cargue las imágenes
+        this.cdr.detectChanges(); 
       }
-
     } catch (err) {
-      console.error('Error inesperado:', err);
-      this.errorMessage = 'Ocurrió un error de conexión.';
+      this.errorMessage = 'Error de conexión';
     } finally {
       this.loading = false;
-      this.cdr.detectChanges();
+      this.cdr.detectChanges(); // ✅ Último despertar para quitar el spinner
     }
   }
 }

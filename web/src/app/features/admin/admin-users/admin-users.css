@@ -192,6 +192,133 @@
     gap: 0.25rem; 
 }
 
+
+/* =========================================
+   7. GESTIÓN DE FOTOS (MINIMALISTA)
+   ========================================= */
+
+/* --- IMÁGENES EN LA TABLA --- */
+.avatar-img {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 50% !important;
+    object-fit: cover;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    background-color: #f1f5f9;
+    display: block;
+}
+
+/* --- CONTENEDOR DEL FORMULARIO --- */
+.photo-section {
+    display: flex;
+    justify-content: center;
+    padding: 1.5rem 0;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.photo-upload-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* --- CÍRCULO DE PREVIEW --- */
+.avatar-preview-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    background-color: #1e293b;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    border: 3px solid var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.avatar-preview-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-placeholder {
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatar-placeholder i {
+    font-size: 3rem;
+}
+
+/* --- ACCIONES Y BOTONES MINIMALISTAS --- */
+.photo-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+/* Botón de Carga (+) - Solo Icono Circular */
+:host ::ng-deep .btn-icon-only.p-fileupload-choose {
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    border: 1px solid var(--primary-color) !important;
+    color: var(--primary-color) !important;
+    transition: all 0.2s ease;
+}
+
+:host ::ng-deep .btn-icon-only.p-fileupload-choose:hover {
+    background: rgba(var(--primary-rgb), 0.1) !important;
+    transform: translateY(-2px);
+}
+
+:host ::ng-deep .btn-icon-only.p-fileupload-choose .p-button-icon {
+    margin: 0 !important;
+    font-size: 1.2rem;
+}
+
+/* Ocultar texto de selección de PrimeNG */
+:host ::ng-deep .btn-icon-only.p-fileupload-choose .p-button-label {
+    display: none !important;
+}
+
+/* Botón de Basura Circular */
+.btn-icon-only.p-button-danger {
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+}
+
+/* Overlay de Carga */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
 /* =========================================
    6. RESPONSIVE
    ========================================= */

@@ -21,6 +21,7 @@ export class AdminLayoutComponent implements OnInit {
   userName: string = 'Cargando...';
   userRole: string = ''; 
   userInitial: string = '?';
+  userPhotoUrl: string | null = null;
 
   constructor(
     private supabase: SupabaseService, 
@@ -87,9 +88,10 @@ export class AdminLayoutComponent implements OnInit {
       let encontrado = false;
 
       for (const t of tablas) {
+        // ✅ Ahora seleccionamos también foto_url
         const { data } = await this.supabase.supabase
           .from(t.tabla)
-          .select('nombre, apellido')
+          .select('nombre, apellido, foto_url') 
           .eq('email', user.email)
           .maybeSingle();
 
@@ -97,6 +99,7 @@ export class AdminLayoutComponent implements OnInit {
           this.userName = `${data.nombre} ${data.apellido}`;
           this.userRole = t.rol;
           this.userInitial = data.nombre ? data.nombre.charAt(0).toUpperCase() : 'U';
+          this.userPhotoUrl = data.foto_url; // ✅ Guardamos la URL de la foto
           encontrado = true;
           this.cdr.detectChanges();
           break; 
@@ -107,6 +110,7 @@ export class AdminLayoutComponent implements OnInit {
         this.userName = user.email.split('@')[0];
         this.userRole = 'Sin Rol';
         this.userInitial = this.userName.charAt(0).toUpperCase();
+        this.userPhotoUrl = null;
         this.cdr.detectChanges();
       }
 

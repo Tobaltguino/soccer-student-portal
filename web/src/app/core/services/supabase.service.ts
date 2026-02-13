@@ -588,16 +588,17 @@ async eliminarRangosPorTipo(tipoId: number) {
         return { data: [], error: null };
       }
 
-      // 2. Buscar los profesores usando las columnas REALES
+      // 2. Buscar los profesores agregando foto_url
       const { data, error } = await this.supabase
-        .from('grupos_profesores') // Tabla intermedia correcta
+        .from('grupos_profesores')
         .select(`
           profesores (
             id,
             nombre,
             apellido,
             email,
-            tipo_profesor
+            tipo_profesor,
+            foto_url
           )
         `)
         .eq('grupo_id', estudiante.grupo_id);
@@ -614,6 +615,55 @@ async eliminarRangosPorTipo(tipoId: number) {
     } catch (error) {
       console.error('Error en getProfesoresDeEstudiante:', error);
       return { data: null, error };
+    }
+  }
+
+  // ==========================================
+  // 8. GESTIÓN DE ARCHIVOS (FOTOS)
+  // ==========================================
+
+  /**
+   * Sube una foto al bucket 'avatars' y retorna la URL pública.
+   * @param archivo El archivo File seleccionado por el usuario.
+   * @param carpeta Nombre del bucket (por defecto 'avatars').
+   */
+  async subirFoto(archivo: File, carpeta: string = 'avatars'): Promise<string | null> {
+    try {
+      // 1. Validar que sea imagen (opcional pero recomendado)
+      if (!archivo.type.startsWith('image/')) {
+        console.error('El archivo no es una imagen');
+        return null;
+      }
+
+      // 2. Crear un nombre único: TIMESTAMP_NOMBRE_LIMPIO
+      // Ej: 1715629123_foto_perfil.png
+      const fileExt = archivo.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.floor(Math.random() * 1000)}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      // 3. Subir el archivo a Supabase Storage
+      const { error: uploadError } = await this.supabase.storage
+        .from(carpeta)
+        .upload(filePath, archivo, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('Error subiendo imagen:', uploadError.message);
+        return null;
+      }
+
+      // 4. Obtener la URL pública para guardarla en la BD
+      const { data } = this.supabase.storage
+        .from(carpeta)
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+
+    } catch (error) {
+      console.error('Error fatal subiendo imagen:', error);
+      return null;
     }
   }
 }

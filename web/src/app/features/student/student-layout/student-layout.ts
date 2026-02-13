@@ -19,6 +19,7 @@ export class StudentLayoutComponent implements OnInit {
   userName: string = 'Cargando...';
   userRole: string = 'Estudiante'; 
   userInitial: string = '?';
+  userPhotoUrl: string | null = null;
 
   constructor(
     private supabase: SupabaseService, 
@@ -66,13 +67,14 @@ export class StudentLayoutComponent implements OnInit {
       
       if (!user || !user.email) {
         this.userName = 'Invitado';
+        this.cdr.detectChanges();
         return;
       }
 
-      // Buscamos DIRECTAMENTE en la tabla de estudiantes primero
+      // ✅ Buscamos incluyendo el campo foto_url
       const { data } = await this.supabase.supabase
           .from('estudiantes')
-          .select('nombre, apellido')
+          .select('nombre, apellido, foto_url')
           .eq('email', user.email)
           .maybeSingle();
 
@@ -80,15 +82,17 @@ export class StudentLayoutComponent implements OnInit {
           this.userName = `${data.nombre} ${data.apellido}`;
           this.userRole = 'Estudiante';
           this.userInitial = data.nombre ? data.nombre.charAt(0).toUpperCase() : 'E';
+          this.userPhotoUrl = data.foto_url; // ✅ Guardamos la foto
       } else {
-          // Fallback por si acaso entra un admin a ver esta vista
           this.userName = user.email.split('@')[0];
+          this.userPhotoUrl = null;
       }
       this.cdr.detectChanges();
 
     } catch (error) {
       console.error('Error perfil:', error);
       this.userName = 'Usuario';
+      this.cdr.detectChanges();
     }
   }
 

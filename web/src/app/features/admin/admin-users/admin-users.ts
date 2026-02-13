@@ -15,6 +15,7 @@ import { TagModule } from 'primeng/tag';
 import { CheckboxModule } from 'primeng/checkbox';
 import { TooltipModule } from 'primeng/tooltip';
 import { DatePickerModule } from 'primeng/datepicker'; 
+import { FileUploadModule } from 'primeng/fileupload'; // ✅ NUEVO IMPORT
 
 // Services & Directives
 import { FilterService, ConfirmationService, MessageService } from 'primeng/api';
@@ -28,6 +29,7 @@ import { RutFormatDirective } from '../../../shared/directives/rut-format.direct
     CommonModule, FormsModule, TableModule, ButtonModule, DialogModule, 
     InputTextModule, ConfirmDialogModule, SelectModule, MultiSelectModule, 
     ToastModule, TagModule, CheckboxModule, TooltipModule, DatePickerModule,
+    FileUploadModule, // ✅ AGREGADO
     RutFormatDirective
   ],
   providers: [ConfirmationService, MessageService, FilterService],
@@ -78,7 +80,12 @@ export class AdminUsersComponent implements OnInit {
   displayDialog: boolean = false;
   isEditing: boolean = false;
   tituloDialogo: string = '';
-  maxDate: Date = new Date(); // Para limitar fecha nacimiento a hoy
+  maxDate: Date = new Date(); 
+
+  // --- VARIABLES PARA FOTOS (NUEVO) ---
+  archivoSeleccionado: File | null = null;
+  previewUrl: string | null = null;
+  uploadingFoto: boolean = false;
 
   // --- FORMULARIO ---
   userForm: any = {
@@ -92,8 +99,9 @@ export class AdminUsersComponent implements OnInit {
     activo: true, 
     grupo_id: null, 
     tipo_profesor: '',
-    posicionesIds: [], // Array de IDs para el MultiSelect
-    gruposIds: []      // Array de IDs para el MultiSelect (Profesores)
+    posicionesIds: [], 
+    gruposIds: [],
+    foto_url: null // ✅
   };
 
   constructor(
@@ -110,13 +118,10 @@ export class AdminUsersComponent implements OnInit {
     this.cargarDatos();
   }
 
-  // Permite filtrar por "contiene una posición" en el array de posiciones
   configurarFiltrosPersonalizados() {
     this.filterService.register('contienePosicion', (value: any, filter: any): boolean => {
       if (filter === undefined || filter === null || filter.length === 0) return true;
       if (value === undefined || value === null) return false;
-      // value es el array de objetos {posicion_id, ...}
-      // filter es el array de IDs seleccionados [1, 2]
       return value.some((p: any) => filter.includes(p.posicion_id));
     });
   }
@@ -162,13 +167,35 @@ export class AdminUsersComponent implements OnInit {
 
   calcularEdad(fecha: string | Date): number | null {
     if (!fecha) return null;
-    const born = new Date(fecha); // Ojo: aquí asume formato YYYY-MM-DD estándar
+    const born = new Date(fecha);
     const today = new Date();
     let age = today.getFullYear() - born.getFullYear();
     const monthDiff = today.getMonth() - born.getMonth();
-    // Ajuste fino por día
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < born.getDate())) age--;
     return age;
+  }
+
+  // --- GESTIÓN DE FOTOS (NUEVO) ---
+
+  onFileSelected(event: any) {
+    const file = event.files[0];
+    if (file) {
+      this.archivoSeleccionado = file;
+      
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.previewUrl = e.target.result;
+        // 🚀 Despertamos a Angular para que muestre la imagen de inmediato
+        this.cdr.detectChanges(); 
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  clearFoto() {
+    this.archivoSeleccionado = null;
+    this.previewUrl = null;
+    this.userForm.foto_url = null; // Marcar como null para borrar en DB al guardar
   }
 
   // --- ABM (CRUD) ---
@@ -185,32 +212,31 @@ export class AdminUsersComponent implements OnInit {
     this.tituloDialogo = 'Editar Usuario';
     this.limpiarForm();
 
-    // 1. Manejo seguro de FECHA (Evita error de zona horaria)
+    // 1. Manejo seguro de FECHA
     let fechaNac = null;
     if (usuario.fecha_nacimiento) {
-        // Convertimos '2010-05-15' a una fecha local correcta [Año, Mes (0-index), Día]
         const parts = usuario.fecha_nacimiento.split('-'); 
-        // new Date(año, mes-1, dia) crea la fecha en hora local (00:00:00 local)
         if(parts.length === 3) {
             fechaNac = new Date(+parts[0], +parts[1] - 1, +parts[2]);
         }
     }
 
-    // 2. Cargar datos básicos
+    // 2. Cargar datos básicos y foto
     this.userForm = { 
         ...usuario, 
         fecha_nacimiento: fechaNac, 
-        password: '', // No cargamos la contraseña hash
+        password: '', 
         activo: usuario.activo ?? true 
     };
 
-    // 3. Cargar relaciones (Estudiantes -> Posiciones)
+    // ✅ Cargar preview
+    this.previewUrl = usuario.foto_url || null;
+
+    // 3. Cargar relaciones
     if (this.vistaActual === 'estudiantes' && usuario.estudiantes_posiciones) {
-        // Mapeamos el array de objetos [{posicion_id:1}] a array de números [1]
         this.userForm.posicionesIds = usuario.estudiantes_posiciones.map((p: any) => p.posicion_id);
     }
 
-    // 4. Cargar relaciones (Profesores -> Grupos)
     if (this.vistaActual === 'profesores' && usuario.grupos_profesores) {
         this.userForm.gruposIds = usuario.grupos_profesores.map((g: any) => g.grupo_id);
     }
@@ -222,8 +248,13 @@ export class AdminUsersComponent implements OnInit {
     this.userForm = { 
         id: null, nombre: '', apellido: '', rut: '', email: '', password: '', 
         fecha_nacimiento: null, activo: true, grupo_id: null, tipo_profesor: '', 
-        posicionesIds: [], gruposIds: [] 
+        posicionesIds: [], gruposIds: [], 
+        foto_url: null 
     };
+    // Limpiar estados de foto
+    this.archivoSeleccionado = null;
+    this.previewUrl = null;
+    this.uploadingFoto = false;
   }
 
   async guardar() {
@@ -236,16 +267,41 @@ export class AdminUsersComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
+        // ✅ 1. SUBIR FOTO SI CORRESPONDE
+        let finalFotoUrl = this.userForm.foto_url;
+
+        // Si hay un archivo nuevo seleccionado, lo subimos
+        if (this.archivoSeleccionado) {
+            this.uploadingFoto = true;
+            const urlSubida = await this.supabase.subirFoto(this.archivoSeleccionado); // Asegúrate de tener esta función en tu servicio
+            if (urlSubida) {
+                finalFotoUrl = urlSubida;
+                this.cdr.detectChanges();
+
+            }
+            this.uploadingFoto = false;
+            this.cdr.detectChanges();
+
+        } 
+        // Si no hay archivo nuevo Y no hay previewUrl, significa que el usuario borró la foto
+        else if (this.previewUrl === null) {
+            finalFotoUrl = null;
+        }
+
         const { nombre, apellido, rut, activo } = this.userForm;
         
-        // Objeto base que irá a la tabla específica
-        const datosBase: any = { nombre, apellido, rut, activo };
+        // Objeto base con la foto
+        const datosBase: any = { 
+            nombre, 
+            apellido, 
+            rut, 
+            activo,
+            foto_url: finalFotoUrl // ✅ Se guarda el link o null
+        };
 
-        // Lógica específica por Rol
         if (this.vistaActual === 'estudiantes') {
             let fechaDb = null;
             if (this.userForm.fecha_nacimiento) {
-                // Formatear Date object a string YYYY-MM-DD usando hora local
                 const d = this.userForm.fecha_nacimiento;
                 const year = d.getFullYear();
                 const month = ('0' + (d.getMonth() + 1)).slice(-2);
@@ -272,7 +328,7 @@ export class AdminUsersComponent implements OnInit {
             if (error) throw error;
 
         } else {
-            // CREAR (Auth + DB)
+            // CREAR
             const { data, error } = await this.supabase.crearUsuarioCompleto(
                 this.userForm.email.toLowerCase(), 
                 this.userForm.password, 
@@ -280,10 +336,10 @@ export class AdminUsersComponent implements OnInit {
                 this.vistaActual
             );
             if (error) throw error;
-            userId = data?.user?.id; // Capturamos el nuevo ID
+            userId = data?.user?.id;
         }
 
-        // --- ACTUALIZAR RELACIONES MANY-TO-MANY ---
+        // --- RELACIONES MANY-TO-MANY ---
         if (userId) {
             if (this.vistaActual === 'estudiantes') {
                 await this.supabase.actualizarPosicionesEstudiante(userId, this.userForm.posicionesIds);
@@ -296,7 +352,6 @@ export class AdminUsersComponent implements OnInit {
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario guardado correctamente' });
         this.displayDialog = false;
         
-        // Recargar datos (pequeño delay para asegurar consistencia DB)
         setTimeout(() => this.cargarDatos(), 100);
 
     } catch (error: any) {
@@ -304,6 +359,7 @@ export class AdminUsersComponent implements OnInit {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: error.message || 'Error al guardar usuario' });
     } finally {
         this.loading = false;
+        this.uploadingFoto = false;
         this.cdr.markForCheck(); 
     }
   }
@@ -322,15 +378,15 @@ export class AdminUsersComponent implements OnInit {
       accept: async () => {
         const nuevoEstado = !usuario.activo;
         
-        // Reconstruimos el objeto update mínimo necesario
+        // Mantener foto y datos al cambiar estado
         const datosUpdate: any = { 
             nombre: usuario.nombre, 
             apellido: usuario.apellido, 
             rut: usuario.rut, 
-            activo: nuevoEstado 
+            activo: nuevoEstado,
+            foto_url: usuario.foto_url // ✅ Mantener foto
         };
 
-        // Si es estudiante, necesitamos pasar campos obligatorios si la DB los exige en update (raro, pero seguro)
         if (this.vistaActual === 'estudiantes') {
           datosUpdate.fecha_nacimiento = usuario.fecha_nacimiento;
           datosUpdate.grupo_id = usuario.grupo_id;
@@ -342,7 +398,7 @@ export class AdminUsersComponent implements OnInit {
           const { error } = await this.supabase.updateUsuario(this.vistaActual, usuario.id, datosUpdate, usuario.email);
           if (error) throw error;
           
-          usuario.activo = nuevoEstado; // Actualizar vista localmente
+          usuario.activo = nuevoEstado; 
           this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Estado actualizado.' });
           this.cdr.detectChanges();
         } catch (err) {

@@ -62,9 +62,23 @@
 
 /* --- AVATAR (Foto o Iniciales) --- */
 .teacher-avatar {
-    width: 80px;
-    height: 80px;
-    flex-shrink: 0; /* Evita que se aplaste */
+    width: 70px;  /* Ajusta según tu diseño actual */
+    height: 70px; /* Debe ser igual al ancho */
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0; /* Evita que el círculo se aplaste en pantallas pequeñas */
+}
+
+.avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Recorte perfecto al centro */
+    
+    /* Mejoras de nitidez para evitar pixelado */
+    image-rendering: -webkit-optimize-contrast;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    border: 2px solid white;
 }
 
 /* Estilo para cuando son iniciales (div) */

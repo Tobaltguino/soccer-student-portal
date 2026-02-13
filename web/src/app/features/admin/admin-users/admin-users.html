@@ -26,8 +26,8 @@
             <div class="filter-item flex-grow-2">
                 <label>Buscador</label>
                 <input pInputText type="text" [(ngModel)]="filtros.global" 
-                        (input)="dt.filterGlobal(filtros.global, 'contains')" 
-                        placeholder="Nombre, RUT o Email..." class="w-full"/>
+                       (input)="dt.filterGlobal(filtros.global, 'contains')" 
+                       placeholder="Nombre, RUT o Email..." class="w-full"/>
             </div>
 
             <ng-container *ngIf="vistaActual === 'estudiantes'">
@@ -54,7 +54,7 @@
                     <label>Especialidad</label>
                     <p-multiSelect [options]="listaTiposProfesor" [(ngModel)]="filtros.tipoProfesor"
                                    optionLabel="label" optionValue="value" placeholder="Todas las especialidades"
-                                   (onChange)="dt.filter($event.value, 'tipo_profesor', 'in')"
+                                   (onChange)="dt.filter($event.value, 'tipo_profesor', 'in')" 
                                    display="chip" [showClear]="true" styleClass="w-full"
                                    [maxSelectedLabels]="1" selectedItemsLabel="{0} tipos"></p-multiSelect>
                 </div>
@@ -88,10 +88,10 @@
             
             <ng-template pTemplate="header">
                 <tr>
+                    <th style="width: 4rem"></th> 
+                    
                     <th pSortableColumn="nombre">Nombre / RUT <p-sortIcon field="nombre"></p-sortIcon></th>
-                    
                     <th class="text-center" *ngIf="vistaActual === 'estudiantes'">F. Nac / Edad</th>
-                    
                     <th *ngIf="vistaActual === 'estudiantes'">Grupo</th>
                     <th *ngIf="vistaActual === 'estudiantes'">Posiciones</th>
                     <th *ngIf="vistaActual === 'profesores'">Especialidad / Grupos</th>
@@ -103,6 +103,15 @@
 
             <ng-template pTemplate="body" let-item>
                 <tr [ngClass]="{'row-inactive': !item.activo}">
+                    
+                    <td>
+                        <div class="flex align-items-center justify-content-center">
+                            <img [src]="item.foto_url || 'assets/images/default-user.png'" 
+                                alt="Avatar" 
+                                class="avatar-img">
+                        </div>
+                    </td>
+
                     <td>
                         <div class="font-bold text-main">{{ item.nombre }} {{ item.apellido }}</div>
                         <div class="text-xs text-secondary mt-1"><i class="pi pi-id-card"></i> {{ item.rut || 'Sin RUT' }}</div>
@@ -142,6 +151,42 @@
 
     <p-dialog [(visible)]="displayDialog" [header]="tituloDialogo" [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" styleClass="p-fluid">
         <div class="flex flex-column gap-3 pt-2">
+
+            <div class="field photo-section">
+                <div class="photo-upload-wrapper">
+                    <div class="avatar-preview-container shadow-4">
+                        <img *ngIf="previewUrl" [src]="previewUrl" alt="Vista previa">
+                        
+                        <div *ngIf="!previewUrl" class="avatar-placeholder">
+                            <i class="pi pi-camera"></i>
+                        </div>
+
+                        <div *ngIf="uploadingFoto" class="loading-overlay">
+                            <i class="pi pi-spin pi-spinner text-3xl text-white"></i>
+                        </div>
+                    </div>
+
+                    <div class="photo-actions">
+                        <p-fileUpload mode="basic" 
+                                    chooseIcon="pi pi-plus" 
+                                    chooseLabel="Elegir foto" 
+                                    accept="image/*" 
+                                    [auto]="true" 
+                                    [customUpload]="true" 
+                                    (uploadHandler)="onFileSelected($event)"
+                                    styleClass="p-button-rounded p-button-outlined btn-icon-only">
+                        </p-fileUpload>
+
+                        <button *ngIf="previewUrl" 
+                                pButton 
+                                icon="pi pi-trash" 
+                                class="p-button-rounded p-button-danger p-button-text btn-icon-only"
+                                (click)="clearFoto()">
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div class="field">
                 <label><i class="pi pi-envelope"></i> Email</label>
                 <input pInputText [(ngModel)]="userForm.email" />
@@ -187,7 +232,7 @@
         </div>
         <ng-template pTemplate="footer">
             <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="displayDialog = false"></button>
-            <button pButton label="Guardar" icon="pi pi-check" (click)="guardar()"></button>
+            <button pButton label="Guardar" icon="pi pi-check" (click)="guardar()" [loading]="loading"></button>
         </ng-template>
     </p-dialog>
 </div>
