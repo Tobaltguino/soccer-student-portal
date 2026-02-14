@@ -1,0 +1,221 @@
+/* --- CONFIGURACIÓN BASE PRO-FUTBOL --- */
+:host {
+    display: block;
+    padding: 1rem;
+}
+
+.classes-container { 
+    max-width: 1400px; 
+    margin: 0 auto; 
+}
+
+/* --- HEADER --- */
+.page-header {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    margin-bottom: 2rem; 
+    flex-wrap: wrap; 
+    gap: 1rem;
+}
+
+.header-content h1 { 
+    margin: 0; 
+    font-size: 1.5rem; 
+    font-weight: 700; 
+    color: var(--text-main); 
+}
+
+.header-content p { 
+    margin: 0.25rem 0 0; 
+    color: var(--text-secondary); 
+    font-size: 0.9rem; 
+}
+
+/* --- FILTROS (MODELO CARD ADMIN) --- */
+.card {
+    background: var(--bg-card); 
+    padding: 1.25rem; 
+    border-radius: 12px;
+    border: 1px solid var(--border-color); 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.filters-row { 
+    display: flex; 
+    gap: 1rem; 
+    align-items: center; 
+    flex-wrap: wrap; 
+}
+
+.filter-item { 
+    flex: 1; 
+    min-width: 150px; /* Reducido de 200px para acomodar 3 filtros y el botón */
+}
+
+.button-item { 
+    flex: 0 0 auto; 
+}
+
+/* --- TABLA & UTILS --- */
+.card-table {
+    background-color: var(--bg-card); 
+    padding: 0.5rem; 
+    border-radius: 16px;
+    border: 1px solid var(--border-color); 
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.text-main { color: var(--text-main); }
+.text-500 { color: var(--text-secondary); }
+.font-bold { font-weight: 700; }
+
+/* --- REGLA DE ESPACIADO PARA ICONOS --- */
+i[class^="pi pi-"], 
+i[class*=" pi-"] {
+    margin-right: 8px !important;
+}
+
+/* --- ENCABEZADOS DE TABLA --- */
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+    background: var(--bg-main) !important; 
+    color: var(--text-secondary) !important;
+    font-weight: 600; 
+    font-size: 0.8rem; 
+    text-transform: uppercase;
+    padding: 1.25rem 1rem; 
+    border-bottom: 1px solid var(--border-color);
+}
+
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th i {
+    color: var(--primary-color);
+    font-size: 0.9rem;
+}
+
+/* --- CELDAS DE CUERPO --- */
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Ocultar títulos duplicados en escritorio */
+:host ::ng-deep .p-column-title {
+    display: none;
+}
+
+/* --- ANIMACIONES --- */
+.animation-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* =========================================
+   ESTILOS DEL MODAL Y FORMULARIO
+   ========================================= */
+
+/* Estructura de cada campo del formulario */
+.field {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    margin-bottom: 24px !important;
+    width: 100% !important;
+}
+
+.field label {
+    font-weight: 600 !important;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    margin: 0 !important;
+    display: flex;
+    align-items: center;
+}
+
+/* Forzar que todos los inputs ocupen el ancho completo */
+.field input, 
+.field textarea,
+.field p-select,
+.field p-datepicker,
+.field p-calendar,
+.field p-multiSelect {
+    width: 100% !important;
+    display: flex;
+}
+
+.field textarea {
+    min-height: 80px;
+    font-family: inherit;
+}
+
+/* Ajustes de padding interno del Dialog de PrimeNG */
+:host ::ng-deep .p-dialog-content {
+    overflow-y: visible !important;
+    padding: 1.5rem 1.5rem 2rem 1.5rem !important;
+}
+
+/* Centrar las pestañas (SelectButton) */
+:host ::ng-deep .p-selectbutton {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+
+
+/* Invertir color del icono del reloj en modo oscuro */
+.dark-mode input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+/* --- ESPACIADOS DE ICONOS EN EL FORMULARIO --- */
+/* Margen para iconos tradicionales */
+.field label i {
+    margin-right: 8px !important;
+}
+
+/* Margen para emojis en labels de planificación */
+.field label span {
+    margin-right: 10px;
+    font-size: 1.1rem;
+    display: inline-block;
+    width: 20px;
+    text-align: center;
+}
+
+/* Espacio interno en el SelectButton entre icono y texto */
+:host ::ng-deep .p-selectbutton .p-button .p-button-label i {
+    margin-right: 8px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- MEDIA QUERIES PARA MÓVIL --- */
+@media (max-width: 960px) {
+    :host ::ng-deep .p-column-title {
+        display: inline-block;
+        font-weight: 700;
+        min-width: 120px;
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+    }
+
+    :host ::ng-deep .p-datatable-tbody > tr > td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100% !important;
+        padding: 0.8rem 1rem !important;
+        border-bottom: 1px solid var(--border-color) !important;
+    }
+
+    :host ::ng-deep .p-datatable-tbody > tr {
+        border: 1px solid var(--border-color);
+        margin-bottom: 1rem;
+        display: block;
+        border-radius: 10px;
+    }
+}

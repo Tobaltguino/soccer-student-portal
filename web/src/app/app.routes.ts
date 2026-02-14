@@ -28,6 +28,12 @@ import { StudentNutriComponent } from './features/student/student-nutri/student-
 // --- PROFESSOR IMPORTS (Portal Profesor) ---
 import { ProfessorLayoutComponent } from './features/professor/professor-layout/professor-layout';
 import { ProfessorDashboardComponent } from './features/professor/professor-dashboard/professor-dashboard';
+import { ProfessorAttendanceComponent } from './features/professor/professor-attendance/professor-attendance';
+import { ProfessorClassesComponent } from './features/professor/professor-classes/professor-classes';
+import { ProfessorEvaluationsComponent } from './features/professor/professor-evaluations/professor-evaluations';
+import { ProfessorKinesiologyComponent } from './features/professor/professor-kinesiology/professor-kinesiology';
+import { ProfessorNutritionComponent } from './features/professor/professor-nutrition/professor-nutrition';
+import { ProfessorScheduleComponent } from './features/professor/professor-schedule/professor-schedule';
 
 // --- KINE IMPORTS (Portal Especialista Kinesiólogo) ---
 import { KineLayoutComponent } from './features/kine/kine-layout/kine-layout';
@@ -89,7 +95,13 @@ export const routes: Routes = [
         component: ProfessorLayoutComponent, // Menú lateral del Profesor
         children: [
             { path: 'dashboard', component: ProfessorDashboardComponent },
-            // Aquí agregarás: { path: 'asistencia', ... }, { path: 'planificacion', ... }
+            { path: 'attendance', component: ProfessorAttendanceComponent },
+            { path: 'classes', component: ProfessorClassesComponent },
+            { path: 'evaluations', component: ProfessorEvaluationsComponent },
+            { path: 'kinesiology', component: ProfessorKinesiologyComponent },
+            { path: 'nutrition', component: ProfessorNutritionComponent },
+            { path: 'schedule', component: ProfessorScheduleComponent },
+
         ]
     },
 

@@ -1,0 +1,94 @@
+/* =========================================
+   1. CONTENEDOR PRINCIPAL
+   ========================================= */
+:host {
+    display: block;
+    padding: 1rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* =========================================
+   2. HEADER (ESTILO "MIS CLASES")
+   ========================================= */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap; /* Esto ayuda en móviles */
+    gap: 1rem;
+}
+
+.header-content h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    /* Usamos var(--text-color) para que funcione en Dark Mode */
+    color: var(--text-color); 
+}
+
+.header-content p {
+    margin: 0.25rem 0 0;
+    color: var(--text-secondary-color);
+    font-size: 0.9rem;
+}
+
+/* =========================================
+   3. CALENDARIO (WRAPPER)
+   ========================================= */
+.calendar-wrapper {
+    background: var(--surface-card);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    min-height: 700px;
+    border: 1px solid var(--surface-border);
+}
+
+/* =========================================
+   4. FULLCALENDAR (ESTILOS ESPECÍFICOS)
+   ========================================= */
+:host ::ng-deep {
+    /* Variables base */
+    .fc {
+        font-family: var(--font-family);
+        color: var(--text-color);
+        --fc-border-color: var(--surface-border);
+        --fc-today-bg-color: transparent;
+        --fc-now-indicator-color: #ef4444;
+    }
+
+    /* Eventos (Cajas de clases) */
+    .fc-timegrid-event {
+        border: none;
+        border-radius: 6px;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+        padding: 2px 4px;
+        margin: 1px 2px;
+    }
+    .fc-event-title { font-weight: 700; color: #ffffff; }
+    .fc-event-time { color: #ffffff; opacity: 0.9; }
+
+    /* Botones de navegación */
+    .fc-button-primary {
+        background-color: transparent !important; /* Transparente por defecto */
+        border: 1px solid var(--surface-border) !important;
+        color: var(--text-color) !important;
+    }
+    
+    /* Hover Azul */
+    .fc-button-primary:hover, .fc-button-active {
+        background-color: var(--primary-color) !important;
+        border-color: var(--primary-color) !important;
+        color: #ffffff !important;
+    }
+    
+    .fc-toolbar-title { color: var(--text-color); font-weight: 800; }
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .calendar-wrapper { padding: 0.5rem; min-height: 500px; }
+    :host ::ng-deep .fc-toolbar-title { font-size: 1.2rem; }
+}

@@ -1,0 +1,14 @@
+:host { display: block; padding: 1rem; }
+.attendance-container { max-width: 1200px; margin: 0 auto; }
+.page-header { margin-bottom: 2rem; }
+.card { background: var(--bg-card); border: 1px solid var(--border-color); padding: 1.5rem; }
+
+/* Ajustes para la tabla y avatar */
+:host ::ng-deep .p-avatar { border: 2px solid var(--primary-color); }
+:host ::ng-deep .p-datatable-tbody > tr > td { vertical-align: middle; padding: 1rem !important; }
+
+.historial-list { max-height: 400px; overflow-y: auto; }
+
+@media (max-width: 768px) {
+    .p-column-title { font-weight: bold; min-width: 100px; display: inline-block; }
+}

@@ -666,4 +666,52 @@ async eliminarRangosPorTipo(tipoId: number) {
       return null;
     }
   }
+
+  // --- EN supabase.service.ts ---
+
+  // 1. Obtener los datos del profesor logueado
+  async getProfesorPorEmail(email: string) {
+    return await this.supabase
+      .from('profesores')
+      .select('id, nombre, apellido')
+      .eq('email', email)
+      .maybeSingle();
+  }
+
+  // 2. Obtener los grupos asignados a un profesor
+  async getGruposDeProfesor(profesorId: string) {
+    return await this.supabase
+      .from('grupos_profesores')
+      .select('grupo_id, grupos(id, nombre)')
+      .eq('profesor_id', profesorId);
+  }
+
+  // 3. Obtener clases de múltiples grupos desde una fecha específica
+  async getClasesPorGrupos(grupoIds: string[], fechaInicio: string) {
+    return await this.supabase
+      .from('clases')
+      .select('*')
+      .in('grupo_id', grupoIds)
+      .gte('fecha', fechaInicio);
+  }
+
+  async getSesionesEvaluacionPorGrupos(grupoIds: string[]) {
+    return await this.supabase
+      .from('evaluaciones_sesiones') // ✅ Nombre correcto de tu tabla
+      .select(`
+        id, fecha, estado, grupo_id, tipo_evaluacion_id,
+        grupos (nombre),
+        tipo_evaluacion (nombre, unidad_medida)
+      `)
+      .in('grupo_id', grupoIds);
+  }
+
+  async getClasesPorGrupo(grupoId: number | string) {
+    return await this.supabase
+      .from('clases')
+      .select('*')
+      .eq('grupo_id', grupoId)
+      .order('fecha', { ascending: false }) // Las más recientes primero
+      .order('hora', { ascending: false });
+  }
 }

@@ -1,1 +1,103 @@
-<p>professor-layout works!</p>
+<div class="layout-container" [class.collapsed]="isCollapsed">
+    <div class="mobile-overlay" [class.active]="isMobileMenuOpen" (click)="closeMobileMenu()"></div>
+
+    <aside class="sidebar" [class.mobile-active]="isMobileMenuOpen">
+        
+        <div class="brand">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+                </div>
+                <div class="brand-text">
+                    <h2>ProFutbol</h2>
+                    <span>CUERPO TÉCNICO</span> 
+                </div>
+            </div>
+            <button class="toggle-btn desktop-only" (click)="toggleSidebar()">
+                <i class="pi pi-bars"></i>
+            </button>
+            <button class="toggle-btn mobile-only" (click)="closeMobileMenu()">
+                <i class="pi pi-times"></i>
+            </button>
+        </div>
+
+        <nav class="menu">
+            <div class="menu-label">PANEL CONTROL</div>
+            <a class="menu-item" routerLink="/professor/dashboard" routerLinkActive="active-link" (click)="closeMobileMenu()">
+                <i class="pi pi-home"></i>
+                <span class="label">Inicio</span>
+            </a>
+            <a class="menu-item" routerLink="/professor/schedule" routerLinkActive="active-link" (click)="closeMobileMenu()">
+                <i class="pi pi-calendar"></i>
+                <span class="label">Mi Horario</span>
+            </a>
+
+            <div class="menu-label system">GESTIÓN GRUPOS</div>
+            <a class="menu-item" routerLink="/professor/classes" routerLinkActive="active-link" (click)="closeMobileMenu()">
+                <i class="pi pi-calendar-plus"></i>
+                <span class="label">Mis Clases</span>
+            </a>
+            <a class="menu-item" routerLink="/professor/attendance" routerLinkActive="active-link" (click)="closeMobileMenu()">
+                <i class="pi pi-check-square"></i>
+                <span class="label">Asistencias</span>
+            </a>
+            <a class="menu-item" routerLink="/professor/evaluations" routerLinkActive="active-link" (click)="closeMobileMenu()">
+                <i class="pi pi-chart-bar"></i>
+                <span class="label">Evaluaciones</span>
+            </a>
+
+            <div class="menu-label system">ESPECIALIDAD</div>
+            <a class="menu-item" routerLink="/professor/kinesiology" routerLinkActive="active-link" (click)="closeMobileMenu()">
+                <i class="pi pi-heart-fill"></i>
+                <span class="label">Kinesiología</span>
+            </a>
+            <a class="menu-item" routerLink="/professor/nutrition" routerLinkActive="active-link" (click)="closeMobileMenu()">
+                <i class="pi pi-apple"></i>
+                <span class="label">Nutrición</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="logout-btn" (click)="logout()">
+                <i class="pi pi-sign-out"></i>
+                <span>Cerrar Sesión</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-bar">
+            <button class="mobile-menu-btn" (click)="toggleMobileMenu()">
+                <i class="pi pi-bars"></i>
+            </button>
+
+            <div class="header-right">
+                <button class="theme-toggle-btn" (click)="toggleTheme()" [title]="isDarkMode ? 'Modo Claro' : 'Modo Oscuro'">
+                    <i class="pi" [class.pi-moon]="!isDarkMode" [class.pi-sun]="isDarkMode"></i>
+                </button>
+
+                <div class="user-profile">
+                    <div class="user-info">
+                        <span class="name">{{ userName }}</span>
+                        <span class="role">{{ userRole }}</span>
+                    </div>
+
+                    <div class="avatar-container shadow-1">
+                        <img *ngIf="userPhotoUrl" 
+                            [src]="userPhotoUrl" 
+                            alt="Perfil Profesor" 
+                            class="avatar-img">
+
+                        <div *ngIf="!userPhotoUrl" class="avatar-initials">
+                            {{ userInitial }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-content">
+            <router-outlet></router-outlet>
+        </div>
+    </main>
+</div>

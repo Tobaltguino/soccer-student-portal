@@ -170,6 +170,11 @@ export class AdminClassesComponent implements OnInit {
     this.tituloDialogo = 'Nueva Clase'; 
     this.limpiarForm(); 
     this.vistaFormulario = 'logistica';
+    
+    // Asignar la hora actual por defecto en formato "HH:mm"
+    const ahora = new Date();
+    this.claseForm.hora = ('0' + ahora.getHours()).slice(-2) + ':' + ('0' + ahora.getMinutes()).slice(-2);
+    
     this.displayDialog = true; 
   }
   
@@ -179,9 +184,10 @@ export class AdminClassesComponent implements OnInit {
     this.vistaFormulario = 'logistica';
     
     const fechaObj = new Date(clase.fecha + 'T00:00:00');
-    const horaObj = new Date(`2000-01-01T${clase.hora}`);
+    // Guardamos la hora directamente como string "HH:mm"
+    const horaString = clase.hora ? clase.hora.slice(0, 5) : ''; 
     
-    this.claseForm = { ...clase, fecha: fechaObj, hora: horaObj };
+    this.claseForm = { ...clase, fecha: fechaObj, hora: horaString };
     this.displayDialog = true;
   }
 
@@ -194,7 +200,7 @@ export class AdminClassesComponent implements OnInit {
     const datosParaEnviar: any = {
       grupo_id: this.claseForm.grupo_id,
       fecha: this.formatearFecha(this.claseForm.fecha),
-      hora: this.formatearHora(this.claseForm.hora),
+      hora: this.claseForm.hora, // ✅ Ya es un string, no necesita formateo
       lugar: this.claseForm.lugar || '',
       objetivo: this.claseForm.objetivo || '',
       calentamiento: this.claseForm.calentamiento || '',

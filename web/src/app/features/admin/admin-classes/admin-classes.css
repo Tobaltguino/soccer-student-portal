@@ -139,6 +139,30 @@
     margin-right: 8px;
 }
 
+/* --- AJUSTE INPUT HORA NATIVO --- */
+input[type="time"].p-inputtext {
+    width: 100%;
+    font-family: inherit;
+    color: var(--text-main);
+    background: var(--bg-main);
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s;
+    cursor: pointer;
+}
+
+input[type="time"].p-inputtext:focus {
+    border-color: var(--primary-color);
+}
+
+/* Invertir color del icono del reloj nativo en modo oscuro */
+.dark-mode input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
 /* --- MEDIA QUERIES --- */
 @media (max-width: 768px) {
     :host { padding: 0.5rem; }
