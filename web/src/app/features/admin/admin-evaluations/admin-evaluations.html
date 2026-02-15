@@ -1,4 +1,4 @@
-<div class="eval-container p-3">
+<div class="eval-container p-3 fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
     <p-confirmdialog></p-confirmdialog>
 
@@ -50,7 +50,7 @@
 
             <div class="filter-btn">
                 <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary" 
-                        (click)="limpiarFiltros()" pTooltip="Limpiar"></button>
+                        (click)="limpiarFiltros()" pTooltip="Limpiar Filtros"></button>
             </div>
         </div>
     </div>
@@ -84,75 +84,103 @@
                 </tr>
             </ng-template>
             <ng-template pTemplate="emptymessage">
-                <tr><td colspan="5" class="text-center p-4">No se encontraron sesiones con estos filtros.</td></tr>
+                <tr><td colspan="5" class="text-center p-4 text-500">No se encontraron sesiones con estos filtros.</td></tr>
             </ng-template>
         </p-table>
     </div>
 
     <p-dialog [(visible)]="displayTipoDialog" header="Configuración Maestra de Tests" [modal]="true" [style]="{width: '95vw', maxWidth: '1000px'}" [draggable]="false" [resizable]="false" styleClass="p-fluid">
         <ng-template pTemplate="content">
-            <div class="grid">
-             <div class="col-12 md:col-5 border-right-1 surface-border pr-3">
+            <div class="grid pt-2">
+             <div class="col-12 md:col-6 border-right-1 surface-border pr-3">
                  <h3 class="mt-0 mb-3 text-primary">Nuevo Test</h3>
+                 
                  <div class="formgrid grid">
-                     <div class="field col-8">
+                     <div class="field col-8 mb-2">
                          <label class="font-bold text-sm">Nombre</label>
-                         <input pInputText [(ngModel)]="tipoForm.nombre" placeholder="Ej: Salto">
+                         <input pInputText [(ngModel)]="tipoForm.nombre" placeholder="Ej: Salto Largo">
                      </div>
-                     <div class="field col-4">
+                     <div class="field col-4 mb-2">
                          <label class="font-bold text-sm">Unidad</label>
                          <input pInputText [(ngModel)]="tipoForm.unidad_medida" placeholder="cm, seg">
                      </div>
+                     <div class="field col-12 m-0 mt-1">
+                         <label class="font-bold text-sm">Descripción (Opcional)</label>
+                         <textarea pInputTextarea [(ngModel)]="tipoForm.descripcion" rows="2" placeholder="Detalle o instrucciones del test..." style="resize: none; width: 100%;"></textarea>
+                     </div>
                  </div>
+                 
                  <div class="flex align-items-center mt-3 mb-3">
                       <p-checkbox [(ngModel)]="usarRangos" [binary]="true" inputId="chkRangos"></p-checkbox>
-                      <label for="chkRangos" class="ml-2 font-bold text-sm cursor-pointer text-900">Agregar Rango</label>
+                      <label for="chkRangos" class="ml-2 font-bold text-sm cursor-pointer text-900">Agregar Rangos de Evaluación</label>
                  </div>
+                 
                  <div *ngIf="usarRangos" class="surface-100 border-round p-3 mt-2 animation-duration-200 fadein">
                      <h4 class="m-0 mb-3 text-700 font-bold text-sm">NUEVO RANGO</h4>
-                     <div class="field mb-3">
-                        <label class="font-bold text-xs block mb-2 text-600">Color Sugerido</label>
-                        
-                        <div class="flex gap-2 mb-2 flex-wrap">
-                            <div *ngFor="let color of coloresPredefinidos" 
-                                class="w-2rem h-2rem border-circle cursor-pointer border-1 border-300 transition-duration-200 hover:surface-300 shadow-1"
-                                [style.background-color]="color"
-                                [class.border-2]="nuevoRango.color_sugerido === color"
-                                [class.border-primary]="nuevoRango.color_sugerido === color"
-                                (click)="seleccionarColor(color)"
-                                pTooltip="Seleccionar">
-                            </div>
-                        </div>
-                    </div>
 
                     <div class="range-inline-row">
-                        <div class="field">
-                            <label class="font-bold text-xs block mb-1 text-600">Mín</label>
-                            <p-inputNumber [(ngModel)]="nuevoRango.valor_min" [showButtons]="false" styleClass="w-full" inputStyleClass="w-full text-center"></p-inputNumber>
+                        <div class="field field-edad">
+                            <label class="font-bold text-xs block mb-1 text-600">Ed. Mín</label>
+                            <p-inputNumber [(ngModel)]="nuevoRango.edad_min" [showButtons]="false" styleClass="w-full" inputStyleClass="w-full text-center" placeholder="10"></p-inputNumber>
                         </div>
-                        <div class="field">
-                            <label class="font-bold text-xs block mb-1 text-600">Máx</label>
-                            <p-inputNumber [(ngModel)]="nuevoRango.valor_max" [showButtons]="false" styleClass="w-full" inputStyleClass="w-full text-center"></p-inputNumber>
+
+                        <div class="field field-edad">
+                            <label class="font-bold text-xs block mb-1 text-600">Ed. Máx</label>
+                            <p-inputNumber [(ngModel)]="nuevoRango.edad_max" [showButtons]="false" styleClass="w-full" inputStyleClass="w-full text-center" placeholder="12"></p-inputNumber>
                         </div>
                         
-                        <div class="field color-fixed">
-                            <label class="font-bold text-xs block mb-1 text-600">Personal</label>
-                            <input type="color" [(ngModel)]="nuevoRango.color_sugerido" class="color-input-custom" pTooltip="Color personalizado">
+                        <div class="field field-etiqueta">
+                            <label class="font-bold text-xs block mb-1 text-600">Etiqueta</label>
+                            <input pInputText [(ngModel)]="nuevoRango.nombre_etiqueta" placeholder="Ej: Bueno" class="w-full">
+                        </div>
+
+                        <div class="field field-minmax">
+                            <label class="font-bold text-xs block mb-1 text-600">Val. Mín</label>
+                            <p-inputNumber [(ngModel)]="nuevoRango.valor_min" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2" [showButtons]="false" styleClass="w-full" inputStyleClass="w-full text-center"></p-inputNumber>
+                        </div>
+                        
+                        <div class="field field-minmax">
+                            <label class="font-bold text-xs block mb-1 text-600">Val. Máx</label>
+                            <p-inputNumber [(ngModel)]="nuevoRango.valor_max" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2" [showButtons]="false" styleClass="w-full" inputStyleClass="w-full text-center"></p-inputNumber>
+                        </div>
+                        
+                        <div class="field field-color">
+                            <label class="font-bold text-xs block mb-1 text-600">Color</label>
+                            <p-select [options]="opcionesColor" [(ngModel)]="nuevoRango.color_sugerido" optionLabel="label" optionValue="value" styleClass="w-full">
+                                <ng-template pTemplate="selectedItem" let-selectedOption>
+                                    <div class="flex align-items-center gap-2" *ngIf="selectedOption">
+                                        <div class="w-1rem h-1rem border-circle shadow-1" [style.backgroundColor]="selectedOption.value"></div>
+                                        <span class="text-xs font-bold" [style.color]="selectedOption.value">{{selectedOption.label}}</span>
+                                    </div>
+                                </ng-template>
+                                <ng-template pTemplate="item" let-opcion>
+                                    <div class="flex align-items-center gap-2">
+                                        <div class="w-1rem h-1rem border-circle shadow-1" [style.backgroundColor]="opcion.value"></div>
+                                        <span class="text-xs">{{opcion.label}}</span>
+                                    </div>
+                                </ng-template>
+                            </p-select>
                         </div>
                         
                         <div class="btn-fixed">
-                            <button pButton icon="pi pi-plus" class="p-button-primary" (click)="agregarRangoALista()" pTooltip="Añadir Rango"></button>
+                            <button pButton icon="pi pi-plus" class="p-button-primary" (click)="agregarRangoALista()" pTooltip="Añadir"></button>
                         </div>
                     </div>
-                     <div class="mt-3 border-top-1 border-300 pt-3" *ngIf="rangosForm.length > 0">
-                         <span class="text-xs font-bold text-600 mb-2 block">Rangos definidos:</span>
+
+                     <div class="mt-4 border-top-1 border-300 pt-3" *ngIf="rangosForm.length > 0">
+                         <span class="text-xs font-bold text-600 mb-2 block">Rangos listos para guardar:</span>
                          <p-table [value]="rangosForm" styleClass="p-datatable-sm custom-compact-table" responsiveLayout="scroll">
                              <ng-template pTemplate="body" let-r let-i="rowIndex">
                                  <tr class="text-sm">
+                                     <td class="font-bold text-primary py-1" style="width: 120px; white-space: nowrap;">
+                                         {{r.edad_min}} a {{r.edad_max}} años
+                                     </td>
                                      <td class="font-bold py-1">{{r.nombre_etiqueta}}</td>
-                                     <td class="py-1 text-center text-600">{{r.valor_min}} - {{r.valor_max}}</td>
+                                     <td class="py-1 text-center text-600" style="white-space: nowrap;">
+                                         {{r.valor_min}} - {{r.valor_max}}
+                                     </td>
                                      <td class="py-1 text-center" style="width: 50px;">
-                                         <div [style.background]="r.color_sugerido" class="w-1rem h-1rem border-circle border-1 border-300 inline-block vertical-align-middle shadow-1"></div>
+                                         <span class="color-indicator" [style.background-color]="r.color_sugerido"></span>
                                      </td>
                                      <td class="text-right py-1" style="width: 40px;">
                                          <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm py-0 w-2rem h-2rem" (click)="quitarRangoDeLista(i)"></button>
@@ -162,42 +190,49 @@
                          </p-table>
                      </div>
                  </div>
-                 <button pButton label="Guardar Todo" icon="pi pi-save" class="mt-4 w-full" (click)="guardarNuevoTipo()"></button>
+
+                 <button pButton label="Guardar Test Completo" icon="pi pi-save" class="mt-4 w-full" (click)="guardarNuevoTipo()"></button>
              </div>
-             <div class="col-12 md:col-7 pl-0 md:pl-4 mt-4 md:mt-0">
+
+             <div class="col-12 md:col-6 pl-0 md:pl-4 mt-4 md:mt-0">
                  <h3 class="mt-0 mb-3 text-primary">Tests Configurados</h3>
-                 <div class="border-1 surface-border border-round overflow-hidden shadow-1">
+                 <div class="border-1 surface-border border-round overflow-hidden shadow-1 bg-white">
                      <p-table [value]="tiposEvaluacion" [scrollable]="true" scrollHeight="400px" styleClass="p-datatable-sm p-datatable-striped">
                          <ng-template pTemplate="header">
                              <tr>
-                                 <th>Nombre</th>
-                                 <th>Unidad</th>
+                                 <th>Nombre de la Prueba</th>
+                                 <th style="width: 100px;">Unidad</th>
                                  <th class="text-center" style="width: 80px">Acción</th>
                              </tr>
                          </ng-template>
+                         
                          <ng-template pTemplate="body" let-t>
                              <tr>
-                                 <td><span class="font-bold text-900">{{t.nombre}}</span></td>
-                                 <td><p-tag [value]="t.unidad_medida" severity="secondary"></p-tag></td>
-                                 <td class="text-center">
-                                     <button pButton icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text p-button-sm" (click)="eliminarTipoTest(t.id)"></button>
+                                 <td>
+                                     <span class="font-bold text-900 block">{{t.nombre}}</span>
+                                     <span class="text-xs text-500 block mt-1 line-height-2" *ngIf="t.descripcion">{{t.descripcion}}</span>
+                                 </td>
+                                 <td class="vertical-align-top pt-3"><p-tag [value]="t.unidad_medida" severity="secondary"></p-tag></td>
+                                 <td class="text-center vertical-align-top pt-2">
+                                     <button pButton icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text p-button-sm" (click)="eliminarTipoTest(t.id)" pTooltip="Eliminar test y registros"></button>
                                  </td>
                              </tr>
                          </ng-template>
+                         
                          <ng-template pTemplate="emptymessage">
-                             <tr><td colspan="3" class="text-center p-4 text-500">No hay tests configurados.</td></tr>
+                             <tr><td colspan="3" class="text-center p-4 text-500">No hay tests configurados actualmente.</td></tr>
                          </ng-template>
                      </p-table>
                  </div>
              </div>
          </div>
         </ng-template>
-     </p-dialog>
+    </p-dialog>
  
-     <p-dialog [(visible)]="displayMainDialog" [header]="evalLogistica.id ? 'Editar Sesión' : 'Nueva Sesión'" [modal]="true" [style]="{width: '450px'}" styleClass="p-fluid">
+    <p-dialog [(visible)]="displayMainDialog" [header]="evalLogistica.id ? 'Editar Sesión' : 'Nueva Sesión'" [modal]="true" [style]="{width: '450px'}" styleClass="p-fluid">
         <ng-template pTemplate="content">
          <div class="field mt-2">
-             <label class="font-bold">Fecha</label>
+             <label class="font-bold">Fecha de Aplicación</label>
              <p-datepicker [(ngModel)]="evalLogistica.fecha" appendTo="body" dateFormat="dd/mm/yy" [showIcon]="true"></p-datepicker>
          </div>
          <div class="field">
@@ -220,22 +255,22 @@
              <div class="flex gap-4">
                  <div class="flex align-items-center">
                      <p-radioButton name="estado" value="PENDIENTE" [(ngModel)]="evalLogistica.estado" inputId="st1"></p-radioButton>
-                     <label for="st1" class="ml-2">Pendiente</label>
+                     <label for="st1" class="ml-2 cursor-pointer">Pendiente</label>
                  </div>
                  <div class="flex align-items-center">
                      <p-radioButton name="estado" value="FINALIZADO" [(ngModel)]="evalLogistica.estado" inputId="st2"></p-radioButton>
-                     <label for="st2" class="ml-2">Finalizado</label>
+                     <label for="st2" class="ml-2 cursor-pointer">Finalizado</label>
                  </div>
              </div>
          </div>
         </ng-template>
          <ng-template pTemplate="footer">
-             <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="displayMainDialog = false"></button>
+             <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="displayMainDialog = false"></button>
              <button pButton label="Guardar" icon="pi pi-check" (click)="crearSesionPlanificada()"></button>
          </ng-template>
-     </p-dialog>
+    </p-dialog>
  
-     <p-dialog [(visible)]="displayGradesDialog" header="Registro de Resultados" [modal]="true" [style]="{width: '90vw', maxWidth: '900px'}" [maximizable]="true" styleClass="p-fluid">
+    <p-dialog [(visible)]="displayGradesDialog" header="Registro de Resultados" [modal]="true" [style]="{width: '90vw', maxWidth: '900px'}" [maximizable]="true" styleClass="p-fluid">
         <ng-template pTemplate="content">
             <div class="surface-100 p-3 border-round mb-3 flex justify-content-between align-items-center">
                 <div class="flex flex-column">
@@ -247,6 +282,7 @@
                     <p-tag [value]="evalLogistica.grupos?.nombre" severity="info" styleClass="text-base"></p-tag>
                 </div>
             </div>
+            
             <p-table [value]="estudiantesGrupo" [scrollable]="true" scrollHeight="500px" styleClass="p-datatable-gridlines p-datatable-sm" responsiveLayout="scroll">
                 <ng-template pTemplate="header">
                     <tr>
@@ -271,21 +307,21 @@
                         </td>
                         <td><input pInputText [(ngModel)]="estudiante.observacion" placeholder="Opcional"></td>
                         <td class="text-center">
-                            <button pButton icon="pi pi-eraser" class="p-button-rounded p-button-text p-button-secondary" (click)="limpiarFila(estudiante)" pTooltip="Limpiar nota"></button>
+                            <button pButton icon="pi pi-eraser" class="p-button-rounded p-button-text p-button-secondary" (click)="limpiarFila(estudiante)" pTooltip="Limpiar fila"></button>
                         </td>
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="emptymessage">
-                    <tr><td colspan="4" class="text-center p-4">No hay estudiantes en este grupo.</td></tr>
+                    <tr><td colspan="4" class="text-center p-4 text-500">No hay estudiantes activos en este grupo.</td></tr>
                 </ng-template>
             </p-table>
         </ng-template>
         <ng-template pTemplate="footer">
             <div class="flex justify-content-between align-items-center w-full">
-                <small class="text-600">Se guardarán solo los registros modificados.</small>
+                <small class="text-500 italic">Solo se guardarán las notas modificadas.</small>
                 <div class="flex gap-2">
-                    <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text" (click)="displayGradesDialog = false"></button>
-                    <button pButton label="Guardar Todo" icon="pi pi-save" (click)="guardarNotasFinales()"></button>
+                    <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="displayGradesDialog = false"></button>
+                    <button pButton label="Guardar Resultados" icon="pi pi-save" (click)="guardarNotasFinales()" [loading]="loading"></button>
                 </div>
             </div>
         </ng-template>

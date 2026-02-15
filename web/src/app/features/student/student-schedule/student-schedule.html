@@ -17,15 +17,16 @@
               [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" 
               [draggable]="false" [resizable]="false" styleClass="p-fluid">
         
-        <div *ngIf="claseSeleccionada" class="animation-fade-in">
+        <div *ngIf="claseSeleccionada" class="animation-fade-in pt-2">
+            
             <div class="field mb-3 grid">
                 <div class="col-6">
                     <label class="text-primary font-bold block mb-1 text-sm">📅 Fecha</label>
-                    <span class="text-900 font-medium">{{ claseSeleccionada.fecha | date:'dd/MM/yyyy' }}</span>
+                    <span class="text-900 font-medium">{{ claseSeleccionada?.fecha | date:'dd/MM/yyyy' }}</span>
                 </div>
                 <div class="col-6">
                     <label class="text-primary font-bold block mb-1 text-sm">⏰ Hora</label>
-                    <span class="text-900 font-medium">{{ claseSeleccionada.hora | slice:0:5 }} hrs</span>
+                    <span class="text-900 font-medium">{{ claseSeleccionada?.hora ? (claseSeleccionada.hora | slice:0:5) : '--:--' }} hrs</span>
                 </div>
             </div>
 
@@ -33,35 +34,44 @@
                 <label class="text-primary font-bold block mb-1 text-sm">📍 Lugar</label>
                 <div class="flex align-items-center">
                     <i class="pi pi-map-marker mr-2 text-primary"></i>
-                    <span class="text-900">{{ claseSeleccionada.lugar || 'Cancha Principal' }}</span>
+                    <span class="text-900">{{ claseSeleccionada?.lugar || 'Cancha Principal' }}</span>
                 </div>
             </div>
 
-            <div class="field mb-4">
+            <div class="field mb-3">
                 <label class="text-primary font-bold block mb-1 text-sm">🎯 Objetivo Principal</label>
                 <div class="surface-100 p-3 border-round text-700 italic border-1 border-200">
-                    {{ claseSeleccionada.objetivo && claseSeleccionada.objetivo !== 'EMPTY' ? claseSeleccionada.objetivo : 'Entrenamiento técnico/táctico' }}
+                    {{ claseSeleccionada?.objetivo && claseSeleccionada?.objetivo !== 'EMPTY' ? claseSeleccionada.objetivo : 'Entrenamiento técnico/táctico' }}
                 </div>
             </div>
-            
-            <div class="field mb-2" *ngIf="claseSeleccionada.calentamiento && claseSeleccionada.calentamiento !== 'EMPTY'">
-                <label class="font-bold text-sm text-900">🔥 Calentamiento</label>
-                <div class="text-sm text-600 mt-1">{{ claseSeleccionada.calentamiento }}</div>
-            </div>
-             
-             <div class="field mb-2" *ngIf="claseSeleccionada.parte_principal && claseSeleccionada.parte_principal !== 'EMPTY'">
-                <label class="font-bold text-sm text-900">⚽ Parte Principal</label>
-                <div class="text-sm text-600 mt-1">{{ claseSeleccionada.parte_principal }}</div>
+
+            <div *ngIf="puedeVerPlanificacion(claseSeleccionada)" class="animation-fade-in">
+                <div class="field mb-2" *ngIf="claseSeleccionada.calentamiento && claseSeleccionada.calentamiento !== 'EMPTY'">
+                    <label class="font-bold text-sm text-900">🔥 Calentamiento</label>
+                    <div class="text-sm text-600 mt-1 surface-ground p-3 border-round border-1 border-200">{{ claseSeleccionada.calentamiento }}</div>
+                </div>
+                 
+                <div class="field mb-2" *ngIf="claseSeleccionada.parte_principal && claseSeleccionada.parte_principal !== 'EMPTY'">
+                    <label class="font-bold text-sm text-900">⚽ Parte Principal</label>
+                    <div class="text-sm text-600 mt-1 surface-ground p-3 border-round border-1 border-200">{{ claseSeleccionada.parte_principal }}</div>
+                </div>
+
+                <div class="field mb-2" *ngIf="claseSeleccionada.vuelta_calma && claseSeleccionada.vuelta_calma !== 'EMPTY'">
+                    <label class="font-bold text-sm text-900">❄️ Vuelta a la Calma</label>
+                    <div class="text-sm text-600 mt-1 surface-ground p-3 border-round border-1 border-200">{{ claseSeleccionada.vuelta_calma }}</div>
+                </div>
             </div>
 
-             <div class="field mb-2" *ngIf="claseSeleccionada.vuelta_calma && claseSeleccionada.vuelta_calma !== 'EMPTY'">
-                <label class="font-bold text-sm text-900">❄️ Vuelta a la Calma</label>
-                <div class="text-sm text-600 mt-1">{{ claseSeleccionada.vuelta_calma }}</div>
+            <div *ngIf="!puedeVerPlanificacion(claseSeleccionada)" 
+                 class="text-center p-4 surface-100 border-round text-600 border-1 border-300 mt-4 animation-fade-in">
+                <i class="pi pi-lock text-3xl mb-2 text-primary block"></i>
+                <span class="text-sm font-medium">La planificación detallada estará disponible a la hora del entrenamiento.</span>
             </div>
+            
         </div>
 
         <ng-template pTemplate="footer">
-            <button pButton label="Entendido" icon="pi pi-check" class="p-button-text" 
+            <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text" 
                     (click)="displayDetalle = false"></button>
         </ng-template>
     </p-dialog>

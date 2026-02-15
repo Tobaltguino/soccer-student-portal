@@ -48,29 +48,38 @@ export class SupabaseService {
     const tablas = ['admins', 'estudiantes', 'profesores', 'kinesiologos', 'nutricionistas'];
     
     for (const tabla of tablas) {
-      const { data } = await this.supabase
+      // 1. Buscamos el email Y el estado activo
+      const { data: userData, error: dbError } = await this.supabase
         .from(tabla)
-        .select('email')
+        .select('email, activo')
         .eq('rut', rutInput.trim())
         .maybeSingle();
 
-      if (data?.email) {
-        // Intentamos loguear con el email encontrado
+      if (userData?.email) {
+        // 2. 🛡️ VERIFICACIÓN CLAVE: Si la cuenta está inactiva, lanzamos error antes del Auth
+        if (userData.activo === false) {
+          return { 
+            data: null, 
+            error: { message: 'Tu cuenta se encuentra desactivada. Contacta al administrador.' }, 
+            role: null 
+          };
+        }
+
+        // 3. Intentamos loguear con el email encontrado
         const authResponse = await this.supabase.auth.signInWithPassword({ 
-          email: data.email, 
+          email: userData.email, 
           password 
         });
 
-        // Si la contraseña es incorrecta, devolvemos el error inmediatamente
         if (authResponse.error) {
-           return { data: null, error: authResponse.error, role: null };
+          return { data: null, error: authResponse.error, role: null };
         }
 
-        // ✅ ÉXITO: Devolvemos la data de auth Y el nombre de la tabla (rol)
+        // ✅ ÉXITO: Usuario existe, está activo y la contraseña es correcta
         return { 
             data: authResponse.data, 
             error: null, 
-            role: tabla // 'admins', 'estudiantes', etc.
+            role: tabla 
         };
       }
     }
@@ -364,12 +373,14 @@ export class SupabaseService {
   }
 
   // Obtener rangos de un test específico
+  // Obtener rangos de un test específico
   async getRangosPorTipo(tipoId: number) {
     return await this.supabase
       .from('evaluacion_rangos')
       .select('*')
       .eq('tipo_evaluacion_id', tipoId)
-      .order('valor_min', { ascending: true });
+      .order('edad_min', { ascending: true })   // ✅ Ordena por edad inicial
+      .order('valor_min', { ascending: true }); // ✅ Luego por valor
   }
 
   // Guardar un rango
@@ -518,6 +529,14 @@ async eliminarRangosPorTipo(tipoId: number) {
    */
   async getEvaluacionesAlumno(uid: string, fechaDesde?: string) {
     try {
+      const { data: estudiante } = await this.supabase
+        .from('estudiantes')
+        .select('fecha_nacimiento')
+        .eq('id', uid)
+        .single();
+
+      const fechaNac = estudiante?.fecha_nacimiento;
+
       let query = this.supabase
         .from('evaluaciones_resultados')
         .select(`
@@ -528,39 +547,62 @@ async eliminarRangosPorTipo(tipoId: number) {
               id,
               nombre,
               unidad_medida,
+              descripcion,
               evaluacion_rangos (*) 
             )
           )
         `)
         .eq('estudiante_id', uid);
 
-      if (fechaDesde) {
-        query = query.gte('evaluaciones_sesiones.fecha', fechaDesde);
-      }
+      if (fechaDesde) query = query.gte('evaluaciones_sesiones.fecha', fechaDesde);
 
       const { data, error } = await query;
       if (error) throw error;
 
       const dataFormateada = data?.map(res => {
         const valor = res.valor_numerico;
+        const fechaPrueba = res.evaluaciones_sesiones?.fecha;
         const rangos = res.evaluaciones_sesiones?.tipo_evaluacion?.evaluacion_rangos || [];
         
-        // ✅ Buscamos en qué rango cae el resultado
+        let edadAlMomento = 0;
+        if (fechaNac && fechaPrueba) {
+           const nac = new Date(fechaNac + 'T00:00:00');
+           const evalDate = new Date(fechaPrueba + 'T00:00:00');
+           edadAlMomento = evalDate.getFullYear() - nac.getFullYear();
+           const m = evalDate.getMonth() - nac.getMonth();
+           if (m < 0 || (m === 0 && evalDate.getDate() < nac.getDate())) edadAlMomento--;
+        }
+
+        // ✅ AHORA BUSCAMOS QUE LA EDAD ESTÉ ENTRE EL MÍNIMO Y MÁXIMO
         const rangoEncontrado = rangos.find((r: any) => 
-          valor >= r.valor_min && valor <= r.valor_max
+          edadAlMomento >= r.edad_min && 
+          edadAlMomento <= r.edad_max && 
+          valor >= r.valor_min && 
+          valor <= r.valor_max
         );
+
+        let nivelFinal = 'Sin Rango';
+        let colorFinal = '#64748b';
+
+        if (edadAlMomento === 0) {
+            nivelFinal = 'Falta Edad'; 
+        } else if (rangoEncontrado) {
+            nivelFinal = rangoEncontrado.nombre_etiqueta;
+            colorFinal = rangoEncontrado.color_sugerido;
+        }
 
         return {
           id: res.id,
           resultado: valor,
           observacion: res.observacion,
-          fecha: res.evaluaciones_sesiones?.fecha,
+          fecha: fechaPrueba,
           created_at: res.created_at,
           test_nombre: res.evaluaciones_sesiones?.tipo_evaluacion?.nombre,
+          test_descripcion: res.evaluaciones_sesiones?.tipo_evaluacion?.descripcion,
           unidad: res.evaluaciones_sesiones?.tipo_evaluacion?.unidad_medida,
-          // Si no hay rango, mostramos un estado neutro
-          nivel: rangoEncontrado ? rangoEncontrado.nombre_etiqueta : 'Sin Rango',
-          color: rangoEncontrado ? rangoEncontrado.color_sugerido : '#64748b'
+          edad_evaluacion: edadAlMomento, 
+          nivel: nivelFinal, 
+          color: colorFinal  
         };
       });
 
@@ -667,7 +709,6 @@ async eliminarRangosPorTipo(tipoId: number) {
     }
   }
 
-  // --- EN supabase.service.ts ---
 
   // 1. Obtener los datos del profesor logueado
   async getProfesorPorEmail(email: string) {

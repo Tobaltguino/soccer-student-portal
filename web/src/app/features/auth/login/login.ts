@@ -54,13 +54,17 @@ export class LoginComponent {
   /**
    * Proceso de inicio de sesión usando el RUT como identificador
    */
+  /**
+   * Proceso de inicio de sesión usando el RUT como identificador.
+   * Incluye verificación de estado de cuenta (Activo/Inactivo).
+   */
   async ingresar() {
     // 1. Validación básica de campos vacíos
     if (!this.rut || !this.password) {
       this.messageService.add({ 
         severity: 'warn', 
         summary: 'Atención', 
-        detail: 'Por favor, completa todos los campos.' 
+        detail: 'Por favor, ingresa tu RUT y contraseña.' 
       });
       return;
     }
@@ -68,57 +72,58 @@ export class LoginComponent {
     this.loading = true;
 
     try {
-      // 2. Preparar el RUT:
-      // Solo hacemos trim() para quitar espacios al inicio/final por si acaso.
-      // YA NO quitamos los puntos, se envía tal cual (ej: "12.345.678-9")
+      // 2. Preparar el RUT (limpieza de espacios)
       const rutBusqueda = this.rut.trim();
 
-      console.log("Enviando a Supabase:", rutBusqueda); 
-
-      // 3. Llamada al servicio
-      // Recuerda que tu servicio ahora debe devolver { data, error, role }
+      // 3. Llamada al servicio con desestructuración de respuesta
       const { data, error, role } = await this.supabaseService.loginConRut(rutBusqueda, this.password);
 
+      // 4. Manejo de Errores (Credenciales incorrectas o Cuenta Desactivada)
       if (error) {
         this.messageService.add({ 
           severity: 'error', 
-          summary: 'Error', 
-          detail: 'Credenciales inválidas o usuario no encontrado.' 
+          summary: 'Acceso Denegado', 
+          // Usamos el mensaje dinámico que viene del servicio
+          detail: error.message || 'Credenciales inválidas o usuario no encontrado.' 
         });
         this.loading = false;
         return;
       }
 
-      // 4. Éxito: Redirección según Rol
+      // 5. Éxito: Redirección según el Rol detectado
       if (data?.user && role) {
         this.messageService.add({ 
           severity: 'success', 
-          summary: 'Bienvenido', 
-          detail: 'Ingresando al sistema...' 
+          summary: 'Acceso Autorizado', 
+          detail: 'Cargando tu perfil, por favor espera...' 
         });
 
-        // Mapa de rutas: Nombre de la Tabla -> Ruta de Angular
+        // Mapa de rutas según la tabla donde se encontró el usuario
         const rutasPorRol: any = {
-            'admins': '/admin/dashboard',
-            'estudiantes': '/student/dashboard',
-            'profesores': '/professor/dashboard',
-            'kinesiologos': '/kine/dashboard',
-            'nutricionistas': '/nutri/dashboard'
+          'admins': '/admin/dashboard',
+          'estudiantes': '/student/dashboard',
+          'profesores': '/professor/dashboard',
+          'kinesiologos': '/kine/dashboard',
+          'nutricionistas': '/nutri/dashboard'
         };
 
         const rutaDestino = rutasPorRol[role] || '/login'; 
 
+        // Pequeño delay para que el usuario vea el mensaje de éxito antes de saltar
         setTimeout(() => {
-            this.router.navigate([rutaDestino]);
-        }, 1000);
+          this.router.navigate([rutaDestino]);
+        }, 1200);
+      } else {
+        // Caso borde: si no hay error pero tampoco hay datos de usuario
+        throw new Error('No se pudo recuperar la sesión del usuario.');
       }
 
     } catch (e: any) {
-      console.error('Error de Login:', e);
+      console.error('Error Crítico de Login:', e);
       this.messageService.add({ 
         severity: 'error', 
-        summary: 'Error', 
-        detail: 'Fallo de conexión inesperado.' 
+        summary: 'Error de Sistema', 
+        detail: 'Ocurrió un problema al conectar con el servidor.' 
       });
       this.loading = false;
     }

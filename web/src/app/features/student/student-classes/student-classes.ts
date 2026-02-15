@@ -139,4 +139,15 @@ export class StudentClassesComponent implements OnInit {
     if (presente === false) return 'danger';
     return 'secondary';
   }
+
+  puedeVerPlanificacion(clase: any): boolean {
+    if (!clase.fecha || !clase.hora) return false;
+    
+    // Creamos un objeto Date con la fecha y hora exacta de la clase
+    const tiempoClase = new Date(`${clase.fecha}T${clase.hora}`).getTime();
+    const tiempoAhora = new Date().getTime();
+    
+    // Retorna true solo si la hora actual es mayor o igual a la de la clase
+    return tiempoClase <= tiempoAhora;
+  }
 }

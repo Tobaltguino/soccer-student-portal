@@ -33,16 +33,13 @@ export class StudentScheduleComponent implements OnInit {
     initialView: 'listWeek',
     locale: esLocale,
     
-    // --- CONFIGURACIÓN DE HORAS (24 HORAS COMPLETAS) ---
-    slotMinTime: '00:00:00', // Comienza a las 12 AM
-    slotMaxTime: '24:00:00', // Termina a las 12 AM del día siguiente
-    scrollTime: '08:00:00',  // Se posiciona automáticamente a las 8 AM al abrir
+    slotMinTime: '00:00:00',
+    slotMaxTime: '24:00:00',
+    scrollTime: '08:00:00',
     allDaySlot: false,
     slotDuration: '00:30:00', 
     
-    // --- FORMATO DE RANGO (00:00 - 00:30) ---
     slotLabelContent: (arg) => {
-      // Calculamos el fin del bloque sumando 30 minutos a la hora de la celda
       const fechaFin = new Date(arg.date);
       fechaFin.setMinutes(fechaFin.getMinutes() + 30);
       
@@ -108,7 +105,6 @@ export class StudentScheduleComponent implements OnInit {
 
         const eventos = (data || []).map((clase: any) => {
             const start = new Date(`${clase.fecha}T${clase.hora}`);
-            // Asumimos 90 minutos de duración para la visualización en el calendario
             const end = new Date(start.getTime() + 90 * 60000); 
 
             return {
@@ -135,11 +131,22 @@ export class StudentScheduleComponent implements OnInit {
   handleEventClick(arg: any) {
     this.claseSeleccionada = arg.event.extendedProps;
     this.displayDetalle = true;
+    this.cdr.detectChanges(); // ✅ IMPORTANTE: Fuerza a Angular a abrir el modal
   }
 
   getColorEvento(clase: any): string {
-    if (clase.presente === true) return '#22c55e'; // Verde para asistida
-    if (clase.presente === false) return '#ef4444'; // Rojo para falta
-    return '#3b82f6'; // Azul para pendiente
+    if (clase.presente === true) return '#22c55e'; 
+    if (clase.presente === false) return '#ef4444'; 
+    return '#3b82f6'; 
+  }
+
+  // ✅ NUEVA FUNCIÓN DE CANDADO
+  puedeVerPlanificacion(clase: any): boolean {
+    if (!clase || !clase.fecha || !clase.hora) return false;
+    
+    const tiempoClase = new Date(`${clase.fecha}T${clase.hora}`).getTime();
+    const tiempoAhora = new Date().getTime();
+    
+    return tiempoClase <= tiempoAhora; // Solo true si la hora actual ya pasó la hora de la clase
   }
 }

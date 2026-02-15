@@ -43,9 +43,8 @@
 }
 
 /* =========================================
-   3. BARRA DE FILTROS HORIZONTAL (CORREGIDO)
+   3. BARRA DE FILTROS HORIZONTAL
    ========================================= */
-
 .filter-bar {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -57,18 +56,17 @@
 
 .horizontal-filters {
     display: flex;
-    flex-direction: row; /* Fuerza fila horizontal */
+    flex-direction: row; 
     align-items: center;
     gap: 10px;
     width: 100%;
 }
 
 .filter-item {
-    flex: 1; /* Ocupa espacio equitativo */
-    min-width: 0; /* Permite que el flex se reduzca si es necesario */
+    flex: 1; 
+    min-width: 0; 
 }
 
-/* Forzar ancho 100% en los inputs internos de PrimeNG */
 :host ::ng-deep .horizontal-filters .p-datepicker,
 :host ::ng-deep .horizontal-filters .p-select,
 :host ::ng-deep .horizontal-filters .p-dropdown,
@@ -76,7 +74,6 @@
     width: 100% !important;
 }
 
-/* Asegurar altura uniforme para inputs y botón */
 :host ::ng-deep .horizontal-filters .p-inputtext,
 :host ::ng-deep .horizontal-filters .p-select,
 :host ::ng-deep .horizontal-filters .p-dropdown {
@@ -108,7 +105,6 @@
 /* =========================================
    5. FORMULARIOS (MODALES)
    ========================================= */
-/* Estilos generales para campos verticales (usados en modales simples) */
 .field {
     display: flex !important;
     flex-direction: column !important;
@@ -125,53 +121,73 @@
 }
 
 /* =========================================
-   6. FILA DE RANGOS INLINE (CONFIG TEST)
+   6. FILA DE RANGOS INLINE (CONFIG TEST) - MEJORADA
    ========================================= */
-/* Esto es solo para el modal de rangos */
 .range-inline-row {
     display: flex !important;
     flex-direction: row !important;
     align-items: flex-end !important;
-    gap: 12px;
+    gap: 8px; 
     width: 100%;
+    margin-bottom: 1rem;
 }
 
 .range-inline-row .field {
-    width: auto !important; 
-    flex: 1; 
-    margin-bottom: 0 !important;
+    margin-bottom: 0 !important; 
+    display: flex;
+    flex-direction: column;
 }
 
-.range-inline-row .field.color-fixed {
-    flex: 0 0 60px !important; 
-}
-
-.color-input-custom {
-    width: 100%;
-    height: 40px; 
-    padding: 2px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    cursor: pointer;
-    background: #ffffff;
-    display: block;
-}
+/* Anchos específicos para cada input */
+.range-inline-row .field-edad { flex: 0 0 60px; }
+.range-inline-row .field-etiqueta { flex: 1; min-width: 90px; }
+.range-inline-row .field-minmax { flex: 0 0 65px; }
+.range-inline-row .field-color { flex: 0 0 130px; }
+/* ✅ Aumentamos el ancho para que quepa el texto ("Verde") en el Dropdown */
+.range-inline-row .field-color { flex: 0 0 130px; }
 
 .range-inline-row .btn-fixed {
-    flex: 0 0 auto; 
-    padding-bottom: 1px;
+    flex: 0 0 42px; 
 }
 
+/* Botón de agregar alineado con los inputs */
 .range-inline-row .btn-fixed button {
-    height: 40px !important;
-    width: 40px !important;
+    height: 42px !important;
+    width: 42px !important;
+    padding: 0 !important;
     display: flex;
     justify-content: center;
+    align-items: center;
+}
+
+/* Forzamos que todos los inputs midan 42px de alto */
+:host ::ng-deep .range-inline-row .p-inputtext,
+:host ::ng-deep .range-inline-row .p-inputnumber-input,
+:host ::ng-deep .range-inline-row .p-select {
+    height: 42px !important;
+}
+
+/* Tabla compacta para ver lo que se está agregando */
+.custom-compact-table {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
 }
 
 .custom-compact-table .p-datatable-tbody > tr > td {
-    padding: 0.5rem !important;
-    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.85rem;
+    vertical-align: middle;
+}
+
+/* Indicador del color en la tabla */
+.color-indicator {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    display: inline-block;
 }
 
 /* =========================================
@@ -192,7 +208,6 @@
    8. RESPONSIVE (MÓVIL)
    ========================================= */
 @media (max-width: 768px) {
-    /* En celular, la barra de filtros se vuelve vertical para que quepa */
     .horizontal-filters {
         flex-direction: column !important;
         align-items: stretch !important;
@@ -207,7 +222,7 @@
         width: 100% !important;
     }
 
-    /* Modal de rangos en celular */
+    /* En móvil, la fila de rangos se apila verticalmente */
     .range-inline-row {
         flex-direction: column !important; 
         align-items: stretch !important;
@@ -215,7 +230,6 @@
     }
     
     .range-inline-row .field,
-    .range-inline-row .field.color-fixed,
     .range-inline-row .btn-fixed button {
         width: 100% !important;
         flex: none !important;

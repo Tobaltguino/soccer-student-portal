@@ -82,8 +82,12 @@
                     </td>
                     <td class="text-center">
                         <span class="p-column-title">Planificación</span>
-                        <button pButton icon="pi pi-eye" class="p-button-text p-button-info p-button-rounded" 
-                                (click)="verPlanificacion(clase)" pTooltip="Ver Planificación"></button>
+                        <button pButton icon="pi pi-eye" 
+                                class="p-button-text p-button-rounded" 
+                                [ngClass]="puedeVerPlanificacion(clase) ? 'p-button-info' : 'p-button-secondary'"
+                                (click)="verPlanificacion(clase)" 
+                                [disabled]="!puedeVerPlanificacion(clase)"
+                                [pTooltip]="puedeVerPlanificacion(clase) ? 'Ver Planificación' : 'Se habilitará a la hora del entrenamiento'"></button>
                     </td>
                 </tr>
             </ng-template>

@@ -17,6 +17,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { CheckboxModule } from 'primeng/checkbox';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { RadioButtonModule } from 'primeng/radiobutton';
+import { TextareaModule } from 'primeng/textarea';
 
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { SupabaseService } from '../../../core/services/supabase.service';
@@ -28,7 +29,7 @@ import { SupabaseService } from '../../../core/services/supabase.service';
     CommonModule, FormsModule, TableModule, ButtonModule, DialogModule,
     InputTextModule, InputNumberModule, SelectModule, DatePickerModule,
     TagModule, ToastModule, ConfirmDialogModule, TooltipModule, 
-    CheckboxModule, ToggleButtonModule, RadioButtonModule
+    CheckboxModule, ToggleButtonModule, RadioButtonModule, TextareaModule
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './admin-evaluations.html',
@@ -54,15 +55,13 @@ export class AdminEvaluationsComponent implements OnInit {
     { label: 'Finalizado', value: 'FINALIZADO' }
   ];
 
-  // --- PALETA DE COLORES (RANGOS) ---
-  // Prioridad: Rojo, Naranja, Verde
-  coloresPredefinidos: string[] = [
-    '#ef4444', // Rojo (Mal/Bajo)
-    '#f97316', // Naranja (Regular/Medio)
-    '#22c55e', // Verde (Bien/Alto)
-    '#3b82f6', // Azul (Extra)
-    '#a855f7', // Púrpura (Extra)
-    '#64748b'  // Gris (Neutro)
+  opcionesColor = [
+    { label: 'Azul', value: '#3b82f6', hex: '#3b82f6' },
+    { label: 'Verde', value: '#22c55e', hex: '#22c55e' },
+    { label: 'Amarillo', value: '#eab308', hex: '#eab308' },
+    { label: 'Naranja', value: '#f97316', hex: '#f97316' },
+    { label: 'Rojo', value: '#ef4444', hex: '#ef4444' },
+    { label: 'Gris', value: '#6b7280', hex: '#6b7280' }
   ];
 
   // --- ESTADOS UI ---
@@ -74,13 +73,17 @@ export class AdminEvaluationsComponent implements OnInit {
   usarRangos: boolean = false;
 
   // --- FORMULARIOS ---
-  tipoForm: any = { nombre: '', unidad_medida: '' };
+  tipoForm: any = { nombre: '', unidad_medida: '', descripcion: '' };
   rangosForm: any[] = [];
+  
+  // Rango con Edad y color verde por defecto
   nuevoRango: any = { 
+    edad_min: null,   // ✅ NUEVO
+    edad_max: null,   // ✅ NUEVO
     nombre_etiqueta: '', 
     valor_min: null, 
     valor_max: null, 
-    color_sugerido: '#3b82f6' 
+    color_sugerido: '#22c55e' 
   };
 
   evalLogistica: any = {
@@ -180,27 +183,71 @@ export class AdminEvaluationsComponent implements OnInit {
   // ==========================================
   
   abrirNuevoTipo() {
-    this.tipoForm = { nombre: '', unidad_medida: '' };
+    this.tipoForm = { nombre: '', unidad_medida: '', descripcion: '' };
     this.rangosForm = [];
     this.usarRangos = false;
-    // Por defecto sugerimos azul, pero el usuario puede cambiarlo
-    this.nuevoRango = { nombre_etiqueta: '', valor_min: null, valor_max: null, color_sugerido: '#3b82f6' };
+    this.nuevoRango = { edad_min: null, edad_max: null, nombre_etiqueta: '', valor_min: null, valor_max: null, color_sugerido: '#22c55e' };
     this.displayTipoDialog = true;
   }
 
-  // ✅ Función para seleccionar color rápido desde la paleta
-  seleccionarColor(color: string) {
-    this.nuevoRango.color_sugerido = color;
-  }
-
   agregarRangoALista() {
-    if (!this.nuevoRango.nombre_etiqueta || this.nuevoRango.valor_max === null) {
-      this.messageService.add({ severity: 'warn', summary: 'Incompleto', detail: 'Asigne etiqueta y valor máximo' });
+    // A. Validar campos vacíos
+    if (this.nuevoRango.edad_min === null || this.nuevoRango.edad_max === null || !this.nuevoRango.nombre_etiqueta || this.nuevoRango.valor_min === null || this.nuevoRango.valor_max === null) {
+      this.messageService.add({ severity: 'warn', summary: 'Incompleto', detail: 'Asigne Rango de Edad, Etiqueta y Valores' });
       return;
     }
+
+    // B. Validar lógicas de los rangos individuales
+    if (this.nuevoRango.edad_min > this.nuevoRango.edad_max) {
+      this.messageService.add({ severity: 'warn', summary: 'Edad Inválida', detail: 'La edad mínima no puede ser mayor a la máxima' });
+      return;
+    }
+    if (this.nuevoRango.valor_min >= this.nuevoRango.valor_max) {
+      this.messageService.add({ severity: 'warn', summary: 'Valor Inválido', detail: 'El valor mínimo debe ser menor al máximo' });
+      return;
+    }
+
+    const eMinNuevo = this.nuevoRango.edad_min;
+    const eMaxNuevo = this.nuevoRango.edad_max;
+    const vMinNuevo = this.nuevoRango.valor_min;
+    const vMaxNuevo = this.nuevoRango.valor_max;
+    const etiquetaNueva = this.nuevoRango.nombre_etiqueta.trim().toUpperCase();
+
+    // C. Validar choques en la matriz 2D (Edad Y Valor)
+    const conflicto = this.rangosForm.find(r => {
+      // ¿Chocan las edades?
+      const solapanEdades = (eMinNuevo <= r.edad_max) && (eMaxNuevo >= r.edad_min);
+      // ¿Chocan los valores del test?
+      const solapanValores = (vMinNuevo <= r.valor_max) && (vMaxNuevo >= r.valor_min);
+      // ¿Es la misma etiqueta en edades que chocan?
+      const mismaEtiqueta = (r.nombre_etiqueta.trim().toUpperCase() === etiquetaNueva);
+
+      // Hay conflicto crítico si:
+      // 1. Las edades chocan Y las notas chocan (no se sabría qué nivel darle al alumno)
+      // 2. Las edades chocan Y le pusieron el mismo nombre a la etiqueta (ej: "Bueno" dos veces en la misma edad)
+      return (solapanEdades && solapanValores) || (solapanEdades && mismaEtiqueta);
+    });
+
+    if (conflicto) {
+      this.messageService.add({ 
+        severity: 'error', 
+        summary: 'Conflicto de Rangos', 
+        detail: `La configuración choca con el rango existente: '${conflicto.nombre_etiqueta}' (${conflicto.edad_min}-${conflicto.edad_max} años). Revise edades o valores.` 
+      });
+      return;
+    }
+
     this.rangosForm.push({ ...this.nuevoRango });
-    // Resetear formulario de rango manteniendo el último color (opcional) o volviendo al default
-    this.nuevoRango = { nombre_etiqueta: '', valor_min: null, valor_max: null, color_sugerido: '#3b82f6' };
+    
+    // ✅ Reiniciar manteniendo el rango de edad y el color, para llenar más rápido
+    this.nuevoRango = { 
+        edad_min: this.nuevoRango.edad_min, 
+        edad_max: this.nuevoRango.edad_max, 
+        nombre_etiqueta: '', 
+        valor_min: null, 
+        valor_max: null, 
+        color_sugerido: this.nuevoRango.color_sugerido 
+    };
   }
 
   quitarRangoDeLista(index: number) {
@@ -331,39 +378,32 @@ export class AdminEvaluationsComponent implements OnInit {
   async abrirCalificador(sesion: any) {
     this.evalLogistica = { ...sesion };
     this.loading = true;
-    this.cdr.detectChanges(); // Forzar spinner visualmente
+    this.cdr.detectChanges(); 
 
     try {
-      // Usamos Promise.allSettled para que si una falla, no bloquee la otra
-      // (aunque idealmente necesitamos ambas)
       const [resAlumnos, resResultados] = await Promise.all([
          this.supabase.getAlumnosPorGrupo(sesion.grupo_id),
          this.supabase.getResultadosPorSesion(sesion.id)
       ]);
 
-      // Validar si hubo errores en las peticiones (opcional, pero útil para debug)
       if (resAlumnos.error) console.error("Error cargando alumnos:", resAlumnos.error);
       if (resResultados.error) console.error("Error cargando notas:", resResultados.error);
 
       const alumnos = resAlumnos.data || [];
       const resultados = resResultados.data || [];
 
-      // Mapeo seguro: Si no hay alumnos, alumnos será [], el map no se ejecuta y no hay error
       this.estudiantesGrupo = alumnos.map((alumno: any) => {
-          // Buscamos si este alumno ya tiene nota guardada
           const notaExistente = resultados.find((r: any) => r.estudiante_id === alumno.id);
           
           return {
               estudiante_id: alumno.id,
               nombre: alumno.nombre,
               apellido: alumno.apellido,
-              // Asignamos valor o null/vacío por defecto
               valor_numerico: notaExistente ? notaExistente.valor_numerico : null,
               observacion: notaExistente ? notaExistente.observacion : ''
           };
       });
       
-      // Mostrar el diálogo SOLO si terminamos todo el proceso
       this.displayGradesDialog = true;
 
     } catch (e: any) {
@@ -374,7 +414,6 @@ export class AdminEvaluationsComponent implements OnInit {
         detail: 'No se pudo cargar la lista de estudiantes. Intente nuevamente.' 
       });
     } finally {
-      // ESTO ES LO IMPORTANTE: Siempre apagar el loading, pase lo que pase
       this.loading = false;
       this.cdr.detectChanges();
     }
@@ -389,7 +428,7 @@ export class AdminEvaluationsComponent implements OnInit {
     const notasAGuardar = this.estudiantesGrupo
       .filter(e => e.valor_numerico !== null || (e.observacion && e.observacion.trim() !== ''))
       .map(e => ({
-        sesion_id: this.evalLogistica.id, // ✅ Asegúrate que este ID sea el correcto
+        sesion_id: this.evalLogistica.id, 
         estudiante_id: e.estudiante_id,
         valor_numerico: e.valor_numerico,
         observacion: e.observacion || ''
@@ -403,13 +442,13 @@ export class AdminEvaluationsComponent implements OnInit {
     this.loading = true;
     try {
       const { error } = await this.supabase.guardarResultadosMasivos(notasAGuardar);
-      if (error) throw error; // ✅ Si hay error 409, saltará al catch
+      if (error) throw error; 
 
       this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Resultados actualizados correctamente' });
       this.displayGradesDialog = false;
       this.cargarDatosIniciales(); 
     } catch (error: any) {
-      console.error("Error al guardar:", error); // ✅ Agregado para ver el error real en consola
+      console.error("Error al guardar:", error); 
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Fallo al guardar: posible duplicado o error de conexión.' });
     } finally {
       this.loading = false;
