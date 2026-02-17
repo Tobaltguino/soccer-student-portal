@@ -755,4 +755,53 @@ async eliminarRangosPorTipo(tipoId: number) {
       .order('fecha', { ascending: false }) // Las más recientes primero
       .order('hora', { ascending: false });
   }
+
+  // ==========================================
+  // GUÍAS DE TRABAJO (MATERIAL DE ESTUDIO)
+  // ==========================================
+
+  // 1. Obtener todas las guías (Con el nombre del grupo)
+  // 1. Obtener TODAS las guías globales
+  async getGuias() {
+    return await this.supabase
+      .from('work_guides')
+      .select('*')
+      .order('created_at', { ascending: false });
+  }
+
+  // 2. Subir el archivo (PDF, Word) al Storage
+  async uploadGuiaFile(file: File) {
+    const fileExt = file.name.split('.').pop();
+    // Creamos un nombre único para evitar que se sobrescriban archivos con el mismo nombre
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+
+    const { data, error } = await this.supabase.storage
+      .from('guias_trabajo')
+      .upload(fileName, file);
+
+    if (error) throw error;
+
+    // Obtener la URL pública para descargar el archivo después
+    const { data: urlData } = this.supabase.storage
+      .from('guias_trabajo')
+      .getPublicUrl(fileName);
+      
+    return urlData.publicUrl;
+  }
+
+  // 3. Guardar los datos de la guía en la tabla
+  async createGuia(guia: any) {
+    // Al insertar, Supabase tomará automáticamente el auth.uid() para 'creado_por'
+    return await this.supabase.from('work_guides').insert(guia);
+  }
+
+  // 4. Eliminar guía (Solo admin, validado por RLS)
+  async deleteGuia(id: string) {
+    return await this.supabase.from('work_guides').delete().eq('id', id);
+  }
+
+  // 5. Actualizar guía existente
+  async updateGuia(id: string, guia: any) {
+    return await this.supabase.from('work_guides').update(guia).eq('id', id);
+  }
 }

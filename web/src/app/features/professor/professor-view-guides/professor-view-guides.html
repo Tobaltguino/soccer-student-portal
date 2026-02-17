@@ -1,0 +1,52 @@
+<div class="guides-container fadein animation-duration-500 max-w-full">
+    <header class="page-header">
+        <div class="header-content">
+            <h1>Material de Estudio Institucional</h1>
+            <p>Documentos y guías compartidas por la administración.</p>
+        </div>
+        <button pButton icon="pi pi-sync" class="p-button-rounded p-button-text p-button-primary" (click)="cargarGuias()" [loading]="loading" pTooltip="Actualizar lista"></button>
+    </header>
+
+    <div class="card shadow-2 border-round surface-card p-3 table-responsive">
+        <p-table [value]="guias" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped">
+            
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width: 30%">Título</th>
+                    <th style="width: 45%">Descripción</th>
+                    <th style="width: 15%">Fecha de Subida</th>
+                    <th style="width: 10%" class="text-center">Acciones</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-guia>
+                <tr>
+                    <td>
+                        <span class="font-bold text-main text-lg">{{guia.titulo}}</span>
+                    </td>
+                    <td>
+                        <span class="text-sm text-secondary line-height-2">{{guia.descripcion || 'Sin descripción adicional.'}}</span>
+                    </td>
+                    <td>
+                        <span class="text-secondary"><i class="pi pi-calendar mr-1"></i> {{guia.created_at | date:'dd/MM/yyyy'}}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="p-column-title">Acciones</span>
+                        <div class="flex justify-content-center">
+                            <a [href]="guia.archivo_url" target="_blank" class="no-underline">
+                                <button pButton icon="pi pi-download" class="p-button-rounded p-button-outlined p-button-primary" pTooltip="Descargar Documento"></button>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="4" class="text-center p-5 text-secondary">Aún no hay material de estudio publicado.</td>
+                </tr>
+            </ng-template>
+            
+        </p-table>
+    </div>
+</div>

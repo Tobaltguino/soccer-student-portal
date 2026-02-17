@@ -1,0 +1,97 @@
+<div class="guides-container fadein animation-duration-500">
+    <p-toast position="top-right"></p-toast>
+    <p-confirmdialog></p-confirmdialog>
+
+    <header class="page-header">
+        <div class="header-content">
+            <h1>Material de Estudio Global</h1>
+            <p>Estas guías serán visibles para todos los estudiantes y profesores.</p>
+        </div>
+        <button pButton label="Subir Guía" icon="pi pi-upload" class="btn-create p-button-primary" (click)="abrirNuevo()"></button>
+    </header>
+
+    <div class="card-table table-responsive shadow-2 border-round surface-card p-3">
+        <p-table [value]="guias" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="stack" [breakpoint]="'768px'">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width: 30%">Título</th>
+                    <th style="width: 40%">Descripción</th>
+                    <th style="width: 15%">Fecha de Subida</th>
+                    <th style="width: 15%" class="text-center">Acciones</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-guia>
+                <tr>
+                    <td>
+                        <span class="font-bold text-main text-lg">{{guia.titulo}}</span>
+                    </td>
+                    <td>
+                        <span class="text-sm text-secondary line-height-2">{{guia.descripcion || 'Sin descripción'}}</span>
+                    </td>
+                    <td>
+                        <span class="text-secondary"><i class="pi pi-calendar mr-1"></i> {{guia.created_at | date:'dd/MM/yyyy HH:mm'}}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="p-column-title">Acciones</span>
+                        <div class="flex justify-content-center gap-2">
+                            <a [href]="guia.archivo_url" target="_blank" class="no-underline">
+                                <button pButton icon="pi pi-download" class="p-button-rounded p-button-text p-button-secondary" pTooltip="Descargar"></button>
+                            </a>
+                            <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-info" (click)="editarGuia(guia)" pTooltip="Editar"></button>
+                            <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" (click)="eliminarGuia(guia.id)" pTooltip="Eliminar"></button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="4" class="text-center p-5 text-secondary">No hay guías de estudio subidas en el sistema.</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <p-dialog [(visible)]="displayDialog" [header]="nuevaGuia.id ? 'Editar Guía Global' : 'Subir Nueva Guía Global'" [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" styleClass="p-fluid" [closable]="!subiendoArchivo">
+        <ng-template pTemplate="content">
+            <div class="field mt-2 mb-4">
+                <label class="font-bold block mb-2">Título de la Guía *</label>
+                <input pInputText [(ngModel)]="nuevaGuia.titulo" placeholder="Ej: Fundamentos Tácticos 2026" [disabled]="subiendoArchivo">
+            </div>
+
+            <div class="field mb-4">
+                <label class="font-bold block mb-2">Descripción (Opcional)</label>
+                <textarea pInputText [(ngModel)]="nuevaGuia.descripcion" rows="2" placeholder="Instrucciones breves sobre este material..." style="resize: none;" [disabled]="subiendoArchivo"></textarea>
+            </div>
+
+            <div class="field mb-2">
+                <label class="font-bold block mb-2">Archivo {{ nuevaGuia.id ? '(Opcional, déjelo vacío para no cambiarlo)' : '* (PDF, Word, JPG)' }}</label>
+                
+                <div class="file-upload-container border-1 border-300 border-round p-3 text-center surface-50 cursor-pointer transition-colors transition-duration-200 hover:surface-100" 
+                     (click)="fileInput.click()" 
+                     [class.opacity-50]="subiendoArchivo"
+                     [class.pointer-events-none]="subiendoArchivo">
+                    
+                    <input type="file" #fileInput class="hidden" (click)="$event.stopPropagation()" (change)="onFileSelect($event)" accept=".pdf,.doc,.docx,.jpg,.png" [disabled]="subiendoArchivo">
+                    
+                    <div *ngIf="!archivoSeleccionado">
+                        <i class="pi" [ngClass]="nuevaGuia.id ? 'pi-file-edit text-info' : 'pi-cloud-upload text-primary'" class="text-4xl mb-2"></i>
+                        <div class="text-700 font-medium">
+                            {{ nuevaGuia.id ? 'Haga clic si desea reemplazar el archivo actual' : 'Haz clic aquí para seleccionar un archivo' }}
+                        </div>
+                        <div class="text-500 text-sm mt-1">Máximo 5MB</div>
+                    </div>
+
+                    <div *ngIf="archivoSeleccionado" class="flex flex-column align-items-center">
+                        <i class="pi pi-file text-4xl text-green-500 mb-2"></i>
+                        <div class="text-900 font-bold text-sm w-full white-space-nowrap overflow-hidden text-overflow-ellipsis px-2">{{archivoSeleccionado.name}}</div>
+                        <div class="text-500 text-xs mt-1">{{ (archivoSeleccionado.size / 1024 / 1024) | number:'1.2-2' }} MB</div>
+                    </div>
+                </div>
+            </div>
+        </ng-template>
+        <ng-template pTemplate="footer">
+            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="displayDialog=false" [disabled]="subiendoArchivo"></button>
+            <button pButton [label]="nuevaGuia.id ? 'Guardar Cambios' : 'Publicar Globalmente'" icon="pi pi-check" (click)="guardarGuia()" [loading]="subiendoArchivo"></button>
+        </ng-template>
+    </p-dialog>
+</div>

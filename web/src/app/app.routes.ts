@@ -13,6 +13,7 @@ import { AdminEvaluationsComponent } from './features/admin/admin-evaluations/ad
 import { AdminKineComponent } from './features/admin/admin-kine/admin-kine'; // Vista Admin ("En construcción")
 import { AdminNutriComponent } from './features/admin/admin-nutri/admin-nutri'; // Vista Admin ("En construcción")
 import { AdminPaymentsComponent } from './features/admin/admin-payments/admin-payments';
+import { AdminGuidesManagementComponent } from './features/admin/admin-guides-management/admin-guides-management';
 
 // --- STUDENT IMPORTS (Portal Alumno) ---
 import { StudentLayoutComponent } from './features/student/student-layout/student-layout';
@@ -23,6 +24,8 @@ import { StudentAttendanceComponent } from './features/student/student-attendanc
 import { StudentEvaluationsComponent } from './features/student/student-evaluations/student-evaluations';
 import { StudentKineComponent } from './features/student/student-kine/student-kine';
 import { StudentNutriComponent } from './features/student/student-nutri/student-nutri';
+import { StudentViewGuidesComponent } from './features/student/student-view-guides/student-view-guides';
+
 
 
 // --- PROFESSOR IMPORTS (Portal Profesor) ---
@@ -34,6 +37,7 @@ import { ProfessorEvaluationsComponent } from './features/professor/professor-ev
 import { ProfessorKinesiologyComponent } from './features/professor/professor-kinesiology/professor-kinesiology';
 import { ProfessorNutritionComponent } from './features/professor/professor-nutrition/professor-nutrition';
 import { ProfessorScheduleComponent } from './features/professor/professor-schedule/professor-schedule';
+import { ProfessorViewGuidesComponent } from './features/professor/professor-view-guides/professor-view-guides';
 
 // --- KINE IMPORTS (Portal Especialista Kinesiólogo) ---
 import { KineLayoutComponent } from './features/kine/kine-layout/kine-layout';
@@ -64,6 +68,7 @@ export const routes: Routes = [
             { path: 'kinesiology', component: AdminKineComponent }, // Gestión Admin de Kine
             { path: 'nutrition', component: AdminNutriComponent },   // Gestión Admin de Nutri
             { path: 'payments', component: AdminPaymentsComponent },
+            { path: 'guides-management', component: AdminGuidesManagementComponent },
         ]
     },
 
@@ -83,6 +88,7 @@ export const routes: Routes = [
             { path: 'kine', component: StudentKineComponent },
             { path: 'nutri', component: StudentNutriComponent },
             { path: 'view-professor', component: ViewTeachersComponent },
+            { path: 'view-guides', component: StudentViewGuidesComponent },
 
         ]
     },
@@ -101,7 +107,7 @@ export const routes: Routes = [
             { path: 'kinesiology', component: ProfessorKinesiologyComponent },
             { path: 'nutrition', component: ProfessorNutritionComponent },
             { path: 'schedule', component: ProfessorScheduleComponent },
-
+            { path: 'view-guides', component: ProfessorViewGuidesComponent },
         ]
     },
 

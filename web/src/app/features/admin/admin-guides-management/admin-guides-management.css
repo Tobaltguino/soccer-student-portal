@@ -1,0 +1,90 @@
+/* --- CONFIGURACIÓN BASE --- */
+:host {
+    display: block;
+    min-height: 100vh;
+    padding: 1rem;
+}
+
+.guides-container { max-width: 1400px; margin: 0 auto; }
+
+/* --- HEADER INSPIRADO EN CLASES --- */
+.page-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
+}
+.header-content h1 { margin: 0; font-size: 1.5rem; font-weight: 700; color: var(--text-main); }
+.header-content p { margin: 0.25rem 0 0; color: var(--text-secondary); font-size: 0.9rem; }
+.btn-create { white-space: nowrap; }
+
+/* Textos adaptados al tema */
+.text-main { color: var(--text-main); }
+.text-secondary { color: var(--text-secondary); }
+
+/* --- CAJA DE SUBIDA DE ARCHIVOS (Drag & Drop) --- */
+.file-upload-container {
+    border-style: dashed !important;
+    border-width: 2px !important;
+    border-color: var(--border-color, #ccc) !important;
+    border-radius: 8px;
+    background-color: var(--bg-card, #f9fafb);
+    transition: all 0.2s ease-in-out;
+}
+
+.file-upload-container:hover {
+    background-color: var(--surface-100);
+    border-color: var(--primary-color) !important;
+}
+
+.file-upload-container.opacity-50 {
+    opacity: 0.6;
+    cursor: not-allowed !important;
+    border-color: var(--surface-300) !important;
+}
+
+/* --- ESTILOS DE TEXTO PARA LA TABLA --- */
+.line-height-2 {
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.white-space-nowrap {
+    white-space: nowrap;
+}
+
+/* --- MEDIA QUERIES (RESPONSIVE) --- */
+@media screen and (max-width: 768px) {
+    :host { padding: 0.5rem; }
+    .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+    .header-content, .btn-create { width: 100%; justify-content: center; }
+
+    .p-datatable-sm .p-datatable-tbody > tr > td {
+        text-align: left !important;
+        display: block;
+        width: 100% !important;
+        box-sizing: border-box;
+        border: 0 none !important;
+        padding: 0.75rem 1rem !important;
+    }
+
+    .p-datatable-sm .p-datatable-tbody > tr > td .p-column-title {
+        display: block;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+    }
+
+    .p-datatable-sm .p-datatable-tbody > tr > td:last-child {
+        border-bottom: 2px solid var(--border-color) !important;
+        padding-bottom: 1.5rem !important;
+    }
+
+    .p-datatable-sm .p-datatable-tbody > tr > td:last-child .flex {
+        justify-content: flex-start !important;
+    }
+}
