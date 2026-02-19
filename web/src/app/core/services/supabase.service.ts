@@ -190,59 +190,25 @@ export class SupabaseService {
 
   // --- CREAR USUARIO (AUTH + DB) ---
   async crearUsuarioCompleto(email: string, password: string, datosPersonales: any, tabla: string) {
-    // 1. Instancia temporal para no cerrar sesión del admin actual
-    const tempSupabase = createClient(environment.supabaseUrl, environment.supabaseKey, {
-      auth: { 
-        autoRefreshToken: false, 
-        persistSession: false,
-        detectSessionInUrl: false 
+    // Llamamos a la función que acabas de subir (create-user)
+    const { data, error } = await this.supabase.functions.invoke('create-user', {
+      body: { 
+        email, 
+        password, 
+        datosPersonales, 
+        tabla,
+        role: this.mapTablaToRole(tabla) 
       }
     });
 
-    // ✅ LIMPIEZA DE SEGURIDAD
-    if (tabla !== 'estudiantes') {
-      delete datosPersonales.fecha_nacimiento;
-      delete datosPersonales.grupo_id;
-    }
+    // Si hubo un error de red
+    if (error) return { data: null, error };
 
-    // 2. Crear usuario en Auth
-    const { data: authData, error: authError } = await tempSupabase.auth.signUp({
-      email: email,
-      password: password,
-      options: {
-        data: {
-          role: this.mapTablaToRole(tabla),
-          nombre: datosPersonales.nombre,
-          apellido: datosPersonales.apellido,
-          rut: datosPersonales.rut,
-          ...(datosPersonales.tipo_profesor && { tipo_profesor: datosPersonales.tipo_profesor })
-        }
-      }
-    });
+    // Si la función nos devuelve un error (ej: "email ya existe")
+    if (data.error) return { data: null, error: data.error };
 
-    if (authError) return { data: null, error: authError };
-    if (!authData.user) return { data: null, error: { message: 'Error creando usuario Auth' } };
-
-    // 3. Insertar/Actualizar datos en la tabla pública
-    // Usamos UPSERT en lugar de UPDATE para evitar el error 406 si el trigger es lento
-    const datosParaGuardar = {
-        id: authData.user.id, // Forzamos el ID del usuario creado
-        ...datosPersonales
-    };
-
-    const { data: dbData, error: dbError } = await this.supabase
-      .from(tabla)
-      .upsert(datosParaGuardar) // ✅ CAMBIO CLAVE: Upsert arregla la condición de carrera
-      .select()
-      .maybeSingle(); 
-
-    if (dbError) {
-        console.warn("Error en DB:", dbError.message);
-        // Aunque falle la DB, el usuario Auth se creó, devolvemos el usuario
-        return { data: { user: authData.user, perfil: null }, error: dbError };
-    }
-
-    return { data: { user: authData.user, perfil: dbData }, error: null };
+    // ¡Éxito!
+    return { data: data.data, error: null };
   }
 
   // --- EDITAR / ELIMINAR ---

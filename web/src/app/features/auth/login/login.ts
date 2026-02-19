@@ -15,6 +15,7 @@ import { DialogModule } from 'primeng/dialog';
 // Servicios y Directivas
 import { SupabaseService } from '../../../core/services/supabase.service';
 import { RutFormatDirective } from '../../../shared/directives/rut-format.directive';
+import { RutValidator } from '../../../shared/directives/rut-validator.directive';
 
 @Component({
   selector: 'app-login',
@@ -52,9 +53,6 @@ export class LoginComponent {
   ) {}
 
   /**
-   * Proceso de inicio de sesión usando el RUT como identificador
-   */
-  /**
    * Proceso de inicio de sesión usando el RUT como identificador.
    * Incluye verificación de estado de cuenta (Activo/Inactivo).
    */
@@ -65,6 +63,15 @@ export class LoginComponent {
         severity: 'warn', 
         summary: 'Atención', 
         detail: 'Por favor, ingresa tu RUT y contraseña.' 
+      });
+      return;
+    }
+
+    if (!RutValidator.esValido(this.rut)) {
+      this.messageService.add({ 
+        severity: 'error', 
+        summary: 'RUT Incorrecto', 
+        detail: 'El RUT ingresado no es válido legalmente.' 
       });
       return;
     }
@@ -83,7 +90,6 @@ export class LoginComponent {
         this.messageService.add({ 
           severity: 'error', 
           summary: 'Acceso Denegado', 
-          // Usamos el mensaje dinámico que viene del servicio
           detail: error.message || 'Credenciales inválidas o usuario no encontrado.' 
         });
         this.loading = false;
@@ -98,23 +104,29 @@ export class LoginComponent {
           detail: 'Cargando tu perfil, por favor espera...' 
         });
 
-        // Mapa de rutas según la tabla donde se encontró el usuario
-        const rutasPorRol: any = {
-          'admins': '/admin/dashboard',
-          'estudiantes': '/student/dashboard',
-          'profesores': '/professor/dashboard',
-          'kinesiologos': '/kine/dashboard',
-          'nutricionistas': '/nutri/dashboard'
+        // ✅ ESTO ES NUEVO: Mapeamos los roles de la BD a los roles de las Rutas
+        const mapRoles: any = {
+          'admins': 'admin',
+          'estudiantes': 'student',
+          'profesores': 'professor',
+          'kinesiologos': 'kine',
+          'nutricionistas': 'nutri'
         };
 
-        const rutaDestino = rutasPorRol[role] || '/login'; 
+        const rolEstandarizado = mapRoles[role] || 'student'; // 'student' por defecto por seguridad
+
+        // ✅ ESTO ES CLAVE PARA EL GUARD: Guardamos el rol en el navegador
+        localStorage.setItem('userRole', rolEstandarizado);
+
+        // Armamos la ruta destino basándonos en el rol estandarizado
+        const rutaDestino = `/${rolEstandarizado}/dashboard`; 
 
         // Pequeño delay para que el usuario vea el mensaje de éxito antes de saltar
         setTimeout(() => {
           this.router.navigate([rutaDestino]);
         }, 1200);
+        
       } else {
-        // Caso borde: si no hay error pero tampoco hay datos de usuario
         throw new Error('No se pudo recuperar la sesión del usuario.');
       }
 

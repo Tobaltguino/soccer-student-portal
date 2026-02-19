@@ -128,6 +128,7 @@ export class AdminLayoutComponent implements OnInit {
 
   async logout() {
     await this.supabase.logout();
+    localStorage.removeItem('userRole');
     this.router.navigate(['/login']);
   }
 }

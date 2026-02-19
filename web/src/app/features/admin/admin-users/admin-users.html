@@ -197,14 +197,18 @@
             </div>
             <div class="field">
                 <label><i class="pi pi-id-card"></i> RUT</label>
-                <input pInputText appRutFormat [(ngModel)]="userForm.rut" placeholder="12345678-9" />
+                <input pInputText appRutFormat [(ngModel)]="userForm.rut" placeholder="12.345.678-9" />
             </div>
             <div class="field" *ngIf="vistaActual === 'estudiantes'">
                 <label><i class="pi pi-calendar"></i> Fecha de Nacimiento</label>
                 <p-datepicker [(ngModel)]="userForm.fecha_nacimiento" [showIcon]="true" appendTo="body" dateFormat="dd/mm/yy" [maxDate]="maxDate" placeholder="Selecciona fecha"></p-datepicker>
                 <small class="text-primary font-bold mt-1 block" *ngIf="userForm.fecha_nacimiento">Edad calculada: {{ calcularEdad(userForm.fecha_nacimiento) }} años</small>
             </div>
-            <div class="field" *ngIf="!isEditing"><label><i class="pi pi-lock"></i> Contraseña</label><input pInputText type="password" [(ngModel)]="userForm.password" /></div>
+            <div class="field bg-blue-50 p-3 border-round" *ngIf="!isEditing">
+                <span class="text-blue-700 text-sm font-medium">
+                    <i class="pi pi-info-circle mr-1"></i> La contraseña inicial se generará automáticamente usando el RUT del usuario (sin puntos ni guiones).
+                </span>
+            </div>
             <div class="field flex align-items-center gap-3 py-2 bg-gray-50 border-round px-3">
                 <p-checkbox [(ngModel)]="userForm.activo" [binary]="true" inputId="activo"></p-checkbox>
                 <label for="activo" class="mb-0 cursor-pointer">Cuenta habilitada</label>

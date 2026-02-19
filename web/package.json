@@ -49,6 +49,7 @@
     "@angular/compiler-cli": "^21.0.0",
     "@tailwindcss/postcss": "^4.1.12",
     "jsdom": "^27.1.0",
+    "supabase": "^2.76.11",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
   }

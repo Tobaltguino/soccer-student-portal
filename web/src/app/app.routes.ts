@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth-guard'; // ✅ IMPORTA EL GUARD AQUÍ
 
 // --- AUTH ---
 import { LoginComponent } from './features/auth/login/login';
@@ -10,8 +11,8 @@ import { AdminUsersComponent } from './features/admin/admin-users/admin-users';
 import { AdminGroupsComponent } from './features/admin/admin-groups/admin-groups';
 import { AdminClassesComponent } from './features/admin/admin-classes/admin-classes';
 import { AdminEvaluationsComponent } from './features/admin/admin-evaluations/admin-evaluations';
-import { AdminKineComponent } from './features/admin/admin-kine/admin-kine'; // Vista Admin ("En construcción")
-import { AdminNutriComponent } from './features/admin/admin-nutri/admin-nutri'; // Vista Admin ("En construcción")
+import { AdminKineComponent } from './features/admin/admin-kine/admin-kine'; 
+import { AdminNutriComponent } from './features/admin/admin-nutri/admin-nutri'; 
 import { AdminPaymentsComponent } from './features/admin/admin-payments/admin-payments';
 import { AdminGuidesManagementComponent } from './features/admin/admin-guides-management/admin-guides-management';
 
@@ -25,8 +26,7 @@ import { StudentEvaluationsComponent } from './features/student/student-evaluati
 import { StudentKineComponent } from './features/student/student-kine/student-kine';
 import { StudentNutriComponent } from './features/student/student-nutri/student-nutri';
 import { StudentViewGuidesComponent } from './features/student/student-view-guides/student-view-guides';
-
-
+import { ViewTeachersComponent } from './features/student/view-teachers/view-teachers';
 
 // --- PROFESSOR IMPORTS (Portal Profesor) ---
 import { ProfessorLayoutComponent } from './features/professor/professor-layout/professor-layout';
@@ -39,48 +39,49 @@ import { ProfessorNutritionComponent } from './features/professor/professor-nutr
 import { ProfessorScheduleComponent } from './features/professor/professor-schedule/professor-schedule';
 import { ProfessorViewGuidesComponent } from './features/professor/professor-view-guides/professor-view-guides';
 
-// --- KINE IMPORTS (Portal Especialista Kinesiólogo) ---
+// --- KINE IMPORTS ---
 import { KineLayoutComponent } from './features/kine/kine-layout/kine-layout';
 import { KineDashboardComponent } from './features/kine/kine-dashboard/kine-dashboard';
 
-// --- NUTRI IMPORTS (Portal Especialista Nutricionista) ---
+// --- NUTRI IMPORTS ---
 import { NutriLayoutComponent } from './features/nutri/nutri-layout/nutri-layout';
 import { NutriDashboardComponent } from './features/nutri/nutri-dashboard/nutri-dashboard';
-import { ViewTeachersComponent } from './features/student/view-teachers/view-teachers';
 
 export const routes: Routes = [
-    // Redirección inicial
     { path: '', redirectTo: 'login', pathMatch: 'full' },
     { path: 'login', component: LoginComponent },
 
     // ==========================================
-    // 1. RUTA ADMIN (Administrador General)
+    // 1. RUTA ADMIN
     // ==========================================
     {
         path: 'admin',
-        component: AdminLayoutComponent, // Menú lateral del Admin
+        component: AdminLayoutComponent,
+        canActivate: [authGuard], // ✅ Aplica el Guard
+        data: { roles: ['admin'] }, // ✅ Define quién entra
         children: [
             { path: 'dashboard', component: AdminDashboardComponent },
             { path: 'users', component: AdminUsersComponent },
             { path: 'groups', component: AdminGroupsComponent },
             { path: 'classes', component: AdminClassesComponent },
             { path: 'evaluations', component: AdminEvaluationsComponent },
-            { path: 'kinesiology', component: AdminKineComponent }, // Gestión Admin de Kine
-            { path: 'nutrition', component: AdminNutriComponent },   // Gestión Admin de Nutri
+            { path: 'kinesiology', component: AdminKineComponent },
+            { path: 'nutrition', component: AdminNutriComponent },
             { path: 'payments', component: AdminPaymentsComponent },
-            { path: 'guides-management', component: AdminGuidesManagementComponent },
+            { path: 'guides', component: AdminGuidesManagementComponent },
         ]
     },
 
     // ==========================================
-    // 2. RUTA ESTUDIANTE (Portal del Alumno)
+    // 2. RUTA ESTUDIANTE
     // ==========================================
     {
         path: 'student',
         component: StudentLayoutComponent,
+        canActivate: [authGuard], 
+        data: { roles: ['student', 'estudiante'] }, // ✅ Permite variables por si acaso
         children: [
             { path: 'dashboard', component: StudentDashboardComponent },
-            
             { path: 'schedule', component: StudentScheduleComponent },
             { path: 'classes', component: StudentClassesComponent },
             { path: 'attendance', component: StudentAttendanceComponent },
@@ -88,17 +89,18 @@ export const routes: Routes = [
             { path: 'kine', component: StudentKineComponent },
             { path: 'nutri', component: StudentNutriComponent },
             { path: 'view-professor', component: ViewTeachersComponent },
-            { path: 'view-guides', component: StudentViewGuidesComponent },
-
+            { path: 'guides', component: StudentViewGuidesComponent },
         ]
     },
 
     // ==========================================
-    // 3. RUTA PROFESOR (Portal del Docente)
+    // 3. RUTA PROFESOR
     // ==========================================
     {
         path: 'professor',
-        component: ProfessorLayoutComponent, // Menú lateral del Profesor
+        component: ProfessorLayoutComponent,
+        canActivate: [authGuard], 
+        data: { roles: ['professor', 'profesor'] },
         children: [
             { path: 'dashboard', component: ProfessorDashboardComponent },
             { path: 'attendance', component: ProfessorAttendanceComponent },
@@ -107,34 +109,36 @@ export const routes: Routes = [
             { path: 'kinesiology', component: ProfessorKinesiologyComponent },
             { path: 'nutrition', component: ProfessorNutritionComponent },
             { path: 'schedule', component: ProfessorScheduleComponent },
-            { path: 'view-guides', component: ProfessorViewGuidesComponent },
+            { path: 'guides', component: ProfessorViewGuidesComponent },
         ]
     },
 
     // ==========================================
-    // 4. RUTA KINESIÓLOGO (Portal del Especialista)
+    // 4. RUTA KINESIÓLOGO
     // ==========================================
     {
         path: 'kine',
-        component: KineLayoutComponent, // Menú lateral del Kinesiólogo
+        component: KineLayoutComponent,
+        canActivate: [authGuard], 
+        data: { roles: ['kine', 'kinesiologo'] },
         children: [
             { path: 'dashboard', component: KineDashboardComponent },
-            // Aquí agregarás: { path: 'pacientes', ... }, { path: 'fichas', ... }
         ]
     },
 
     // ==========================================
-    // 5. RUTA NUTRICIONISTA (Portal del Especialista)
+    // 5. RUTA NUTRICIONISTA
     // ==========================================
     {
         path: 'nutri',
-        component: NutriLayoutComponent, // Menú lateral del Nutricionista
+        component: NutriLayoutComponent,
+        canActivate: [authGuard], 
+        data: { roles: ['nutri', 'nutricionista'] },
         children: [
             { path: 'dashboard', component: NutriDashboardComponent },
-            // Aquí agregarás: { path: 'dietas', ... }, { path: 'seguimiento', ... }
         ]
     },
 
-    // Ruta comodín (404) -> redirigir al login
+    // Ruta comodín (404)
     { path: '**', redirectTo: 'login' }
 ];

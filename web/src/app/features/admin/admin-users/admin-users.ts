@@ -262,41 +262,43 @@ export class AdminUsersComponent implements OnInit {
         this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'El email es obligatorio' });
         return;
     }
+
+    // ✅ NUEVO: Si estamos creando, el RUT es obligatorio para generar la contraseña
+    if (!this.isEditing && !this.userForm.rut) {
+        this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'El RUT es obligatorio para generar la contraseña inicial' });
+        return;
+    }
     
     this.loading = true;
     this.cdr.detectChanges();
 
     try {
-        // ✅ 1. SUBIR FOTO SI CORRESPONDE
+        // 1. SUBIR FOTO SI CORRESPONDE
         let finalFotoUrl = this.userForm.foto_url;
 
-        // Si hay un archivo nuevo seleccionado, lo subimos
         if (this.archivoSeleccionado) {
             this.uploadingFoto = true;
-            const urlSubida = await this.supabase.subirFoto(this.archivoSeleccionado); // Asegúrate de tener esta función en tu servicio
+            const urlSubida = await this.supabase.subirFoto(this.archivoSeleccionado);
             if (urlSubida) {
                 finalFotoUrl = urlSubida;
                 this.cdr.detectChanges();
-
             }
             this.uploadingFoto = false;
             this.cdr.detectChanges();
-
         } 
-        // Si no hay archivo nuevo Y no hay previewUrl, significa que el usuario borró la foto
         else if (this.previewUrl === null) {
             finalFotoUrl = null;
         }
 
         const { nombre, apellido, rut, activo } = this.userForm;
         
-        // Objeto base con la foto
+        // Objeto base
         const datosBase: any = { 
             nombre, 
             apellido, 
             rut, 
             activo,
-            foto_url: finalFotoUrl // ✅ Se guarda el link o null
+            foto_url: finalFotoUrl 
         };
 
         if (this.vistaActual === 'estudiantes') {
@@ -329,9 +331,12 @@ export class AdminUsersComponent implements OnInit {
 
         } else {
             // CREAR
+            // ✅ NUEVO: Limpiamos el RUT (quitamos puntos y guiones) usando una expresión regular
+            const generatedPassword = this.userForm.rut.replace(/[\.\-]/g, '');
+
             const { data, error } = await this.supabase.crearUsuarioCompleto(
                 this.userForm.email.toLowerCase(), 
-                this.userForm.password, 
+                generatedPassword, // ✅ Pasamos la contraseña automática aquí
                 datosBase, 
                 this.vistaActual
             );
