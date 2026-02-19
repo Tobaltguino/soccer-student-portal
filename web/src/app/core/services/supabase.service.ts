@@ -72,7 +72,18 @@ export class SupabaseService {
         });
 
         if (authResponse.error) {
-          return { data: null, error: authResponse.error, role: null };
+          // ✅ AQUÍ INTERCEPTAMOS EL ERROR DE SUPABASE
+          let mensajeError = authResponse.error.message;
+          
+          if (mensajeError === 'Invalid login credentials') {
+            mensajeError = 'Contraseña incorrecta.';
+          }
+
+          return { 
+            data: null, 
+            error: { message: mensajeError }, 
+            role: null 
+          };
         }
 
         // ✅ ÉXITO: Usuario existe, está activo y la contraseña es correcta
