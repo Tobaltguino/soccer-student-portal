@@ -170,7 +170,14 @@ export class ProfessorEvaluationsComponent implements OnInit {
   // 3. GESTIÓN DE SESIONES (LOGÍSTICA)
   // ==========================================
   abrirNuevo() {
-    this.evalLogistica = { id: null, grupo_id: null, tipo_evaluacion_id: null, fecha: new Date(), estado: 'PENDIENTE' };
+    // Inicializamos en null para obligar a que el profesor lo llene
+    this.evalLogistica = { 
+      id: null, 
+      grupo_id: null, 
+      tipo_evaluacion_id: null, 
+      fecha: null, // <--- Cambiado de new Date() a null
+      estado: 'PENDIENTE' 
+    };
     this.displayMainDialog = true;
   }
 
@@ -181,12 +188,28 @@ export class ProfessorEvaluationsComponent implements OnInit {
   }
 
   async crearSesionPlanificada() {
-    if (!this.evalLogistica.grupo_id || !this.evalLogistica.tipo_evaluacion_id) {
-        this.messageService.add({ severity: 'warn', summary: 'Faltan datos', detail: 'Selecciona grupo y prueba' });
+    // ✅ VALIDACIÓN ESTRICTA: Faltan datos obligatorios
+    if (!this.evalLogistica.fecha || !this.evalLogistica.grupo_id || !this.evalLogistica.tipo_evaluacion_id) {
+        this.messageService.add({ 
+          severity: 'warn', 
+          summary: 'Faltan datos', 
+          detail: 'Complete todos los campos obligatorios (*).' 
+        });
         return;
     }
 
-    const fechaStr = this.evalLogistica.fecha.toISOString().split('T')[0];
+    // ✅ VALIDACIÓN: Que la fecha sea correcta
+    const fechaSeleccionada = new Date(this.evalLogistica.fecha);
+    if (isNaN(fechaSeleccionada.getTime())) {
+        this.messageService.add({ 
+            severity: 'warn', 
+            summary: 'Fecha Inválida', 
+            detail: 'Ingrese una fecha válida para la sesión.' 
+        });
+        return;
+    }
+
+    const fechaStr = fechaSeleccionada.toISOString().split('T')[0];
     const payload = {
         grupo_id: this.evalLogistica.grupo_id,
         tipo_evaluacion_id: this.evalLogistica.tipo_evaluacion_id,

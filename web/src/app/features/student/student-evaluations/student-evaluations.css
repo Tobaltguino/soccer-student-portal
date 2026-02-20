@@ -113,6 +113,76 @@ i[class*=" pi-"] {
     to { opacity: 1; transform: translateY(0); }
 }
 
+
+/* =========================================================
+   ESTILOS DEL MODAL (DETALLE DE EVALUACIÓN)
+   ========================================================= */
+
+.modal-header-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Fuerza a que el título y el valor estén uno encima del otro */
+.info-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+/* Etiqueta superior en gris y mayúsculas */
+.info-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+}
+
+/* Valor resaltado */
+.info-value {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+/* Títulos de las secciones (con icono centrado) */
+.modal-label {
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.8rem !important;
+    font-size: 0.95rem;
+}
+
+/* Cajas de texto con padding interior y fondo suave */
+.modal-content-box {
+    background-color: var(--surface-hover, #f8f9fa);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.2rem;
+    color: var(--text-main);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+
+/* Estilo especial cuando NO hay observaciones */
+.empty-state {
+    color: var(--text-secondary);
+    font-style: italic;
+    background-color: transparent;
+    border-style: dashed;
+}
+
+/* Compatibilidad con modo oscuro */
+:host-context(body.dark-mode) .modal-content-box {
+    background-color: rgba(0,0,0,0.2);
+}
+
 /* --- MEDIA QUERIES PARA MÓVIL --- */
 @media (max-width: 960px) {
     :host ::ng-deep .p-column-title {

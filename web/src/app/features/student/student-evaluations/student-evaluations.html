@@ -96,31 +96,31 @@
     </div>
 
     <p-dialog [(visible)]="displayDetalle" header="Detalle de Evaluación" 
-              [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" styleClass="p-fluid">
+              [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" [draggable]="false" [resizable]="false" styleClass="p-fluid">
         
-        <div *ngIf="selectedEval" class="animation-fade-in pt-2">
+        <div *ngIf="selectedEval" class="animation-fade-in pb-2">
             
-            <div class="flex justify-content-between mb-4 border-bottom-1 border-300 pb-3">
-                <div>
-                    <span class="text-sm text-500 block">Prueba Seleccionada</span>
-                    <span class="text-lg font-bold text-900">{{selectedEval.test_nombre}}</span>
+            <div class="modal-header-info mb-4 border-bottom-1 border-300 pb-4 mt-2">
+                <div class="info-block">
+                    <span class="info-label">Prueba Seleccionada</span>
+                    <span class="info-value text-primary">{{selectedEval.test_nombre}}</span>
                 </div>
-                <div class="text-right" *ngIf="selectedEval.edad_evaluacion > 0">
-                    <span class="text-sm text-500 block">Edad al rendir</span>
-                    <p-tag [value]="selectedEval.edad_evaluacion + ' años'" severity="info"></p-tag>
+                <div class="info-block text-right" *ngIf="selectedEval.edad_evaluacion > 0">
+                    <span class="info-label">Edad al rendir</span>
+                    <p-tag [value]="selectedEval.edad_evaluacion + ' años'" severity="info" styleClass="px-3 py-2 text-sm font-bold shadow-1"></p-tag>
                 </div>
             </div>
 
             <div class="field mb-4" *ngIf="selectedEval.test_descripcion">
-                <label class="font-bold text-primary"><i class="pi pi-book"></i> Descripción de la Prueba</label>
-                <div class="text-700 text-sm mt-1 line-height-3">
+                <label class="modal-label"><i class="pi pi-book text-primary"></i> Descripción de la Prueba</label>
+                <div class="modal-content-box">
                     {{ selectedEval.test_descripcion }}
                 </div>
             </div>
 
             <div class="field mb-2">
-                <label class="font-bold text-primary"><i class="pi pi-comment"></i> Observaciones del Entrenador</label>
-                <div class="surface-ground p-3 border-round border-1 border-200 italic line-height-3 text-sm mt-1">
+                <label class="modal-label"><i class="pi pi-comment text-primary"></i> Observaciones del Entrenador</label>
+                <div class="modal-content-box" [ngClass]="{'empty-state': !selectedEval.observacion}">
                     {{ selectedEval.observacion || 'Sin observaciones registradas para esta sesión.' }}
                 </div>
             </div>
@@ -128,7 +128,7 @@
         </div>
 
         <ng-template pTemplate="footer">
-            <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text" (click)="displayDetalle = false"></button>
+            <button pButton label="Cerrar" icon="pi pi-times" class="p-button-outlined p-button-secondary w-full sm:w-auto" (click)="displayDetalle = false"></button>
         </ng-template>
     </p-dialog>
 </div>

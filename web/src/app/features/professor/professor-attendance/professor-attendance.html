@@ -38,29 +38,27 @@
             </ng-template>
             <ng-template pTemplate="body" let-est>
                 <tr>
-                    <td>
-    <div class="flex align-items-center flex-nowrap gap-3">
-        
-        <p-avatar 
-            [image]="est.foto_url" 
-            [label]="!est.foto_url ? est.nombre.charAt(0) : ''"
-            shape="circle" 
-            size="large" 
-            [style]="{'background-color': '#3b82f6', 'color': '#ffffff', 'border': '2px solid var(--primary-color)', 'min-width': '3rem', 'min-height': '3rem'}">
-        </p-avatar>
+                    <td style="min-width: 250px;">
+                        <div class="estudiante-profile-wrapper">
+                            
+                            <p-avatar 
+                                [image]="est.foto_url" 
+                                [label]="!est.foto_url ? est.nombre.charAt(0) : ''"
+                                shape="circle" 
+                                size="large" 
+                                [style]="{'background-color': '#3b82f6', 'color': '#ffffff', 'border': '2px solid var(--primary-color)', 'min-width': '3.5rem', 'min-height': '3.5rem'}">
+                            </p-avatar>
 
-        <div class="flex flex-column justify-content-center" style="min-width: 200px;">
-            <div class="estudiante-nombre">
-                {{est.nombre}} {{est.apellido}}
-            </div>
-            <div class="estudiante-rut mt-1">
-                <i class="pi pi-id-card text-xs mr-2"></i>
-                <span>{{ est.rut || 'Sin RUT registrado' }}</span>
-            </div>
-        </div>
+                            <div class="estudiante-profile-text">
+                                <span class="est-nombre">{{est.nombre}} {{est.apellido}}</span>
+                                <span class="est-rut">
+                                    <i class="pi pi-id-card"></i>
+                                    {{ est.rut || 'Sin RUT registrado' }}
+                                </span>
+                            </div>
 
-    </div>
-</td>
+                        </div>
+                    </td>
                     <td class="text-center">
                         <span class="text-sm font-bold text-700">{{est.resumen}}</span>
                     </td>

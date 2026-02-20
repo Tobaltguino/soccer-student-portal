@@ -88,16 +88,19 @@
 
     <p-dialog [(visible)]="displayMainDialog" [header]="evalLogistica.id ? 'Editar Sesión' : 'Nueva Sesión'" [modal]="true" [style]="{width: '450px'}" styleClass="p-fluid">
         <ng-template pTemplate="content">
+            
             <div class="field mt-2">
-                <label class="font-bold">Fecha</label>
+                <label class="font-bold">Fecha <span class="text-red-500 font-bold">*</span></label>
                 <p-datepicker [(ngModel)]="evalLogistica.fecha" appendTo="body" dateFormat="dd/mm/yy" [showIcon]="true"></p-datepicker>
             </div>
+            
             <div class="field">
-                <label class="font-bold">Grupo</label>
+                <label class="font-bold">Grupo <span class="text-red-500 font-bold">*</span></label>
                 <p-select [options]="grupos" [(ngModel)]="evalLogistica.grupo_id" optionLabel="nombre" optionValue="id" placeholder="Selecciona tu grupo" appendTo="body"></p-select>
             </div>
+            
             <div class="field">
-                <label class="font-bold">Tipo de Evaluación</label>
+                <label class="font-bold">Tipo de Evaluación <span class="text-red-500 font-bold">*</span></label>
                 <p-select [options]="tiposEvaluacion" [(ngModel)]="evalLogistica.tipo_evaluacion_id" optionLabel="nombre" optionValue="id" placeholder="Selecciona la prueba" appendTo="body">
                     <ng-template let-item pTemplate="item">
                         <div class="flex align-items-center gap-2">
@@ -107,6 +110,7 @@
                     </ng-template>
                 </p-select>
             </div>
+            
             <div class="field" *ngIf="evalLogistica.id">
                 <label class="font-bold mb-2 block">Estado de la Sesión</label>
                 <div class="flex gap-4">
@@ -120,6 +124,7 @@
                     </div>
                 </div>
             </div>
+
         </ng-template>
         <ng-template pTemplate="footer">
             <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="displayMainDialog = false"></button>

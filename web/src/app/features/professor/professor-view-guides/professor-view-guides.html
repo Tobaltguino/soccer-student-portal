@@ -1,11 +1,24 @@
 <div class="guides-container fadein animation-duration-500 max-w-full">
-    <header class="page-header">
+    
+    <header class="flex justify-content-between align-items-center mb-4 page-header">
         <div class="header-content">
-            <h1>Material de Estudio Institucional</h1>
-            <p>Documentos y guías compartidas por la administración.</p>
+            <h1 class="text-2xl font-bold m-0 text-main">Material de Estudio</h1>
+            <p class="text-secondary m-0 mt-1">Documentos y guías compartidas por la administración.</p>
         </div>
-        <button pButton icon="pi pi-sync" class="p-button-rounded p-button-text p-button-primary" (click)="cargarGuias()" [loading]="loading" pTooltip="Actualizar lista"></button>
+        <div class="flex gap-2 header-actions">
+            <button pButton icon="pi pi-sync" class="p-button-rounded p-button-text p-button-primary" (click)="cargarGuias()" [loading]="loading" pTooltip="Actualizar lista"></button>
+        </div>
     </header>
+
+    <div class="filter-bar card mb-3 p-3 surface-card border-round shadow-1">
+        <div class="horizontal-filters">
+            <div class="filter-item">
+                <span class="p-input-icon-left w-full">
+                    <input pInputText type="text" [(ngModel)]="filtroTitulo" (input)="aplicarFiltros()" placeholder="Buscar por título de guía..." class="w-full" />
+                </span>
+            </div>
+            </div>
+    </div>
 
     <div class="card shadow-2 border-round surface-card p-3 table-responsive">
         <p-table [value]="guias" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped">
@@ -28,7 +41,7 @@
                         <span class="text-sm text-secondary line-height-2">{{guia.descripcion || 'Sin descripción adicional.'}}</span>
                     </td>
                     <td>
-                        <span class="text-secondary"><i class="pi pi-calendar mr-1"></i> {{guia.created_at | date:'dd/MM/yyyy'}}</span>
+                        <span class="font-bold"><i class="pi pi-calendar mr-1 text-primary"></i> {{guia.created_at | date:'dd/MM/yyyy'}}</span>
                     </td>
                     <td class="text-center">
                         <span class="p-column-title">Acciones</span>
@@ -43,7 +56,10 @@
 
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="4" class="text-center p-5 text-secondary">Aún no hay material de estudio publicado.</td>
+                    <td colspan="4" class="text-center p-5 text-secondary">
+                        <div *ngIf="filtroTitulo; else sinGuias">No se encontraron guías que coincidan con "{{filtroTitulo}}".</div>
+                        <ng-template #sinGuias>Aún no hay material de estudio publicado.</ng-template>
+                    </td>
                 </tr>
             </ng-template>
             
