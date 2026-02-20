@@ -21,6 +21,8 @@ import { FileUploadModule } from 'primeng/fileupload'; // ✅ NUEVO IMPORT
 import { FilterService, ConfirmationService, MessageService } from 'primeng/api';
 import { SupabaseService } from '../../../core/services/supabase.service';
 import { RutFormatDirective } from '../../../shared/directives/rut-format.directive';
+import { RutValidator } from '../../../shared/directives/rut-validator.directive';
+
 
 @Component({
   selector: 'app-admin-users',
@@ -258,22 +260,45 @@ export class AdminUsersComponent implements OnInit {
   }
 
   async guardar() {
-    if (!this.userForm.email) {
-        this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'El email es obligatorio' });
+    // 1. VALIDACIONES BÁSICAS (Campos comunes)
+    if (!this.userForm.nombre || !this.userForm.apellido || !this.userForm.email || !this.userForm.rut) {
+        this.messageService.add({ severity: 'warn', summary: 'Campos Incompletos', detail: 'Por favor completa todos los campos marcados con *.' });
         return;
     }
 
-    // ✅ NUEVO: Si estamos creando, el RUT es obligatorio para generar la contraseña
-    if (!this.isEditing && !this.userForm.rut) {
-        this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'El RUT es obligatorio para generar la contraseña inicial' });
+    // 2. VALIDACIÓN DE EMAIL
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.userForm.email)) {
+        this.messageService.add({ severity: 'error', summary: 'Email Inválido', detail: 'Ingresa un correo electrónico con formato válido.' });
         return;
     }
-    
+
+    // 3. VALIDACIÓN DE RUT
+    const rutLimpio = this.userForm.rut.replace(/\./g, '').trim();
+    if (!RutValidator.esValido(rutLimpio)) {
+        this.messageService.add({ severity: 'error', summary: 'RUT Inválido', detail: 'El formato del RUT no es correcto o no existe.' });
+        return;
+    }
+
+    // 4. VALIDACIONES ESPECÍFICAS POR ROL
+    if (this.vistaActual === 'estudiantes') {
+        if (!this.userForm.fecha_nacimiento) {
+            this.messageService.add({ severity: 'warn', summary: 'Faltan Datos', detail: 'La fecha de nacimiento es obligatoria para los estudiantes.' });
+            return;
+        }
+    } else if (this.vistaActual === 'profesores') {
+        if (!this.userForm.tipo_profesor) {
+            this.messageService.add({ severity: 'warn', summary: 'Faltan Datos', detail: 'La especialidad es obligatoria para los profesores.' });
+            return;
+        }
+    }
+
+    // --- Si pasa todas las validaciones, procedemos a guardar ---
     this.loading = true;
     this.cdr.detectChanges();
 
     try {
-        // 1. SUBIR FOTO SI CORRESPONDE
+        // 5. SUBIR FOTO SI CORRESPONDE
         let finalFotoUrl = this.userForm.foto_url;
 
         if (this.archivoSeleccionado) {
@@ -290,13 +315,13 @@ export class AdminUsersComponent implements OnInit {
             finalFotoUrl = null;
         }
 
-        const { nombre, apellido, rut, activo } = this.userForm;
+        const { nombre, apellido, activo } = this.userForm;
         
-        // Objeto base
+        // Objeto base usando el rutLimpio
         const datosBase: any = { 
             nombre, 
             apellido, 
-            rut, 
+            rut: rutLimpio, // Guardamos el RUT limpio en la BD
             activo,
             foto_url: finalFotoUrl 
         };
@@ -331,12 +356,12 @@ export class AdminUsersComponent implements OnInit {
 
         } else {
             // CREAR
-            // ✅ NUEVO: Limpiamos el RUT (quitamos puntos y guiones) usando una expresión regular
-            const generatedPassword = this.userForm.rut.replace(/[\.\-]/g, '');
+            // Contraseña sin puntos ni guiones (usando el rutLimpio ya validado)
+            const generatedPassword = rutLimpio.replace(/-/g, '');
 
             const { data, error } = await this.supabase.crearUsuarioCompleto(
                 this.userForm.email.toLowerCase(), 
-                generatedPassword, // ✅ Pasamos la contraseña automática aquí
+                generatedPassword, 
                 datosBase, 
                 this.vistaActual
             );
@@ -367,7 +392,7 @@ export class AdminUsersComponent implements OnInit {
         this.uploadingFoto = false;
         this.cdr.markForCheck(); 
     }
-  }
+}
 
   // --- ACCIONES DE ESTADO Y ELIMINAR ---
 

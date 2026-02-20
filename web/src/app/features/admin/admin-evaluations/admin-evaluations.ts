@@ -191,19 +191,19 @@ export class AdminEvaluationsComponent implements OnInit {
   }
 
   agregarRangoALista() {
-    // A. Validar campos vacíos
     if (this.nuevoRango.edad_min === null || this.nuevoRango.edad_max === null || !this.nuevoRango.nombre_etiqueta || this.nuevoRango.valor_min === null || this.nuevoRango.valor_max === null) {
-      this.messageService.add({ severity: 'warn', summary: 'Incompleto', detail: 'Asigne Rango de Edad, Etiqueta y Valores' });
+      this.messageService.add({ severity: 'warn', summary: 'Incompleto', detail: 'Llene todos los campos del rango (*)' });
       return;
     }
 
-    // B. Validar lógicas de los rangos individuales
     if (this.nuevoRango.edad_min > this.nuevoRango.edad_max) {
       this.messageService.add({ severity: 'warn', summary: 'Edad Inválida', detail: 'La edad mínima no puede ser mayor a la máxima' });
       return;
     }
-    if (this.nuevoRango.valor_min >= this.nuevoRango.valor_max) {
-      this.messageService.add({ severity: 'warn', summary: 'Valor Inválido', detail: 'El valor mínimo debe ser menor al máximo' });
+    
+    // Cambiamos >= a > por si el valor min y max son exactos (Ej: min 10, max 10)
+    if (this.nuevoRango.valor_min > this.nuevoRango.valor_max) {
+      this.messageService.add({ severity: 'warn', summary: 'Valor Inválido', detail: 'El valor mínimo no puede ser mayor al máximo' });
       return;
     }
 
@@ -213,33 +213,26 @@ export class AdminEvaluationsComponent implements OnInit {
     const vMaxNuevo = this.nuevoRango.valor_max;
     const etiquetaNueva = this.nuevoRango.nombre_etiqueta.trim().toUpperCase();
 
-    // C. Validar choques en la matriz 2D (Edad Y Valor)
+    // Validar cruce de datos
     const conflicto = this.rangosForm.find(r => {
-      // ¿Chocan las edades?
       const solapanEdades = (eMinNuevo <= r.edad_max) && (eMaxNuevo >= r.edad_min);
-      // ¿Chocan los valores del test?
       const solapanValores = (vMinNuevo <= r.valor_max) && (vMaxNuevo >= r.valor_min);
-      // ¿Es la misma etiqueta en edades que chocan?
       const mismaEtiqueta = (r.nombre_etiqueta.trim().toUpperCase() === etiquetaNueva);
 
-      // Hay conflicto crítico si:
-      // 1. Las edades chocan Y las notas chocan (no se sabría qué nivel darle al alumno)
-      // 2. Las edades chocan Y le pusieron el mismo nombre a la etiqueta (ej: "Bueno" dos veces en la misma edad)
       return (solapanEdades && solapanValores) || (solapanEdades && mismaEtiqueta);
     });
 
     if (conflicto) {
       this.messageService.add({ 
         severity: 'error', 
-        summary: 'Conflicto de Rangos', 
-        detail: `La configuración choca con el rango existente: '${conflicto.nombre_etiqueta}' (${conflicto.edad_min}-${conflicto.edad_max} años). Revise edades o valores.` 
+        summary: 'Cruce de Datos Detectado', 
+        detail: `No se puede agregar. Los valores (${vMinNuevo}-${vMaxNuevo}) chocan con el rango '${conflicto.nombre_etiqueta}' (${conflicto.valor_min}-${conflicto.valor_max}) para alumnos de ${conflicto.edad_min} a ${conflicto.edad_max} años.` 
       });
       return;
     }
 
     this.rangosForm.push({ ...this.nuevoRango });
     
-    // ✅ Reiniciar manteniendo el rango de edad y el color, para llenar más rápido
     this.nuevoRango = { 
         edad_min: this.nuevoRango.edad_min, 
         edad_max: this.nuevoRango.edad_max, 
@@ -256,10 +249,10 @@ export class AdminEvaluationsComponent implements OnInit {
 
   async guardarNuevoTipo() {
     if (!this.tipoForm.nombre || !this.tipoForm.unidad_medida) {
-      this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Nombre y unidad obligatorios' });
+      this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'El Nombre y la Unidad son obligatorios (*)' });
       return;
     }
-
+    // ... el resto de la función guardarNuevoTipo() se mantiene igual ...
     this.loading = true;
     try {
       const { data, error } = await this.supabase.createTipoEvaluacion(this.tipoForm);
@@ -325,12 +318,20 @@ export class AdminEvaluationsComponent implements OnInit {
   }
 
   async crearSesionPlanificada() {
-    if (!this.evalLogistica.grupo_id || !this.evalLogistica.tipo_evaluacion_id) {
-        this.messageService.add({ severity: 'warn', summary: 'Faltan datos', detail: 'Selecciona grupo y prueba' });
+    // 1. Validar campos obligatorios
+    if (!this.evalLogistica.grupo_id || !this.evalLogistica.tipo_evaluacion_id || !this.evalLogistica.fecha) {
+        this.messageService.add({ severity: 'warn', summary: 'Faltan datos', detail: 'Complete todos los campos obligatorios marcados con (*)' });
         return;
     }
 
-    const fechaStr = this.evalLogistica.fecha.toISOString().split('T')[0];
+    // 2. Validar formato de fecha
+    const fechaSeleccionada = new Date(this.evalLogistica.fecha);
+    if (isNaN(fechaSeleccionada.getTime())) {
+        this.messageService.add({ severity: 'warn', summary: 'Fecha Inválida', detail: 'Ingrese una fecha válida para la sesión.' });
+        return;
+    }
+
+    const fechaStr = fechaSeleccionada.toISOString().split('T')[0];
     const payload = {
         grupo_id: this.evalLogistica.grupo_id,
         tipo_evaluacion_id: this.evalLogistica.tipo_evaluacion_id,

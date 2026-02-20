@@ -182,6 +182,26 @@ a.fc-col-header-cell-cushion {
     border-bottom: 1px solid var(--surface-border) !important;
 }
 
+/* ==================================================
+   AJUSTE GLOBAL: INPUT HORA NATIVO
+   ================================================== */
+input[type="time"].p-inputtext {
+    width: 100%;
+    height: 42px; /* Fuerza exactamente la misma altura que el p-datepicker */
+    font-family: inherit;
+    cursor: pointer;
+    
+    /* Al no forzar background ni color aquí, el input absorberá 
+       automáticamente el fondo blanco, el borde y el color de texto 
+       idéntico al del input "Lugar de Entrenamiento" 
+    */
+}
+
+/* Solo le agregamos el mismo brillo azul de PrimeNG al hacerle clic */
+input[type="time"].p-inputtext:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.2); 
+}
 
 /* ============================================================
    AJUSTES PARA CELULAR (MÓVIL)

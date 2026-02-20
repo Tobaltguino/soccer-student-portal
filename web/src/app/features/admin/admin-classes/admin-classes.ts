@@ -192,8 +192,13 @@ export class AdminClassesComponent implements OnInit {
   }
 
   async guardarClase() {
-    if (!this.claseForm.grupo_id || !this.claseForm.fecha || !this.claseForm.hora) {
-        this.messageService.add({ severity: 'warn', summary: 'Faltan datos', detail: 'Complete Grupo, Fecha y Hora' });
+    // ✅ Validamos que TODOS los campos de logística estén completos
+    if (!this.claseForm.grupo_id || !this.claseForm.fecha || !this.claseForm.hora || !this.claseForm.lugar || this.claseForm.lugar.trim() === '') {
+        this.messageService.add({ 
+            severity: 'warn', 
+            summary: 'Faltan datos', 
+            detail: 'Complete todos los campos obligatorios de Logística (*)' 
+        });
         return;
     }
 
