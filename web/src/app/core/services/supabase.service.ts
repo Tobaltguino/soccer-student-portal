@@ -314,9 +314,9 @@ export class SupabaseService {
   async getAlumnosPorGrupo(grupoId: number) {
     return await this.supabase
       .from('estudiantes')
-      .select('id, nombre, apellido, grupo_id')
+      .select('id, nombre, apellido, grupo_id, rut, foto_url') // ✅ Campos agregados
       .eq('grupo_id', grupoId)
-      .eq('activo', true) // Solo alumnos activos
+      .eq('activo', true) 
       .order('apellido', { ascending: true });
   }
 

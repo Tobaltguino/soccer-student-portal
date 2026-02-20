@@ -154,25 +154,29 @@
                 </p-selectButton>
             </div>
             <div *ngIf="vistaFormulario === 'logistica'" class="animation-fade-in">
+                
                 <div class="field">
-                    <label><i class="pi pi-users"></i> Grupo Asignado</label>
+                    <label><i class="pi pi-users"></i> Grupo Asignado <span class="text-red-500 font-bold">*</span></label>
                     <p-select [options]="grupos" [(ngModel)]="claseForm.grupo_id" optionLabel="nombre" optionValue="id" 
                               [disabled]="true" appendTo="body"></p-select>
                 </div>
+                
                 <div class="formgrid grid">
                     <div class="field col-6">
-                        <label><i class="pi pi-calendar"></i> Fecha</label>
+                        <label><i class="pi pi-calendar"></i> Fecha <span class="text-red-500 font-bold">*</span></label>
                         <p-datepicker [(ngModel)]="claseForm.fecha" dateFormat="dd/mm/yy" appendTo="body" [showIcon]="true"></p-datepicker>
                     </div>
                     <div class="field col-6">
-                        <label><i class="pi pi-clock"></i> Hora</label>
+                        <label><i class="pi pi-clock"></i> Hora <span class="text-red-500 font-bold">*</span></label>
                         <input pInputText type="time" [(ngModel)]="claseForm.hora" class="w-full">
                     </div>
                 </div>
+                
                 <div class="field">
-                    <label><i class="pi pi-map-marker"></i> Lugar / Cancha</label>
+                    <label><i class="pi pi-map-marker"></i> Lugar / Cancha <span class="text-red-500 font-bold">*</span></label>
                     <input pInputText [(ngModel)]="claseForm.lugar" placeholder="Ej: Cancha 3" />
                 </div>
+                
             </div>
             <div *ngIf="vistaFormulario === 'planificacion'" class="animation-fade-in">
                 <div class="field">

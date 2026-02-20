@@ -1,14 +1,148 @@
-:host { display: block; padding: 1rem; }
-.attendance-container { max-width: 1200px; margin: 0 auto; }
-.page-header { margin-bottom: 2rem; }
-.card { background: var(--bg-card); border: 1px solid var(--border-color); padding: 1.5rem; }
+:host { 
+    display: block; 
+    padding: 1rem; 
+}
 
-/* Ajustes para la tabla y avatar */
-:host ::ng-deep .p-avatar { border: 2px solid var(--primary-color); }
-:host ::ng-deep .p-datatable-tbody > tr > td { vertical-align: middle; padding: 1rem !important; }
+.attendance-container { 
+    max-width: 1200px; 
+    margin: 0 auto; 
+}
 
-.historial-list { max-height: 400px; overflow-y: auto; }
+.page-header { 
+    margin-bottom: 2rem; 
+}
+
+.card { 
+    background: var(--bg-card); 
+    border: 1px solid var(--border-color); 
+    padding: 1.5rem; 
+}
+
+/* --- ESTILOS DE LA TABLA PRINCIPAL --- */
+
+/* Permite que los elementos flex internos se desborden visualmente si es necesario */
+:host ::ng-deep .p-datatable-tbody > tr > td { 
+    vertical-align: middle; 
+    padding: 1rem !important; 
+    overflow: visible !important; 
+}
+
+/* Fuerza al nombre a mantenerse en una sola línea al lado de la foto */
+.estudiante-nombre {
+    font-weight: 700;
+    color: var(--text-main);
+    font-size: 1rem;
+    line-height: 1.2;
+    white-space: nowrap; 
+}
+
+/* Estilo para el RUT debajo del nombre */
+.estudiante-rut {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+/* Avatar con borde de marca */
+:host ::ng-deep .p-avatar { 
+    border: 2px solid var(--primary-color); 
+}
+
+/* --- ESTRUCTURA DEL HISTORIAL (MODAL) --- */
+
+.historial-scroll-area { 
+    max-height: 350px; 
+    overflow-y: auto; 
+    padding-right: 5px; 
+}
+
+.historial-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    background-color: var(--surface-hover, #f8f9fa); 
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.historial-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    transition: background-color 0.2s;
+}
+
+.historial-row:hover {
+    background-color: var(--surface-hover, rgba(0,0,0,0.02));
+}
+
+/* Alineación de columnas en el historial */
+.col-fecha {
+    flex: 0 0 100px; 
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.col-lugar {
+    flex: 1; 
+    display: flex;
+    align-items: center;
+    color: var(--text-secondary);
+    padding: 0 10px;
+    min-width: 0;
+}
+
+.col-estado {
+    flex: 0 0 110px; 
+    text-align: right; 
+}
+
+.text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* --- MODO OSCURO --- */
+
+:host-context(body.dark-mode) .historial-header {
+    background-color: var(--bg-main) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+/* --- RESPONSIVE --- */
 
 @media (max-width: 768px) {
-    .p-column-title { font-weight: bold; min-width: 100px; display: inline-block; }
+    .historial-scroll-area {
+        max-height: 60vh; 
+    }
+}
+
+/* Para pantallas muy pequeñas, evitamos que la tabla se rompa */
+@media (max-width: 480px) {
+    .historial-header {
+        display: none; 
+    }
+    
+    .historial-row {
+        flex-direction: column; 
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .col-estado {
+        width: 100%;
+        text-align: left; 
+    }
 }

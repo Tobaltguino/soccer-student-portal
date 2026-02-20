@@ -30,28 +30,37 @@
         <p-table [value]="estudiantesAsistencia" [rows]="10" [paginator]="true" styleClass="p-datatable-sm" responsiveLayout="stack">
             <ng-template pTemplate="header">
                 <tr>
-                    <th style="width: 80px">Perfil</th>
-                    <th style="width: 35%">Estudiante / RUT</th>
+                    <th style="width: 40%; min-width: 250px;">Estudiante</th>
                     <th style="width: 20%" class="text-center">Presencias / Total</th>
                     <th style="width: 20%" class="text-center">Rendimiento</th>
-                    <th style="width: 15%" class="text-center">Historial</th>
+                    <th style="width: 10%" class="text-center">Historial</th>
                 </tr>
             </ng-template>
             <ng-template pTemplate="body" let-est>
                 <tr>
                     <td>
-                        <p-avatar 
-                            [image]="est.foto_url" 
-                            [label]="!est.foto_url ? est.nombre.charAt(0) : ''"
-                            shape="circle" 
-                            size="large" 
-                            [style]="{'background-color': '#3b82f6', 'color': '#ffffff', 'border': '2px solid var(--primary-color)'}">
-                        </p-avatar>
-                    </td>
-                    <td>
-                        <div class="font-bold text-900">{{est.apellido}}, {{est.nombre}}</div>
-                        <div class="text-xs text-500 font-medium">{{est.rut}}</div>
-                    </td>
+    <div class="flex align-items-center flex-nowrap gap-3">
+        
+        <p-avatar 
+            [image]="est.foto_url" 
+            [label]="!est.foto_url ? est.nombre.charAt(0) : ''"
+            shape="circle" 
+            size="large" 
+            [style]="{'background-color': '#3b82f6', 'color': '#ffffff', 'border': '2px solid var(--primary-color)', 'min-width': '3rem', 'min-height': '3rem'}">
+        </p-avatar>
+
+        <div class="flex flex-column justify-content-center" style="min-width: 200px;">
+            <div class="estudiante-nombre">
+                {{est.nombre}} {{est.apellido}}
+            </div>
+            <div class="estudiante-rut mt-1">
+                <i class="pi pi-id-card text-xs mr-2"></i>
+                <span>{{ est.rut || 'Sin RUT registrado' }}</span>
+            </div>
+        </div>
+
+    </div>
+</td>
                     <td class="text-center">
                         <span class="text-sm font-bold text-700">{{est.resumen}}</span>
                     </td>
@@ -90,15 +99,33 @@
         <div *ngIf="loadingHistorial" class="text-center p-4"><i class="pi pi-spin pi-spinner text-4xl text-primary"></i></div>
 
         <div *ngIf="!loadingHistorial" class="historial-scroll-area">
-            <div *ngFor="let h of historialAlumno" class="flex align-items-center justify-content-between p-3 mb-2 border-round surface-hover border-1 surface-border">
-                <div>
-                    <div class="font-bold text-main">{{h.clases.fecha | date:'EEEE, dd/MM/yyyy' : '' : 'es'}}</div>
-                    <div class="text-xs text-500"><i class="pi pi-map-marker mr-1"></i>{{h.clases.lugar}}</div>
-                </div>
-                <p-tag [severity]="h.presente ? 'success' : 'danger'" 
-                       [icon]="h.presente ? 'pi pi-check' : 'pi pi-times'"
-                       [value]="h.presente ? 'PRESENTE' : 'AUSENTE'"></p-tag>
+            
+            <div *ngIf="historialAlumno.length > 0" class="historial-header">
+                <div class="col-fecha">Fecha</div>
+                <div class="col-lugar">Lugar</div>
+                <div class="col-estado">Estado</div>
             </div>
+
+            <div *ngFor="let h of historialAlumno" class="historial-row">
+                
+                <div class="col-fecha">
+                    {{ h.clases.fecha | date:'dd/MM/yyyy' }}
+                </div>
+                
+                <div class="col-lugar">
+                    <i class="pi pi-map-marker mr-1"></i>
+                    <span class="text-truncate">{{ h.clases.lugar }}</span>
+                </div>
+                
+                <div class="col-estado">
+                    <p-tag [severity]="h.presente ? 'success' : 'danger'" 
+                           [icon]="h.presente ? 'pi pi-check' : 'pi pi-times'"
+                           [value]="h.presente ? 'PRESENTE' : 'AUSENTE'">
+                    </p-tag>
+                </div>
+                
+            </div>
+
             <div *ngIf="historialAlumno.length === 0" class="text-center p-5 border-2 border-dashed border-300">
                 <p class="text-500 m-0">Sin clases registradas en este mes.</p>
             </div>

@@ -197,19 +197,18 @@ export class ProfessorClassesComponent implements OnInit {
   }
 
   // --- FORMULARIO CREAR / EDITAR ---
+  // --- FORMULARIO CREAR / EDITAR ---
   abrirNuevaClase() {
     if (!this.selectedGrupoId) return;
     this.isEditing = false;
     this.vistaFormulario = 'logistica';
     
-    const ahora = new Date();
-    const horaDefault = ('0' + ahora.getHours()).slice(-2) + ':' + ('0' + ahora.getMinutes()).slice(-2);
-
+    // Dejamos los campos vacíos (null) para obligar a llenarlos, igual que en admin
     this.claseForm = {
       grupo_id: this.selectedGrupoId,
-      fecha: new Date(),
-      hora: horaDefault,
-      lugar: 'Cancha Principal',
+      fecha: null, // Antes era new Date()
+      hora: null,  // Antes calculaba la hora actual
+      lugar: '',   // Vacío, con el placeholder del HTML mostrando la sugerencia
       objetivo: '',
       calentamiento: '',
       parte_principal: '',
@@ -236,11 +235,32 @@ export class ProfessorClassesComponent implements OnInit {
   }
 
   async guardarClase() {
+    // 1. VALIDACIONES DE LOGÍSTICA
+    if (!this.selectedGrupoId || !this.claseForm.fecha || !this.claseForm.hora || !this.claseForm.lugar || this.claseForm.lugar.trim() === '') {
+        this.messageService.add({ 
+            severity: 'warn', 
+            summary: 'Faltan datos', 
+            detail: 'Complete todos los campos obligatorios de Logística (*).' 
+        });
+        return;
+    }
+
+    // 2. Validar que la fecha sea correcta
+    const fechaSeleccionada = new Date(this.claseForm.fecha);
+    if (isNaN(fechaSeleccionada.getTime())) {
+        this.messageService.add({ 
+            severity: 'warn', 
+            summary: 'Fecha Inválida', 
+            detail: 'Ingrese una fecha válida para la clase.' 
+        });
+        return;
+    }
+
     this.saving = true;
     this.cdr.detectChanges();
 
     try {
-      const fechaGuardar = this.formatearFecha(this.claseForm.fecha);
+      const fechaGuardar = this.formatearFecha(fechaSeleccionada);
       
       const payload = {
         grupo_id: this.selectedGrupoId,
@@ -259,11 +279,13 @@ export class ProfessorClassesComponent implements OnInit {
           .update(payload)
           .eq('id', this.claseForm.id);
         if (error) throw error;
+        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Clase actualizada correctamente.' });
       } else {
         const { error } = await this.supabaseService.supabase
           .from('clases')
           .insert(payload);
         if (error) throw error;
+        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Clase creada correctamente.' });
       }
 
       this.displayForm = false;
@@ -271,6 +293,7 @@ export class ProfessorClassesComponent implements OnInit {
 
     } catch (error) {
       console.error('Error guardando clase:', error);
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Ocurrió un error al guardar la clase.' });
     } finally {
       this.saving = false;
       this.cdr.detectChanges();
