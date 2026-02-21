@@ -1,0 +1,136 @@
+<div class="attendance-container p-3 fadein animation-duration-500">
+    <p-toast position="top-right"></p-toast>
+
+    <header class="page-header">
+        <div class="header-content">
+            <h1 class="text-2xl font-bold m-0 text-main">Control Global de Asistencia</h1>
+            <p class="text-secondary m-0 mt-1">Supervisión mensual de participación de toda la academia.</p>
+        </div>
+    </header>
+
+    <div class="card selector-card shadow-1 border-round mb-4">
+        <div class="flex flex-wrap gap-3 align-items-end">
+            <div class="field flex-grow-1" style="min-width: 200px;">
+                <label class="font-bold text-sm mb-2 block"><i class="pi pi-users mr-2 text-primary"></i>Seleccionar Grupo</label>
+                <p-select [options]="grupos" [(ngModel)]="grupoSeleccionado" optionLabel="nombre" optionValue="id" 
+                          placeholder="Escoge un grupo" (onChange)="onFilterChange()" styleClass="w-full"></p-select>
+            </div>
+            <div class="field">
+                <label class="font-bold text-sm mb-2 block">Mes</label>
+                <p-select [options]="meses" [(ngModel)]="filtroMes" (onChange)="onFilterChange()" styleClass="w-min"></p-select>
+            </div>
+            <div class="field">
+                <label class="font-bold text-sm mb-2 block">Año</label>
+                <p-select [options]="anios" [(ngModel)]="filtroAnio" (onChange)="onFilterChange()" styleClass="w-min"></p-select>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-2 border-round surface-card p-0 overflow-hidden" *ngIf="!loading && estudiantesAsistencia.length > 0">
+        <p-table [value]="estudiantesAsistencia" [rows]="10" [paginator]="true" styleClass="p-datatable-sm" responsiveLayout="stack">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width: 40%; min-width: 250px;">Estudiante</th>
+                    <th style="width: 20%" class="text-center">Presencias / Total</th>
+                    <th style="width: 20%" class="text-center">Rendimiento</th>
+                    <th style="width: 10%" class="text-center">Historial</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-est>
+                <tr>
+                    <td style="min-width: 250px;">
+                        <div class="estudiante-profile-wrapper">
+                            
+                            <p-avatar 
+                                [image]="est.foto_url" 
+                                [label]="!est.foto_url ? est.nombre.charAt(0) : ''"
+                                shape="circle" 
+                                size="large" 
+                                [style]="{'background-color': '#3b82f6', 'color': '#ffffff', 'border': '2px solid var(--primary-color)', 'min-width': '3.5rem', 'min-height': '3.5rem'}">
+                            </p-avatar>
+
+                            <div class="estudiante-profile-text">
+                                <span class="est-nombre">{{est.nombre}} {{est.apellido}}</span>
+                                <span class="est-rut">
+                                    <i class="pi pi-id-card"></i>
+                                    {{ est.rut || 'Sin RUT registrado' }}
+                                </span>
+                            </div>
+
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <span class="text-sm font-bold text-700">{{est.resumen}}</span>
+                    </td>
+                    <td class="text-center">
+                        <p-tag [value]="est.porcentaje + '%'" [severity]="getSeverity(est.porcentaje)" styleClass="px-3 py-1 text-sm"></p-tag>
+                    </td>
+                    <td class="text-center">
+                        <button pButton icon="pi pi-search-plus" 
+                                class="p-button-rounded p-button-text p-button-info" 
+                                (click)="verHistorialIndividual(est)"
+                                pTooltip="Ver detalle diario"></button>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <div *ngIf="loading" class="text-center p-5">
+        <i class="pi pi-spin pi-spinner text-primary" style="font-size: 3rem"></i>
+        <p class="mt-3 text-500">Calculando estadísticas...</p>
+    </div>
+
+    <div *ngIf="!loading && grupoSeleccionado && estudiantesAsistencia.length === 0" class="text-center p-5 card shadow-1">
+        <i class="pi pi-info-circle text-400 mb-3" style="font-size: 2rem"></i>
+        <p class="text-600 m-0">No se encontraron registros de asistencia para este grupo en el periodo seleccionado.</p>
+    </div>
+
+    <p-dialog [(visible)]="displayHistorial" [header]="'Historial: ' + alumnoSeleccionado?.nombre + ' ' + alumnoSeleccionado?.apellido" 
+              [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" [draggable]="false" [resizable]="false">
+        
+        <div class="flex gap-2 mb-4 bg-gray-100 p-2 border-round">
+            <p-select [options]="meses" [(ngModel)]="filtroMes" (onChange)="cargarDetalleHistorial()" styleClass="flex-grow-1"></p-select>
+            <p-select [options]="anios" [(ngModel)]="filtroAnio" (onChange)="cargarDetalleHistorial()"></p-select>
+        </div>
+
+        <div *ngIf="loadingHistorial" class="text-center p-4"><i class="pi pi-spin pi-spinner text-4xl text-primary"></i></div>
+
+        <div *ngIf="!loadingHistorial" class="historial-scroll-area">
+            
+            <div *ngIf="historialAlumno.length > 0" class="historial-header">
+                <div class="col-fecha">Fecha</div>
+                <div class="col-lugar">Lugar</div>
+                <div class="col-estado">Estado</div>
+            </div>
+
+            <div *ngFor="let h of historialAlumno" class="historial-row">
+                
+                <div class="col-fecha">
+                    {{ h.clases.fecha | date:'dd/MM/yyyy' }}
+                </div>
+                
+                <div class="col-lugar">
+                    <i class="pi pi-map-marker mr-1"></i>
+                    <span class="text-truncate">{{ h.clases.lugar }}</span>
+                </div>
+                
+                <div class="col-estado">
+                    <p-tag [severity]="h.presente ? 'success' : 'danger'" 
+                           [icon]="h.presente ? 'pi pi-check' : 'pi pi-times'"
+                           [value]="h.presente ? 'PRESENTE' : 'AUSENTE'">
+                    </p-tag>
+                </div>
+                
+            </div>
+
+            <div *ngIf="historialAlumno.length === 0" class="text-center p-5 border-2 border-dashed border-300">
+                <p class="text-500 m-0">Sin clases registradas en este mes.</p>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text" (click)="displayHistorial = false"></button>
+        </ng-template>
+    </p-dialog>
+</div>

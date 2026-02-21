@@ -15,6 +15,7 @@ import { AdminKineComponent } from './features/admin/admin-kine/admin-kine';
 import { AdminNutriComponent } from './features/admin/admin-nutri/admin-nutri'; 
 import { AdminPaymentsComponent } from './features/admin/admin-payments/admin-payments';
 import { AdminGuidesManagementComponent } from './features/admin/admin-guides-management/admin-guides-management';
+import { AdminAttendanceComponent } from './features/admin/admin-attendance/admin-attendance';
 
 // --- STUDENT IMPORTS (Portal Alumno) ---
 import { StudentLayoutComponent } from './features/student/student-layout/student-layout';
@@ -69,6 +70,8 @@ export const routes: Routes = [
             { path: 'nutrition', component: AdminNutriComponent },
             { path: 'payments', component: AdminPaymentsComponent },
             { path: 'guides', component: AdminGuidesManagementComponent },
+            { path: 'attendance', component: AdminAttendanceComponent },
+
         ]
     },
 
