@@ -102,6 +102,41 @@ export class SupabaseService {
     };
   }
 
+  async resetPasswordPorRut(rutInput: string) {
+    const tablas = ['admins', 'estudiantes', 'profesores', 'kinesiologos', 'nutricionistas'];
+    
+    for (const tabla of tablas) {
+      // 1. Buscamos el email asociado a ese RUT
+      const { data } = await this.supabase
+        .from(tabla)
+        .select('email, activo')
+        .eq('rut', rutInput.trim())
+        .maybeSingle();
+
+      if (data?.email) {
+        // 2. Verificamos que la cuenta no esté desactivada
+        if (data.activo === false) {
+           return { error: { message: 'Tu cuenta se encuentra desactivada. Contacta al administrador.' } };
+        }
+        
+        // 3. Enviamos el correo de recuperación al email encontrado
+        return await this.supabase.auth.resetPasswordForEmail(data.email, {
+          redirectTo: window.location.origin + '/update-password' 
+        });
+      }
+    }
+    
+    // Si termina el ciclo y no encontró nada:
+    return { error: { message: `El RUT ${rutInput} no está registrado en ProFutbol.` } };
+  }
+
+  // Actualizar la contraseña del usuario (se usa después del reset)
+  async updatePassword(newPassword: string) {
+    return await this.supabase.auth.updateUser({
+      password: newPassword
+    });
+  }
+
   // ==========================================
   // 2. DASHBOARD (DATOS RESUMIDOS)
   // ==========================================

@@ -78,14 +78,18 @@
         
         <div class="flex flex-column gap-3 pt-2">
             <p class="text-secondary text-sm mb-3">
-                Ingresa el <b>correo electrónico</b> vinculado a tu cuenta. Te enviaremos un enlace para crear una contraseña nueva.
+                Ingresa tu <b>RUT</b>. Buscaremos el correo electrónico asociado a tu cuenta y te enviaremos instrucciones para crear una nueva contraseña.
             </p>
             
             <div class="field">
-                <label for="resetEmail" class="font-bold mb-2 block">Correo Electrónico</label>
+                <label for="rutRecuperacion" class="font-bold mb-2 block">RUT del Usuario</label>
                 <div class="p-input-icon-left w-full">
-                    <i class="pi pi-envelope"></i>
-                    <input pInputText id="resetEmail" [(ngModel)]="resetEmail" placeholder="ejemplo@profutbol.cl"/>
+                    <i class="pi pi-id-card"></i>
+                    <input pInputText 
+                           id="rutRecuperacion" 
+                           [(ngModel)]="rutRecuperacion" 
+                           appRutFormat
+                           placeholder="12.345.678-9"/>
                 </div>
             </div>
         </div>

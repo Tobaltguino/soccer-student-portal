@@ -3,6 +3,7 @@ import { authGuard } from './core/guards/auth-guard'; // ✅ IMPORTA EL GUARD AQ
 
 // --- AUTH ---
 import { LoginComponent } from './features/auth/login/login';
+import { UpdatePasswordComponent } from './features/auth/update-password/update-password'; // Ajusta la importación
 
 // --- ADMIN IMPORTS ---
 import { AdminLayoutComponent } from './features/admin/admin-layout/admin-layout';
@@ -51,6 +52,7 @@ import { NutriDashboardComponent } from './features/nutri/nutri-dashboard/nutri-
 export const routes: Routes = [
     { path: '', redirectTo: 'login', pathMatch: 'full' },
     { path: 'login', component: LoginComponent },
+    { path: 'update-password', component: UpdatePasswordComponent },
 
     // ==========================================
     // 1. RUTA ADMIN

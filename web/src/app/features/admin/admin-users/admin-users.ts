@@ -318,10 +318,11 @@ export class AdminUsersComponent implements OnInit {
         const { nombre, apellido, activo } = this.userForm;
         
         // Objeto base usando el rutLimpio
+        // Objeto base usando el rut original del formulario
         const datosBase: any = { 
             nombre, 
             apellido, 
-            rut: rutLimpio, // Guardamos el RUT limpio en la BD
+            rut: this.userForm.rut, // ✅ AHORA SÍ (se guarda con puntos y guion)
             activo,
             foto_url: finalFotoUrl 
         };

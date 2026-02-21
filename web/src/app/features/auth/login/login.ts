@@ -43,7 +43,7 @@ export class LoginComponent {
 
   // Variables para Recuperación de Contraseña
   displayResetDialog = false;
-  resetEmail = '';
+  rutRecuperacion = ''; 
   loadingReset = false;
 
   constructor(
@@ -104,7 +104,7 @@ export class LoginComponent {
           detail: 'Cargando tu perfil, por favor espera...' 
         });
 
-        // ✅ ESTO ES NUEVO: Mapeamos los roles de la BD a los roles de las Rutas
+        // Mapeamos los roles de la BD a los roles de las Rutas
         const mapRoles: any = {
           'admins': 'admin',
           'estudiantes': 'student',
@@ -113,9 +113,9 @@ export class LoginComponent {
           'nutricionistas': 'nutri'
         };
 
-        const rolEstandarizado = mapRoles[role] || 'student'; // 'student' por defecto por seguridad
+        const rolEstandarizado = mapRoles[role] || 'student';
 
-        // ✅ ESTO ES CLAVE PARA EL GUARD: Guardamos el rol en el navegador
+        // Guardamos el rol en el navegador
         localStorage.setItem('userRole', rolEstandarizado);
 
         // Armamos la ruta destino basándonos en el rol estandarizado
@@ -144,20 +144,28 @@ export class LoginComponent {
   // --- Métodos de Recuperación de Contraseña ---
 
   abrirDialogoRecuperacion() {
-    this.resetEmail = ''; 
+    this.rutRecuperacion = ''; 
     this.displayResetDialog = true;
   }
 
   async enviarCorreoRecuperacion() {
-    if (!this.resetEmail) {
-      this.messageService.add({ severity: 'warn', summary: 'Falta Email', detail: 'Ingresa tu correo para continuar.' });
+    // 1. Validar que no esté vacío
+    if (!this.rutRecuperacion) {
+      this.messageService.add({ severity: 'warn', summary: 'Falta RUT', detail: 'Ingresa tu RUT para continuar.' });
+      return;
+    }
+
+    // 2. Validar que el RUT sea real usando tu validador
+    if (!RutValidator.esValido(this.rutRecuperacion)) {
+      this.messageService.add({ severity: 'error', summary: 'RUT Incorrecto', detail: 'El formato del RUT no es válido.' });
       return;
     }
 
     this.loadingReset = true;
 
     try {
-      const { error } = await this.supabaseService.resetPassword(this.resetEmail);
+      // 3. Llamar a la nueva función del servicio que busca por RUT
+      const { error } = await this.supabaseService.resetPasswordPorRut(this.rutRecuperacion);
 
       if (error) {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: error.message });
@@ -166,11 +174,11 @@ export class LoginComponent {
         this.messageService.add({ 
             severity: 'success', 
             summary: 'Correo Enviado', 
-            detail: 'Revisa tu bandeja de entrada para restablecer tu contraseña.' 
+            detail: 'Hemos enviado un enlace de recuperación al correo asociado a este RUT.' 
         });
       }
     } catch (e) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error de conexión.' });
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error de conexión con el servidor.' });
     } finally {
       this.loadingReset = false;
     }
