@@ -7,6 +7,7 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Manejo de CORS para llamadas desde Angular
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -18,11 +19,11 @@ serve(async (req) => {
 
     const { email, password, datosPersonales, tabla, role } = await req.json()
 
-    // Creamos la cuenta en Auth como Administradores
+    // 1. Crear el usuario en el sistema de autenticación
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: email,
       password: password,
-      email_confirm: true,
+      email_confirm: false, // Se deja en false para permitir la verificación posterior
       user_metadata: {
         role: role,
         nombre: datosPersonales.nombre,
@@ -36,6 +37,16 @@ serve(async (req) => {
 
     const userId = authData.user.id
 
+    // 2. FORZAR EL ENVÍO DEL CORREO (Método de Invitación)
+    // Esto disparará el correo usando la plantilla "Invite User" de tu panel
+    const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email)
+    
+    if (inviteError) {
+      console.error("Error al enviar invitación:", inviteError.message)
+      // No lanzamos error aquí para que al menos el usuario quede creado en la DB
+    }
+
+    // Limpieza de datos específicos de estudiantes para otras tablas
     if (tabla !== 'estudiantes') {
       delete datosPersonales.fecha_nacimiento;
       delete datosPersonales.grupo_id;
@@ -46,7 +57,7 @@ serve(async (req) => {
       ...datosPersonales
     }
 
-    // Upsert en la tabla correspondiente
+    // 3. Guardar información adicional en la tabla correspondiente (estudiantes, profesores, etc.)
     const { data: dbData, error: dbError } = await supabase
       .from(tabla)
       .upsert(datosParaGuardar)

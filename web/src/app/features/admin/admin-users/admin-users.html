@@ -139,9 +139,22 @@
                     <td class="text-center"><p-tag [severity]="item.activo ? 'success' : 'danger'" [value]="item.activo ? 'ACTIVO' : 'INACTIVO'" [rounded]="true"></p-tag></td>
                     <td class="text-center">
                         <div class="action-buttons">
-                            <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning" (click)="abrirEditar(item)"></button>
-                            <button pButton [icon]="item.activo ? 'pi pi-lock-open' : 'pi pi-lock'" [class]="item.activo ? 'p-button-text p-button-success' : 'p-button-text p-button-danger'" (click)="toggleEstado(item)"></button>
-                            <button pButton icon="pi pi-trash" class="p-button-text p-button-danger" (click)="eliminar(item)"></button>
+                            <ng-container *ngIf="item.rut !== '1-1'">
+                                <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning" 
+                                        (click)="abrirEditar(item)" pTooltip="Editar"></button>
+                                <button pButton [icon]="item.activo ? 'pi pi-lock-open' : 'pi pi-lock'" 
+                                        [class]="item.activo ? 'p-button-text p-button-success' : 'p-button-text p-button-danger'" 
+                                        (click)="toggleEstado(item)" pTooltip="Cambiar Estado"></button>
+                                <button pButton icon="pi pi-trash" class="p-button-text p-button-danger" 
+                                        (click)="eliminar(item)" pTooltip="Eliminar"></button>
+                            </ng-container>
+
+                            <p-tag *ngIf="item.rut === '1-1'" 
+                                icon="pi pi-shield" 
+                                severity="info" 
+                                value="SISTEMA" 
+                                pTooltip="Cuenta raíz protegida">
+                            </p-tag>
                         </div>
                     </td>
                 </tr>

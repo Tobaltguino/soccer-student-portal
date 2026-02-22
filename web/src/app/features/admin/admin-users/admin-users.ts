@@ -210,6 +210,15 @@ export class AdminUsersComponent implements OnInit {
   }
 
   abrirEditar(usuario: any) {
+    if (usuario.rut === '1-1') {
+        this.messageService.add({ 
+            severity: 'info', 
+            summary: 'Cuenta Protegida', 
+            detail: 'Los datos del administrador maestro solo pueden ser modificados desde la base de datos por seguridad.' 
+        });
+        return;
+    }
+
     this.isEditing = true;
     this.tituloDialogo = 'Editar Usuario';
     this.limpiarForm();
@@ -260,6 +269,10 @@ export class AdminUsersComponent implements OnInit {
   }
 
   async guardar() {
+    if (this.isEditing && this.userForm.rut === '1-1') {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Acción no permitida para esta cuenta.' });
+        return;
+    }
     // 1. VALIDACIONES BÁSICAS (Campos comunes)
     if (!this.userForm.nombre || !this.userForm.apellido || !this.userForm.email || !this.userForm.rut) {
         this.messageService.add({ severity: 'warn', summary: 'Campos Incompletos', detail: 'Por favor completa todos los campos marcados con *.' });
@@ -398,6 +411,10 @@ export class AdminUsersComponent implements OnInit {
   // --- ACCIONES DE ESTADO Y ELIMINAR ---
 
   async toggleEstado(usuario: any) {
+    if (usuario.rut === '1-1') {
+      this.messageService.add({ severity: 'error', summary: 'Acceso Denegado', detail: 'No se puede desactivar al administrador maestro.' });
+      return;
+    }
     const accion = usuario.activo ? 'desactivar' : 'activar';
     this.confirmationService.confirm({
       message: `¿Estás seguro de que deseas ${accion} la cuenta de ${usuario.nombre} ${usuario.apellido}?`,
@@ -440,6 +457,10 @@ export class AdminUsersComponent implements OnInit {
   }
 
   async eliminar(usuario: any) {
+    if (usuario.rut === '1-1') {
+      this.messageService.add({ severity: 'error', summary: 'Acceso Denegado', detail: 'El administrador maestro no puede ser eliminado.' });
+      return;
+    }
     this.confirmationService.confirm({
       message: `¿Eliminar permanentemente a ${usuario.nombre} ${usuario.apellido}?`,
       header: 'Confirmar Eliminación',
