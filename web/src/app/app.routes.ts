@@ -1,9 +1,12 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth-guard'; // ✅ IMPORTA EL GUARD AQUÍ
+import { authGuard } from './core/guards/auth-guard';
+
+// --- HOME ---
+import { HomeComponent } from './features/home/home/home';
 
 // --- AUTH ---
 import { LoginComponent } from './features/auth/login/login';
-import { UpdatePasswordComponent } from './features/auth/update-password/update-password'; // Ajusta la importación
+import { UpdatePasswordComponent } from './features/auth/update-password/update-password';
 
 // --- ADMIN IMPORTS ---
 import { AdminLayoutComponent } from './features/admin/admin-layout/admin-layout';
@@ -50,18 +53,25 @@ import { NutriLayoutComponent } from './features/nutri/nutri-layout/nutri-layout
 import { NutriDashboardComponent } from './features/nutri/nutri-dashboard/nutri-dashboard';
 
 export const routes: Routes = [
-    { path: '', redirectTo: 'login', pathMatch: 'full' },
+    // ==========================================
+    // 0. RUTA HOME (Landing Page)
+    // ==========================================
+    { path: '', component: HomeComponent, pathMatch: 'full' }, // ✅ Ahora el inicio carga el Home directamente
+
+    // ==========================================
+    // 1. RUTAS AUTH (Login y Recuperación)
+    // ==========================================
     { path: 'login', component: LoginComponent },
     { path: 'update-password', component: UpdatePasswordComponent },
 
     // ==========================================
-    // 1. RUTA ADMIN
+    // 2. RUTA ADMIN
     // ==========================================
     {
         path: 'admin',
         component: AdminLayoutComponent,
-        canActivate: [authGuard], // ✅ Aplica el Guard
-        data: { roles: ['admin'] }, // ✅ Define quién entra
+        canActivate: [authGuard],
+        data: { roles: ['admin'] }, 
         children: [
             { path: 'dashboard', component: AdminDashboardComponent },
             { path: 'users', component: AdminUsersComponent },
@@ -73,18 +83,17 @@ export const routes: Routes = [
             { path: 'payments', component: AdminPaymentsComponent },
             { path: 'guides', component: AdminGuidesManagementComponent },
             { path: 'attendance', component: AdminAttendanceComponent },
-
         ]
     },
 
     // ==========================================
-    // 2. RUTA ESTUDIANTE
+    // 3. RUTA ESTUDIANTE
     // ==========================================
     {
         path: 'student',
         component: StudentLayoutComponent,
         canActivate: [authGuard], 
-        data: { roles: ['student', 'estudiante'] }, // ✅ Permite variables por si acaso
+        data: { roles: ['student', 'estudiante'] },
         children: [
             { path: 'dashboard', component: StudentDashboardComponent },
             { path: 'schedule', component: StudentScheduleComponent },
@@ -99,7 +108,7 @@ export const routes: Routes = [
     },
 
     // ==========================================
-    // 3. RUTA PROFESOR
+    // 4. RUTA PROFESOR
     // ==========================================
     {
         path: 'professor',
@@ -119,7 +128,7 @@ export const routes: Routes = [
     },
 
     // ==========================================
-    // 4. RUTA KINESIÓLOGO
+    // 5. RUTA KINESIÓLOGO
     // ==========================================
     {
         path: 'kine',
@@ -132,7 +141,7 @@ export const routes: Routes = [
     },
 
     // ==========================================
-    // 5. RUTA NUTRICIONISTA
+    // 6. RUTA NUTRICIONISTA
     // ==========================================
     {
         path: 'nutri',
@@ -144,6 +153,8 @@ export const routes: Routes = [
         ]
     },
 
+    // ==========================================
     // Ruta comodín (404)
-    { path: '**', redirectTo: 'login' }
+    // ==========================================
+    { path: '**', redirectTo: '' } // ✅ Si alguien escribe una ruta mala, lo devolvemos al Home
 ];
