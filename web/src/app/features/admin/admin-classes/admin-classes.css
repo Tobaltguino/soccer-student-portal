@@ -16,16 +16,58 @@
 .header-content p { margin: 0.25rem 0 0; color: var(--text-secondary); font-size: 0.9rem; }
 .btn-create { white-space: nowrap; }
 
-/* --- FILTROS --- */
-.card {
-    background: var(--bg-card); padding: 1rem; border-radius: 12px;
-    border: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+/* =========================================
+   BARRA DE FILTROS (HORIZONTAL Y RESPONSIVA)
+   ========================================= */
+.filter-bar {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    margin-bottom: 1.5rem;
 }
-.filters-row { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
-.filter-item { flex: 1; min-width: 200px; }
-.button-item { flex: 0 0 auto; }
 
-/* --- ESTILOS DEL FORMULARIO --- */
+.filter-row {
+    display: flex;
+    align-items: flex-end; /* Alinea los inputs en la base con el botón */
+    gap: 1rem;
+    width: 100%;
+}
+
+.filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-item label {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0; 
+}
+
+.filter-item-btn {
+    flex: none;
+    padding-bottom: 1px; /* Ajuste óptico para alinear el botón con los inputs */
+}
+
+.flex-grow-1 {
+    flex: 1;
+    min-width: 150px;
+}
+
+/* Forzar ancho completo de los componentes de PrimeNG dentro de la barra */
+:host ::ng-deep .filter-bar .p-select,
+:host ::ng-deep .filter-bar .p-datepicker,
+:host ::ng-deep .filter-bar .p-inputtext {
+    width: 100%;
+}
+
+/* --- ESTILOS DEL FORMULARIO (MODAL) --- */
 .field {
     display: flex !important;
     flex-direction: column !important;
@@ -144,8 +186,11 @@
     :host { padding: 0.5rem; }
     .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
     .header-content, .btn-create { width: 100%; justify-content: center; }
-    .filters-row { flex-direction: column; align-items: stretch; gap: 0.5rem; }
-    .filter-item, .button-item { width: 100%; min-width: 0; }
+    
+    /* Filtros apilados en móvil */
+    .filter-row { flex-direction: column; align-items: stretch; gap: 1rem; }
+    .filter-item, .filter-item-btn { width: 100%; min-width: 100%; flex: none; }
+    
     .hidden-mobile { display: none !important; }
     .visible-mobile { display: block !important; }
     :host ::ng-deep .p-datatable .p-datatable-tbody > tr > td { padding: 0.8rem 0.5rem; font-size: 0.9rem; }

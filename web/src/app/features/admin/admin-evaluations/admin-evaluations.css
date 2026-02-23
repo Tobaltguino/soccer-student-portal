@@ -1,5 +1,5 @@
 /* =========================================
-   1. CONFIGURACIÓN BASE
+   1. CONFIGURACIÓN BASE Y LAYOUT
    ========================================= */
 :host {
     display: block;
@@ -43,7 +43,7 @@
 }
 
 /* =========================================
-   3. BARRA DE FILTROS HORIZONTAL
+   3. BARRA DE FILTROS ESTANDARIZADA
    ========================================= */
 .filter-bar {
     background: var(--bg-card);
@@ -54,52 +54,111 @@
     margin-bottom: 1.5rem;
 }
 
-.horizontal-filters {
+.filter-row {
     display: flex;
-    flex-direction: row; 
-    align-items: center;
-    gap: 10px;
+    align-items: flex-end; /* Alinea los inputs en la base con el botón */
+    gap: 1rem;
     width: 100%;
 }
 
 .filter-item {
-    flex: 1; 
-    min-width: 0; 
-}
-
-:host ::ng-deep .horizontal-filters .p-datepicker,
-:host ::ng-deep .horizontal-filters .p-select,
-:host ::ng-deep .horizontal-filters .p-dropdown,
-:host ::ng-deep .horizontal-filters .p-inputtext {
-    width: 100% !important;
-}
-
-:host ::ng-deep .horizontal-filters .p-inputtext,
-:host ::ng-deep .horizontal-filters .p-select,
-:host ::ng-deep .horizontal-filters .p-dropdown {
-    height: 42px;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
-.filter-btn button {
-    height: 42px;
-    width: 42px;
+.filter-item label {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0; 
+}
+
+.filter-item-btn {
+    flex: none;
+    padding-bottom: 1px; /* Ajuste óptico para alinear el botón */
+}
+
+.flex-grow-1 {
+    flex: 1;
+    min-width: 150px;
+}
+
+.w-10rem {
+    width: 10rem;
+    min-width: 120px;
+    flex: none; /* Evita que el selector de Estado se expanda demasiado */
+}
+
+/* Forzar ancho completo de los componentes de PrimeNG dentro de la barra */
+:host ::ng-deep .filter-bar .p-select,
+:host ::ng-deep .filter-bar .p-datepicker,
+:host ::ng-deep .filter-bar .p-inputtext,
+:host ::ng-deep .filter-bar .p-dropdown {
+    width: 100%;
 }
 
 /* =========================================
-   4. TABLAS Y CONTENEDORES
+   4. TABLAS Y CENTRADO ABSOLUTO
    ========================================= */
-.card-table {
+.card-table, .surface-card {
     background-color: var(--bg-card); 
-    padding: 0.5rem; 
     border-radius: 16px;
     border: 1px solid var(--border-color); 
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
-.hidden-mobile { 
-    display: table-cell; 
+.hidden-mobile { display: table-cell; }
+
+/* Limpiar encabezados */
+:host ::ng-deep .p-datatable .p-datatable-header {
+    background: transparent; 
+    border: none; 
+}
+
+/* Estilo de los encabezados (TH) */
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+    background: var(--bg-main) !important;
+    color: var(--text-secondary) !important;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    text-align: center !important; /* Centrado forzado */
+}
+
+/* Centrar contenido de encabezados (incluye flechas de ordenamiento) */
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th .p-column-header-content {
+    display: flex;
+    justify-content: center !important;
+    align-items: center;
+    width: 100%;
+}
+
+/* Estilo de las celdas (TD) */
+:host ::ng-deep .p-datatable-tbody > tr > td { 
+    vertical-align: middle; 
+    padding: 1rem !important; 
+    border-bottom: 1px solid var(--bg-main);
+    text-align: center !important; /* Centrado forzado */
+}
+
+/* Centrar los p-tag dentro de la celda */
+:host ::ng-deep .p-datatable-tbody > tr > td p-tag {
+    display: inline-flex !important;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+}
+
+/* Asegurar que textos y spans se centren */
+:host ::ng-deep .p-datatable-tbody > tr > td > span {
+    display: block;
+    text-align: center;
+    margin: 0 auto;
 }
 
 /* =========================================
@@ -120,8 +179,16 @@
     margin: 0 !important;
 }
 
+:host ::ng-deep .field input, 
+:host ::ng-deep .field textarea,
+:host ::ng-deep .field p-select,
+:host ::ng-deep .field p-datepicker {
+    width: 100% !important;
+    display: flex;
+}
+
 /* =========================================
-   6. FILA DE RANGOS INLINE (CONFIG TEST) - MEJORADA
+   6. FILA DE RANGOS INLINE (CONFIG TEST)
    ========================================= */
 .range-inline-row {
     display: flex !important;
@@ -142,8 +209,6 @@
 .range-inline-row .field-edad { flex: 0 0 60px; }
 .range-inline-row .field-etiqueta { flex: 1; min-width: 90px; }
 .range-inline-row .field-minmax { flex: 0 0 65px; }
-.range-inline-row .field-color { flex: 0 0 130px; }
-/* ✅ Aumentamos el ancho para que quepa el texto ("Verde") en el Dropdown */
 .range-inline-row .field-color { flex: 0 0 130px; }
 
 .range-inline-row .btn-fixed {
@@ -188,6 +253,7 @@
     border: 1px solid rgba(0,0,0,0.1);
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     display: inline-block;
+    margin: 0 auto;
 }
 
 /* =========================================
@@ -208,18 +274,19 @@
    8. RESPONSIVE (MÓVIL)
    ========================================= */
 @media (max-width: 768px) {
-    .horizontal-filters {
+    /* --- FILTROS APILADOS --- */
+    .filter-row {
         flex-direction: column !important;
         align-items: stretch !important;
+        gap: 1rem;
     }
     
-    .filter-item, .filter-btn {
+    .filter-item, 
+    .filter-item-btn,
+    .w-10rem {
         width: 100% !important;
-        margin-bottom: 0.5rem;
-    }
-    
-    .filter-btn button {
-        width: 100% !important;
+        min-width: 100% !important;
+        flex: none;
     }
 
     /* En móvil, la fila de rangos se apila verticalmente */
@@ -245,4 +312,21 @@
     .pl-4 { padding-left: 0 !important; }
     
     .hidden-mobile { display: none !important; }
+    
+    /* Ajustes tabla móvil */
+    :host ::ng-deep .p-datatable-tbody > tr > td { 
+        padding: 0.8rem 0.5rem !important; 
+        font-size: 0.9rem; 
+    }
+
+    /* --- FIX: FORZAR BOTONES DE ACCIÓN EN UNA SOLA FILA --- */
+.action-buttons {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    flex-wrap: nowrap !important; /* Evita que bajen a la siguiente línea */
+    width: max-content; /* Fuerza al contenedor a medir lo que miden los botones */
+    margin: 0 auto; /* Lo mantiene centrado */
+}
 }

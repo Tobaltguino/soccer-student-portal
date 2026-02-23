@@ -1,3 +1,6 @@
+/* =========================================
+   1. CONFIGURACIÓN BASE Y LAYOUT
+   ========================================= */
 :host { 
     display: block; 
     padding: 1rem; 
@@ -18,23 +21,108 @@
     padding: 1.5rem; 
 }
 
-/* --- ESTILOS DE LA TABLA PRINCIPAL --- */
+/* =========================================
+   2. BARRA DE FILTROS (HORIZONTAL)
+   ========================================= */
+.filter-bar {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+}
+
+.filter-row {
+    display: flex;
+    align-items: flex-end; 
+    gap: 1rem;
+    width: 100%;
+}
+
+.filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-item label {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0; 
+}
+
+.flex-grow-1 {
+    flex: 1;
+    min-width: 150px; 
+}
+
+/* Forzar ancho completo de los selectores de PrimeNG */
+:host ::ng-deep .filter-bar .p-select {
+    width: 100%;
+}
+
+/* =========================================
+   3. TABLA PRINCIPAL Y CENTRADO ABSOLUTO
+   ========================================= */
+
+/* Limpiar encabezados */
+:host ::ng-deep .p-datatable .p-datatable-header {
+    background: transparent; 
+    border: none; 
+}
+
+/* Estilo de los encabezados (TH) */
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+    background: var(--bg-main) !important;
+    color: var(--text-secondary) !important;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Centrar contenido de encabezados que tengan la clase .text-center */
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th.text-center .p-column-header-content {
+    display: flex;
+    justify-content: center !important;
+    align-items: center;
+    width: 100%;
+}
+
+/* Estilo de las celdas (TD) */
 :host ::ng-deep .p-datatable-tbody > tr > td { 
     vertical-align: middle; 
     padding: 1rem !important; 
     white-space: nowrap; 
+    border-bottom: 1px solid var(--bg-main);
+}
+
+/* Centrar celdas específicas */
+:host ::ng-deep .p-datatable-tbody > tr > td.text-center {
+    text-align: center !important;
+}
+
+/* Centrar los p-tag (Rendimiento) dentro de la celda */
+:host ::ng-deep .p-datatable-tbody > tr > td.text-center p-tag {
+    display: inline-flex !important;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
 }
 
 /* =========================================================
-   FIX DEFINITIVO: PERFIL DEL ESTUDIANTE EN LA TABLA
+   4. PERFIL DEL ESTUDIANTE EN LA TABLA
    ========================================================= */
-
 .estudiante-profile-wrapper {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     align-items: center !important;
-    justify-content: flex-start !important;
+    justify-content: flex-start !important; /* Mantenemos el nombre alineado a la izquierda */
     gap: 15px !important;
     width: 100% !important;
 }
@@ -72,9 +160,8 @@
 }
 
 /* =========================================================
-   ESTRUCTURA DEL HISTORIAL (MODAL)
+   5. ESTRUCTURA DEL HISTORIAL (MODAL)
    ========================================================= */
-
 .historial-scroll-area { 
     max-height: 350px; 
     overflow-y: auto; 
@@ -126,10 +213,81 @@
     border: 1px solid var(--border-color) !important;
 }
 
-/* --- RESPONSIVE --- */
+/* =========================================================
+   6. RESPONSIVE (MÓVIL)
+   ========================================================= */
+.hidden-desktop { display: none; }
+
 @media (max-width: 768px) {
+    
+    /* --- FILTROS APILADOS --- */
+    .filter-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    .filter-item {
+        width: 100%;
+        min-width: 100%;
+        flex: none;
+    }
+
+    /* --- HISTORIAL MODAL --- */
     .historial-scroll-area {
         max-height: 60vh; 
+    }
+
+    /* --- TABLA A TARJETAS MÓVILES --- */
+    .hidden-desktop { display: inline-block; }
+    
+    /* Ocultar encabezados de la tabla original */
+    :host ::ng-deep .p-datatable-thead { display: none !important; }
+
+    /* Convertir las filas (TR) en Tarjetas */
+    :host ::ng-deep .p-datatable-tbody > tr {
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        padding: 1.25rem 1rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    /* Ajustar cada fila interna de la tarjeta (TD) */
+    :host ::ng-deep .p-datatable-tbody > tr > td {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important; /* Etiqueta a la izq, valor a la der */
+        width: 100% !important;
+        padding: 0.75rem 0 !important;
+        border: none !important;
+        border-bottom: 1px solid var(--border-color) !important;
+        text-align: right !important;
+        white-space: normal;
+    }
+
+    /* Ajuste para el Perfil (primera fila de la tarjeta) */
+    :host ::ng-deep .p-datatable-tbody > tr > td:first-child {
+        justify-content: flex-start !important;
+        padding-bottom: 1.25rem !important;
+    }
+
+    /* Ajuste para el Botón (última fila de la tarjeta) */
+    :host ::ng-deep .p-datatable-tbody > tr > td:last-child {
+        border-bottom: none !important;
+        padding-top: 1.25rem !important;
+        justify-content: center !important;
+    }
+
+    /* Hacemos que el botón ocupe todo el ancho en celular */
+    .btn-historial {
+        width: 100%;
+        background-color: rgba(59, 130, 246, 0.1) !important; 
+        border-radius: 8px !important;
+        padding: 0.75rem !important;
+        justify-content: center;
     }
 }
 

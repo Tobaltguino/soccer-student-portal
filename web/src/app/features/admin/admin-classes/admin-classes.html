@@ -10,24 +10,34 @@
         <button pButton label="Nueva Clase" icon="pi pi-plus" class="btn-create" (click)="abrirNuevo()"></button>
     </header>
 
-    <div class="filters-container card mb-4">
-        <div class="filters-row">
+    <div class="filter-bar card mb-4 p-3 surface-card border-round shadow-1">
+        <div class="filter-row">
             
-            <div class="filter-item">
-                <p-datepicker [(ngModel)]="filtroFecha" placeholder="Filtrar por Fecha" (onSelect)="aplicarFiltros()" [showClear]="true" (onClear)="aplicarFiltros()" dateFormat="dd/mm/yy" [style]="{'width':'100%'}"></p-datepicker>
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-calendar mr-1"></i> Fecha</label>
+                <p-datepicker [(ngModel)]="filtroFecha" placeholder="Seleccionar Fecha" 
+                              (onSelect)="aplicarFiltros()" [showClear]="true" (onClear)="aplicarFiltros()" 
+                              dateFormat="dd/mm/yy" styleClass="w-full"></p-datepicker>
             </div>
 
-            <div class="filter-item">
-                <p-select [options]="grupos" [(ngModel)]="filtroGrupoId" optionLabel="nombre" optionValue="id" placeholder="Filtrar por Grupo" (onChange)="aplicarFiltros()" [showClear]="true" appendTo="body" [style]="{'width':'100%'}"></p-select>
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-users mr-1"></i> Grupo</label>
+                <p-select [options]="grupos" [(ngModel)]="filtroGrupoId" optionLabel="nombre" optionValue="id" 
+                          placeholder="Todos los grupos" (onChange)="aplicarFiltros()" [showClear]="true" 
+                          appendTo="body" styleClass="w-full"></p-select>
             </div>
 
-            <div class="filter-item">
-                    <input pInputText type="text" [(ngModel)]="filtroLugar" (input)="aplicarFiltros()" placeholder="Buscar Lugar..." class="w-full"/>
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-map-marker mr-1"></i> Lugar</label>
+                <input pInputText type="text" [(ngModel)]="filtroLugar" (input)="aplicarFiltros()" 
+                       placeholder="Buscar Lugar..." class="w-full"/>
             </div>
 
-            <div class="filter-item button-item">
-                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary w-full" (click)="limpiarFiltros()" pTooltip="Limpiar Filtros"></button>
+            <div class="filter-item-btn">
+                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary w-full" 
+                        (click)="limpiarFiltros()" pTooltip="Limpiar"></button>
             </div>
+
         </div>
     </div>
 

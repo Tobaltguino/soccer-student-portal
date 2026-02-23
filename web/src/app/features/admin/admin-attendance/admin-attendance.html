@@ -8,21 +8,25 @@
         </div>
     </header>
 
-    <div class="card selector-card shadow-1 border-round mb-4">
-        <div class="flex flex-wrap gap-3 align-items-end">
-            <div class="field flex-grow-1" style="min-width: 200px;">
-                <label class="font-bold text-sm mb-2 block"><i class="pi pi-users mr-2 text-primary"></i>Seleccionar Grupo</label>
+    <div class="filter-bar card mb-4 p-3 surface-card border-round shadow-1">
+        <div class="filter-row">
+            
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-users mr-1"></i> Grupo</label>
                 <p-select [options]="grupos" [(ngModel)]="grupoSeleccionado" optionLabel="nombre" optionValue="id" 
                           placeholder="Escoge un grupo" (onChange)="onFilterChange()" styleClass="w-full"></p-select>
             </div>
-            <div class="field">
-                <label class="font-bold text-sm mb-2 block">Mes</label>
-                <p-select [options]="meses" [(ngModel)]="filtroMes" (onChange)="onFilterChange()" styleClass="w-min"></p-select>
+
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-calendar mr-1"></i> Mes</label>
+                <p-select [options]="meses" [(ngModel)]="filtroMes" (onChange)="onFilterChange()" styleClass="w-full"></p-select>
             </div>
-            <div class="field">
-                <label class="font-bold text-sm mb-2 block">Año</label>
-                <p-select [options]="anios" [(ngModel)]="filtroAnio" (onChange)="onFilterChange()" styleClass="w-min"></p-select>
+
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-calendar-plus mr-1"></i> Año</label>
+                <p-select [options]="anios" [(ngModel)]="filtroAnio" (onChange)="onFilterChange()" styleClass="w-full"></p-select>
             </div>
+
         </div>
     </div>
 
@@ -40,7 +44,6 @@
                 <tr>
                     <td style="min-width: 250px;">
                         <div class="estudiante-profile-wrapper">
-                            
                             <p-avatar 
                                 [image]="est.foto_url" 
                                 [label]="!est.foto_url ? est.nombre.charAt(0) : ''"
@@ -48,7 +51,6 @@
                                 size="large" 
                                 [style]="{'background-color': '#3b82f6', 'color': '#ffffff', 'border': '2px solid var(--primary-color)', 'min-width': '3.5rem', 'min-height': '3.5rem'}">
                             </p-avatar>
-
                             <div class="estudiante-profile-text">
                                 <span class="est-nombre">{{est.nombre}} {{est.apellido}}</span>
                                 <span class="est-rut">
@@ -56,20 +58,23 @@
                                     {{ est.rut || 'Sin RUT registrado' }}
                                 </span>
                             </div>
-
                         </div>
                     </td>
                     <td class="text-center">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Presencias:</span>
                         <span class="text-sm font-bold text-700">{{est.resumen}}</span>
                     </td>
                     <td class="text-center">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Rendimiento:</span>
                         <p-tag [value]="est.porcentaje + '%'" [severity]="getSeverity(est.porcentaje)" styleClass="px-3 py-1 text-sm"></p-tag>
                     </td>
                     <td class="text-center">
                         <button pButton icon="pi pi-search-plus" 
-                                class="p-button-rounded p-button-text p-button-info" 
+                                class="p-button-rounded p-button-text p-button-info btn-historial" 
                                 (click)="verHistorialIndividual(est)"
-                                pTooltip="Ver detalle diario"></button>
+                                pTooltip="Ver detalle diario">
+                            <span class="hidden-desktop ml-2 font-bold">Ver Historial</span>
+                        </button>
                     </td>
                 </tr>
             </ng-template>

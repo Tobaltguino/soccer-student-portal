@@ -13,45 +13,45 @@
         </div>
     </header>
 
-    <div class="filter-bar card mb-3 p-3 surface-card border-round shadow-1">
-        <div class="horizontal-filters">
+    <div class="filter-bar card mb-4 p-3 surface-card border-round shadow-1">
+        <div class="filter-row">
             
-            <div class="filter-item">
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-calendar mr-1"></i> Fecha</label>
                 <p-datepicker [(ngModel)]="filtroFecha" dateFormat="dd/mm/yy" [showIcon]="false" 
-                              placeholder="Filtrar por Fecha" 
-                              (onSelect)="aplicarFiltros()" [showClear]="true" (onClear)="aplicarFiltros()" 
-                              styleClass="w-full"></p-datepicker>
+                              placeholder="Filtrar por Fecha" (onSelect)="aplicarFiltros()" 
+                              [showClear]="true" (onClear)="aplicarFiltros()" styleClass="w-full"></p-datepicker>
             </div>
 
-            <div class="filter-item">
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-users mr-1"></i> Grupo</label>
                 <p-select [options]="grupos" [(ngModel)]="filtroGrupo" optionLabel="nombre" 
-                          placeholder="Filtrar por Grupo" 
-                          (onChange)="aplicarFiltros()" [showClear]="true" 
-                          styleClass="w-full"></p-select>
+                          placeholder="Todos los grupos" (onChange)="aplicarFiltros()" 
+                          [showClear]="true" styleClass="w-full"></p-select>
             </div>
 
-            <div class="filter-item">
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-clipboard mr-1"></i> Prueba</label>
                 <p-select [options]="tiposEvaluacion" [(ngModel)]="filtroPrueba" optionLabel="nombre" 
-                          placeholder="Filtrar por Prueba" 
-                          (onChange)="aplicarFiltros()" [showClear]="true" 
-                          styleClass="w-full"></p-select>
+                          placeholder="Todas las pruebas" (onChange)="aplicarFiltros()" 
+                          [showClear]="true" styleClass="w-full"></p-select>
             </div>
 
-            <div class="filter-item">
+            <div class="filter-item w-10rem">
+                <label><i class="pi pi-flag mr-1"></i> Estado</label>
                 <p-select [options]="opcionesEstadoFiltro" [(ngModel)]="filtroEstado" optionLabel="label" optionValue="value" 
-                          placeholder="Filtrar por Estado" 
-                          (onChange)="aplicarFiltros()" [showClear]="true" 
-                          styleClass="w-full">
+                          placeholder="Todos" (onChange)="aplicarFiltros()" [showClear]="true" styleClass="w-full">
                     <ng-template let-option pTemplate="item">
                         <p-tag [value]="option.label" [severity]="option.value === 'PENDIENTE' ? 'warn' : 'success'"></p-tag>
                     </ng-template>
                 </p-select>
             </div>
 
-            <div class="filter-btn">
-                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary" 
-                        (click)="limpiarFiltros()" pTooltip="Limpiar Filtros"></button>
+            <div class="filter-item-btn">
+                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary w-full" 
+                        (click)="limpiarFiltros()" pTooltip="Limpiar"></button>
             </div>
+            
         </div>
     </div>
 
@@ -75,7 +75,7 @@
                         <p-tag [value]="sesion.estado" [severity]="sesion.estado === 'PENDIENTE' ? 'warn' : 'success'"></p-tag>
                     </td>
                     <td class="text-center">
-                        <div class="flex justify-content-center gap-2">
+                        <div class="action-buttons">
                             <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-secondary p-button-sm" (click)="editarSesion(sesion)" pTooltip="Editar Logística"></button>
                             <button pButton icon="pi pi-user-edit" class="p-button-rounded p-button-success p-button-sm" (click)="abrirCalificador(sesion)" pTooltip="Calificar Alumnos"></button>
                             <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger p-button-sm" (click)="eliminarSesion(sesion.id)" pTooltip="Eliminar"></button>
