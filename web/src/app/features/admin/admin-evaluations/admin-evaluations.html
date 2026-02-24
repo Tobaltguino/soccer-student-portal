@@ -55,8 +55,8 @@
         </div>
     </div>
 
-    <div class="card shadow-2 border-round surface-card p-3">
-        <p-table [value]="sesiones" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="scroll">
+    <div class="card shadow-2 border-round surface-card p-3 card-table">
+        <p-table [value]="sesiones" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="stack">
             <ng-template pTemplate="header">
                 <tr>
                     <th style="width: 20%">Fecha</th>
@@ -68,10 +68,20 @@
             </ng-template>
             <ng-template pTemplate="body" let-sesion>
                 <tr>
-                    <td><span class="font-bold">{{ sesion.fecha | date:'dd/MM/yyyy' }}</span></td>
-                    <td><p-tag [value]="sesion.grupos?.nombre" severity="info"></p-tag></td>
-                    <td><span class="font-bold text-900">{{ sesion.tipo_evaluacion?.nombre }}</span></td>
+                    <td>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Fecha:</span>
+                        <span class="font-bold">{{ sesion.fecha | date:'dd/MM/yyyy' }}</span>
+                    </td>
+                    <td>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Grupo:</span>
+                        <p-tag [value]="sesion.grupos?.nombre" severity="info"></p-tag>
+                    </td>
+                    <td>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Prueba:</span>
+                        <span class="font-bold text-900">{{ sesion.tipo_evaluacion?.nombre }}</span>
+                    </td>
                     <td class="hidden-mobile">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Estado:</span>
                         <p-tag [value]="sesion.estado" [severity]="sesion.estado === 'PENDIENTE' ? 'warn' : 'success'"></p-tag>
                     </td>
                     <td class="text-center">

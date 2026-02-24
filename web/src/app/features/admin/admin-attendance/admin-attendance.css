@@ -289,6 +289,20 @@
         padding: 0.75rem !important;
         justify-content: center;
     }
+
+    /* --- FIX: SALTO DE LÍNEA Y AJUSTE ENTRE NOMBRE Y RUT EN MÓVIL --- */
+    .estudiante-profile-text {
+        gap: 8px !important; /* Crea el efecto de \n (salto de línea visual) */
+    }
+
+    .est-nombre {
+        white-space: normal !important; /* Permite que el nombre baje de línea si es muy largo y no rompa la tarjeta */
+        line-height: 1.3 !important;
+    }
+
+    .est-rut {
+        margin-top: 0 !important; /* Reseteamos el margen anterior porque ahora usamos gap */
+    }
 }
 
 @media (max-width: 480px) {

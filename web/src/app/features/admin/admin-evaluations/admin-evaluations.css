@@ -111,6 +111,7 @@
 }
 
 .hidden-mobile { display: table-cell; }
+.hidden-desktop { display: none; }
 
 /* Limpiar encabezados */
 :host ::ng-deep .p-datatable .p-datatable-header {
@@ -271,7 +272,7 @@
 }
 
 /* =========================================
-   8. RESPONSIVE (MÓVIL)
+   8. RESPONSIVE (MÓVIL) Y TARJETAS
    ========================================= */
 @media (max-width: 768px) {
     /* --- FILTROS APILADOS --- */
@@ -311,22 +312,54 @@
     
     .pl-4 { padding-left: 0 !important; }
     
-    .hidden-mobile { display: none !important; }
+    /* --- MAGIA: TABLA A TARJETAS MÓVILES (SOLO TABLA PRINCIPAL) --- */
+    .hidden-desktop { display: inline-block; }
     
-    /* Ajustes tabla móvil */
-    :host ::ng-deep .p-datatable-tbody > tr > td { 
-        padding: 0.8rem 0.5rem !important; 
-        font-size: 0.9rem; 
+    /* Ocultar la columna de Estado en la vista original, pero mostrarla en la tarjeta */
+    .hidden-mobile { display: flex !important; }
+    
+    /* Ocultar encabezados SOLO de la tabla principal */
+    :host ::ng-deep .card-table .p-datatable-thead { display: none !important; }
+
+    /* Convertir las filas (TR) en Tarjetas SOLO en la tabla principal */
+    :host ::ng-deep .card-table .p-datatable-tbody > tr {
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        padding: 1.25rem 1rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
 
-    /* --- FIX: FORZAR BOTONES DE ACCIÓN EN UNA SOLA FILA --- */
-.action-buttons {
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    gap: 0.5rem !important;
-    flex-wrap: nowrap !important; /* Evita que bajen a la siguiente línea */
-    width: max-content; /* Fuerza al contenedor a medir lo que miden los botones */
-    margin: 0 auto; /* Lo mantiene centrado */
-}
+    /* Ajustar cada celda interna de la tarjeta (TD) */
+    :host ::ng-deep .card-table .p-datatable-tbody > tr > td {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important; 
+        width: 100% !important;
+        padding: 0.75rem 0 !important;
+        border: none !important;
+        border-bottom: 1px solid var(--border-color) !important;
+        text-align: right !important;
+    }
+
+    /* Ajuste para la última fila de la tarjeta (Botones) */
+    :host ::ng-deep .card-table .p-datatable-tbody > tr > td:last-child {
+        border-bottom: none !important;
+        padding-top: 1.25rem !important;
+        justify-content: center !important;
+    }
+
+    /* Estilo de los botones dentro de la tarjeta */
+    .card-table .action-buttons {
+        width: 100%;
+        justify-content: space-around !important; 
+        background-color: rgba(0,0,0,0.02); 
+        border-radius: 8px;
+        padding: 0.5rem;
+        flex-wrap: nowrap !important;
+        margin: 0 auto;
+    }
 }

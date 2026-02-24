@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -35,7 +35,7 @@ import { RutValidator } from '../../../shared/directives/rut-validator.directive
   templateUrl: './login.html',
   styleUrls: ['./login.css']
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit, OnDestroy {
 
   rut = '';
   password = '';
@@ -46,11 +46,48 @@ export class LoginComponent {
   rutRecuperacion = ''; 
   loadingReset = false;
 
+  // --- VARIABLES PARA EL LOGO DINÁMICO ---
+  logoUrl: string = 'assets/images/ProFutbol_Transparenteblanco.png';
+  private themeObserver!: MutationObserver;
+
   constructor(
     private supabaseService: SupabaseService,
     private router: Router,
     private messageService: MessageService
   ) {}
+
+  ngOnInit() {
+    // 1. Verificar el tema al cargar la pantalla
+    this.actualizarLogoTema();
+
+    // 2. Escuchar si el usuario cambia el tema en tiempo real
+    this.themeObserver = new MutationObserver(() => {
+      this.actualizarLogoTema();
+    });
+    
+    this.themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  ngOnDestroy() {
+    // Apagar el observador cuando salimos del login para ahorrar memoria
+    if (this.themeObserver) {
+      this.themeObserver.disconnect();
+    }
+  }
+
+  // --- FUNCIÓN QUE DECIDE QUÉ LOGO MOSTRAR ---
+  actualizarLogoTema() {
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    
+    if (isDarkMode) {
+      // Logo para fondo oscuro (letras blancas/claras)
+      this.logoUrl = 'assets/images/ProFutbol_Transparenteblanco.png';
+    } else {
+      // Logo para fondo claro (letras oscuras)
+      // ⚠️ Asegúrate de que este archivo exista en tu carpeta assets/images/
+      this.logoUrl = 'assets/images/ProFutbol_Transparentenegro.png'; 
+    }
+  }
 
   /**
    * Proceso de inicio de sesión usando el RUT como identificador.

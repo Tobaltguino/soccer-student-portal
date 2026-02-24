@@ -83,7 +83,7 @@
 
     <div class="main-card">
         <p-table #dt [value]="dataList" [loading]="loading" [rows]="10" [paginator]="true" 
-                 styleClass="p-datatable-sm" [rowHover]="true" 
+                 styleClass="p-datatable-sm" [rowHover]="true" responsiveLayout="stack"
                  [globalFilterFields]="['nombre', 'apellido', 'rut', 'email', 'tipo_profesor']">
             
             <ng-template pTemplate="header">
@@ -105,7 +105,7 @@
                 <tr [ngClass]="{'row-inactive': !item.activo}">
                     
                     <td>
-                        <div class="flex align-items-center justify-content-center">
+                        <div class="flex align-items-center justify-content-center sm:justify-content-start">
                             <img [src]="item.foto_url || 'assets/images/default-user.png'" 
                                 alt="Avatar" 
                                 class="avatar-img">
@@ -113,30 +113,54 @@
                     </td>
 
                     <td>
-                        <div class="font-bold text-main">{{ item.nombre }} {{ item.apellido }}</div>
-                        <div class="text-xs text-secondary mt-1"><i class="pi pi-id-card"></i> {{ item.rut || 'Sin RUT' }}</div>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Usuario:</span>
+                        <div class="text-right sm:text-left">
+                            <div class="font-bold text-main">{{ item.nombre }} {{ item.apellido }}</div>
+                            <div class="text-xs text-secondary mt-1 justify-content-end sm:justify-content-start flex align-items-center"><i class="pi pi-id-card"></i> {{ item.rut || 'Sin RUT' }}</div>
+                        </div>
                     </td>
                     
                     <td class="text-center" *ngIf="vistaActual === 'estudiantes'">
-                        <div *ngIf="item.fecha_nacimiento" class="fecha-nac-container">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">F. Nacimiento:</span>
+                        <div *ngIf="item.fecha_nacimiento" class="fecha-nac-container text-right sm:text-center">
                             <span class="fecha-nac-text">{{ item.fecha_nacimiento | date:'dd/MM/yyyy' }}</span>
                             <span class="edad-text"><i class="pi pi-calendar mr-1"></i> {{ calcularEdad(item.fecha_nacimiento) }} años</span>
                         </div>
                         <span *ngIf="!item.fecha_nacimiento" class="text-secondary">-</span>
                     </td>
 
-                    <td *ngIf="vistaActual === 'estudiantes'"><p-tag [value]="item.grupos?.nombre || 'Sin Grupo'" [severity]="item.grupos ? 'info' : 'secondary'"></p-tag></td>
                     <td *ngIf="vistaActual === 'estudiantes'">
-                        <div class="flex gap-1 flex-wrap">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Grupo:</span>
+                        <p-tag [value]="item.grupos?.nombre || 'Sin Grupo'" [severity]="item.grupos ? 'info' : 'secondary'"></p-tag>
+                    </td>
+
+                    <td *ngIf="vistaActual === 'estudiantes'">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Posiciones:</span>
+                        <div class="flex gap-1 flex-wrap justify-content-end sm:justify-content-start">
                             <p-tag *ngFor="let p of item.estudiantes_posiciones" [value]="p.posiciones?.nombre" severity="warn"></p-tag>
                         </div>
                     </td>
+
                     <td *ngIf="vistaActual === 'profesores'">
-                        <div class="flex gap-1 flex-wrap mb-1"><p-tag *ngFor="let gp of item.grupos_profesores" [value]="gp.grupos?.nombre" severity="success"></p-tag></div>
-                        <small class="text-secondary">{{ item.tipo_profesor }}</small>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Detalles:</span>
+                        <div class="text-right sm:text-left">
+                            <div class="flex gap-1 flex-wrap mb-1 justify-content-end sm:justify-content-start">
+                                <p-tag *ngFor="let gp of item.grupos_profesores" [value]="gp.grupos?.nombre" severity="success"></p-tag>
+                            </div>
+                            <small class="text-secondary">{{ item.tipo_profesor }}</small>
+                        </div>
                     </td>
-                    <td class="hidden-mobile text-sm">{{ item.email }}</td>
-                    <td class="text-center"><p-tag [severity]="item.activo ? 'success' : 'danger'" [value]="item.activo ? 'ACTIVO' : 'INACTIVO'" [rounded]="true"></p-tag></td>
+
+                    <td class="text-sm">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Email:</span>
+                        <span>{{ item.email }}</span>
+                    </td>
+
+                    <td class="text-center">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Estado:</span>
+                        <p-tag [severity]="item.activo ? 'success' : 'danger'" [value]="item.activo ? 'ACTIVO' : 'INACTIVO'" [rounded]="true"></p-tag>
+                    </td>
+
                     <td class="text-center">
                         <div class="action-buttons">
                             <ng-container *ngIf="item.rut !== '1-1'">

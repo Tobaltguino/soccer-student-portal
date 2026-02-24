@@ -260,20 +260,45 @@ export class SupabaseService {
   // --- EDITAR / ELIMINAR ---
 
   async updateUsuario(tabla: string, id: string, datos: any, email: string) {
-    // ✅ LIMPIEZA DE SEGURIDAD antes de enviar al RPC
+    // ✅ 1. LIMPIEZA DE SEGURIDAD
     if (tabla !== 'estudiantes') {
       delete datos.fecha_nacimiento;
       delete datos.grupo_id;
     }
 
-    return await this.supabase.rpc('admin_actualizar_usuario', {
-      id_usuario: id,
-      nuevo_email: email,     
-      tabla_nombre: tabla,
-      nuevos_datos: datos
-    });
-  }
+    // 🚀 ESTA ES LA LÍNEA MÁGICA QUE FALTABA:
+    // Obligamos a que el email también se guarde en la tabla visible (estudiantes/profesores)
+    if (email) {
+      datos.email = email;
+    }
 
+    // ✅ 2. ACTUALIZAR DATOS PÚBLICOS (Nombre, RUT, activo, y AHORA EL EMAIL)
+    const { data: updateData, error: dbError } = await this.supabase
+      .from(tabla)
+      .update(datos)
+      .eq('id', id);
+
+    if (dbError) {
+      console.error("Error al actualizar datos:", dbError);
+      throw dbError; 
+    }
+
+    // ✅ 3. ACTUALIZAR EL CORREO EN AUTH (Acceso real)
+    if (email) {
+      const { error: authError } = await this.supabase.rpc('admin_actualizar_email_auth', {
+        usuario_id: id,
+        nuevo_email: email
+      });
+
+      if (authError) {
+        console.error("Error al actualizar el correo en Auth:", authError);
+        throw new Error("Se actualizaron los datos, pero el sistema bloqueó el cambio de correo.");
+      }
+    }
+
+    return { error: null };
+  }
+  
   async deleteUsuario(tabla: string, id: string) {
     // Llamamos al RPC para borrar en cascada (Auth + Perfil)
     return await this.supabase.rpc('admin_eliminar_usuario', {

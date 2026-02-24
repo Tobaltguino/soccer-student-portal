@@ -42,7 +42,7 @@
     </div>
 
     <div class="card-table table-responsive">
-        <p-table [value]="clases" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm" [rowHover]="true">
+        <p-table [value]="clases" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm" [rowHover]="true" responsiveLayout="stack">
             <ng-template pTemplate="header">
                 <tr>
                     <th style="width: 25%">Fecha / Hora</th>
@@ -54,23 +54,31 @@
             <ng-template pTemplate="body" let-item>
                 <tr>
                     <td>
-                        <div class="font-bold text-main">{{ item.fecha | date: 'dd/MM/yyyy' }}</div>
-                        <div class="text-sm text-500 flex align-items-center mt-1">
-                            <i class="pi pi-clock mr-1 text-xs"></i>{{ item.hora | slice:0:5 }}
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Fecha / Hora:</span>
+                        
+                        <div class="text-right sm:text-left">
+                            <div class="font-bold text-main">{{ item.fecha | date: 'dd/MM/yyyy' }}</div>
+                            <div class="text-sm text-500 flex align-items-center mt-1 justify-content-end sm:justify-content-start">
+                                <i class="pi pi-clock mr-1 text-xs"></i>{{ item.hora | slice:0:5 }}
+                            </div>
                         </div>
                     </td>
                     
-                    <td><p-tag [value]="item.grupos?.nombre" severity="info"></p-tag></td>
+                    <td>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Grupo:</span>
+                        <p-tag [value]="item.grupos?.nombre" severity="info"></p-tag>
+                    </td>
                     
                     <td class="text-main">
-                        <i class="pi pi-map-marker text-primary mr-1"></i>{{ item.lugar }}
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Lugar:</span>
+                        <span><i class="pi pi-map-marker text-primary mr-1"></i>{{ item.lugar }}</span>
                     </td>
                     
                     <td class="text-center">
                         <div class="action-buttons">
                             <button pButton icon="pi pi-check-square" class="p-button-text p-button-info p-button-rounded" (click)="verAsistencia(item)" pTooltip="Asistencia"></button>
-                            <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning p-button-rounded" (click)="abrirEditar(item)"></button>
-                            <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-rounded" (click)="eliminarClase(item.id)"></button>
+                            <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning p-button-rounded" (click)="abrirEditar(item)" pTooltip="Editar"></button>
+                            <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-rounded" (click)="eliminarClase(item.id)" pTooltip="Eliminar"></button>
                         </div>
                     </td>
                 </tr>
@@ -150,7 +158,7 @@
                 
                 <div class="field">
                     <label class="font-bold text-primary"><i class="pi pi-directions"></i> Objetivo Principal</label>
-                    <input pInputText [(ngModel)]="claseForm.objetivo" placeholder="Ej: Mejora del pase corto" />
+                    <textarea pTextarea [(ngModel)]="claseForm.objetivo" rows="2" placeholder="Ej: Mejora del pase corto y control de balón..."></textarea>
                 </div>
                 
                 <div class="field">
