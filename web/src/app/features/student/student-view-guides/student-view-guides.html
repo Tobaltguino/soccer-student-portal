@@ -7,8 +7,32 @@
         <button pButton icon="pi pi-sync" class="p-button-rounded p-button-text p-button-primary" (click)="cargarGuias()" [loading]="loading" pTooltip="Actualizar lista"></button>
     </header>
 
-    <div class="card shadow-2 border-round surface-card p-3 table-responsive">
-        <p-table [value]="guias" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped">
+    <div class="filter-bar card mb-4 p-3 surface-card border-round shadow-1">
+        <div class="filter-row">
+            
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-search mr-1"></i> Buscar Título</label>
+                <input pInputText type="text" [(ngModel)]="filtroTitulo" (input)="aplicarFiltros()" 
+                       placeholder="Ej: Reglamento..." class="w-full"/>
+            </div>
+
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-calendar mr-1"></i> Fecha de Subida</label>
+                <p-datepicker [(ngModel)]="filtroFecha" placeholder="Seleccionar Fecha" 
+                              (onSelect)="aplicarFiltros()" [showClear]="true" (onClear)="aplicarFiltros()" 
+                              dateFormat="dd/mm/yy" styleClass="w-full"></p-datepicker>
+            </div>
+
+            <div class="filter-item-btn">
+                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary w-full" 
+                        (click)="limpiarFiltros()" pTooltip="Limpiar Filtros"></button>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="card shadow-2 border-round surface-card p-3 table-responsive card-table">
+        <p-table [value]="guiasFiltradas" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="stack">
             
             <ng-template pTemplate="header">
                 <tr>
@@ -22,19 +46,21 @@
             <ng-template pTemplate="body" let-guia>
                 <tr>
                     <td>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Título:</span>
                         <span class="font-bold text-main text-lg">{{guia.titulo}}</span>
                     </td>
                     <td>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Descripción:</span>
                         <span class="text-sm text-secondary line-height-2">{{guia.descripcion || 'Sin descripción adicional.'}}</span>
                     </td>
                     <td>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Fecha:</span>
                         <span class="text-secondary"><i class="pi pi-calendar mr-1"></i> {{guia.created_at | date:'dd/MM/yyyy'}}</span>
                     </td>
                     <td class="text-center">
-                        <span class="p-column-title">Acciones</span>
-                        <div class="flex justify-content-center">
-                            <a [href]="guia.archivo_url" target="_blank" class="no-underline">
-                                <button pButton icon="pi pi-download" class="p-button-rounded p-button-outlined p-button-primary" pTooltip="Descargar Documento"></button>
+                        <div class="action-buttons">
+                            <a [href]="guia.archivo_url" target="_blank" class="no-underline w-full">
+                                <button pButton icon="pi pi-download" label="Descargar Documento" class="p-button-outlined p-button-primary w-full justify-content-center"></button>
                             </a>
                         </div>
                     </td>
@@ -43,7 +69,7 @@
 
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="4" class="text-center p-5 text-secondary">Aún no hay material de estudio publicado.</td>
+                    <td colspan="4" class="text-center p-5 text-secondary">No se encontró material de estudio con esos filtros.</td>
                 </tr>
             </ng-template>
             
