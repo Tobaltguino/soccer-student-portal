@@ -169,6 +169,12 @@
 .text-main { color: var(--text-main); }
 .text-secondary { color: var(--text-secondary); }
 
+.btn-secundario-centrado {
+    display: flex;       /* Mantiene el icono y el texto alineados por dentro */
+    margin-left: auto;   /* Empuja el botón hacia el centro desde la izquierda */
+    margin-right: auto;  /* Empuja el botón hacia el centro desde la derecha */
+}
+
 /* --- MOBILE --- */
 @media (max-width: 576px) {
     .login-wrapper { align-items: flex-start; padding-top: 4rem; }

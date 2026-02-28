@@ -28,10 +28,9 @@
         
         <div class="hero-content fade-in-up">
             <span class="badge">Academia de Fútbol de Alto Rendimiento</span>
-            <h1 class="hero-title">Formamos a los líderes del <span>mañana</span></h1>
-            <p class="hero-subtitle">
-                Descubre tu máximo potencial. En ProFutbol unimos pasión, disciplina y tecnología deportiva para llevar tu talento al siguiente nivel, dentro y fuera de la cancha.
-            </p>
+            <h1 class="hero-title" [innerHTML]="heroTitulo"></h1>
+            <p class="hero-subtitle">{{ heroSubtitulo }}</p>
+            
             <div class="hero-buttons">
                 <button pButton label="Únete a Nosotros" icon="pi pi-whatsapp" size="large" class="p-button-primary shadow-4 mr-3" (click)="irA(linkWhatsApp)"></button>
                 <button pButton label="Conocer Más" icon="pi pi-arrow-down" size="large" class="p-button-outlined p-button-secondary bg-white-alpha-10 text-white border-white hover:bg-white-alpha-20" (click)="scrollTo('nosotros')"></button>
@@ -47,20 +46,10 @@
         </div>
 
         <div class="features-grid">
-            <div class="feature-card">
-                <div class="icon-wrapper"><i class="pi pi-star-fill"></i></div>
-                <h3>Formación Técnica</h3>
-                <p>Entrenamientos planificados enfocados en el desarrollo técnico, táctico y cognitivo del jugador moderno.</p>
-            </div>
-            <div class="feature-card">
-                <div class="icon-wrapper"><i class="pi pi-heart-fill"></i></div>
-                <h3>Área Médica</h3>
-                <p>Acompañamiento constante de kinesiólogos y nutricionistas para prevenir lesiones y optimizar el rendimiento.</p>
-            </div>
-            <div class="feature-card">
-                <div class="icon-wrapper"><i class="pi pi-desktop"></i></div>
-                <h3>Tecnología ProFutbol</h3>
-                <p>Portal exclusivo donde jugadores y apoderados pueden ver estadísticas, evaluaciones e historial de asistencia.</p>
+            <div class="feature-card" *ngFor="let m of metodologias">
+                <div class="icon-wrapper"><i class="pi {{ m.icono }}"></i></div>
+                <h3>{{ m.titulo }}</h3>
+                <p>{{ m.descripcion }}</p>
             </div>
         </div>
     </section>
@@ -72,33 +61,13 @@
         </div>
 
         <div class="programs-grid">
-            <div class="program-card">
-                <div class="program-img bg-blue-100 flex align-items-center justify-content-center h-10rem border-round-top">
-                    <i class="pi pi-bolt text-5xl text-blue-500"></i>
+            <div class="program-card" *ngFor="let p of programas">
+                <div class="program-img {{ p.color_fondo }} flex align-items-center justify-content-center h-10rem border-round-top">
+                    <i class="pi {{ p.icono }} text-5xl {{ p.color_texto }}"></i>
                 </div>
                 <div class="program-content">
-                    <h3>Iniciación (5 a 9 años)</h3>
-                    <p>Enfoque en la psicomotricidad, el juego lúdico y los fundamentos básicos del fútbol. ¡Aprender jugando!</p>
-                </div>
-            </div>
-
-            <div class="program-card">
-                <div class="program-img bg-green-100 flex align-items-center justify-content-center h-10rem border-round-top">
-                    <i class="pi pi-directions text-5xl text-green-500"></i>
-                </div>
-                <div class="program-content">
-                    <h3>Formación (10 a 14 años)</h3>
-                    <p>Desarrollo técnico específico, comprensión táctica y preparación física orientada al crecimiento.</p>
-                </div>
-            </div>
-
-            <div class="program-card">
-                <div class="program-img bg-orange-100 flex align-items-center justify-content-center h-10rem border-round-top">
-                    <i class="pi pi-shield text-5xl text-orange-500"></i>
-                </div>
-                <div class="program-content">
-                    <h3>Proyección (15 a 18 años)</h3>
-                    <p>Alto rendimiento, exigencia física, apoyo nutricional y preparación para competencias exigentes.</p>
+                    <h3>{{ p.titulo }}</h3>
+                    <p>{{ p.descripcion }}</p>
                 </div>
             </div>
         </div>
@@ -112,28 +81,12 @@
         </div>
 
         <div class="sponsors-grid">
-            <div class="sponsor-card">
-                <div class="sponsor-icon bg-indigo-100 text-indigo-500"><i class="pi pi-shopping-bag"></i></div>
-                <h3>SportFit Store</h3>
-                <p>20% de descuento en zapatos de fútbol, canilleras e indumentaria deportiva para todos nuestros alumnos activos.</p>
-            </div>
-            
-            <div class="sponsor-card">
-                <div class="sponsor-icon bg-red-100 text-red-500"><i class="pi pi-heart"></i></div>
-                <h3>Clínica Traumatológica</h3>
-                <p>Convenio con atención preferencial, urgencias sin costo de ingreso y descuentos en Rayos X y Resonancias.</p>
-            </div>
-
-            <div class="sponsor-card">
-                <div class="sponsor-icon bg-cyan-100 text-cyan-500"><i class="pi pi-filter"></i></div>
-                <h3>Agua Pura</h3>
-                <p>Patrocinador oficial de hidratación. Garantiza estaciones de agua mineralizada en entrenamientos y partidos.</p>
-            </div>
-
-            <div class="sponsor-card">
-                <div class="sponsor-icon bg-orange-100 text-orange-500"><i class="pi pi-apple"></i></div>
-                <h3>NutriLife Supplements</h3>
-                <p>Charlas nutricionales gratuitas para padres y precios de mayorista en suplementos vitamínicos y deportivos.</p>
+            <div class="sponsor-card" *ngFor="let a of alianzas">
+                <div class="sponsor-logo-wrapper mb-4">
+                    <img [src]="a.imagen_url || 'assets/images/default-sponsor.png'" [alt]="a.nombre" class="sponsor-logo">
+                </div>
+                <h3>{{ a.nombre }}</h3>
+                <p>{{ a.descripcion }}</p>
             </div>
         </div>
     </section>
@@ -149,24 +102,23 @@
                 <h4>Contacto</h4>
                 <p><i class="pi pi-whatsapp mr-3 text-xl"></i> {{ telefonoAcademia }}</p>
                 <p><i class="pi pi-envelope mr-3 text-xl"></i> {{ correoAcademia }}</p>
-                </div>
+            </div>
 
             <div class="footer-links social-column">
                 <h4>Síguenos</h4>
                 <p class="mb-3 text-sm" style="color: #94a3b8;">Descubre nuestro día a día</p>
                 
                 <div class="social-list mt-3">
-                    <div class="social-item" (click)="irA(linkInstagram)">
+                    <div class="social-item cursor-pointer" (click)="irA(linkInstagram)">
                         <div class="icon-circle"><i class="pi pi-instagram text-xl"></i></div>
                         <span class="social-name">{{ nombreInstagram }}</span>
                     </div>
 
-                    <div class="social-item" (click)="irA(linkFacebook)">
+                    <div class="social-item cursor-pointer" (click)="irA(linkFacebook)">
                         <div class="icon-circle"><i class="pi pi-facebook text-xl"></i></div>
                         <span class="social-name">{{ nombreFacebook }}</span>
                     </div>
                 </div>
-
             </div>
         </div>
         

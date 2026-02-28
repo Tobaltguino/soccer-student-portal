@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
-import { SupabaseService } from '../services/supabase.service'; // Ajusta la ruta a tu servicio
+import { SupabaseService } from '../services/supabase.service'; 
 
 export const authGuard: CanActivateFn = async (route, state) => {
   const router = inject(Router);
@@ -10,7 +10,7 @@ export const authGuard: CanActivateFn = async (route, state) => {
   const { data: { session } } = await supabase.supabase.auth.getSession();
 
   if (!session) {
-    // Si no está logueado, lo pateamos al login
+    // Si no está logueado, lo pateamos al login de inmediato
     router.navigate(['/login']);
     return false;
   }
@@ -18,14 +18,17 @@ export const authGuard: CanActivateFn = async (route, state) => {
   // 2. Verificamos los roles permitidos para esta ruta
   const rolesPermitidos = route.data['roles'] as Array<string>;
   
-  // Asumimos que guardaste el rol en el localStorage al hacer login
-  // Ej: localStorage.setItem('userRole', 'admin');
-  const rolActual = localStorage.getItem('userRole'); 
-
   if (rolesPermitidos && rolesPermitidos.length > 0) {
-    if (!rolActual || !rolesPermitidos.includes(rolActual)) {
-      // Si está logueado pero no tiene el rol, lo mandamos a su propio dashboard
-      const rutaSegura = rolActual ? `/${rolActual}/dashboard` : '/login';
+    
+    // 🚀 MAGIA DE SEGURIDAD: Le preguntamos al servicio (BD o Memoria), NO al localStorage
+    const rolReal = await supabase.getRolSeguro(session.user.id); 
+
+    if (!rolesPermitidos.includes(rolReal)) {
+      // Si el rol REAL no coincide con el permitido, lo devolvemos a su casa
+      console.warn('Acceso denegado: Intento de violación de roles detectado.');
+      
+      // Construimos la ruta segura basada en su rol real
+      const rutaSegura = rolReal ? `/${rolReal}/dashboard` : '/login';
       router.navigate([rutaSegura]);
       return false;
     }

@@ -54,37 +54,39 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   async cargarDatos() {
-    this.loading = true;
-    try {
-      // 1. Estudiantes: Traemos la lista completa
-      // CORRECCIÓN: Usamos 'data' directamente y contamos el largo del array (.length)
-      const { data: estudiantes, error } = await this.supabaseService.getEstudiantes();
-      
-      if (estudiantes) {
-        // ✅ AQUÍ ESTABA EL ERROR: Usamos .length porque 'count' venía vacío del servicio
-        this.totalEstudiantes = estudiantes.length;
-        
-        // Procesamos los cumpleaños con la lista obtenida
-        this.cumpleanosList = this.filtrarProximosCumpleanos(estudiantes);
-      } else {
-        this.totalEstudiantes = 0;
-      }
+    this.loading = true;
+    try {
+      // 1. Estudiantes: Traemos la lista completa
+      const { data: estudiantes, error } = await this.supabaseService.getEstudiantes();
+      
+      if (estudiantes) {
+        // Filtramos el arreglo para quedarnos solo con los que tienen activo === true
+        const estudiantesActivos = estudiantes.filter((est: any) => est.activo === true);
 
-      // 2. Clases de Hoy
-      const { data: clases } = await this.supabaseService.getClasesHoy();
-      this.clasesHoy = clases || [];
+        // Ahora contamos solo el largo del arreglo de los activos
+        this.totalEstudiantes = estudiantesActivos.length;
+        
+        // Procesamos los cumpleaños usando la lista de estudiantes activos
+        this.cumpleanosList = this.filtrarProximosCumpleanos(estudiantesActivos);
+      } else {
+        this.totalEstudiantes = 0;
+      }
 
-      // 3. Evaluaciones (Para la tarjeta morada)
-      const { data: actividad } = await this.supabaseService.getActividadReciente();
-      this.actividadReciente = actividad || [];
+      // 2. Clases de Hoy
+      const { data: clases } = await this.supabaseService.getClasesHoy();
+      this.clasesHoy = clases || [];
 
-    } catch (error) {
-      console.error('Error cargando estadísticas:', error);
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
-  }
+      // 3. Evaluaciones (Para la tarjeta morada)
+      const { data: actividad } = await this.supabaseService.getActividadReciente();
+      this.actividadReciente = actividad || [];
+
+    } catch (error) {
+      console.error('Error cargando estadísticas:', error);
+    } finally {
+      this.loading = false;
+      this.cdr.detectChanges();
+    }
+  }
 
   // Lógica para filtrar cumpleaños próximos (0 a 7 días)
   filtrarProximosCumpleanos(estudiantes: any[]): any[] {
@@ -128,5 +130,5 @@ export class AdminDashboardComponent implements OnInit {
   async refrescar() {
     await this.verificarConexion();
     await this.cargarDatos();
-  }
+  } 
 }

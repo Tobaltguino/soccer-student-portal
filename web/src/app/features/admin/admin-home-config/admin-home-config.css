@@ -1,0 +1,51 @@
+:host {
+    display: block;
+}
+
+.text-main { color: var(--text-main); }
+.text-secondary { color: var(--text-secondary); }
+.text-primary { color: var(--primary-color); }
+
+/* Ajuste para que las pestañas de PrimeNG no pierdan el diseño */
+:host ::ng-deep .p-tablist-tab-list {
+    background: transparent !important;
+    border: none !important;
+}
+
+:host ::ng-deep .p-tabpanels {
+    background: transparent !important;
+    padding: 1.5rem 0 0 0 !important;
+}
+
+/* Campos del formulario */
+.field {
+    margin-bottom: 1.5rem;
+}
+
+label {
+    color: var(--text-main);
+    font-size: 0.9rem;
+}
+
+textarea {
+    resize: vertical;
+}
+
+/* Modales */
+:host ::ng-deep .p-dialog-content {
+    padding-top: 1rem !important;
+}
+
+/* Ajuste de imágenes */
+.object-contain {
+    object-fit: contain;
+}
+
+/* Ajuste de imágenes para que no rompan la tabla */
+.logo-tabla {
+    width: 45px;          /* Ancho fijo pequeñito */
+    height: 45px;         /* Alto fijo pequeñito */
+    object-fit: contain;  /* Evita que se estire o se aplaste */
+    display: block;
+    margin: 0 auto;       /* Lo centra en la celda */
+}

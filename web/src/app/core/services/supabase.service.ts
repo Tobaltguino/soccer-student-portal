@@ -21,7 +21,12 @@ export class SupabaseService {
     return await this.supabase.auth.signInWithPassword({ email, password });
   }
 
+  // Variable privada en memoria (los usuarios no pueden alterarla desde el navegador)
+  private rolCache: string | null = null;
+
   async logout() {
+    this.limpiarCacheRol(); // Limpiamos la memoria al salir
+    localStorage.removeItem('userRole'); // Limpiamos el rastro del navegador
     return await this.supabase.auth.signOut();
   }
 
@@ -36,6 +41,37 @@ export class SupabaseService {
       .eq('id', uid)
       .single();
     return !(error || !data);
+  }
+
+  /**
+   * Obtiene el rol del usuario de forma 100% segura.
+   * Si no está en memoria, va a buscarlo a las tablas de Supabase.
+   */
+  async getRolSeguro(userId: string): Promise<string> {
+    // Si ya lo buscamos en esta sesión, lo devolvemos rápido
+    if (this.rolCache) return this.rolCache;
+
+    // Si no lo tenemos, le preguntamos a la base de datos de forma segura
+    const { data: admin } = await this.supabase.from('admins').select('id').eq('id', userId).maybeSingle();
+    if (admin) { this.rolCache = 'admin'; return 'admin'; }
+
+    const { data: prof } = await this.supabase.from('profesores').select('id').eq('id', userId).maybeSingle();
+    if (prof) { this.rolCache = 'professor'; return 'professor'; }
+
+    const { data: est } = await this.supabase.from('estudiantes').select('id').eq('id', userId).maybeSingle();
+    if (est) { this.rolCache = 'student'; return 'student'; }
+
+    const { data: kine } = await this.supabase.from('kinesiologos').select('id').eq('id', userId).maybeSingle();
+    if (kine) { this.rolCache = 'kine'; return 'kine'; }
+
+    const { data: nutri } = await this.supabase.from('nutricionistas').select('id').eq('id', userId).maybeSingle();
+    if (nutri) { this.rolCache = 'nutri'; return 'nutri'; }
+
+    return 'student'; // Rol por defecto de emergencia
+  }
+
+  limpiarCacheRol() {
+    this.rolCache = null;
   }
 
   async resetPassword(email: string) {
@@ -841,4 +877,52 @@ async eliminarRangosPorTipo(tipoId: number) {
   async updateGuia(id: string, guia: any) {
     return await this.supabase.from('work_guides').update(guia).eq('id', id);
   }
+
+  // ==========================================
+  // CONFIGURACIÓN WEB (LANDING PAGE)
+  // ==========================================
+
+  // Obtiene los datos públicos para el Home
+  async getConfiguracionWeb() {
+    return await this.supabase
+      .from('configuracion_web')
+      .select('*')
+      .eq('id', 1)
+      .single();
+  }
+
+  // Actualiza los datos (La usaremos en el panel de Admin después)
+  async updateConfiguracionWeb(datos: any) {
+    return await this.supabase
+      .from('configuracion_web')
+      .update(datos)
+      .eq('id', 1);
+  }
+
+  async getWebMetodologias() {
+    return await this.supabase.from('web_metodologias').select('*').order('orden', { ascending: true });
+  }
+
+  async getWebProgramas() {
+    return await this.supabase.from('web_programas').select('*').order('orden', { ascending: true });
+  }
+
+  async getWebAlianzas() {
+    return await this.supabase.from('web_alianzas').select('*').order('orden', { ascending: true });
+  }
+
+  // --- CRUD METODOLOGÍAS ---
+  async createWebMetodologia(datos: any) { return await this.supabase.from('web_metodologias').insert(datos); }
+  async updateWebMetodologia(id: number, datos: any) { return await this.supabase.from('web_metodologias').update(datos).eq('id', id); }
+  async deleteWebMetodologia(id: number) { return await this.supabase.from('web_metodologias').delete().eq('id', id); }
+
+  // --- CRUD PROGRAMAS ---
+  async createWebPrograma(datos: any) { return await this.supabase.from('web_programas').insert(datos); }
+  async updateWebPrograma(id: number, datos: any) { return await this.supabase.from('web_programas').update(datos).eq('id', id); }
+  async deleteWebPrograma(id: number) { return await this.supabase.from('web_programas').delete().eq('id', id); }
+
+  // --- CRUD ALIANZAS ---
+  async createWebAlianza(datos: any) { return await this.supabase.from('web_alianzas').insert(datos); }
+  async updateWebAlianza(id: number, datos: any) { return await this.supabase.from('web_alianzas').update(datos).eq('id', id); }
+  async deleteWebAlianza(id: number) { return await this.supabase.from('web_alianzas').delete().eq('id', id); }
 }

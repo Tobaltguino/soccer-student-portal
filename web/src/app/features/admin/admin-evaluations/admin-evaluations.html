@@ -56,13 +56,13 @@
     </div>
 
     <div class="card shadow-2 border-round surface-card p-3 card-table">
-        <p-table [value]="sesiones" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="stack">
+        <p-table [value]="sesiones" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="scroll">    
             <ng-template pTemplate="header">
                 <tr>
                     <th style="width: 20%">Fecha</th>
                     <th style="width: 25%">Grupo</th>
                     <th style="width: 25%">Prueba</th>
-                    <th style="width: 15%" class="hidden-mobile">Estado</th>
+                    <th style="width: 15%">Estado</th>
                     <th style="width: 15%" class="text-center">Acciones</th>
                 </tr>
             </ng-template>
@@ -80,7 +80,7 @@
                         <span class="p-column-title font-bold text-secondary hidden-desktop">Prueba:</span>
                         <span class="font-bold text-900">{{ sesion.tipo_evaluacion?.nombre }}</span>
                     </td>
-                    <td class="hidden-mobile">
+                    <td>
                         <span class="p-column-title font-bold text-secondary hidden-desktop">Estado:</span>
                         <p-tag [value]="sesion.estado" [severity]="sesion.estado === 'PENDIENTE' ? 'warn' : 'success'"></p-tag>
                     </td>

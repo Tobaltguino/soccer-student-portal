@@ -108,15 +108,18 @@
     border-radius: 16px;
     border: 1px solid var(--border-color); 
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
 }
 
-.hidden-mobile { display: table-cell; }
-.hidden-desktop { display: none; }
+/* Control estricto de visibilidad */
+.hidden-desktop { display: none !important; }
+.hidden-mobile { display: table-cell !important; }
 
 /* Limpiar encabezados */
 :host ::ng-deep .p-datatable .p-datatable-header {
     background: transparent; 
     border: none; 
+    padding: 1rem 0; 
 }
 
 /* Estilo de los encabezados (TH) */
@@ -128,10 +131,10 @@
     text-transform: uppercase;
     padding: 1rem;
     border-bottom: 1px solid var(--border-color);
-    text-align: center !important; /* Centrado forzado */
+    text-align: center !important;
 }
 
-/* Centrar contenido de encabezados (incluye flechas de ordenamiento) */
+/* Centrar contenido de encabezados */
 :host ::ng-deep .p-datatable .p-datatable-thead > tr > th .p-column-header-content {
     display: flex;
     justify-content: center !important;
@@ -140,26 +143,18 @@
 }
 
 /* Estilo de las celdas (TD) */
-:host ::ng-deep .p-datatable-tbody > tr > td { 
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td { 
     vertical-align: middle; 
     padding: 1rem !important; 
     border-bottom: 1px solid var(--bg-main);
-    text-align: center !important; /* Centrado forzado */
+    text-align: center !important; /* Esto centra en PC sin romper el celular */
+    color: var(--text-main);
 }
 
-/* Centrar los p-tag dentro de la celda */
+/* Ajuste sutil para las etiquetas P-TAG (Sin margin auto para no romper el móvil) */
 :host ::ng-deep .p-datatable-tbody > tr > td p-tag {
     display: inline-flex !important;
-    justify-content: center;
     align-items: center;
-    margin: 0 auto;
-}
-
-/* Asegurar que textos y spans se centren */
-:host ::ng-deep .p-datatable-tbody > tr > td > span {
-    display: block;
-    text-align: center;
-    margin: 0 auto;
 }
 
 /* =========================================
@@ -313,10 +308,8 @@
     .pl-4 { padding-left: 0 !important; }
     
     /* --- MAGIA: TABLA A TARJETAS MÓVILES (SOLO TABLA PRINCIPAL) --- */
-    .hidden-desktop { display: inline-block; }
-    
-    /* Ocultar la columna de Estado en la vista original, pero mostrarla en la tarjeta */
-    .hidden-mobile { display: flex !important; }
+    .hidden-desktop { display: inline-block !important; }
+    .hidden-mobile { display: none !important; } 
     
     /* Ocultar encabezados SOLO de la tabla principal */
     :host ::ng-deep .card-table .p-datatable-thead { display: none !important; }
@@ -343,6 +336,7 @@
         border: none !important;
         border-bottom: 1px solid var(--border-color) !important;
         text-align: right !important;
+        white-space: normal;
     }
 
     /* Ajuste para la última fila de la tarjeta (Botones) */
@@ -354,8 +348,10 @@
 
     /* Estilo de los botones dentro de la tarjeta */
     .card-table .action-buttons {
+        display: flex !important;
+        justify-content: center !important;
+        gap: 1.5rem !important;
         width: 100%;
-        justify-content: space-around !important; 
         background-color: rgba(0,0,0,0.02); 
         border-radius: 8px;
         padding: 0.5rem;

@@ -220,4 +220,8 @@ export class LoginComponent implements OnInit, OnDestroy {
       this.loadingReset = false;
     }
   }
+
+  volverAlHome() {
+    this.router.navigate(['/']);
+  }
 }
