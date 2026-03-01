@@ -1,1 +1,82 @@
-<p>nutri-layout works!</p>
+<div class="layout-container" [class.collapsed]="isCollapsed">
+    <div class="mobile-overlay" [class.active]="isMobileMenuOpen" (click)="closeMobileMenu()"></div>
+
+    <aside class="sidebar" [class.mobile-active]="isMobileMenuOpen">
+        
+        <div class="brand">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+                </div>
+                <div class="brand-text">
+                    <h2>ProFutbol</h2>
+                    <span>PORTAL NUTRICIÓN</span> 
+                </div>
+            </div>
+            <button class="toggle-btn desktop-only" (click)="toggleSidebar()">
+                <i class="pi pi-bars"></i>
+            </button>
+            <button class="toggle-btn mobile-only" (click)="closeMobileMenu()">
+                <i class="pi pi-times"></i>
+            </button>
+        </div>
+
+        <nav class="menu">
+            <div class="menu-label">PRINCIPAL</div>
+            
+            <a class="menu-item" routerLink="/nutri/dashboard" routerLinkActive="active-link" (click)="closeMobileMenu()">
+                <i class="pi pi-home"></i>
+                <span class="label">Inicio</span>
+            </a>
+
+            <div class="menu-label system">GESTIÓN</div>
+            <a class="menu-item" routerLink="/nutri/evaluations" routerLinkActive="active-link" (click)="closeMobileMenu()">
+                <i class="pi pi-chart-line"></i>
+                <span class="label">Evaluaciones</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="logout-btn" (click)="logout()">
+                <i class="pi pi-sign-out"></i>
+                <span>Cerrar Sesión</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-bar">
+            <button class="mobile-menu-btn" (click)="toggleMobileMenu()">
+                <i class="pi pi-bars"></i>
+            </button>
+
+            <div class="header-right">
+                <button class="theme-toggle-btn" (click)="toggleTheme()" [title]="isDarkMode ? 'Modo Claro' : 'Modo Oscuro'">
+                    <i class="pi" [class.pi-moon]="!isDarkMode" [class.pi-sun]="isDarkMode"></i>
+                </button>
+
+                <div class="user-profile">
+                    <div class="user-info">
+                        <span class="name">{{ userName }}</span>
+                        <span class="role">{{ userRole }}</span>
+                    </div>
+
+                    <div class="avatar-container shadow-1">
+                        <img *ngIf="userPhotoUrl" 
+                            [src]="userPhotoUrl" 
+                            alt="Perfil Nutricionista" 
+                            class="avatar-img">
+
+                        <div *ngIf="!userPhotoUrl" class="avatar-initials">
+                            {{ userInitial }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-content">
+            <router-outlet></router-outlet>
+        </div>
+    </main>
+</div>

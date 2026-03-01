@@ -52,6 +52,7 @@ import { KineDashboardComponent } from './features/kine/kine-dashboard/kine-dash
 // --- NUTRI IMPORTS ---
 import { NutriLayoutComponent } from './features/nutri/nutri-layout/nutri-layout';
 import { NutriDashboardComponent } from './features/nutri/nutri-dashboard/nutri-dashboard';
+import { NutriEvaluationsComponent } from './features/nutri/nutri-evaluation/nutri-evaluation';
 
 export const routes: Routes = [
     // ==========================================
@@ -152,7 +153,9 @@ export const routes: Routes = [
         data: { roles: ['nutri', 'nutricionista'] },
         children: [
             { path: 'dashboard', component: NutriDashboardComponent },
+            { path: 'evaluations', component: NutriEvaluationsComponent }
         ]
+        
     },
 
     // ==========================================

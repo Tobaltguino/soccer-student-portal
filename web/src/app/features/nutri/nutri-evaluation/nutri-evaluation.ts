@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../../core/services/supabase.service';
+// Importaciones de PrimeNG
 import { TableModule } from 'primeng/table';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -16,7 +17,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 @Component({
-  selector: 'app-admin-nutri',
+  selector: 'app-nutri-evaluation',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, DialogModule, ButtonModule, 
@@ -24,17 +25,19 @@ import { MessageService, ConfirmationService } from 'primeng/api';
     ConfirmDialogModule, RadioButtonModule, TooltipModule
   ],
   providers: [MessageService, ConfirmationService],
-  templateUrl: './admin-nutri.html',
-  styleUrls: ['./admin-nutri.css']
+  templateUrl: './nutri-evaluation.html',
+  styleUrls: ['./nutri-evaluation.css']
 })
-export class AdminNutriComponent implements OnInit {
+export class NutriEvaluationsComponent implements OnInit {
   
+  // Datos
   sesiones: any[] = [];
   sesionesFiltradas: any[] = [];
   tiposEvaluacion: any[] = [];
   estudiantes: any[] = [];
-  nutricionistas: any[] = []; 
+  nutricionistaId: string | null = null;
 
+  // Filtros
   filtroFecha: Date | null = null;
   filtroPrueba: any = null;
   filtroEstado: string | null = null;
@@ -43,20 +46,19 @@ export class AdminNutriComponent implements OnInit {
     { label: 'Finalizadas', value: 'FINALIZADO' }
   ];
 
+  // Modales y Estado
   displayMainDialog = false;
   displayGradesDialog = false;
-  displayTiposDialog = false;
   loading = false;
   guardando = false;
 
+  // Objeto para crear/editar evaluación
   evalLogistica: any = {};
-  nuevoTipo = { nombre: '', descripcion: '' };
 
   constructor(
     private supabase: SupabaseService,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService, 
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef 
   ) {}
 
   async ngOnInit() {
@@ -66,22 +68,28 @@ export class AdminNutriComponent implements OnInit {
   async cargarDatosBase() {
     try {
       this.loading = true;
-      this.cdr.detectChanges();
+      this.cdr.detectChanges(); 
 
-      await this.cargarTiposEvaluacion();
+      const { data: { user } } = await this.supabase.getUser();
+      if (user) {
+        const { data: nutri } = await this.supabase.supabase
+          .from('nutricionistas')
+          .select('id')
+          .eq('email', user.email)
+          .single();
+        this.nutricionistaId = nutri?.id;
+      }
 
-      const resNutris = await this.supabase.supabase.from('nutricionistas').select('id, nombre, apellido');
-      this.nutricionistas = (resNutris.data || []).map(n => ({
-        id: n.id,
-        nombreCompleto: `${n.nombre} ${n.apellido}`
-      }));
+      const resTipos = await this.supabase.getTiposEvaluacionNutri();
+      this.tiposEvaluacion = resTipos.data || [];
 
       const resEst = await this.supabase.getEstudiantesBasico();
+      // ✅ Preparamos a los estudiantes con los nuevos campos
       this.estudiantes = (resEst.data || []).map(est => ({
         ...est,
         archivoSeleccionado: null,
         archivo_url_previo: null,
-        nombre_archivo_previo: null, // ✅ Nueva propiedad para el nombre bonito
+        nombre_archivo_previo: null,
         observacion: ''
       }));
 
@@ -92,20 +100,15 @@ export class AdminNutriComponent implements OnInit {
       this.mostrarError('No se pudieron cargar los datos base.');
     } finally {
       this.loading = false;
-      this.cdr.detectChanges();
+      this.cdr.detectChanges(); 
     }
-  }
-
-  async cargarTiposEvaluacion() {
-    const resTipos = await this.supabase.getTiposEvaluacionNutri();
-    this.tiposEvaluacion = resTipos.data || [];
   }
 
   async cargarSesiones() {
     const res = await this.supabase.getEvaluacionesNutri();
     this.sesiones = res.data || [];
     this.aplicarFiltros();
-    this.cdr.detectChanges();
+    this.cdr.detectChanges(); 
   }
 
   aplicarFiltros() {
@@ -127,7 +130,7 @@ export class AdminNutriComponent implements OnInit {
 
       return cumpleFecha && cumplePrueba && cumpleEstado;
     });
-    this.cdr.detectChanges();
+    this.cdr.detectChanges(); 
   }
 
   limpiarFiltros() {
@@ -137,68 +140,15 @@ export class AdminNutriComponent implements OnInit {
     this.aplicarFiltros();
   }
 
-  abrirConfiguracionTipos() {
-    this.nuevoTipo = { nombre: '', descripcion: '' };
-    this.displayTiposDialog = true;
-    this.cdr.detectChanges();
-  }
-
-  async guardarNuevoTipo() {
-    if (!this.nuevoTipo.nombre) return;
-    try {
-      this.loading = true;
-      await this.supabase.crearTipoEvaluacionNutri(this.nuevoTipo);
-      this.mostrarExito('Test agregado correctamente');
-      this.nuevoTipo = { nombre: '', descripcion: '' };
-      await this.cargarTiposEvaluacion(); 
-    } catch (error) {
-      this.mostrarError('Error al guardar el tipo de test');
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
-  }
-
-  eliminarTipo(tipo: any) {
-    this.confirmationService.confirm({
-      message: `¿Seguro que deseas eliminar el test "${tipo.nombre}"?`,
-      header: 'Confirmar Eliminación',
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Sí, Eliminar',
-      rejectLabel: 'Cancelar',
-      acceptButtonStyleClass: 'p-button-danger',
-      accept: async () => {
-        try {
-          this.loading = true;
-          this.cdr.detectChanges();
-          await this.supabase.eliminarTipoEvaluacionNutri(tipo.id);
-          this.mostrarExito('Test eliminado correctamente');
-          await this.cargarTiposEvaluacion(); 
-        } catch (error: any) {
-          console.error(error);
-          if (error.code === '23503') {
-            this.mostrarError('No se puede eliminar porque ya hay sesiones usando este test.');
-          } else {
-            this.mostrarError('Hubo un error al eliminar el test');
-          }
-        } finally {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }
-      }
-    });
-  }
-
   abrirNuevo() {
     this.evalLogistica = {
       id: null,
       fecha: new Date(),
       tipo_id: null,
-      nutricionista_id: null, 
       estado: 'PENDIENTE'
     };
     this.displayMainDialog = true;
-    this.cdr.detectChanges();
+    this.cdr.detectChanges(); 
   }
 
   editarSesion(sesion: any) {
@@ -208,22 +158,22 @@ export class AdminNutriComponent implements OnInit {
       fecha: new Date(year, month - 1, day)
     };
     this.displayMainDialog = true;
-    this.cdr.detectChanges();
+    this.cdr.detectChanges(); 
   }
 
   async guardarSesionPlanificada() {
-    if (!this.evalLogistica.fecha || !this.evalLogistica.tipo_id || !this.evalLogistica.nutricionista_id) {
+    if (!this.evalLogistica.fecha || !this.evalLogistica.tipo_id || !this.nutricionistaId) {
       this.mostrarError('Faltan campos obligatorios');
       return;
     }
 
     try {
       this.loading = true;
-      this.cdr.detectChanges();
+      this.cdr.detectChanges(); 
       
       const payload = {
         tipo_id: this.evalLogistica.tipo_id,
-        nutricionista_id: this.evalLogistica.nutricionista_id,
+        nutricionista_id: this.nutricionistaId,
         fecha: this.evalLogistica.fecha.toISOString().split('T')[0],
         estado: this.evalLogistica.estado
       };
@@ -242,36 +192,11 @@ export class AdminNutriComponent implements OnInit {
       this.mostrarError('Error al guardar la sesión');
     } finally {
       this.loading = false;
-      this.cdr.detectChanges();
+      this.cdr.detectChanges(); 
     }
   }
 
-  eliminarSesion(sesion: any) {
-    this.confirmationService.confirm({
-      message: `¿Estás seguro de eliminar la sesión "${sesion.tipo_evaluacion?.nombre}"? Se perderán todos los archivos adjuntos de los estudiantes.`,
-      header: 'Confirmar Eliminación',
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Sí, Eliminar',
-      rejectLabel: 'Cancelar',
-      acceptButtonStyleClass: 'p-button-danger',
-      accept: async () => {
-        try {
-          this.loading = true;
-          this.cdr.detectChanges();
-          await this.supabase.eliminarEvaluacionNutri(sesion.id);
-          this.mostrarExito('Sesión eliminada correctamente');
-          await this.cargarSesiones();
-        } catch (error) {
-          console.error(error);
-          this.mostrarError('Hubo un error al eliminar la sesión');
-        } finally {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }
-      }
-    });
-  }
-
+  // --- LÓGICA MODAL 2: REGISTRAR RESULTADOS ---
   async abrirCalificador(sesion: any) {
     this.evalLogistica = sesion;
     
@@ -279,9 +204,11 @@ export class AdminNutriComponent implements OnInit {
       this.loading = true;
       this.cdr.detectChanges();
 
+      // ✅ 1. Buscamos resultados previos
       const resResultados = await this.supabase.getResultadosPorSesionNutri(sesion.id);
       const resultadosPrevios = resResultados.data || [];
 
+      // ✅ 2. Mapeamos la lista limpiando la selección actual pero cargando el historial
       this.estudiantes.forEach(est => {
         const resultadoGuardado = resultadosPrevios.find(r => r.estudiante_id === est.id);
 
@@ -289,7 +216,7 @@ export class AdminNutriComponent implements OnInit {
         est.archivo_url_previo = resultadoGuardado ? resultadoGuardado.archivo_url : null;
         est.observacion = resultadoGuardado ? resultadoGuardado.observaciones : '';
 
-        // ✅ Extraer y limpiar el nombre del archivo de la URL
+        // Extraer el nombre original del archivo
         if (est.archivo_url_previo) {
           const urlParts = est.archivo_url_previo.split('/');
           const rawName = decodeURIComponent(urlParts[urlParts.length - 1]);
@@ -306,7 +233,7 @@ export class AdminNutriComponent implements OnInit {
       this.mostrarError('Error al cargar los resultados previos.');
     } finally {
       this.loading = false;
-      this.cdr.detectChanges();
+      this.cdr.detectChanges(); 
     }
   }
 
@@ -315,23 +242,23 @@ export class AdminNutriComponent implements OnInit {
     
     if (file) {
       if (file.type !== 'application/pdf') {
-        this.mostrarError('Formato inválido. Sube únicamente archivos PDF.');
+        this.mostrarError('Formato inválido. Por favor, sube únicamente archivos PDF.');
         event.target.value = ''; 
         estudiante.archivoSeleccionado = null;
-        this.cdr.detectChanges();
+        this.cdr.detectChanges(); 
         return;
       }
       
       estudiante.archivoSeleccionado = file;
-      this.cdr.detectChanges();
+      this.cdr.detectChanges(); 
     }
   }
 
   limpiarFila(estudiante: any, fileInput: any) {
     estudiante.archivoSeleccionado = null;
     estudiante.observacion = '';
-    if(fileInput) fileInput.value = ''; // Limpia el input nativo oculto
-    this.cdr.detectChanges();
+    if(fileInput) fileInput.value = ''; // ✅ Limpia el input nativo oculto
+    this.cdr.detectChanges(); 
   }
 
   async guardarNotasFinales() {
@@ -345,7 +272,7 @@ export class AdminNutriComponent implements OnInit {
     try {
       this.guardando = true;
       this.messageService.add({ severity: 'info', summary: 'Guardando', detail: `Subiendo ${porGuardar.length} resultados...` });
-      this.cdr.detectChanges();
+      this.cdr.detectChanges(); 
 
       for (const est of porGuardar) {
         const archivoUrl = await this.supabase.subirArchivoNutricion(est.archivoSeleccionado, est.archivoSeleccionado.name);
@@ -370,7 +297,7 @@ export class AdminNutriComponent implements OnInit {
       }
     } finally {
       this.guardando = false;
-      this.cdr.detectChanges();
+      this.cdr.detectChanges(); 
     }
   }
 

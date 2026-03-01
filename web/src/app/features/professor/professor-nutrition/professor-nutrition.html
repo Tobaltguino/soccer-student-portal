@@ -1,22 +1,121 @@
-<div class="construction-container fadein animation-duration-500">
-    <div class="construction-card">
-        
-        <div class="icon-stack">
-            <div class="gear-large"><i class="pi pi-cog"></i></div>
-            <div class="gear-small"><i class="pi pi-cog"></i></div>
-            <div class="icon-center"><i class="pi pi-heart-fill" style="color: #ef4444;"></i></div> 
+<div class="eval-container p-3">
+    <p-toast position="top-right"></p-toast>
+
+    <header class="flex justify-content-between align-items-center mb-4 page-header">
+        <div class="header-content">
+            <h1 class="text-2xl font-bold m-0 text-900">Resultados Nutricionales</h1>
+            <p class="text-600 m-0 mt-1">Consulta los informes y pautas nutricionales de tus estudiantes.</p>
+        </div>
+        </header>
+
+    <div class="filter-bar card mb-3 p-3 surface-card border-round shadow-1">
+        <div class="horizontal-filters">
+            <div class="filter-item">
+                <p-datepicker [(ngModel)]="filtroFecha" dateFormat="dd/mm/yy" [showIcon]="false" 
+                              placeholder="Filtrar por Fecha" 
+                              (onSelect)="aplicarFiltros()" [showClear]="true" (onClear)="aplicarFiltros()" 
+                              styleClass="w-full"></p-datepicker>
             </div>
 
-        <h2 class="title">Área de Nutricion</h2> <p class="subtitle">
-            Estamos construyendo el módulo de gestión clínica.
-            <br>
-            Pronto podrás gestionar fichas y evoluciones aquí.
-        </p>
+            <div class="filter-item">
+                <p-select [options]="tiposEvaluacion" [(ngModel)]="filtroPrueba" optionLabel="nombre" 
+                          placeholder="Filtrar por Tipo de Evaluación" 
+                          (onChange)="aplicarFiltros()" [showClear]="true" 
+                          styleClass="w-full"></p-select>
+            </div>
 
-        <div class="actions">
-            <button pButton label="Volver al Dashboard" icon="pi pi-arrow-left" 
-                    class="p-button-outlined p-button-secondary" 
-                    routerLink="/professor/dashboard"></button>
+            <div class="filter-btn">
+                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary" 
+                        (click)="limpiarFiltros()" pTooltip="Limpiar"></button>
+            </div>
         </div>
     </div>
+
+    <div class="card shadow-2 border-round surface-card p-3">
+        <p-table [value]="sesionesFiltradas" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="scroll">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width: 20%">Fecha</th>
+                    <th style="width: 50%">Tipo de Evaluación</th>
+                    <th style="width: 15%" class="hidden-mobile">Estado</th>
+                    <th style="width: 15%" class="text-center">Acción</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-sesion>
+                <tr>
+                    <td><span class="font-bold">{{ sesion.fecha | date:'dd/MM/yyyy' }}</span></td>
+                    <td><span class="font-bold text-900">{{ sesion.tipo_evaluacion?.nombre }}</span></td>
+                    <td class="hidden-mobile">
+                        <p-tag [value]="sesion.estado" severity="success"></p-tag>
+                    </td>
+                    <td class="text-center">
+                        <div class="flex justify-content-center">
+                            <button pButton icon="pi pi-eye" class="p-button-rounded p-button-text p-button-info p-button-sm" 
+                                    (click)="verResultados(sesion)" pTooltip="Ver Informe Completo"></button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr><td colspan="4" class="text-center p-4">No hay evaluaciones nutricionales finalizadas disponibles.</td></tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <p-dialog [(visible)]="displayGradesDialog" header="Informe de Resultados" [modal]="true" [style]="{width: '90vw', maxWidth: '1000px'}" [maximizable]="true" styleClass="p-fluid">
+        <ng-template pTemplate="content">
+            <div class="surface-100 p-3 border-round mb-3 flex justify-content-between align-items-center">
+                <div class="flex flex-column">
+                    <span class="text-sm text-600">Evaluación Seleccionada</span>
+                    <span class="text-xl font-bold text-900">{{evalLogistica.tipo_evaluacion?.nombre}}</span>
+                </div>
+                <div class="text-right">
+                    <span class="text-sm text-600 block">Fecha del Informe</span>
+                    <span class="font-bold">{{ evalLogistica.fecha | date:'dd/MM/yyyy' }}</span>
+                </div>
+            </div>
+
+            <p-table [value]="estudiantes" [scrollable]="true" scrollHeight="500px" styleClass="p-datatable-gridlines p-datatable-sm" responsiveLayout="scroll">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 30%">Estudiante</th>
+                        <th style="width: 35%">Documento (PDF)</th>
+                        <th style="width: 35%">Observación Médica</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-estudiante>
+                    <tr>
+                        <td><span class="font-bold text-900">{{estudiante.apellido}}</span>, {{estudiante.nombre}}</td>
+                        
+                        <td>
+                            <div *ngIf="estudiante.archivo_url_previo; else noFile">
+                                <a [href]="estudiante.archivo_url_previo" target="_blank" 
+                                   class="p-button p-component p-button-outlined p-button-danger p-button-sm flex justify-content-center gap-2 w-full text-left" 
+                                   style="text-decoration: none;">
+                                    <i class="pi pi-file-pdf text-lg"></i>
+                                    <span class="white-space-nowrap overflow-hidden text-overflow-ellipsis" [title]="estudiante.nombre_archivo_previo">
+                                        Descargar / Ver PDF
+                                    </span>
+                                </a>
+                            </div>
+                            <ng-template #noFile>
+                                <span class="text-500 italic text-sm"><i class="pi pi-times-circle mr-1"></i> Sin documento</span>
+                            </ng-template>
+                        </td>
+
+                        <td>
+                            <span *ngIf="estudiante.observacion" class="text-700 text-sm line-height-2">{{ estudiante.observacion }}</span>
+                            <span *ngIf="!estudiante.observacion" class="text-400 italic text-sm">-</span>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </ng-template>
+        
+        <ng-template pTemplate="footer">
+            <div class="flex justify-content-end w-full">
+                <button pButton label="Cerrar Informe" icon="pi pi-times" class="p-button-secondary" (click)="displayGradesDialog = false"></button>
+            </div>
+        </ng-template>
+    </p-dialog>
 </div>

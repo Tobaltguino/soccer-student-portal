@@ -925,4 +925,125 @@ async eliminarRangosPorTipo(tipoId: number) {
   async createWebAlianza(datos: any) { return await this.supabase.from('web_alianzas').insert(datos); }
   async updateWebAlianza(id: number, datos: any) { return await this.supabase.from('web_alianzas').update(datos).eq('id', id); }
   async deleteWebAlianza(id: number) { return await this.supabase.from('web_alianzas').delete().eq('id', id); }
+
+  // =========================================
+  // --- MÓDULO NUTRICIÓN ---
+  // =========================================
+
+  // 1. Obtener los tipos de evaluación (Antropometría, Pauta, etc.)
+  async getTiposEvaluacionNutri() {
+    return await this.supabase.from('tipo_evaluacion_nutri').select('*');
+  }
+
+  // 2. Obtener todas las sesiones/evaluaciones creadas para llenar la tabla
+  async getEvaluacionesNutri() {
+    return await this.supabase
+      .from('evaluacion_nutri')
+      .select(`
+        *,
+        tipo_evaluacion:tipo_evaluacion_nutri(nombre)
+      `)
+      .order('fecha', { ascending: false });
+  }
+
+  // 3. Crear una nueva sesión de evaluación (incluyendo el estado)
+  async crearEvaluacionNutri(evaluacion: { tipo_id: string, nutricionista_id: string, fecha: string, estado: string }) {
+    return await this.supabase
+      .from('evaluacion_nutri')
+      .insert(evaluacion)
+      .select()
+      .single();
+  }
+
+  // 4. Actualizar una sesión existente (Ej: Cambiar de PENDIENTE a FINALIZADO o cambiar fecha)
+  async actualizarEvaluacionNutri(id: string, evaluacion: any) {
+    return await this.supabase
+      .from('evaluacion_nutri')
+      .update(evaluacion)
+      .eq('id', id)
+      .select()
+      .single();
+  }
+
+  // 5. Obtener la lista de todos los estudiantes de la academia
+  async getEstudiantesBasico() {
+    return await this.supabase
+      .from('estudiantes')
+      .select('id, nombre, apellido')
+      .order('apellido', { ascending: true });
+  }
+
+  // 6. Subir el archivo PDF/Imagen al Storage
+  async subirArchivoNutricion(file: File, fileName: string) {
+    const filePath = `evaluaciones/${Date.now()}_${fileName}`;
+    const { data, error } = await this.supabase.storage
+      .from('documentos_nutricion')
+      .upload(filePath, file);
+
+    if (error) throw error;
+    
+    // Devolvemos la URL pública para guardarla en la tabla
+    const { data: publicUrlData } = this.supabase.storage
+      .from('documentos_nutricion')
+      .getPublicUrl(filePath);
+
+    return publicUrlData.publicUrl;
+  }
+
+  // 7. Guardar el resultado final y el archivo para un estudiante
+  async guardarResultadoNutri(resultado: { evaluacion_id: string, estudiante_id: string, archivo_url: string, observaciones: string }) {
+    return await this.supabase
+      .from('evaluacion_resultado_nutri')
+      .upsert(resultado, { onConflict: 'evaluacion_id,estudiante_id' }); // ✅ La magia del upsert
+  }
+
+  // 8. Eliminar una sesión de evaluación
+  async eliminarEvaluacionNutri(id: string) {
+    return await this.supabase
+      .from('evaluacion_nutri')
+      .delete()
+      .eq('id', id);
+  }
+
+  // 9. Crear un nuevo tipo de evaluación (catálogo)
+  async crearTipoEvaluacionNutri(tipo: { nombre: string, descripcion: string }) {
+    return await this.supabase
+      .from('tipo_evaluacion_nutri')
+      .insert(tipo)
+      .select()
+      .single();
+  }
+
+  // 10. Eliminar un tipo de evaluación del catálogo
+  async eliminarTipoEvaluacionNutri(id: string) {
+    return await this.supabase
+      .from('tipo_evaluacion_nutri')
+      .delete()
+      .eq('id', id);
+  }
+
+  // 11. Obtener los resultados previos de una sesión
+  async getResultadosPorSesionNutri(sesionId: string) {
+    return await this.supabase
+      .from('evaluacion_resultado_nutri')
+      .select('*')
+      .eq('evaluacion_id', sesionId);
+  }
+
+  // 12. Obtener los resultados nutricionales de un estudiante específico (Vista Alumno)
+  async getResultadosNutriEstudiante(estudianteId: string) {
+    return await this.supabase
+      .from('evaluacion_resultado_nutri')
+      .select(`
+        archivo_url,
+        observaciones,
+        evaluacion:evaluacion_nutri (
+          id,
+          fecha,
+          estado,
+          tipo_evaluacion:tipo_evaluacion_nutri (nombre)
+        )
+      `)
+      .eq('estudiante_id', estudianteId);
+  }
 }

@@ -4,11 +4,10 @@
 
     <header class="flex justify-content-between align-items-center mb-4 page-header">
         <div class="header-content">
-            <h1 class="text-2xl font-bold m-0 text-900">Admin General: Nutrición</h1>
-            <p class="text-600 m-0 mt-1">Gestión global de pautas y mediciones de la academia.</p>
+            <h1 class="text-2xl font-bold m-0 text-900">Evaluaciones Nutricionales</h1>
+            <p class="text-600 m-0 mt-1">Gestión de pautas y mediciones de todos los estudiantes.</p>
         </div>
         <div class="flex gap-2 header-actions">
-            <button pButton label="Configurar Tests" icon="pi pi-cog" class="p-button-outlined p-button-secondary p-button-sm" (click)="abrirConfiguracionTipos()"></button>
             <button pButton label="Nueva Sesión" icon="pi pi-plus" class="p-button-primary p-button-sm" (click)="abrirNuevo()"></button>
         </div>
     </header>
@@ -51,10 +50,10 @@
         <p-table [value]="sesionesFiltradas" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="scroll">
             <ng-template pTemplate="header">
                 <tr>
-                    <th style="width: 15%">Fecha</th>
-                    <th style="width: 35%">Tipo de Evaluación</th>
-                    <th style="width: 15%" class="hidden-mobile">Estado</th>
-                    <th style="width: 35%" class="text-center">Acciones</th>
+                    <th style="width: 20%">Fecha</th>
+                    <th style="width: 40%">Tipo de Evaluación</th>
+                    <th style="width: 20%" class="hidden-mobile">Estado</th>
+                    <th style="width: 20%" class="text-center">Acciones</th>
                 </tr>
             </ng-template>
             <ng-template pTemplate="body" let-sesion>
@@ -68,7 +67,6 @@
                         <div class="flex justify-content-center gap-2">
                             <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-secondary p-button-sm" (click)="editarSesion(sesion)" pTooltip="Editar Logística"></button>
                             <button pButton icon="pi pi-file-arrow-up" class="p-button-rounded p-button-success p-button-sm" (click)="abrirCalificador(sesion)" pTooltip="Adjuntar Resultados"></button>
-                            <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger p-button-sm" (click)="eliminarSesion(sesion)" pTooltip="Eliminar Sesión"></button>
                         </div>
                     </td>
                 </tr>
@@ -78,51 +76,6 @@
             </ng-template>
         </p-table>
     </div>
-
-    <p-dialog [(visible)]="displayTiposDialog" header="Configurar Tipos de Evaluación" [modal]="true" [style]="{width: '600px', maxWidth: '90vw'}" styleClass="p-fluid">
-        <ng-template pTemplate="content">
-            
-            <div class="surface-100 p-3 border-round mb-4">
-                <h4 class="m-0 mb-3 text-700">Agregar Nuevo Test</h4>
-                
-                <div class="field mt-2">
-                    <label class="font-bold text-sm block">Nombre <span class="text-red-500">*</span></label>
-                    <input type="text" pInputText [(ngModel)]="nuevoTipo.nombre" placeholder="Ej: Medición Antropométrica">
-                </div>
-                
-                <div class="field">
-                    <label class="font-bold text-sm block">Descripción</label>
-                    <input type="text" pInputText [(ngModel)]="nuevoTipo.descripcion" placeholder="Opcional">
-                </div>
-                
-                <div class="flex justify-content-end mt-3">
-                    <button pButton label="Guardar Test" icon="pi pi-save" class="p-button-success w-auto" 
-                            (click)="guardarNuevoTipo()" [disabled]="!nuevoTipo.nombre"></button>
-                </div>
-            </div>
-
-            <p-table [value]="tiposEvaluacion" [scrollable]="true" scrollHeight="300px" styleClass="p-datatable-sm p-datatable-striped">
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th style="width: 40%">Nombre del Test</th>
-                        <th style="width: 45%">Descripción</th>
-                        <th style="width: 15%" class="text-center">Acción</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-tipo>
-                    <tr>
-                        <td><span class="font-bold text-900">{{ tipo.nombre }}</span></td>
-                        <td class="text-sm text-600">{{ tipo.descripcion || 'Sin descripción' }}</td>
-                        <td class="text-center">
-                            <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger p-button-sm" 
-                                    (click)="eliminarTipo(tipo)" pTooltip="Eliminar Test"></button>
-                        </td>
-                    </tr>
-                </ng-template>
-            </p-table>
-
-        </ng-template>
-    </p-dialog>
 
     <p-dialog [(visible)]="displayMainDialog" [header]="evalLogistica.id ? 'Editar Sesión' : 'Nueva Sesión'" [modal]="true" [style]="{width: '450px'}" styleClass="p-fluid">
         <ng-template pTemplate="content">
@@ -135,11 +88,6 @@
             <div class="field">
                 <label class="font-bold">Tipo de Evaluación <span class="text-red-500 font-bold">*</span></label>
                 <p-select [options]="tiposEvaluacion" [(ngModel)]="evalLogistica.tipo_id" optionLabel="nombre" optionValue="id" placeholder="Selecciona el tipo" appendTo="body"></p-select>
-            </div>
-
-            <div class="field">
-                <label class="font-bold">Profesional a Cargo <span class="text-red-500 font-bold">*</span></label>
-                <p-select [options]="nutricionistas" [(ngModel)]="evalLogistica.nutricionista_id" optionLabel="nombreCompleto" optionValue="id" placeholder="Asignar Nutricionista" appendTo="body"></p-select>
             </div>
             
             <div class="field" *ngIf="evalLogistica.id">
