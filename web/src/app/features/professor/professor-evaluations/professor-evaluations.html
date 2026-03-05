@@ -18,28 +18,28 @@
                 <p-datepicker [(ngModel)]="filtroFecha" dateFormat="dd/mm/yy" [showIcon]="false" 
                               placeholder="Filtrar por Fecha" 
                               (onSelect)="aplicarFiltros()" [showClear]="true" (onClear)="aplicarFiltros()" 
-                              styleClass="w-full"></p-datepicker>
+                              styleClass="w-full" appendTo="body"></p-datepicker>
             </div>
 
             <div class="filter-item">
                 <p-select [options]="grupos" [(ngModel)]="filtroGrupo" optionLabel="nombre" 
                           placeholder="Tus Grupos" 
                           (onChange)="aplicarFiltros()" [showClear]="true" 
-                          styleClass="w-full"></p-select>
+                          styleClass="w-full" appendTo="body"></p-select>
             </div>
 
             <div class="filter-item">
                 <p-select [options]="tiposEvaluacion" [(ngModel)]="filtroPrueba" optionLabel="nombre" 
                           placeholder="Filtrar por Prueba" 
                           (onChange)="aplicarFiltros()" [showClear]="true" 
-                          styleClass="w-full"></p-select>
+                          styleClass="w-full" appendTo="body"></p-select>
             </div>
 
             <div class="filter-item">
                 <p-select [options]="opcionesEstadoFiltro" [(ngModel)]="filtroEstado" optionLabel="label" optionValue="value" 
                           placeholder="Filtrar por Estado" 
                           (onChange)="aplicarFiltros()" [showClear]="true" 
-                          styleClass="w-full">
+                          styleClass="w-full" appendTo="body">
                     <ng-template let-option pTemplate="item">
                         <p-tag [value]="option.label" [severity]="option.value === 'PENDIENTE' ? 'warn' : 'success'"></p-tag>
                     </ng-template>
@@ -53,30 +53,41 @@
         </div>
     </div>
 
-    <div class="card shadow-2 border-round surface-card p-3">
-        <p-table [value]="sesiones" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="scroll">
+    <div class="card shadow-2 border-round surface-card p-3 card-table">
+        <p-table [value]="sesiones" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="stack" [breakpoint]="'960px'">
             <ng-template pTemplate="header">
                 <tr>
                     <th style="width: 20%">Fecha</th>
                     <th style="width: 25%">Grupo</th>
                     <th style="width: 25%">Prueba</th>
-                    <th style="width: 15%" class="hidden-mobile">Estado</th>
+                    <th style="width: 15%">Estado</th>
                     <th style="width: 15%" class="text-center">Acciones</th>
                 </tr>
             </ng-template>
             <ng-template pTemplate="body" let-sesion>
                 <tr>
-                    <td><span class="font-bold">{{ sesion.fecha | date:'dd/MM/yyyy' }}</span></td>
-                    <td><p-tag [value]="sesion.grupos?.nombre" severity="info"></p-tag></td>
-                    <td><span class="font-bold text-900">{{ sesion.tipo_evaluacion?.nombre }}</span></td>
-                    <td class="hidden-mobile">
+                    <td>
+                        <span class="p-column-title">Fecha</span>
+                        <span class="font-bold">{{ sesion.fecha | date:'dd/MM/yyyy' }}</span>
+                    </td>
+                    <td>
+                        <span class="p-column-title">Grupo</span>
+                        <p-tag [value]="sesion.grupos?.nombre" severity="info"></p-tag>
+                    </td>
+                    <td>
+                        <span class="p-column-title">Prueba</span>
+                        <span class="font-bold text-900">{{ sesion.tipo_evaluacion?.nombre }}</span>
+                    </td>
+                    <td>
+                        <span class="p-column-title">Estado</span>
                         <p-tag [value]="sesion.estado" [severity]="sesion.estado === 'PENDIENTE' ? 'warn' : 'success'"></p-tag>
                     </td>
                     <td class="text-center">
-                        <div class="flex justify-content-center gap-2">
+                        <span class="p-column-title">Acciones</span>
+                        <div class="flex justify-content-end md:justify-content-center gap-2">
                             <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-secondary p-button-sm" (click)="editarSesion(sesion)" pTooltip="Editar Logística"></button>
                             <button pButton icon="pi pi-user-edit" class="p-button-rounded p-button-success p-button-sm" (click)="abrirCalificador(sesion)" pTooltip="Calificar Alumnos"></button>
-                            </div>
+                        </div>
                     </td>
                 </tr>
             </ng-template>

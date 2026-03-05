@@ -1,32 +1,60 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { ToastModule } from 'primeng/toast'; // <-- 1. IMPORTAMOS EL MÓDULO VISUAL
+import { MessageService } from 'primeng/api';
+
+import { IdleService } from './core/services/idle.service'; 
+import { SupabaseService } from './core/services/supabase.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, ButtonModule],
-  // Asegúrate de que estos nombres coincidan con tus archivos reales
+  imports: [RouterOutlet, ButtonModule, ToastModule], // <-- 2. LO AGREGAMOS AQUÍ
+  providers: [MessageService],
   templateUrl: './app.html', 
   styleUrl: './app.css'
 })
-export class App implements OnInit { 
+export class App implements OnInit, OnDestroy { 
   title = 'ProFutbol';
 
-  // Esta función se ejecuta apenas abres la página web
+  constructor(
+    private idleService: IdleService,
+    private supabaseService: SupabaseService,
+    private messageService: MessageService
+  ) {}
+
   ngOnInit() {
     this.checkThemePreference();
+
+    // 1. Vigilar el estado de la sesión en Supabase
+    this.supabaseService.supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        this.idleService.iniciarMonitoreo();
+      } else {
+        this.idleService.detenerMonitoreo();
+      }
+    });
+
+    // 2. Mostrar la alerta cuando expira la sesión
+    this.idleService.onIdleTimeout.subscribe(() => {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Sesión Expirada',
+        detail: 'Por tu seguridad, la sesión se cerró por inactividad.',
+        life: 6000 
+      });
+    });
   }
 
-  // Lógica para detectar el tema guardado
+  ngOnDestroy() {
+    this.idleService.detenerMonitoreo();
+  }
+
   checkThemePreference() {
-    // 1. Revisar si el usuario ya guardó una preferencia antes
     const savedTheme = localStorage.getItem('theme');
-    
-    // 2. Revisar si el PC/Celular del usuario está en modo oscuro
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-    // 3. Aplicar la clase al <body>
     if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
       document.body.classList.add('dark-mode');
     } else {

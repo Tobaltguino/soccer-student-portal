@@ -36,7 +36,11 @@
    4. TABLAS Y CONTENEDORES
    ========================================= */
 .card-table { background-color: var(--bg-card); padding: 0.5rem; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
-.hidden-mobile { display: table-cell; }
+
+/* Ocultar títulos duplicados en escritorio */
+:host ::ng-deep .p-column-title {
+    display: none;
+}
 
 /* =========================================
    5. FORMULARIOS (MODALES)
@@ -51,11 +55,60 @@
 :host ::ng-deep .p-inputnumber-input { width: 100% !important; }
 
 /* =========================================
-   7. RESPONSIVE (MÓVIL)
+   7. RESPONSIVE (MÓVIL - ESTILO CLASES)
    ========================================= */
-@media (max-width: 768px) {
+@media (max-width: 960px) {
+    /* Filtros hacia abajo */
     .horizontal-filters { flex-direction: column !important; align-items: stretch !important; }
     .filter-item, .filter-btn { width: 100% !important; margin-bottom: 0.5rem; }
     .filter-btn button { width: 100% !important; }
-    .hidden-mobile { display: none !important; }
+
+    /* --- MAGIA: TABLA A TARJETAS MÓVILES --- */
+    
+    /* Mostrar títulos de columna alineados a la izquierda */
+    :host ::ng-deep .card-table .p-column-title {
+        display: inline-block;
+        font-weight: 700;
+        min-width: 120px;
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        text-align: left; /* Títulos a la izquierda */
+    }
+
+    /* Convertir Celdas en filas flexibles (Orden normal) */
+    :host ::ng-deep .card-table .p-datatable-tbody > tr > td {
+        display: flex;
+        flex-direction: row; /* Orden visual normal */
+        justify-content: space-between;
+        align-items: center;
+        width: 100% !important;
+        padding: 0.8rem 1rem !important;
+        border-bottom: 1px solid var(--border-color) !important;
+        text-align: right; /* Datos alineados a la derecha */
+    }
+
+    /* Quitar borde inferior a la última celda */
+    :host ::ng-deep .card-table .p-datatable-tbody > tr > td:last-child {
+        border-bottom: none !important;
+    }
+
+    /* Alinear los botones de acción a la derecha junto con los datos */
+    :host ::ng-deep .card-table .p-datatable-tbody > tr > td:last-child .flex {
+        justify-content: flex-end !important;
+    }
+
+    /* Convertir las filas (TR) en Tarjetas */
+    :host ::ng-deep .card-table .p-datatable-tbody > tr {
+        border: 1px solid var(--border-color);
+        margin-bottom: 1rem;
+        display: block;
+        border-radius: 10px;
+        background: var(--bg-card, #ffffff);
+    }
+
+    /* Ocultar el Thead nativo de la tabla principal */
+    :host ::ng-deep .card-table .p-datatable-thead {
+        display: none !important;
+    }
 }

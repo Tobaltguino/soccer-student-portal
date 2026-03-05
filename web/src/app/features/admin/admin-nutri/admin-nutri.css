@@ -165,4 +165,72 @@ input[type="file"]::file-selector-button:hover {
     .hidden-mobile { 
         display: none !important; 
     }
+
+    /* -----------------------------------------
+       TABLA A TARJETAS (CARD VIEW)
+       ----------------------------------------- */
+    :host ::ng-deep .table-cards-mobile table {
+        display: block;
+    }
+
+    /* Ocultamos los encabezados de la tabla original */
+    :host ::ng-deep .table-cards-mobile thead {
+        display: none;
+    }
+
+    :host ::ng-deep .table-cards-mobile tbody {
+        display: block;
+    }
+
+    /* Cada fila se convierte en una tarjeta */
+    :host ::ng-deep .table-cards-mobile tr {
+        display: block;
+        background: var(--bg-card, #ffffff);
+        border: 1px solid var(--border-color, #e2e8f0);
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Cada celda se vuelve una fila dentro de la tarjeta */
+    :host ::ng-deep .table-cards-mobile td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border: none !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        text-align: right;
+    }
+
+    /* Quitamos el borde a la última celda (acciones) */
+    :host ::ng-deep .table-cards-mobile td:last-child {
+        border-bottom: none !important;
+        justify-content: center;
+        padding-top: 1rem;
+        padding-bottom: 0;
+    }
+
+    /* Inyectamos los "Labels" para que se sepa qué es cada dato */
+    :host ::ng-deep .table-cards-mobile td:nth-child(1)::before {
+        content: "Fecha";
+        font-weight: 600;
+        color: var(--text-secondary, #64748b);
+    }
+
+    :host ::ng-deep .table-cards-mobile td:nth-child(2)::before {
+        content: "Tipo de Evaluación";
+        font-weight: 600;
+        color: var(--text-secondary, #64748b);
+    }
+
+    /* Si decidiste dejar la columna de estado visible en móvil (quitando .hidden-mobile), descomenta esto: */
+    /*
+    :host ::ng-deep .table-cards-mobile td:nth-child(3)::before {
+        content: "Estado";
+        font-weight: 600;
+        color: var(--text-secondary, #64748b);
+    }
+    */
 }

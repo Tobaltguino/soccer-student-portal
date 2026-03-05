@@ -26,40 +26,35 @@
 }
 
 /* =========================================================
-   FIX DEFINITIVO: PERFIL DEL ESTUDIANTE EN LA TABLA
+   PERFIL DEL ESTUDIANTE EN LA TABLA
    ========================================================= */
-
-/* 1. Contenedor principal: Fuerza fila horizontal (Foto - Texto) */
 .estudiante-profile-wrapper {
     display: flex !important;
     flex-direction: row !important;
-    flex-wrap: nowrap !important; /* Prohíbe terminantemente que se bajen los elementos */
+    flex-wrap: nowrap !important; 
     align-items: center !important;
     justify-content: flex-start !important;
     gap: 15px !important;
     width: 100% !important;
 }
 
-/* 2. Contenedor de texto: Fuerza columna vertical (Nombre arriba, RUT abajo) */
 .estudiante-profile-text {
     display: flex !important;
     flex-direction: column !important;
-    align-items: flex-start !important; /* Alinea texto a la izquierda */
+    align-items: flex-start !important; 
     justify-content: center !important;
     overflow: hidden !important;
 }
 
-/* 3. Nombre */
 .est-nombre {
     font-weight: 700 !important;
     color: var(--text-main) !important;
-    font-size: 1rem !important;
+    font-size: 1.05rem !important;
     line-height: 1.2 !important;
-    white-space: nowrap !important; /* Evita que el apellido se baje */
+    white-space: nowrap !important; 
     text-align: left !important;
 }
 
-/* 4. RUT */
 .est-rut {
     font-size: 0.85rem !important;
     color: var(--text-secondary) !important;
@@ -70,16 +65,15 @@
     white-space: nowrap !important;
 }
 
-/* Evitar que el avatar se deforme */
 :host ::ng-deep .estudiante-profile-wrapper .p-avatar {
     flex-shrink: 0 !important;
     border: 2px solid var(--primary-color) !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 /* =========================================================
    ESTRUCTURA DEL HISTORIAL (MODAL)
    ========================================================= */
-
 .historial-scroll-area { 
     max-height: 350px; 
     overflow-y: auto; 
@@ -106,13 +100,15 @@
     justify-content: space-between;
     padding: 12px;
     margin-bottom: 8px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    transition: background-color 0.2s;
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    transition: all 0.2s ease;
+    background: var(--bg-card, #ffffff);
 }
 
 .historial-row:hover {
-    background-color: var(--surface-hover, rgba(0,0,0,0.02));
+    background-color: var(--surface-hover, #f8fafc);
+    border-color: #cbd5e1;
 }
 
 .col-fecha { flex: 0 0 100px; font-weight: 700; color: var(--text-main); }
@@ -131,15 +127,143 @@
     border: 1px solid var(--border-color) !important;
 }
 
-/* --- RESPONSIVE --- */
+/* =========================================================
+   RESPONSIVE (MÓVIL)
+   ========================================================= */
 @media (max-width: 768px) {
-    .historial-scroll-area {
-        max-height: 60vh; 
+    /* Ajustes generales de inputs */
+    :host ::ng-deep .w-full-mobile {
+        width: 100% !important;
     }
+    .selector-card .field {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    /* -----------------------------------------
+       TABLA A TARJETAS 
+       ----------------------------------------- */
+    :host ::ng-deep .table-cards-mobile table,
+    :host ::ng-deep .table-cards-mobile tbody,
+    :host ::ng-deep .table-cards-mobile tr {
+        display: block;
+        width: 100%;
+    }
+
+    :host ::ng-deep .table-cards-mobile thead {
+        display: none !important;
+    }
+
+    :host ::ng-deep .table-cards-mobile tr {
+        background: var(--bg-card, #ffffff);
+        border: 1px solid var(--border-color, #e2e8f0);
+        border-radius: 16px;
+        margin-bottom: 1.5rem;
+        padding: 1.25rem; 
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    :host ::ng-deep .table-cards-mobile td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.85rem 0;
+        border: none !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        text-align: right;
+        width: 100%;
+    }
+
+    /* COLUMNA 1: Perfil (Actúa como Header de la tarjeta) */
+    :host ::ng-deep .table-cards-mobile td:nth-child(1) {
+        border-bottom: 2px dashed #e2e8f0 !important; 
+        padding-top: 0;
+        padding-bottom: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    :host ::ng-deep .table-cards-mobile td:nth-child(1) .estudiante-profile-wrapper {
+        justify-content: flex-start !important;
+    }
+
+    /* COLUMNA 2: Presencias */
+    :host ::ng-deep .table-cards-mobile td:nth-child(2)::before {
+        content: "Presencias / Total";
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-secondary, #64748b);
+    }
+
+    /* COLUMNA 3: Rendimiento */
+    :host ::ng-deep .table-cards-mobile td:nth-child(3)::before {
+        content: "Rendimiento";
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-secondary, #64748b);
+    }
+
+    /* COLUMNA 4: Botón Historial */
+    :host ::ng-deep .table-cards-mobile td:last-child {
+        border-bottom: none !important;
+        display: block;
+        padding-top: 1.25rem;
+        padding-bottom: 0;
+    }
+
+    /* Convertimos el botón redondo en un botón ancho "Call to Action" */
+    :host ::ng-deep .table-cards-mobile .btn-historial-mobile {
+        width: 100% !important;
+        border-radius: 8px !important;
+        background-color: var(--surface-hover, #f0f9ff) !important;
+        border: 1px solid #bae6fd !important;
+        justify-content: center;
+        height: 45px;
+        color: var(--primary-color) !important;
+    }
+    :host ::ng-deep .table-cards-mobile .btn-historial-mobile::after {
+        content: "Ver Historial";
+        font-family: inherit;
+        font-weight: 700;
+        font-size: 0.95rem;
+        margin-left: 8px;
+    }
+
+    /* --- AJUSTES DEL MODAL (HISTORIAL) --- */
+    .historial-scroll-area { max-height: 60vh; }
+    .mobile-dialog-filters { flex-direction: column; }
 }
 
 @media (max-width: 480px) {
+    /* Convertimos las filas del historial en mini-tarjetas */
     .historial-header { display: none; }
-    .historial-row { flex-direction: column; align-items: flex-start; gap: 8px; }
-    .col-estado { width: 100%; text-align: left; }
+    
+    .historial-row { 
+        flex-direction: column; 
+        align-items: flex-start; 
+        gap: 10px; 
+        padding: 1rem;
+        position: relative;
+    }
+    
+    .col-fecha { 
+        width: 100%; 
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 8px;
+        font-size: 0.95rem;
+    }
+    
+    .col-lugar { 
+        width: 100%; 
+        padding: 0; 
+        font-size: 0.9rem;
+    }
+    
+    .col-estado { 
+        width: 100%; 
+        text-align: left; 
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        display: flex;
+        justify-content: flex-end;
+    }
 }

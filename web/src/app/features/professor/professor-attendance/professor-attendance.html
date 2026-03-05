@@ -13,21 +13,24 @@
             <div class="field flex-grow-1" style="min-width: 200px;">
                 <label class="font-bold text-sm mb-2 block"><i class="pi pi-users mr-2 text-primary"></i>Seleccionar Grupo</label>
                 <p-select [options]="grupos" [(ngModel)]="grupoSeleccionado" optionLabel="nombre" optionValue="id" 
-                          placeholder="Escoge un grupo" (onChange)="onFilterChange()" styleClass="w-full"></p-select>
+                          placeholder="Escoge un grupo" (onChange)="onFilterChange()" styleClass="w-full"
+                          appendTo="body"></p-select>
             </div>
             <div class="field">
                 <label class="font-bold text-sm mb-2 block">Mes</label>
-                <p-select [options]="meses" [(ngModel)]="filtroMes" (onChange)="onFilterChange()" styleClass="w-min"></p-select>
+                <p-select [options]="meses" [(ngModel)]="filtroMes" (onChange)="onFilterChange()" 
+                          styleClass="w-min w-full-mobile" appendTo="body"></p-select>
             </div>
             <div class="field">
                 <label class="font-bold text-sm mb-2 block">Año</label>
-                <p-select [options]="anios" [(ngModel)]="filtroAnio" (onChange)="onFilterChange()" styleClass="w-min"></p-select>
+                <p-select [options]="anios" [(ngModel)]="filtroAnio" (onChange)="onFilterChange()" 
+                          styleClass="w-min w-full-mobile" appendTo="body"></p-select>
             </div>
         </div>
     </div>
 
     <div class="card shadow-2 border-round surface-card p-0 overflow-hidden" *ngIf="!loading && estudiantesAsistencia.length > 0">
-        <p-table [value]="estudiantesAsistencia" [rows]="10" [paginator]="true" styleClass="p-datatable-sm" responsiveLayout="stack">
+        <p-table [value]="estudiantesAsistencia" [rows]="10" [paginator]="true" styleClass="p-datatable-sm table-cards-mobile" responsiveLayout="scroll">
             <ng-template pTemplate="header">
                 <tr>
                     <th style="width: 40%; min-width: 250px;">Estudiante</th>
@@ -60,14 +63,14 @@
                         </div>
                     </td>
                     <td class="text-center">
-                        <span class="text-sm font-bold text-700">{{est.resumen}}</span>
+                        <span class="text-base font-bold text-700">{{est.resumen}}</span>
                     </td>
                     <td class="text-center">
-                        <p-tag [value]="est.porcentaje + '%'" [severity]="getSeverity(est.porcentaje)" styleClass="px-3 py-1 text-sm"></p-tag>
+                        <p-tag [value]="est.porcentaje + '%'" [severity]="getSeverity(est.porcentaje)" styleClass="px-3 py-1 text-sm font-bold"></p-tag>
                     </td>
                     <td class="text-center">
-                        <button pButton icon="pi pi-search-plus" 
-                                class="p-button-rounded p-button-text p-button-info" 
+                        <button pButton icon="pi pi-calendar" 
+                                class="p-button-rounded p-button-text p-button-info btn-historial-mobile" 
                                 (click)="verHistorialIndividual(est)"
                                 pTooltip="Ver detalle diario"></button>
                     </td>
@@ -81,7 +84,7 @@
         <p class="mt-3 text-500">Calculando estadísticas...</p>
     </div>
 
-    <div *ngIf="!loading && grupoSeleccionado && estudiantesAsistencia.length === 0" class="text-center p-5 card shadow-1">
+    <div *ngIf="!loading && grupoSeleccionado && estudiantesAsistencia.length === 0" class="text-center p-5 card shadow-1" style="min-height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
         <i class="pi pi-info-circle text-400 mb-3" style="font-size: 2rem"></i>
         <p class="text-600 m-0">No se encontraron registros de asistencia para este grupo en el periodo seleccionado.</p>
     </div>
@@ -89,9 +92,11 @@
     <p-dialog [(visible)]="displayHistorial" [header]="'Historial: ' + alumnoSeleccionado?.nombre + ' ' + alumnoSeleccionado?.apellido" 
               [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" [draggable]="false" [resizable]="false">
         
-        <div class="flex gap-2 mb-4 bg-gray-100 p-2 border-round">
-            <p-select [options]="meses" [(ngModel)]="filtroMes" (onChange)="cargarDetalleHistorial()" styleClass="flex-grow-1"></p-select>
-            <p-select [options]="anios" [(ngModel)]="filtroAnio" (onChange)="cargarDetalleHistorial()"></p-select>
+        <div class="flex gap-2 mb-4 bg-gray-100 p-2 border-round mobile-dialog-filters">
+            <p-select [options]="meses" [(ngModel)]="filtroMes" (onChange)="cargarDetalleHistorial()" 
+                      styleClass="flex-grow-1 w-full" appendTo="body"></p-select>
+            <p-select [options]="anios" [(ngModel)]="filtroAnio" (onChange)="cargarDetalleHistorial()" 
+                      styleClass="w-full" appendTo="body"></p-select>
         </div>
 
         <div *ngIf="loadingHistorial" class="text-center p-4"><i class="pi pi-spin pi-spinner text-4xl text-primary"></i></div>
@@ -111,7 +116,7 @@
                 </div>
                 
                 <div class="col-lugar">
-                    <i class="pi pi-map-marker mr-1"></i>
+                    <i class="pi pi-map-marker mr-1 text-500"></i>
                     <span class="text-truncate">{{ h.clases.lugar }}</span>
                 </div>
                 
@@ -124,13 +129,13 @@
                 
             </div>
 
-            <div *ngIf="historialAlumno.length === 0" class="text-center p-5 border-2 border-dashed border-300">
+            <div *ngIf="historialAlumno.length === 0" class="text-center p-5 border-2 border-dashed border-300 border-round">
                 <p class="text-500 m-0">Sin clases registradas en este mes.</p>
             </div>
         </div>
 
         <ng-template pTemplate="footer">
-            <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text" (click)="displayHistorial = false"></button>
+            <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text w-full-mobile" (click)="displayHistorial = false"></button>
         </ng-template>
     </p-dialog>
 </div>

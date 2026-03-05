@@ -148,6 +148,7 @@ input[type="file"]::file-selector-button:hover {
    7. RESPONSIVE (MÓVIL)
    ========================================= */
 @media (max-width: 768px) {
+    /* Filtros en móvil */
     .horizontal-filters { 
         flex-direction: column !important; 
         align-items: stretch !important; 
@@ -164,5 +165,79 @@ input[type="file"]::file-selector-button:hover {
     
     .hidden-mobile { 
         display: none !important; 
+    }
+
+    /* -----------------------------------------
+       TABLA A TARJETAS (CARD VIEW)
+       Todo esto SOLO aplica en pantallas < 768px
+       ----------------------------------------- */
+    :host ::ng-deep .table-cards-mobile table,
+    :host ::ng-deep .table-cards-mobile tbody,
+    :host ::ng-deep .table-cards-mobile tr {
+        display: block;
+        width: 100%;
+    }
+
+    /* Ocultamos los encabezados de columnas */
+    :host ::ng-deep .table-cards-mobile thead {
+        display: none !important;
+    }
+
+    /* Diseño de la Tarjeta */
+    :host ::ng-deep .table-cards-mobile tr {
+        background: var(--bg-card, #ffffff);
+        border: 1px solid var(--border-color, #e2e8f0);
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Diseño de las filas dentro de la Tarjeta (las celdas td) */
+    :host ::ng-deep .table-cards-mobile td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border: none !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        text-align: right;
+        width: 100%;
+    }
+
+    /* Inyección de los títulos de las columnas */
+    :host ::ng-deep .table-cards-mobile td:nth-child(1)::before {
+        content: "Fecha";
+        font-weight: 600;
+        color: var(--text-secondary, #64748b);
+    }
+
+    :host ::ng-deep .table-cards-mobile td:nth-child(2)::before {
+        content: "Tipo de Evaluación";
+        font-weight: 600;
+        color: var(--text-secondary, #64748b);
+    }
+
+    /* Columna 3: Observación (se apila hacia abajo por ser texto largo) */
+    :host ::ng-deep .table-cards-mobile td:nth-child(3) {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+        gap: 0.5rem;
+    }
+    
+    :host ::ng-deep .table-cards-mobile td:nth-child(3)::before {
+        content: "Observación Médica";
+        font-weight: 600;
+        color: var(--text-secondary, #64748b);
+    }
+
+    /* Columna 4: Documento (Sin borde inferior y bloque completo) */
+    :host ::ng-deep .table-cards-mobile td:last-child {
+        border-bottom: none !important;
+        display: block;
+        padding-top: 1rem;
+        padding-bottom: 0;
+        text-align: center;
     }
 }
