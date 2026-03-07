@@ -82,7 +82,6 @@ export class AdminGuidesManagementComponent implements OnInit {
   }
 
   async guardarGuia() {
-    // Si es NUEVA, exige archivo. Si es EDICIÓN, el archivo es opcional.
     if (!this.nuevaGuia.titulo || (!this.nuevaGuia.id && !this.archivoSeleccionado)) {
       this.messageService.add({ severity: 'warn', summary: 'Incompleto', detail: 'Debe ingresar un título y asegurarse de tener un archivo adjunto.' });
       return;
@@ -92,10 +91,18 @@ export class AdminGuidesManagementComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      // Si el profe seleccionó un NUEVO archivo, lo subimos. Si no, mantenemos la URL vieja.
       let urlFinal = this.nuevaGuia.archivo_url;
+      let archivoViejoParaBorrar = null; 
+
+      // 1. Si el profe seleccionó un NUEVO archivo, lo subimos
       if (this.archivoSeleccionado) {
-        urlFinal = await this.supabase.uploadGuiaFile(this.archivoSeleccionado);
+        
+        // Si estamos editando y ya había una URL, la guardamos para borrarla al final
+        if (this.nuevaGuia.id && this.nuevaGuia.archivo_url) {
+          archivoViejoParaBorrar = this.nuevaGuia.archivo_url;
+        }
+        
+        urlFinal = await this.supabase.uploadGuiaFile(this.archivoSeleccionado, this.nuevaGuia.titulo);
       }
       
       const guiaParaBD = {
@@ -104,10 +111,16 @@ export class AdminGuidesManagementComponent implements OnInit {
         archivo_url: urlFinal
       };
 
-      // ✅ DECISIÓN: ¿Actualizar o Crear?
+      // 2. ¿Creamos o Actualizamos en la Base de Datos?
       if (this.nuevaGuia.id) {
         const { error } = await this.supabase.updateGuia(this.nuevaGuia.id, guiaParaBD);
         if (error) throw error;
+        
+        // ✅ 3. LA MAGIA: Si todo se actualizó bien en la BD y hay un archivo viejo, lo borramos
+        if (archivoViejoParaBorrar) {
+          await this.supabase.deleteGuiaFile(archivoViejoParaBorrar);
+        }
+
         this.messageService.add({ severity: 'success', summary: 'Actualizada', detail: 'La guía se modificó correctamente.' });
       } else {
         const { error } = await this.supabase.createGuia(guiaParaBD);

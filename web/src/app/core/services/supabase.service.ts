@@ -345,7 +345,6 @@ export class SupabaseService {
       .eq('id', id);
 
     if (dbError) {
-      console.error("Error al actualizar datos:", dbError);
       throw dbError; 
     }
 
@@ -357,7 +356,6 @@ export class SupabaseService {
       });
 
       if (authError) {
-        console.error("Error al actualizar el correo en Auth:", authError);
         throw new Error("Se actualizaron los datos, pero el sistema bloqueó el cambio de correo.");
       }
     }
@@ -589,7 +587,6 @@ export class SupabaseService {
         .single();
 
       if (errEst || !estudiante?.grupo_id) {
-        console.error('Error al buscar grupo del estudiante:', errEst);
         return { data: [], error: errEst };
       }
 
@@ -627,7 +624,6 @@ export class SupabaseService {
       return { data: clasesFormateadas, error: null };
 
     } catch (error) {
-      console.error('Error crítico en getClasesAlumno:', error);
       return { data: null, error };
     }
   }
@@ -718,7 +714,6 @@ export class SupabaseService {
 
       return { data: dataFormateada, error: null };
     } catch (error) {
-      console.error('Error en getEvaluacionesAlumno:', error);
       return { data: null, error };
     }
   }
@@ -765,7 +760,6 @@ export class SupabaseService {
       return { data: profesoresLimpios, error: null };
 
     } catch (error) {
-      console.error('Error en getProfesoresDeEstudiante:', error);
       return { data: null, error };
     }
   }
@@ -783,7 +777,6 @@ export class SupabaseService {
     try {
       // 1. Validar que sea imagen (opcional pero recomendado)
       if (!archivo.type.startsWith('image/')) {
-        console.error('El archivo no es una imagen');
         return null;
       }
 
@@ -802,7 +795,6 @@ export class SupabaseService {
         });
 
       if (uploadError) {
-        console.error('Error subiendo imagen:', uploadError.message);
         return null;
       }
 
@@ -814,7 +806,6 @@ export class SupabaseService {
       return data.publicUrl;
 
     } catch (error) {
-      console.error('Error fatal subiendo imagen:', error);
       return null;
     }
   }
@@ -879,19 +870,30 @@ export class SupabaseService {
       .order('created_at', { ascending: false });
   }
 
-  // 2. Subir el archivo (PDF, Word) al Storage
-  async uploadGuiaFile(file: File) {
+  // 2. Subir el archivo al Storage usando el TÍTULO DE LA GUÍA
+  async uploadGuiaFile(file: File, tituloGuia: string) {
     const fileExt = file.name.split('.').pop();
-    // Creamos un nombre único para evitar que se sobrescriban archivos con el mismo nombre
-    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+    
+    // 1. Limpiamos el título para que sea un nombre de archivo seguro
+    // Esto quita tildes, caracteres raros y cambia espacios por guiones bajos
+    const tituloLimpio = tituloGuia
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Elimina tildes
+      .replace(/[^a-zA-Z0-9]/g, '_') // Reemplaza símbolos raros por '_'
+      .replace(/_+/g, '_') // Evita múltiples guiones bajos seguidos
+      .toLowerCase(); // Lo pasamos a minúsculas para mayor consistencia
 
+    const fileName = `${tituloLimpio}.${fileExt}`;
+
+    // 2. Subimos con upsert: true (Si ya existe un archivo con ese nombre, lo sobreescribe)
     const { data, error } = await this.supabase.storage
       .from('guias_trabajo')
-      .upload(fileName, file);
+      .upload(fileName, file, {
+        upsert: true 
+      });
 
     if (error) throw error;
 
-    // Obtener la URL pública para descargar el archivo después
+    // 3. Obtener la URL pública
     const { data: urlData } = this.supabase.storage
       .from('guias_trabajo')
       .getPublicUrl(fileName);
@@ -913,6 +915,27 @@ export class SupabaseService {
   // 5. Actualizar guía existente
   async updateGuia(id: string, guia: any) {
     return await this.supabase.from('work_guides').update(guia).eq('id', id);
+  }
+
+  // 6. Eliminar el archivo físico (PDF, Word) del Storage
+  async deleteGuiaFile(fileUrl: string) {
+    try {
+      // 1. Extraemos solo el nombre del archivo de la URL pública
+      const urlParts = fileUrl.split('/');
+      const fileName = urlParts[urlParts.length - 1];
+
+      // 2. Le decimos a Supabase que lo borre del bucket
+      const { error } = await this.supabase.storage
+        .from('guias_trabajo')
+        .remove([fileName]);
+
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      // Como acordamos, mantenemos la consola limpia. 
+      // Si falla el borrado del archivo "viejo", no queremos romper la aplicación.
+      return { success: false };
+    }
   }
 
   // ==========================================
