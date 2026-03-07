@@ -15,7 +15,7 @@ import { TagModule } from 'primeng/tag';
 import { CheckboxModule } from 'primeng/checkbox';
 import { TooltipModule } from 'primeng/tooltip';
 import { DatePickerModule } from 'primeng/datepicker'; 
-import { FileUploadModule } from 'primeng/fileupload'; // ✅ NUEVO IMPORT
+import { FileUploadModule } from 'primeng/fileupload'; 
 
 // Services & Directives
 import { FilterService, ConfirmationService, MessageService } from 'primeng/api';
@@ -31,7 +31,7 @@ import { RutValidator } from '../../../../shared/directives/rut-validator.direct
     CommonModule, FormsModule, TableModule, ButtonModule, DialogModule, 
     InputTextModule, ConfirmDialogModule, SelectModule, MultiSelectModule, 
     ToastModule, TagModule, CheckboxModule, TooltipModule, DatePickerModule,
-    FileUploadModule, // ✅ AGREGADO
+    FileUploadModule, 
     RutFormatDirective
   ],
   providers: [ConfirmationService, MessageService, FilterService],
@@ -84,7 +84,7 @@ export class AdminUsersComponent implements OnInit {
   tituloDialogo: string = '';
   maxDate: Date = new Date(); 
 
-  // --- VARIABLES PARA FOTOS (NUEVO) ---
+  // --- VARIABLES PARA FOTOS ---
   archivoSeleccionado: File | null = null;
   previewUrl: string | null = null;
   uploadingFoto: boolean = false;
@@ -103,7 +103,7 @@ export class AdminUsersComponent implements OnInit {
     tipo_profesor: '',
     posicionesIds: [], 
     gruposIds: [],
-    foto_url: null // ✅
+    foto_url: null 
   };
 
   constructor(
@@ -157,7 +157,13 @@ export class AdminUsersComponent implements OnInit {
         case 'estudiantes': res = await this.supabase.getEstudiantes(); break;
         case 'profesores': res = await this.supabase.getProfesores(); break;
         case 'admins': res = await this.supabase.getAdmins(); break;
-        case 'kinesiologos': res = await this.supabase.getKinesiologos(); break;
+        case 'kinesiologos': 
+          // ✅ Necesitamos traer los grupos asignados a cada kine en la consulta principal
+          res = await this.supabase.supabase.from('kinesiologos').select(`
+            *,
+            grupos_kine (grupo_id)
+          `); 
+          break;
         case 'nutricionistas': res = await this.supabase.getNutricionistas(); break;
       }
       if (res?.data) this.dataList = res.data;
@@ -177,7 +183,7 @@ export class AdminUsersComponent implements OnInit {
     return age;
   }
 
-  // --- GESTIÓN DE FOTOS (NUEVO) ---
+  // --- GESTIÓN DE FOTOS ---
 
   onFileSelected(event: any) {
     const file = event.files[0];
@@ -187,7 +193,6 @@ export class AdminUsersComponent implements OnInit {
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.previewUrl = e.target.result;
-        // 🚀 Despertamos a Angular para que muestre la imagen de inmediato
         this.cdr.detectChanges(); 
       };
       reader.readAsDataURL(file);
@@ -197,7 +202,7 @@ export class AdminUsersComponent implements OnInit {
   clearFoto() {
     this.archivoSeleccionado = null;
     this.previewUrl = null;
-    this.userForm.foto_url = null; // Marcar como null para borrar en DB al guardar
+    this.userForm.foto_url = null; 
   }
 
   // --- ABM (CRUD) ---
@@ -214,7 +219,7 @@ export class AdminUsersComponent implements OnInit {
         this.messageService.add({ 
             severity: 'info', 
             summary: 'Cuenta Protegida', 
-            detail: 'Los datos del administrador maestro solo pueden ser modificados desde la base de datos por seguridad.' 
+            detail: 'Los datos del administrador maestro solo pueden ser modificados desde la base de datos.' 
         });
         return;
     }
@@ -240,7 +245,6 @@ export class AdminUsersComponent implements OnInit {
         activo: usuario.activo ?? true 
     };
 
-    // ✅ Cargar preview
     this.previewUrl = usuario.foto_url || null;
 
     // 3. Cargar relaciones
@@ -250,6 +254,11 @@ export class AdminUsersComponent implements OnInit {
 
     if (this.vistaActual === 'profesores' && usuario.grupos_profesores) {
         this.userForm.gruposIds = usuario.grupos_profesores.map((g: any) => g.grupo_id);
+    }
+
+    // ✅ Cargar grupos del Kinesiólogo
+    if (this.vistaActual === 'kinesiologos' && usuario.grupos_kine) {
+        this.userForm.gruposIds = usuario.grupos_kine.map((g: any) => g.grupo_id);
     }
 
     this.displayDialog = true;
@@ -262,7 +271,6 @@ export class AdminUsersComponent implements OnInit {
         posicionesIds: [], gruposIds: [], 
         foto_url: null 
     };
-    // Limpiar estados de foto
     this.archivoSeleccionado = null;
     this.previewUrl = null;
     this.uploadingFoto = false;
@@ -270,48 +278,40 @@ export class AdminUsersComponent implements OnInit {
 
   async guardar() {
     if (this.isEditing && this.userForm.rut === '1-1') {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Acción no permitida para esta cuenta.' });
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Acción no permitida.' });
         return;
     }
-    // 1. VALIDACIONES BÁSICAS (Campos comunes)
+    
+    // Validaciones
     if (!this.userForm.nombre || !this.userForm.apellido || !this.userForm.email || !this.userForm.rut) {
-        this.messageService.add({ severity: 'warn', summary: 'Campos Incompletos', detail: 'Por favor completa todos los campos marcados con *.' });
+        this.messageService.add({ severity: 'warn', summary: 'Incompleto', detail: 'Completa todos los campos (*).' });
         return;
     }
 
-    // 2. VALIDACIÓN DE EMAIL
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(this.userForm.email)) {
-        this.messageService.add({ severity: 'error', summary: 'Email Inválido', detail: 'Ingresa un correo electrónico con formato válido.' });
+        this.messageService.add({ severity: 'error', summary: 'Email Inválido', detail: 'Formato incorrecto.' });
         return;
     }
 
-    // 3. VALIDACIÓN DE RUT
     const rutLimpio = this.userForm.rut.replace(/\./g, '').trim();
     if (!RutValidator.esValido(rutLimpio)) {
-        this.messageService.add({ severity: 'error', summary: 'RUT Inválido', detail: 'El formato del RUT no es correcto o no existe.' });
+        this.messageService.add({ severity: 'error', summary: 'RUT Inválido', detail: 'Formato incorrecto.' });
         return;
     }
 
-    // 4. VALIDACIONES ESPECÍFICAS POR ROL
-    if (this.vistaActual === 'estudiantes') {
-        if (!this.userForm.fecha_nacimiento) {
-            this.messageService.add({ severity: 'warn', summary: 'Faltan Datos', detail: 'La fecha de nacimiento es obligatoria para los estudiantes.' });
-            return;
-        }
-    } else if (this.vistaActual === 'profesores') {
-        if (!this.userForm.tipo_profesor) {
-            this.messageService.add({ severity: 'warn', summary: 'Faltan Datos', detail: 'La especialidad es obligatoria para los profesores.' });
-            return;
-        }
+    if (this.vistaActual === 'estudiantes' && !this.userForm.fecha_nacimiento) {
+        this.messageService.add({ severity: 'warn', summary: 'Faltan Datos', detail: 'La fecha es obligatoria.' });
+        return;
+    } else if (this.vistaActual === 'profesores' && !this.userForm.tipo_profesor) {
+        this.messageService.add({ severity: 'warn', summary: 'Faltan Datos', detail: 'Especialidad obligatoria.' });
+        return;
     }
 
-    // --- Si pasa todas las validaciones, procedemos a guardar ---
     this.loading = true;
     this.cdr.detectChanges();
 
     try {
-        // 5. SUBIR FOTO SI CORRESPONDE
         let finalFotoUrl = this.userForm.foto_url;
 
         if (this.archivoSeleccionado) {
@@ -330,12 +330,10 @@ export class AdminUsersComponent implements OnInit {
 
         const { nombre, apellido, activo } = this.userForm;
         
-        // Objeto base usando el rutLimpio
-        // Objeto base usando el rut original del formulario
         const datosBase: any = { 
             nombre, 
             apellido, 
-            rut: this.userForm.rut, // ✅ AHORA SÍ (se guarda con puntos y guion)
+            rut: this.userForm.rut, 
             activo,
             foto_url: finalFotoUrl 
         };
@@ -359,25 +357,14 @@ export class AdminUsersComponent implements OnInit {
         let userId = this.userForm.id;
 
         if (this.isEditing) {
-            // EDITAR
             const { error } = await this.supabase.updateUsuario(
-                this.vistaActual, 
-                userId, 
-                datosBase, 
-                this.userForm.email.toLowerCase()
+                this.vistaActual, userId, datosBase, this.userForm.email.toLowerCase()
             );
             if (error) throw error;
-
         } else {
-            // CREAR
-            // Contraseña sin puntos ni guiones (usando el rutLimpio ya validado)
             const generatedPassword = rutLimpio.replace(/-/g, '');
-
             const { data, error } = await this.supabase.crearUsuarioCompleto(
-                this.userForm.email.toLowerCase(), 
-                generatedPassword, 
-                datosBase, 
-                this.vistaActual
+                this.userForm.email.toLowerCase(), generatedPassword, datosBase, this.vistaActual
             );
             if (error) throw error;
             userId = data?.user?.id;
@@ -391,48 +378,54 @@ export class AdminUsersComponent implements OnInit {
             if (this.vistaActual === 'profesores') {
                 await this.supabase.actualizarGruposProfesor(userId, this.userForm.gruposIds);
             }
+            // ✅ Guardar grupos del Kinesiólogo
+            if (this.vistaActual === 'kinesiologos') {
+                const res = await this.supabase.getGruposDeKine(userId);
+                const gruposViejos = res.data || [];
+                for (let viejo of gruposViejos) {
+                   await this.supabase.removerGrupoDeKine(userId, viejo.grupo_id);
+                }
+                for (let nuevoGrupoId of this.userForm.gruposIds) {
+                   await this.supabase.asignarGrupoAKine(userId, nuevoGrupoId);
+                }
+            }
         }
 
-        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario guardado correctamente' });
+        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario guardado.' });
         this.displayDialog = false;
         
         setTimeout(() => this.cargarDatos(), 100);
 
     } catch (error: any) {
         console.error(error);
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: error.message || 'Error al guardar usuario' });
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: error.message || 'Error al guardar.' });
     } finally {
         this.loading = false;
         this.uploadingFoto = false;
         this.cdr.markForCheck(); 
     }
-}
-
-  // --- ACCIONES DE ESTADO Y ELIMINAR ---
+  }
 
   async toggleEstado(usuario: any) {
     if (usuario.rut === '1-1') {
-      this.messageService.add({ severity: 'error', summary: 'Acceso Denegado', detail: 'No se puede desactivar al administrador maestro.' });
+      this.messageService.add({ severity: 'error', summary: 'Acceso Denegado', detail: 'No se puede desactivar al admin.' });
       return;
     }
     const accion = usuario.activo ? 'desactivar' : 'activar';
     this.confirmationService.confirm({
-      message: `¿Estás seguro de que deseas ${accion} la cuenta de ${usuario.nombre} ${usuario.apellido}?`,
+      message: `¿Deseas ${accion} a ${usuario.nombre} ${usuario.apellido}?`,
       header: 'Confirmar estado',
       icon: usuario.activo ? 'pi pi-exclamation-triangle' : 'pi pi-check-circle',
-      acceptLabel: 'Sí, cambiar',
-      rejectLabel: 'Cancelar',
+      acceptLabel: 'Sí', rejectLabel: 'Cancelar',
       acceptButtonStyleClass: usuario.activo ? 'p-button-danger' : 'p-button-success',
       accept: async () => {
         const nuevoEstado = !usuario.activo;
-        
-        // Mantener foto y datos al cambiar estado
         const datosUpdate: any = { 
             nombre: usuario.nombre, 
             apellido: usuario.apellido, 
             rut: usuario.rut, 
             activo: nuevoEstado,
-            foto_url: usuario.foto_url // ✅ Mantener foto
+            foto_url: usuario.foto_url
         };
 
         if (this.vistaActual === 'estudiantes') {
@@ -450,7 +443,7 @@ export class AdminUsersComponent implements OnInit {
           this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Estado actualizado.' });
           this.cdr.detectChanges();
         } catch (err) {
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el estado.' });
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar.' });
         }
       }
     });
@@ -458,25 +451,27 @@ export class AdminUsersComponent implements OnInit {
 
   async eliminar(usuario: any) {
     if (usuario.rut === '1-1') {
-      this.messageService.add({ severity: 'error', summary: 'Acceso Denegado', detail: 'El administrador maestro no puede ser eliminado.' });
+      this.messageService.add({ severity: 'error', summary: 'Denegado', detail: 'No se puede eliminar.' });
       return;
     }
     this.confirmationService.confirm({
-      message: `¿Eliminar permanentemente a ${usuario.nombre} ${usuario.apellido}?`,
-      header: 'Confirmar Eliminación',
-      icon: 'pi pi-trash',
-      acceptLabel: 'Sí, eliminar',
-      acceptButtonStyleClass: 'p-button-danger',
-      rejectLabel: 'Cancelar',
+      message: `¿Eliminar permanentemente a ${usuario.nombre}?`,
+      header: 'Confirmar', icon: 'pi pi-trash',
+      acceptLabel: 'Sí', acceptButtonStyleClass: 'p-button-danger', rejectLabel: 'Cancelar',
       accept: async () => {
         const { error } = await this.supabase.deleteUsuario(this.vistaActual, usuario.id);
         if (!error) {
-          this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Usuario borrado permanentemente.' });
+          this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Usuario borrado.' });
           this.cargarDatos();
         } else {
-            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el usuario.' });
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar.' });
         }
       }
     });
+  }
+
+  getGrupoNombre(grupoId: any): string {
+    const grupo = this.listaGrupos.find(g => g.id === grupoId);
+    return grupo ? grupo.nombre : 'Desconocido';
   }
 }

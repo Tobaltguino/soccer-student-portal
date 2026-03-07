@@ -203,9 +203,14 @@
 
 /* Anchos específicos para cada input */
 .range-inline-row .field-edad { flex: 0 0 60px; }
-.range-inline-row .field-etiqueta { flex: 1; min-width: 90px; }
+
+/* ✅ Se redujo el ancho de Etiqueta */
+.range-inline-row .field-etiqueta { flex: 0 0 110px; } 
+
 .range-inline-row .field-minmax { flex: 0 0 65px; }
-.range-inline-row .field-color { flex: 0 0 130px; }
+
+/* ✅ El Color ahora ocupa el espacio sobrante (flex: 1) */
+.range-inline-row .field-color { flex: 1; min-width: 120px; } 
 
 .range-inline-row .btn-fixed {
     flex: 0 0 42px; 

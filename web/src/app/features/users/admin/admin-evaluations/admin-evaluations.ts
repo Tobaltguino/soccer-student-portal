@@ -42,6 +42,7 @@ export class AdminEvaluationsComponent implements OnInit {
   sesionesOriginales: any[] = [];  
   grupos: any[] = [];
   tiposEvaluacion: any[] = [];
+  todosLosRangos: any[] = [];      // ✅ GUARDAMOS LOS RANGOS EN MEMORIA
   estudiantesGrupo: any[] = [];    
 
   // --- FILTROS ---
@@ -73,13 +74,12 @@ export class AdminEvaluationsComponent implements OnInit {
   usarRangos: boolean = false;
 
   // --- FORMULARIOS ---
-  tipoForm: any = { nombre: '', unidad_medida: '', descripcion: '' };
+  tipoForm: any = { id: null, nombre: '', unidad_medida: '', descripcion: '' }; 
   rangosForm: any[] = [];
   
-  // Rango con Edad y color verde por defecto
   nuevoRango: any = { 
-    edad_min: null,   // ✅ NUEVO
-    edad_max: null,   // ✅ NUEVO
+    edad_min: null,   
+    edad_max: null,   
     nombre_etiqueta: '', 
     valor_min: null, 
     valor_max: null, 
@@ -111,15 +111,19 @@ export class AdminEvaluationsComponent implements OnInit {
   async cargarDatosIniciales() {
     this.loading = true;
     try {
-      const [g, t, s] = await Promise.all([
+      // ✅ Agregamos la consulta de los rangos aquí para que carguen al principio
+      const [g, t, s, r] = await Promise.all([
         this.supabase.getGrupos(),
         this.supabase.getTiposEvaluacion(),
-        this.supabase.getSesionesEvaluacion()
+        this.supabase.getSesionesEvaluacion(),
+        this.supabase.supabase.from('evaluacion_rangos').select('*') // Descarga masiva
       ]);
 
       this.grupos = g.data || [];
       this.tiposEvaluacion = t.data || [];
       this.sesionesOriginales = s.data || [];
+      this.todosLosRangos = r.data || []; // Guardamos en memoria
+      
       this.sesiones = [...this.sesionesOriginales];
       this.aplicarFiltros(); 
 
@@ -181,13 +185,29 @@ export class AdminEvaluationsComponent implements OnInit {
   // ==========================================
   // 3. GESTIÓN DE TIPOS DE EVALUACIÓN Y RANGOS
   // ==========================================
-  
   abrirNuevoTipo() {
-    this.tipoForm = { nombre: '', unidad_medida: '', descripcion: '' };
+    this.cancelarEdicionTipo(); 
+    this.displayTipoDialog = true;
+  }
+
+  cancelarEdicionTipo() {
+    this.tipoForm = { id: null, nombre: '', unidad_medida: '', descripcion: '' };
     this.rangosForm = [];
     this.usarRangos = false;
     this.nuevoRango = { edad_min: null, edad_max: null, nombre_etiqueta: '', valor_min: null, valor_max: null, color_sugerido: '#22c55e' };
-    this.displayTipoDialog = true;
+  }
+
+  // ✅ AHORA ES SÍNCRONA Y ALTIRO
+  editarTipoTest(test: any) {
+    this.tipoForm = { ...test }; 
+    
+    // Filtramos los rangos directamente desde la memoria
+    this.rangosForm = this.todosLosRangos
+      .filter(r => r.tipo_evaluacion_id === test.id)
+      .sort((a, b) => a.edad_min - b.edad_min || a.valor_min - b.valor_min); // Ordenar por edad y luego por valor
+
+    this.usarRangos = this.rangosForm.length > 0;
+    this.cdr.detectChanges(); // Se dibuja instantáneamente
   }
 
   agregarRangoALista() {
@@ -201,7 +221,6 @@ export class AdminEvaluationsComponent implements OnInit {
       return;
     }
     
-    // Cambiamos >= a > por si el valor min y max son exactos (Ej: min 10, max 10)
     if (this.nuevoRango.valor_min > this.nuevoRango.valor_max) {
       this.messageService.add({ severity: 'warn', summary: 'Valor Inválido', detail: 'El valor mínimo no puede ser mayor al máximo' });
       return;
@@ -213,7 +232,6 @@ export class AdminEvaluationsComponent implements OnInit {
     const vMaxNuevo = this.nuevoRango.valor_max;
     const etiquetaNueva = this.nuevoRango.nombre_etiqueta.trim().toUpperCase();
 
-    // Validar cruce de datos
     const conflicto = this.rangosForm.find(r => {
       const solapanEdades = (eMinNuevo <= r.edad_max) && (eMaxNuevo >= r.edad_min);
       const solapanValores = (vMinNuevo <= r.valor_max) && (vMaxNuevo >= r.valor_min);
@@ -226,7 +244,7 @@ export class AdminEvaluationsComponent implements OnInit {
       this.messageService.add({ 
         severity: 'error', 
         summary: 'Cruce de Datos Detectado', 
-        detail: `No se puede agregar. Los valores (${vMinNuevo}-${vMaxNuevo}) chocan con el rango '${conflicto.nombre_etiqueta}' (${conflicto.valor_min}-${conflicto.valor_max}) para alumnos de ${conflicto.edad_min} a ${conflicto.edad_max} años.` 
+        detail: `No se puede agregar. Los valores chocan con el rango '${conflicto.nombre_etiqueta}' para las mismas edades.` 
       });
       return;
     }
@@ -252,25 +270,44 @@ export class AdminEvaluationsComponent implements OnInit {
       this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'El Nombre y la Unidad son obligatorios (*)' });
       return;
     }
-    // ... el resto de la función guardarNuevoTipo() se mantiene igual ...
+    
     this.loading = true;
     try {
-      const { data, error } = await this.supabase.createTipoEvaluacion(this.tipoForm);
-      if (error) throw error;
+      let testId = this.tipoForm.id;
+      
+      if (testId) {
+        // Actualizar
+        const payload = { nombre: this.tipoForm.nombre, unidad_medida: this.tipoForm.unidad_medida, descripcion: this.tipoForm.descripcion };
+        const { error } = await this.supabase.updateTipoEvaluacion(testId, payload);
+        if (error) throw error;
+        
+        await this.supabase.eliminarRangosPorTipo(testId); 
+      } else {
+        // Crear
+        const payload = { nombre: this.tipoForm.nombre, unidad_medida: this.tipoForm.unidad_medida, descripcion: this.tipoForm.descripcion };
+        const { data, error } = await this.supabase.createTipoEvaluacion(payload);
+        if (error) throw error;
+        testId = (data as any[])[0].id;
+      }
 
-      if (this.usarRangos && data && Array.isArray(data) && data.length > 0 && this.rangosForm.length > 0) {
-        const testId = (data as any[])[0].id;
+      if (this.usarRangos && this.rangosForm.length > 0) {
         const rangosParaDB = this.rangosForm.map(r => ({
-          ...r,
+          edad_min: r.edad_min,
+          edad_max: r.edad_max,
+          nombre_etiqueta: r.nombre_etiqueta,
+          valor_min: r.valor_min,
+          valor_max: r.valor_max,
+          color_sugerido: r.color_sugerido,
           tipo_evaluacion_id: testId
         }));
+        
         const { error: errorRangos } = await this.supabase.createRango(rangosParaDB);
         if (errorRangos) throw errorRangos;
       }
 
-      this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Test configurado correctamente' });
-      this.displayTipoDialog = false;
-      this.cargarDatosIniciales(); 
+      this.messageService.add({ severity: 'success', summary: 'Éxito', detail: testId ? 'Test actualizado correctamente' : 'Test configurado correctamente' });
+      this.cancelarEdicionTipo(); 
+      this.cargarDatosIniciales(); // Al recargar se actualiza la memoria "todosLosRangos"
 
     } catch (err: any) {
       console.error(err);
@@ -295,6 +332,10 @@ export class AdminEvaluationsComponent implements OnInit {
           const { error } = await this.supabase.eliminarTipoEvaluacion(id);
           if (error) throw error;
           this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Test y datos asociados eliminados' });
+          
+          if (this.tipoForm.id === id) {
+              this.cancelarEdicionTipo();
+          }
           this.cargarDatosIniciales();
         } catch (err: any) {
           this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el test.' });
@@ -318,13 +359,11 @@ export class AdminEvaluationsComponent implements OnInit {
   }
 
   async crearSesionPlanificada() {
-    // 1. Validar campos obligatorios
     if (!this.evalLogistica.grupo_id || !this.evalLogistica.tipo_evaluacion_id || !this.evalLogistica.fecha) {
         this.messageService.add({ severity: 'warn', summary: 'Faltan datos', detail: 'Complete todos los campos obligatorios marcados con (*)' });
         return;
     }
 
-    // 2. Validar formato de fecha
     const fechaSeleccionada = new Date(this.evalLogistica.fecha);
     if (isNaN(fechaSeleccionada.getTime())) {
         this.messageService.add({ severity: 'warn', summary: 'Fecha Inválida', detail: 'Ingrese una fecha válida para la sesión.' });

@@ -50,11 +50,13 @@ import { KineLayoutComponent } from './features/users/kine/kine-layout/kine-layo
 import { KineDashboardComponent } from './features/users/kine/kine-dashboard/kine-dashboard';
 import { KineClassesComponent } from './features/users/kine/kine-classes/kine-classes';
 import { KineEvaluationComponent } from './features/users/kine/kine-evaluation/kine-evaluation';
-import { KineAttendanceComponent } from './features/users/kine/kine-attendance/kine-attendance';
 import { KineScheduleComponent } from './features/users/kine/kine-schedule/kine-schedule';
 import { KineNutritionComponent } from './features/users/kine/kine-nutrition/kine-nutrition';
 import { KineViewGuidesComponent } from './features/users/kine/kine-view-guides/kine-view-guides';
-import { KineKinesiologyComponent } from './features/users/kine/kine-kinesiology/kine-kinesiology';
+import { KineEvaluationsKineComponent } from './features/users/kine/kine-evaluations-kine/kine-evaluations-kine';
+import { KineInjuryTrackingComponent } from './features/users/kine/kine-injury-tracking/kine-injury-tracking';
+import { KinePatientsComponent } from './features/users/kine/kine-patients/kine-patients';
+import { KineStudentProfileComponent } from './features/users/kine/kine-student-profile/kine-student-profile';
 
 // --- NUTRI IMPORTS ---
 import { NutriLayoutComponent } from './features/users/nutri/nutri-layout/nutri-layout';
@@ -149,11 +151,14 @@ export const routes: Routes = [
             { path: 'dashboard', component: KineDashboardComponent },
             { path: 'classes', component: KineClassesComponent },
             { path: 'evaluations', component: KineEvaluationComponent },
-            { path: 'attendance', component: KineAttendanceComponent },
             { path: 'schedule', component: KineScheduleComponent },
             { path: 'nutrition', component: KineNutritionComponent },
             { path: 'guides', component: KineViewGuidesComponent },
-            { path: 'kinesiology', component: KineKinesiologyComponent },
+            { path: 'injury-tracking', component: KineInjuryTrackingComponent },
+            { path: 'patients', component: KinePatientsComponent },
+            { path: 'student-profile', component: KineStudentProfileComponent },
+            { path: 'evaluation-kine', component: KineEvaluationsKineComponent },
+
         ]
     },
 

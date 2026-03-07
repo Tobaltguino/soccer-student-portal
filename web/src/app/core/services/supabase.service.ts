@@ -201,6 +201,36 @@ export class SupabaseService {
   }
 
   // ==========================================
+  // --- ASIGNACIÓN DE GRUPOS A KINESIÓLOGOS ---
+  // ==========================================
+
+  // 1. Obtener los grupos asignados a un Kinesiólogo específico (usando su ID)
+  async getGruposDeKine(kineId: string) {
+    return await this.supabase
+      .from('grupos_kine')
+      .select(`
+        grupo_id,
+        grupos (*)
+      `)
+      .eq('kinesiologo_id', kineId);
+  }
+
+  // 2. (Solo Admin) Asignar un grupo a un kinesiólogo
+  async asignarGrupoAKine(kineId: string, grupoId: string) {
+    return await this.supabase
+      .from('grupos_kine')
+      .insert({ kinesiologo_id: kineId, grupo_id: grupoId });
+  }
+
+  // 3. (Solo Admin) Quitarle un grupo a un kinesiólogo
+  async removerGrupoDeKine(kineId: string, grupoId: string) {
+    return await this.supabase
+      .from('grupos_kine')
+      .delete()
+      .match({ kinesiologo_id: kineId, grupo_id: grupoId });
+  }
+
+  // ==========================================
   // 3. MAESTROS (CONFIGURACIÓN GLOBAL)
   // ==========================================
 
@@ -446,14 +476,22 @@ export class SupabaseService {
   }
 
   // Obtener rangos de un test específico
-  // Obtener rangos de un test específico
   async getRangosPorTipo(tipoId: number) {
     return await this.supabase
       .from('evaluacion_rangos')
       .select('*')
       .eq('tipo_evaluacion_id', tipoId)
-      .order('edad_min', { ascending: true })   // ✅ Ordena por edad inicial
-      .order('valor_min', { ascending: true }); // ✅ Luego por valor
+      .order('edad_min', { ascending: true })  
+      .order('valor_min', { ascending: true });
+  }
+
+  // Actualizar el nombre y configuración básica de un test
+  async updateTipoEvaluacion(id: number, payload: any) {
+    return await this.supabase
+      .from('tipo_evaluacion') // <-- Asegúrate de que este sea el nombre real de tu tabla de tests
+      .update(payload)
+      .eq('id', id)
+      .select();
   }
 
   // Guardar un rango
@@ -466,14 +504,13 @@ export class SupabaseService {
     return await this.supabase.from('evaluacion_rangos').delete().eq('id', id);
   }
 
-  // En src/app/core/services/supabase.service.ts
 
-async eliminarRangosPorTipo(tipoId: number) {
-  return await this.supabase
-    .from('evaluacion_rangos')
-    .delete()
-    .eq('tipo_evaluacion_id', tipoId); // Borra todos los que pertenezcan a ese test
-}
+  async eliminarRangosPorTipo(tipoId: number) {
+    return await this.supabase
+      .from('evaluacion_rangos')
+      .delete()
+      .eq('tipo_evaluacion_id', tipoId); // Borra todos los que pertenezcan a ese test
+  }
 
   async getSesionesEvaluacion() {
     return await this.supabase

@@ -1,0 +1,239 @@
+/* VARIABLES LOCALES DEL LAYOUT */
+:host {
+    /* Variables específicas del Sidebar (siempre oscuro) */
+    --sidebar-bg: #0f172a;
+    --sidebar-text: #e2e8f0;
+    --accent-color: #3b82f6;
+    
+    --sidebar-width: 260px;
+    --sidebar-collapsed: 80px;
+    --header-height: 70px;
+    
+    display: block;
+    height: 100vh;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    overflow: hidden;
+}
+
+/* LAYOUT GENERAL */
+.layout-container {
+    display: flex;
+    height: 100vh;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    transition: all 0.3s ease;
+}
+
+/* --- SIDEBAR (Barra Lateral) --- */
+.sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--sidebar-bg);
+    color: var(--sidebar-text);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    transition: width 0.3s ease;
+    z-index: 100;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+}
+
+/* Colapsado (Escritorio) */
+.layout-container.collapsed .sidebar { width: var(--sidebar-collapsed); }
+
+/* Ocultar textos al colapsar */
+.layout-container.collapsed .logo-area,
+.layout-container.collapsed .menu-label,
+.layout-container.collapsed .menu-item span,
+.layout-container.collapsed .logout-btn span,
+.layout-container.collapsed .brand-text {
+    display: none !important;
+}
+
+/* Centrar iconos al colapsar */
+.layout-container.collapsed .brand { justify-content: center; padding: 0; }
+.layout-container.collapsed .menu-item,
+.layout-container.collapsed .logout-btn { justify-content: center; padding-left: 0; padding-right: 0; }
+
+/* BRAND (Logo + Título) */
+.brand {
+    height: var(--header-height);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.logo-area { display: flex; align-items: center; gap: 1rem; overflow: hidden; white-space: nowrap; }
+.logo-icon {
+    width: 32px; height: 32px; background: transparent;
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; flex-shrink: 0; color: white;
+}
+.brand-text h2 { margin: 0; font-size: 1rem; color: white; }
+.brand-text span { font-size: 0.7rem; color: #94a3b8; letter-spacing: 1px; }
+
+.toggle-btn {
+    background: none; border: none; color: #94a3b8; cursor: pointer;
+    font-size: 1.3rem; padding: 8px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+}
+.toggle-btn:hover { color: white; background: rgba(255,255,255,0.1); }
+
+/* MENU */
+.menu { flex: 1; padding: 1rem 0; overflow-y: auto; overflow-x: hidden; }
+.menu-label {
+    font-size: 0.7rem; font-weight: bold; color: #64748b;
+    padding: 1rem 1.5rem 0.5rem; letter-spacing: 0.5px;
+}
+.menu-item {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 0.8rem 1.5rem; color: #cbd5e1; text-decoration: none;
+    font-size: 0.95rem; transition: 0.2s; white-space: nowrap; cursor: pointer;
+}
+.menu-item:hover { background: rgba(255,255,255,0.05); color: white; }
+.menu-item.active-link { background: var(--accent-color); color: white; }
+.menu-item i { font-size: 1.1rem; width: 24px; text-align: center; }
+
+.sidebar-footer { padding: 1rem; border-top: 1px solid rgba(255,255,255,0.1); }
+.logout-btn {
+    width: 100%; display: flex; align-items: center; gap: 0.8rem;
+    background: transparent; border: 1px solid rgba(255,255,255,0.1);
+    color: #fca5a5; padding: 0.8rem; border-radius: 8px;
+    cursor: pointer; transition: 0.2s; white-space: nowrap;
+}
+.logout-btn:hover { background: rgba(239,68,68,0.1); border-color: #ef4444; }
+
+/* --- MAIN CONTENT (Contenido Principal) --- */
+.main-content {
+    flex: 1; display: flex; flex-direction: column;
+    overflow: hidden; position: relative;
+}
+
+/* BARRA SUPERIOR */
+.top-bar {
+    height: var(--header-height);
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+/* Grupo Derecha (Tema + Perfil) */
+.header-right {
+    display: flex; align-items: center; gap: 1rem;
+    margin-left: auto;
+}
+
+/* BOTÓN DE TEMA (Sol/Luna) */
+.theme-toggle-btn {
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+}
+.theme-toggle-btn:hover {
+    background: var(--border-color);
+    transform: rotate(15deg);
+    color: var(--accent-color);
+}
+
+/* PERFIL DE USUARIO */
+/* --- ESTILO DE PERFIL TOP BAR (PORTAL ALUMNO) --- */
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatar-container {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Mejora de nitidez */
+    image-rendering: -webkit-optimize-contrast;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+}
+
+.avatar-initials {
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+/* Ajuste para modo oscuro */
+.dark-mode .avatar-container {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.user-info {
+    text-align: right; line-height: 1.2;
+    display: flex; flex-direction: column; justify-content: center;
+}
+.user-info .name { display: block; font-weight: 700; font-size: 0.9rem; color: var(--text-main); }
+.user-info .role { font-size: 0.75rem; color: var(--accent-color); font-weight: 500; }
+.avatar {
+    width: 38px; height: 38px; background: var(--accent-color);
+    color: white; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem;
+}
+
+/* CONTENIDO DE PÁGINA */
+.page-content { flex: 1; overflow-y: auto; padding: 2rem; }
+
+/* UTILITIES */
+.mobile-only { display: none; }
+.mobile-menu-btn { display: none; }
+.mobile-overlay { display: none; }
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .desktop-only { display: none !important; }
+    .mobile-only { display: block; }
+    .top-bar { padding: 0 1rem; }
+    .mobile-menu-btn {
+        display: block; background: none; border: none;
+        font-size: 1.5rem; color: var(--text-main); cursor: pointer;
+        margin-right: auto;
+    }
+    .header-right { margin-left: 0; gap: 0.5rem; }
+    .sidebar {
+        position: fixed; top: 0; left: -100%; height: 100vh;
+        width: 280px !important; box-shadow: 4px 0 15px rgba(0,0,0,0.3);
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1000;
+    }
+    .sidebar.mobile-active { left: 0; }
+    .brand-text, .menu-label, .menu-item span, .logout-btn span { display: block !important; }
+    .logo-area { display: flex !important; }
+    .layout-container.collapsed .brand { justify-content: space-between; }
+    .layout-container.collapsed .menu-item { justify-content: flex-start; padding: 0.8rem 1.5rem; }
+    .mobile-overlay {
+        display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5); z-index: 999; backdrop-filter: blur(2px);
+    }
+    .mobile-overlay.active { display: block; }
+    .page-content { padding: 1rem; }
+    .user-info { display: none; }
+    .user-profile { padding: 0; border: none; background: transparent; }
+    .avatar { width: 32px; height: 32px; font-size: 0.9rem; }
+    .theme-toggle-btn { width: 32px; height: 32px; font-size: 1rem; }
+}
