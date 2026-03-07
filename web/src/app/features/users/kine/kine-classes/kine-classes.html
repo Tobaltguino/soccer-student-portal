@@ -1,1 +1,127 @@
-<p>kine-classes works!</p>
+<div class="classes-container fadein animation-duration-500">
+    <header class="page-header">
+        <div class="header-content flex align-items-center gap-3">
+            <div>
+                <h1 class="text-2xl font-bold m-0 text-900">Agenda de Entrenamientos</h1>
+                <p class="text-600 m-0 mt-1">Revisa la planificación técnica de las categorías a tu cargo.</p>
+            </div>
+        </div>
+        <div class="header-actions flex gap-2">
+            <button pButton icon="pi pi-sync" class="p-button-rounded p-button-text" 
+                    (click)="cargarClasesPorGrupo()" [loading]="loading" pTooltip="Actualizar lista"></button>
+        </div>
+    </header>
+
+    <div class="filters-container card mb-4">
+        <div class="filters-row">
+            <div class="filter-item flex-grow-1" style="min-width: 200px;">
+                <p-select [options]="grupos" [(ngModel)]="selectedGrupoId" optionLabel="nombre" optionValue="id" 
+                          placeholder="Selecciona una categoría" (onChange)="onGrupoChange()" styleClass="w-full" appendTo="body"></p-select>
+            </div>
+            <div class="filter-item">
+                <p-datepicker [(ngModel)]="filtroFecha" placeholder="Filtrar por Fecha" dateFormat="dd/mm/yy"
+                              (ngModelChange)="aplicarFiltros()" [showClear]="true" styleClass="w-full" appendTo="body"></p-datepicker>
+            </div>
+            <div class="filter-item">
+                <div class="p-input-icon-left w-full">
+                    <input pInputText type="text" [(ngModel)]="filtroLugar" (input)="aplicarFiltros()" 
+                           placeholder="Buscar por lugar..." class="w-full"/>
+                </div>
+            </div>
+            <div class="filter-item button-item flex align-items-end">
+                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary w-full" 
+                        (click)="limpiarFiltros()" pTooltip="Limpiar Filtros"></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-table table-responsive">
+        <p-table [value]="clases" [loading]="loading" [rows]="10" [paginator]="true" 
+                 styleClass="p-datatable-sm" [rowHover]="true" responsiveLayout="stack" [breakpoint]="'960px'">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width: 30%"><i class="pi pi-calendar"></i>Fecha / Hora</th>
+                    <th style="width: 40%"><i class="pi pi-map-marker"></i>Lugar</th>
+                    <th style="width: 30%" class="text-center"><i class="pi pi-eye"></i>Ver</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-clase>
+                <tr>
+                    <td>
+                        <span class="p-column-title">Fecha / Hora</span>
+                        <div class="flex flex-column">
+                            <div class="font-bold text-main">{{ clase.fecha | date:'dd/MM/yyyy' }}</div>
+                            <div class="text-sm text-500 flex align-items-center mt-1">
+                                <i class="pi pi-clock"></i>{{ clase.hora | slice:0:5 }} hrs
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="p-column-title">Lugar</span>
+                        <div class="text-main">{{ clase.lugar || 'Cancha Principal' }}</div>
+                    </td>
+                    <td class="text-center">
+                        <span class="p-column-title">Planificación</span>
+                        <div class="action-buttons flex justify-content-center">
+                            <button pButton icon="pi pi-eye" label="Ver Entrenamiento" class="p-button-text p-button-info p-button-sm font-bold" 
+                                    (click)="verPlanificacion(clase)"></button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr><td colspan="3" class="text-center p-4 text-500">No hay entrenamientos planificados para este grupo.</td></tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <p-dialog [(visible)]="displayPlan" header="Detalle del Entrenamiento" [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" styleClass="p-fluid">
+        <div *ngIf="selectedClase" class="animation-fade-in pt-2">
+            
+            <div class="flex justify-content-between mb-4 border-bottom-1 border-200 pb-3">
+                <div>
+                    <span class="block text-500 text-xs font-bold uppercase mb-1">Fecha Programada</span>
+                    <span class="font-bold text-lg"><i class="pi pi-calendar mr-1 text-primary"></i> {{selectedClase.fecha | date:'dd/MM/yyyy'}}</span>
+                </div>
+                <div class="text-right">
+                    <span class="block text-500 text-xs font-bold uppercase mb-1">Lugar</span>
+                    <span class="font-bold"><i class="pi pi-map-marker mr-1 text-primary"></i> {{selectedClase.lugar}}</span>
+                </div>
+            </div>
+
+            <div class="field mb-4">
+                <label class="font-bold text-primary"><i class="pi pi-directions"></i> Objetivo Principal</label>
+                <div class="surface-ground p-3 border-round border-1 border-200">
+                    {{ selectedClase.objetivo && selectedClase.objetivo !== 'EMPTY' ? selectedClase.objetivo : 'Sin objetivo definido' }}
+                </div>
+            </div>
+            
+            <div class="formgrid grid">
+                <div class="field col-12 mb-3">
+                    <label class="font-bold"><span class="mr-2">🔥</span> Calentamiento</label>
+                    <div class="text-sm bg-gray-100 p-3 border-round border-1 border-200" style="white-space: pre-wrap;">
+                        {{ selectedClase.calentamiento && selectedClase.calentamiento !== 'EMPTY' ? selectedClase.calentamiento : 'No especificado' }}
+                    </div>
+                </div>
+                <div class="field col-12 mb-3">
+                    <label class="font-bold"><span class="mr-2">⚽</span> Parte Principal</label>
+                    <div class="text-sm bg-gray-100 p-3 border-round border-1 border-200" style="white-space: pre-wrap;">
+                        {{ selectedClase.parte_principal && selectedClase.parte_principal !== 'EMPTY' ? selectedClase.parte_principal : 'No especificada' }}
+                    </div>
+                </div>
+                <div class="field col-12 mb-3">
+                    <label class="font-bold"><span class="mr-2">❄️</span> Vuelta a la Calma</label>
+                    <div class="text-sm bg-gray-100 p-3 border-round border-1 border-200" style="white-space: pre-wrap;">
+                        {{ selectedClase.vuelta_calma && selectedClase.vuelta_calma !== 'EMPTY' ? selectedClase.vuelta_calma : 'No especificada' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <ng-template pTemplate="footer">
+            <div class="w-full flex justify-content-end">
+                <button pButton label="Cerrar Detalle" icon="pi pi-times" class="p-button-secondary" (click)="displayPlan = false"></button>
+            </div>
+        </ng-template>
+    </p-dialog>
+</div>

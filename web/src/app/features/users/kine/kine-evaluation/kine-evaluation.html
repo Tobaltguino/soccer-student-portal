@@ -1,1 +1,125 @@
-<p>kine-evaluation works!</p>
+<div class="eval-container p-3 fadein animation-duration-500">
+    <p-toast position="top-right"></p-toast>
+
+    <header class="flex justify-content-between align-items-center mb-4 page-header">
+        <div class="header-content">
+            <h1 class="text-2xl font-bold m-0 text-900">Evaluaciones Físicas</h1>
+            <p class="text-600 m-0 mt-1">Visualiza los resultados de las pruebas físicas tomadas a tus pacientes.</p>
+        </div>
+    </header>
+
+    <div class="filter-bar card mb-3 p-3 surface-card border-round shadow-1">
+        <div class="horizontal-filters">
+            <div class="filter-item">
+                <p-datepicker [(ngModel)]="filtroFecha" dateFormat="dd/mm/yy" [showIcon]="false" 
+                              placeholder="Filtrar por Fecha" 
+                              (onSelect)="aplicarFiltros()" [showClear]="true" (onClear)="aplicarFiltros()" 
+                              styleClass="w-full" appendTo="body"></p-datepicker>
+            </div>
+
+            <div class="filter-item">
+                <p-select [options]="grupos" [(ngModel)]="filtroGrupo" optionLabel="nombre" 
+                          placeholder="Categorías Asignadas" 
+                          (onChange)="aplicarFiltros()" [showClear]="true" 
+                          styleClass="w-full" appendTo="body"></p-select>
+            </div>
+
+            <div class="filter-item">
+                <p-select [options]="tiposEvaluacion" [(ngModel)]="filtroPrueba" optionLabel="nombre" 
+                          placeholder="Filtrar por Prueba" 
+                          (onChange)="aplicarFiltros()" [showClear]="true" 
+                          styleClass="w-full" appendTo="body"></p-select>
+            </div>
+
+            <div class="filter-btn">
+                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary" 
+                        (click)="limpiarFiltros()" pTooltip="Limpiar"></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-2 border-round surface-card p-3 card-table">
+        <p-table [value]="sesiones" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="stack" [breakpoint]="'960px'">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width: 25%">Fecha</th>
+                    <th style="width: 30%">Categoría</th>
+                    <th style="width: 30%">Prueba Física</th>
+                    <th style="width: 15%" class="text-center">Resultados</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-sesion>
+                <tr>
+                    <td>
+                        <span class="p-column-title">Fecha</span>
+                        <span class="font-bold">{{ sesion.fecha | date:'dd/MM/yyyy' }}</span>
+                    </td>
+                    <td>
+                        <span class="p-column-title">Grupo</span>
+                        <p-tag [value]="sesion.grupos?.nombre" severity="info"></p-tag>
+                    </td>
+                    <td>
+                        <span class="p-column-title">Prueba</span>
+                        <span class="font-bold text-900">{{ sesion.tipo_evaluacion?.nombre }}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="p-column-title">Resultados</span>
+                        <div class="flex justify-content-end md:justify-content-center gap-2">
+                            <button pButton icon="pi pi-eye" class="p-button-rounded p-button-text p-button-info p-button-sm" (click)="abrirCalificador(sesion)" pTooltip="Ver Informe Completo"></button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr><td colspan="4" class="text-center p-4">No hay evaluaciones finalizadas para tus categorías.</td></tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <p-dialog [(visible)]="displayGradesDialog" header="Informe de Resultados Físicos" [modal]="true" [style]="{width: '90vw', maxWidth: '900px'}" [maximizable]="true" styleClass="p-fluid">
+        <ng-template pTemplate="content">
+            <div class="surface-100 p-3 border-round mb-3 flex justify-content-between align-items-center">
+                <div class="flex flex-column">
+                    <span class="text-sm text-600">Evaluación Seleccionada</span>
+                    <span class="text-xl font-bold text-900">{{evalLogistica.tipo_evaluacion?.nombre}}</span>
+                </div>
+                <div class="text-right">
+                    <span class="text-sm text-600 block">Categoría</span>
+                    <p-tag [value]="evalLogistica.grupos?.nombre" severity="info" styleClass="text-base"></p-tag>
+                </div>
+            </div>
+            <p-table [value]="estudiantesGrupo" [scrollable]="true" scrollHeight="500px" styleClass="p-datatable-gridlines p-datatable-sm" responsiveLayout="scroll">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 35%">Paciente / Estudiante</th>
+                        <th style="width: 25%" class="text-center">Resultado Obtenido</th>
+                        <th style="width: 40%">Observación Técnica</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-estudiante>
+                    <tr>
+                        <td><span class="font-bold text-900">{{estudiante.apellido}}</span>, {{estudiante.nombre}}</td>
+                        <td class="text-center">
+                            <span *ngIf="estudiante.valor_numerico !== null" class="font-bold text-lg text-primary">
+                                {{estudiante.valor_numerico}} {{evalLogistica.tipo_evaluacion?.unidad_medida}}
+                            </span>
+                            <span *ngIf="estudiante.valor_numerico === null" class="text-500 italic">Ausente / S.D.</span>
+                        </td>
+                        <td>
+                            <span *ngIf="estudiante.observacion" class="text-700 text-sm">{{ estudiante.observacion }}</span>
+                            <span *ngIf="!estudiante.observacion" class="text-400 italic text-sm">-</span>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr><td colspan="3" class="text-center p-4">No hay pacientes en esta categoría.</td></tr>
+                </ng-template>
+            </p-table>
+        </ng-template>
+        <ng-template pTemplate="footer">
+            <div class="flex justify-content-end w-full">
+                <button pButton label="Cerrar Informe" icon="pi pi-times" class="p-button-secondary" (click)="displayGradesDialog = false"></button>
+            </div>
+        </ng-template>
+    </p-dialog>
+</div>
