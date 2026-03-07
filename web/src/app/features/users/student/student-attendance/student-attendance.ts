@@ -80,7 +80,6 @@ export class StudentAttendanceComponent implements OnInit {
       if (error) throw error;
       this.procesarEstadisticas(data || []);
     } catch (error) {
-      console.error('Error cargando estadísticas:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges(); // Despierta a Angular al finalizar la carga

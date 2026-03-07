@@ -91,7 +91,6 @@ export class StudentLayoutComponent implements OnInit {
       this.cdr.detectChanges();
 
     } catch (error) {
-      console.error('Error perfil:', error);
       this.userName = 'Usuario';
       this.cdr.detectChanges();
     }

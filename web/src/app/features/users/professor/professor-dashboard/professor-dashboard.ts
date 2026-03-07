@@ -107,7 +107,6 @@ export class ProfessorDashboardComponent implements OnInit {
       }
 
     } catch (error) {
-      console.error('Error dashboard:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();

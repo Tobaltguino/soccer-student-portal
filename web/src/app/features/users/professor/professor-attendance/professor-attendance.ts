@@ -130,7 +130,6 @@ export class ProfessorAttendanceComponent implements OnInit {
       });
 
     } catch (error) {
-      console.error(error);
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al calcular estadísticas' });
     } finally {
       this.loading = false;
@@ -169,7 +168,6 @@ export class ProfessorAttendanceComponent implements OnInit {
       if (error) throw error;
       this.historialAlumno = data || [];
     } catch (error) {
-      console.error(error);
     } finally {
       this.loadingHistorial = false;
       this.cdr.detectChanges();

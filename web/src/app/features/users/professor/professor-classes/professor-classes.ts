@@ -104,7 +104,6 @@ export class ProfessorClassesComponent implements OnInit {
         }
       }
     } catch (error) {
-      console.error('Error al cargar grupos:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
@@ -132,7 +131,6 @@ export class ProfessorClassesComponent implements OnInit {
 
       this.aplicarFiltros();
     } catch (error) {
-      console.error('Error al cargar clases:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
@@ -166,7 +164,6 @@ export class ProfessorClassesComponent implements OnInit {
         });
       }
     } catch (error) {
-      console.error('Error al cargar asistencia:', error);
     } finally {
       this.loadingAsistencia = false;
       this.cdr.detectChanges();
@@ -294,7 +291,6 @@ export class ProfessorClassesComponent implements OnInit {
       await this.cargarClasesPorGrupo();
 
     } catch (error) {
-      console.error('Error guardando clase:', error);
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Ocurrió un error al guardar la clase.' });
     } finally {
       this.saving = false;

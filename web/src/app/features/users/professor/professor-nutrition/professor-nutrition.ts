@@ -73,7 +73,6 @@ export class ProfessorNutritionComponent implements OnInit {
       await this.cargarSesiones();
 
     } catch (error) {
-      console.error('Error cargando datos', error);
       this.mostrarError('No se pudieron cargar los datos base.');
     } finally {
       this.loading = false;
@@ -144,7 +143,6 @@ export class ProfessorNutritionComponent implements OnInit {
 
       this.displayGradesDialog = true;
     } catch (error) {
-      console.error(error);
       this.mostrarError('Error al cargar los resultados de los estudiantes.');
     } finally {
       this.loading = false;

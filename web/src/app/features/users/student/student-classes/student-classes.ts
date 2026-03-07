@@ -70,7 +70,6 @@ export class StudentClassesComponent implements OnInit {
         this.aplicarFiltros();
       }
     } catch (error) {
-      console.error('Error al cargar clases:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();

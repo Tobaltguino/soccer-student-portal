@@ -55,7 +55,6 @@ export class KineViewGuidesComponent implements OnInit {
       this.aplicarFiltros(); 
       
     } catch (error) {
-      console.error('Error al cargar material de estudio:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges(); 

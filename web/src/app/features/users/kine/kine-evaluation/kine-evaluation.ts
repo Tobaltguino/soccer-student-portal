@@ -85,9 +85,7 @@ export class KineEvaluationComponent implements OnInit {
 
         if (misGrupoIds.length > 0) {
           const { data: sData, error: errorSesiones } = await this.supabase.getSesionesEvaluacionPorGrupos(misGrupoIds);
-          
-          if (errorSesiones) console.error("Error al cargar sesiones:", errorSesiones);
-          
+                    
           // ✅ SOLO GUARDAMOS LAS FINALIZADAS
           this.sesionesOriginales = (sData || []).filter(s => s.estado === 'FINALIZADO');
         } else {
@@ -98,7 +96,6 @@ export class KineEvaluationComponent implements OnInit {
         this.aplicarFiltros();
       }
     } catch (error: any) {
-      console.error('ERROR EXACTO:', error);
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Fallo al cargar datos.' });
     } finally {
       this.loading = false;
@@ -178,7 +175,6 @@ export class KineEvaluationComponent implements OnInit {
       this.displayGradesDialog = true;
 
     } catch (e: any) {
-      console.error("Error al cargar resultados de la sesión:", e);
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar la lista de pacientes.' });
     } finally {
       this.loading = false;

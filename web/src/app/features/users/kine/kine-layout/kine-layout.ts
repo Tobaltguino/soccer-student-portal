@@ -90,7 +90,6 @@ export class KineLayoutComponent implements OnInit {
       this.cdr.detectChanges();
 
     } catch (error) {
-      console.error('Error perfil kinesiólogo:', error);
       this.userName = 'Usuario Médico';
       this.cdr.detectChanges();
     }

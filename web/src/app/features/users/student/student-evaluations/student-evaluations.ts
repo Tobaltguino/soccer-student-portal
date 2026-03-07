@@ -68,7 +68,6 @@ export class StudentEvaluationsComponent implements OnInit {
         this.aplicarFiltros();
       }
     } catch (error) {
-      console.error('Error al cargar evaluaciones:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();

@@ -92,7 +92,6 @@ export class ProfessorLayoutComponent implements OnInit {
       this.cdr.detectChanges();
 
     } catch (error) {
-      console.error('Error perfil profesor:', error);
       this.userName = 'Usuario';
       this.cdr.detectChanges();
     }

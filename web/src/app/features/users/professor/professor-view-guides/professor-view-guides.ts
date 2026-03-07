@@ -54,7 +54,6 @@ export class ProfessorViewGuidesComponent implements OnInit {
       this.aplicarFiltros(); // ✅ Aplicamos filtro inicial por si hay algo escrito
       
     } catch (error) {
-      console.error('Error al cargar material de estudio:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges(); 

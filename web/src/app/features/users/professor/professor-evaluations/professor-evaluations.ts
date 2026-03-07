@@ -103,7 +103,7 @@ export class ProfessorEvaluationsComponent implements OnInit {
         if (misGrupoIds.length > 0) {
           const { data: sData, error: errorSesiones } = await this.supabase.getSesionesEvaluacionPorGrupos(misGrupoIds);
           
-          if (errorSesiones) console.error("Error al cargar sesiones:", errorSesiones);
+          if (errorSesiones)
           this.sesionesOriginales = sData || [];
         } else {
           this.sesionesOriginales = [];
@@ -113,7 +113,6 @@ export class ProfessorEvaluationsComponent implements OnInit {
         this.aplicarFiltros();
       }
     } catch (error: any) {
-      console.error('ERROR EXACTO:', error);
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Fallo al cargar datos.' });
     } finally {
       this.loading = false;

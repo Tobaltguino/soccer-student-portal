@@ -59,7 +59,6 @@ export class StudentViewGuidesComponent implements OnInit {
       this.guiasFiltradas = [...this.guias]; // Copiamos los datos iniciales
       
     } catch (error) {
-      console.error('Error al cargar material de estudio:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges(); 

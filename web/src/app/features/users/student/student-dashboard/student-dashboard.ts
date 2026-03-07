@@ -56,7 +56,6 @@ export class StudentDashboardComponent implements OnInit {
       }
 
     } catch (error) {
-      console.error('Error dashboard:', error);
       this.supabaseStatus = 'offline';
     } finally {
       this.loading = false;

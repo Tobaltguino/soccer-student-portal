@@ -123,7 +123,6 @@ export class StudentScheduleComponent implements OnInit {
         this.calendarOptions = { ...this.calendarOptions, events: eventos };
       }
     } catch (error) {
-      console.error('Error cargando calendario:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();

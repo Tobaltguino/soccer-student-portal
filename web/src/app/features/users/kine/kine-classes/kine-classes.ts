@@ -79,7 +79,6 @@ export class KineClassesComponent implements OnInit {
         }
       }
     } catch (error) {
-      console.error('Error al cargar grupos:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
@@ -107,7 +106,6 @@ export class KineClassesComponent implements OnInit {
 
       this.aplicarFiltros();
     } catch (error) {
-      console.error('Error al cargar clases:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();

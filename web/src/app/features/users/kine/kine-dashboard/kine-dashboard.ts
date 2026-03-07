@@ -101,7 +101,6 @@ export class KineDashboardComponent implements OnInit {
       }
 
     } catch (error) {
-      console.error('Error dashboard kine:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();

@@ -110,7 +110,6 @@ export class StudentNutriComponent implements OnInit {
       this.aplicarFiltros();
 
     } catch (error) {
-      console.error('Error cargando resultados del estudiante', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();

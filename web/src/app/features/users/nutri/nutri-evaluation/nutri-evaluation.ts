@@ -98,7 +98,6 @@ export class NutriEvaluationsComponent implements OnInit {
       await this.cargarSesiones();
 
     } catch (error) {
-      console.error('Error cargando datos', error);
       this.mostrarError('No se pudieron cargar los datos base.');
     } finally {
       this.loading = false;
@@ -231,7 +230,6 @@ export class NutriEvaluationsComponent implements OnInit {
 
       this.displayGradesDialog = true;
     } catch (error) {
-      console.error(error);
       this.mostrarError('Error al cargar los resultados previos.');
     } finally {
       this.loading = false;
@@ -291,7 +289,6 @@ export class NutriEvaluationsComponent implements OnInit {
       this.displayGradesDialog = false;
 
     } catch (error: any) {
-      console.error(error);
       if (error.code === '23505') {
          this.mostrarError('Algunos estudiantes ya tenían resultados registrados en esta sesión.');
       } else {

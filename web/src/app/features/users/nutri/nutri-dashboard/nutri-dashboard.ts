@@ -54,7 +54,6 @@ export class NutriDashboardComponent implements OnInit {
         .limit(1);
 
       if (errEval) {
-        console.error('Error de Supabase al traer evaluación:', errEval);
       }
 
       if (evaluaciones && evaluaciones.length > 0) {
@@ -64,7 +63,6 @@ export class NutriDashboardComponent implements OnInit {
       }
 
     } catch (error) {
-      console.error('Error cargando el dashboard de nutri:', error);
       this.supabaseStatus = 'offline';
     } finally {
       this.loading = false;
