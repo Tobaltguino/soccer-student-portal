@@ -91,10 +91,10 @@ export class LoginComponent implements OnInit, OnDestroy {
 
   /**
    * Proceso de inicio de sesión usando el RUT como identificador.
-   * Incluye verificación de estado de cuenta (Activo/Inactivo).
+   * Incluye verificación de estado de cuenta y Términos y Condiciones.
    */
   async ingresar() {
-    // 1. Validación básica de campos vacíos
+    // 1. Validación básica de campos
     if (!this.rut || !this.password) {
       this.messageService.add({ 
         severity: 'warn', 
@@ -119,8 +119,8 @@ export class LoginComponent implements OnInit, OnDestroy {
       // 2. Preparar el RUT (limpieza de espacios)
       const rutBusqueda = this.rut.trim();
 
-      // 3. Llamada al servicio con desestructuración de respuesta
-      const { data, error, role } = await this.supabaseService.loginConRut(rutBusqueda, this.password);
+      // 3. Llamada al servicio: ahora recibimos también "aceptoTerminos"
+      const { data, error, role, aceptoTerminos } = await this.supabaseService.loginConRut(rutBusqueda, this.password);
 
       // 4. Manejo de Errores (Credenciales incorrectas o Cuenta Desactivada)
       if (error) {
@@ -133,14 +133,9 @@ export class LoginComponent implements OnInit, OnDestroy {
         return;
       }
 
-      // 5. Éxito: Redirección según el Rol detectado
+      // 5. Éxito: Evaluación de Términos y Redirección
       if (data?.user && role) {
-        this.messageService.add({ 
-          severity: 'success', 
-          summary: 'Acceso Autorizado', 
-          detail: 'Cargando tu perfil, por favor espera...' 
-        });
-
+        
         // Mapeamos los roles de la BD a los roles de las Rutas
         const mapRoles: any = {
           'admins': 'admin',
@@ -151,17 +146,37 @@ export class LoginComponent implements OnInit, OnDestroy {
         };
 
         const rolEstandarizado = mapRoles[role] || 'student';
-
-        // Guardamos el rol en el navegador
         localStorage.setItem('userRole', rolEstandarizado);
 
-        // Armamos la ruta destino basándonos en el rol estandarizado
-        const rutaDestino = `/${rolEstandarizado}/dashboard`; 
+        // ✅ LÓGICA DE TÉRMINOS Y CONDICIONES
+        if (aceptoTerminos === false || aceptoTerminos === null) {
+          
+          this.messageService.add({ 
+            severity: 'info', 
+            summary: 'Atención Requerida', 
+            detail: 'Debes aceptar los Términos y Condiciones para continuar.' 
+          });
 
-        // Pequeño delay para que el usuario vea el mensaje de éxito antes de saltar
-        setTimeout(() => {
-          this.router.navigate([rutaDestino]);
-        }, 1200);
+          setTimeout(() => {
+            this.router.navigate(['/terminos']); // Mandamos a la pantalla de firmas
+          }, 1200);
+
+        } else {
+          
+          // Ya firmó, lo mandamos directo a su Dashboard
+          this.messageService.add({ 
+            severity: 'success', 
+            summary: 'Acceso Autorizado', 
+            detail: 'Cargando tu perfil, por favor espera...' 
+          });
+
+          const rutaDestino = `/${rolEstandarizado}/dashboard`; 
+          
+          setTimeout(() => {
+            this.router.navigate([rutaDestino]);
+          }, 1200);
+
+        }
         
       } else {
         throw new Error('No se pudo recuperar la sesión del usuario.');

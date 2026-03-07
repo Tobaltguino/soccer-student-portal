@@ -7,6 +7,7 @@ import { HomeComponent } from './features/home/home/home';
 // --- AUTH ---
 import { LoginComponent } from './features/auth/login/login';
 import { UpdatePasswordComponent } from './features/auth/update-password/update-password';
+import { TerminosComponent } from './features/terminos/terminos';
 
 // --- ADMIN IMPORTS ---
 import { AdminLayoutComponent } from './features/users/admin/admin-layout/admin-layout';
@@ -74,6 +75,8 @@ export const routes: Routes = [
     // ==========================================
     { path: 'login', component: LoginComponent },
     { path: 'update-password', component: UpdatePasswordComponent },
+    // ✅ 2. AGREGAMOS LA RUTA DE TÉRMINOS
+    { path: 'terminos', component: TerminosComponent },
 
     // ==========================================
     // 2. RUTA ADMIN
@@ -180,5 +183,5 @@ export const routes: Routes = [
     // ==========================================
     // Ruta comodín (404)
     // ==========================================
-    { path: '**', redirectTo: '' } // ✅ Si alguien escribe una ruta mala, lo devolvemos al Home
+    { path: '**', redirectTo: '' } 
 ];

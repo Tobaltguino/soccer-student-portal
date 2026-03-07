@@ -84,10 +84,10 @@ export class SupabaseService {
     const tablas = ['admins', 'estudiantes', 'profesores', 'kinesiologos', 'nutricionistas'];
     
     for (const tabla of tablas) {
-      // 1. Buscamos el email Y el estado activo
+      // 1. Buscamos el email, el estado activo Y LA ACEPTACIÓN DE TÉRMINOS
       const { data: userData, error: dbError } = await this.supabase
         .from(tabla)
-        .select('email, activo')
+        .select('email, activo, acepto_terminos') // <--- CAMBIO AQUÍ
         .eq('rut', rutInput.trim())
         .maybeSingle();
 
@@ -97,7 +97,8 @@ export class SupabaseService {
           return { 
             data: null, 
             error: { message: 'Tu cuenta se encuentra desactivada. Contacta al administrador.' }, 
-            role: null 
+            role: null,
+            aceptoTerminos: false
           };
         }
 
@@ -118,7 +119,8 @@ export class SupabaseService {
           return { 
             data: null, 
             error: { message: mensajeError }, 
-            role: null 
+            role: null,
+            aceptoTerminos: false
           };
         }
 
@@ -126,7 +128,8 @@ export class SupabaseService {
         return { 
             data: authResponse.data, 
             error: null, 
-            role: tabla 
+            role: tabla,
+            aceptoTerminos: userData.acepto_terminos // <--- CAMBIO AQUÍ
         };
       }
     }
@@ -134,7 +137,8 @@ export class SupabaseService {
     return { 
         data: null, 
         error: { message: `El RUT ${rutInput} no está registrado en ProFutbol.` },
-        role: null
+        role: null,
+        aceptoTerminos: false
     };
   }
 
@@ -171,6 +175,18 @@ export class SupabaseService {
     return await this.supabase.auth.updateUser({
       password: newPassword
     });
+  }
+
+  async registrarFirmaTerminos(tabla: string, userId: string) {
+    const payload = {
+      acepto_terminos: true,
+      fecha_aceptacion_terminos: new Date().toISOString()
+    };
+
+    return await this.supabase
+      .from(tabla)
+      .update(payload)
+      .eq('id', userId);
   }
 
   // ==========================================

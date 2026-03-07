@@ -1,0 +1,107 @@
+.terminos-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: var(--surface-ground, #f8fafc);
+  padding: 2rem 1rem;
+}
+
+.terminos-container {
+  background-color: var(--surface-card, #ffffff);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  max-width: 800px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.terminos-header {
+  padding: 2rem;
+  text-align: center;
+  border-bottom: 1px solid var(--surface-border, #e2e8f0);
+}
+
+.terminos-header h2 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-color, #1e293b);
+  font-size: 1.75rem;
+}
+
+.terminos-header p {
+  margin: 0;
+  color: var(--text-color-secondary, #64748b);
+}
+
+/* La caja donde va el texto legal */
+.terminos-content-box {
+  padding: 2rem;
+  max-height: 50vh; /* Obliga a hacer scroll si es muy largo */
+  overflow-y: auto;
+  background-color: var(--surface-ground, #f8fafc);
+  color: var(--text-color, #334155);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.terminos-content-box h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  color: var(--text-color, #0f172a);
+}
+
+.terminos-content-box h3:first-child {
+  margin-top: 0;
+}
+
+.terminos-content-box ul {
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.terminos-footer {
+  padding: 2rem;
+  border-top: 1px solid var(--surface-border, #e2e8f0);
+  background-color: var(--surface-card, #ffffff);
+}
+
+.checkbox-area {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.checkbox-area label {
+  cursor: pointer;
+  color: var(--text-color, #334155);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+/* Modo oscuro opcional */
+:host-context(body.dark-mode) .terminos-wrapper {
+  background-color: #0f172a;
+}
+:host-context(body.dark-mode) .terminos-container,
+:host-context(body.dark-mode) .terminos-footer {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+:host-context(body.dark-mode) .terminos-content-box {
+  background-color: #0f172a;
+  color: #cbd5e1;
+}
+:host-context(body.dark-mode) .terminos-header h2,
+:host-context(body.dark-mode) .terminos-content-box h3 {
+  color: #f8fafc;
+}
