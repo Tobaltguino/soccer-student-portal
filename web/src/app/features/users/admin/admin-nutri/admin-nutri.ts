@@ -88,7 +88,6 @@ export class AdminNutriComponent implements OnInit {
       await this.cargarSesiones();
 
     } catch (error) {
-      console.error('Error cargando datos', error);
       this.mostrarError('No se pudieron cargar los datos base.');
     } finally {
       this.loading = false;
@@ -175,7 +174,6 @@ export class AdminNutriComponent implements OnInit {
           this.mostrarExito('Test eliminado correctamente');
           await this.cargarTiposEvaluacion(); 
         } catch (error: any) {
-          console.error(error);
           if (error.code === '23503') {
             this.mostrarError('No se puede eliminar porque ya hay sesiones usando este test.');
           } else {
@@ -262,7 +260,6 @@ export class AdminNutriComponent implements OnInit {
           this.mostrarExito('Sesión eliminada correctamente');
           await this.cargarSesiones();
         } catch (error) {
-          console.error(error);
           this.mostrarError('Hubo un error al eliminar la sesión');
         } finally {
           this.loading = false;
@@ -302,7 +299,6 @@ export class AdminNutriComponent implements OnInit {
 
       this.displayGradesDialog = true;
     } catch (error) {
-      console.error(error);
       this.mostrarError('Error al cargar los resultados previos.');
     } finally {
       this.loading = false;
@@ -362,7 +358,6 @@ export class AdminNutriComponent implements OnInit {
       this.displayGradesDialog = false;
 
     } catch (error: any) {
-      console.error(error);
       if (error.code === '23505') {
          this.mostrarError('Algunos estudiantes ya tenían resultados registrados en esta sesión.');
       } else {

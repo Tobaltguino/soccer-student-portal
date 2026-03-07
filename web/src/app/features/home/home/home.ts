@@ -95,9 +95,11 @@ export class HomeComponent implements OnInit {
       if (ali.data && ali.data.length > 0) this.alianzas = ali.data;
 
     } catch (error) {
-      console.error('Error cargando datos dinámicos de la web, usando predeterminados.', error);
+      // Al no hacer nada aquí, la aplicación simplemente se queda con los datos 
+      // hardcodeados (los que definiste al principio del componente).
+      // Esto es un comportamiento elegante y silencioso.
     } finally {
-      // ✅ Le avisamos a Angular que ya llegaron los datos y debe dibujar la pantalla
+      // Le avisamos a Angular que ya llegaron los datos y debe dibujar la pantalla
       this.cdr.detectChanges(); 
     }
   }

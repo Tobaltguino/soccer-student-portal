@@ -168,7 +168,6 @@ export class LoginComponent implements OnInit, OnDestroy {
       }
 
     } catch (e: any) {
-      console.error('Error Crítico de Login:', e);
       this.messageService.add({ 
         severity: 'error', 
         summary: 'Error de Sistema', 

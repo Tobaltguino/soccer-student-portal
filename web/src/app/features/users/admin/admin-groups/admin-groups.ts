@@ -68,7 +68,6 @@ export class AdminGroupsComponent implements OnInit {
       }));
     } else {
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los grupos.' });
-      console.error('Error cargando grupos:', error);
     }
     
     this.loading = false;

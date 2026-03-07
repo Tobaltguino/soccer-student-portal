@@ -123,7 +123,6 @@ export class AdminAttendanceComponent implements OnInit {
       });
 
     } catch (error) {
-      console.error(error);
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al calcular estadísticas' });
     } finally {
       this.loading = false;
@@ -162,7 +161,7 @@ export class AdminAttendanceComponent implements OnInit {
       if (error) throw error;
       this.historialAlumno = data || [];
     } catch (error) {
-      console.error(error);
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el historial.' });
     } finally {
       this.loadingHistorial = false;
       this.cdr.detectChanges();

@@ -69,7 +69,7 @@ export class IdleService {
       this.router.navigate(['/login']);
       
     } catch (error) {
-      console.error('Error al cerrar sesión:', error);
+      // El cierre de sesión falló, pero forzamos la navegación al login igualmente
       this.router.navigate(['/login']);
     }
   }

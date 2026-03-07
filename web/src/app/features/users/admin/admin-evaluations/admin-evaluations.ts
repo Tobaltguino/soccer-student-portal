@@ -310,7 +310,6 @@ export class AdminEvaluationsComponent implements OnInit {
       this.cargarDatosIniciales(); // Al recargar se actualiza la memoria "todosLosRangos"
 
     } catch (err: any) {
-      console.error(err);
       this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message || 'Error al guardar' });
     } finally {
       this.loading = false;
@@ -426,9 +425,6 @@ export class AdminEvaluationsComponent implements OnInit {
          this.supabase.getResultadosPorSesion(sesion.id)
       ]);
 
-      if (resAlumnos.error) console.error("Error cargando alumnos:", resAlumnos.error);
-      if (resResultados.error) console.error("Error cargando notas:", resResultados.error);
-
       const alumnos = resAlumnos.data || [];
       const resultados = resResultados.data || [];
 
@@ -447,7 +443,6 @@ export class AdminEvaluationsComponent implements OnInit {
       this.displayGradesDialog = true;
 
     } catch (e: any) {
-      console.error("Error CRÍTICO en abrirCalificador:", e);
       this.messageService.add({ 
         severity: 'error', 
         summary: 'Error', 
@@ -488,7 +483,6 @@ export class AdminEvaluationsComponent implements OnInit {
       this.displayGradesDialog = false;
       this.cargarDatosIniciales(); 
     } catch (error: any) {
-      console.error("Error al guardar:", error); 
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Fallo al guardar: posible duplicado o error de conexión.' });
     } finally {
       this.loading = false;

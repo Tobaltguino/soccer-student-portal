@@ -115,7 +115,6 @@ export class AdminLayoutComponent implements OnInit {
       }
 
     } catch (error) {
-      console.error('Error perfil:', error);
       this.userName = 'Error';
       this.cdr.detectChanges();
     }

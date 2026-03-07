@@ -397,7 +397,6 @@ export class AdminUsersComponent implements OnInit {
         setTimeout(() => this.cargarDatos(), 100);
 
     } catch (error: any) {
-        console.error(error);
         this.messageService.add({ severity: 'error', summary: 'Error', detail: error.message || 'Error al guardar.' });
     } finally {
         this.loading = false;

@@ -81,7 +81,8 @@ export class AdminDashboardComponent implements OnInit {
       this.actividadReciente = actividad || [];
 
     } catch (error) {
-      console.error('Error cargando estadísticas:', error);
+      // Si falla la carga, simplemente dejamos los valores iniciales (0 o vacíos)
+      // No necesitamos loguear esto para el usuario.
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
