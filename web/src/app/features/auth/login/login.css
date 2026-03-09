@@ -37,32 +37,30 @@
     transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
+/* Tarjeta más compacta (Padding reducido) */
 :host ::ng-deep .p-card-body {
-    padding: 2.5rem;
+    padding: 1.5rem 2rem;
 }
 
 /* --- LOGO Y TÍTULOS --- */
 .logo-section {
     text-align: center;
-    margin-bottom: 2.5rem;
+    margin-bottom: 1.5rem; /* Margen inferior reducido */
 }
 
-/* Estilo base para ambas imágenes */
+/* Escudo más pequeño */
 .logo-img {
-    height: 80px;
+    height: 65px; 
     width: auto;
     object-fit: contain;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem; /* Margen inferior reducido */
     filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
     transition: all 0.3s ease;
 }
 
 /* =========================================
-   🔥 LÓGICA DE DOBLE LOGO (CORREGIDA) 🔥
-   Usamos :host-context para "escapar" del componente
-   y leer la clase del body.
+   🔥 LÓGICA DE DOBLE LOGO 🔥
    ========================================= */
-
 /* 1. POR DEFECTO (Modo Claro): */
 .logo-light { display: block; margin: 0 auto 1rem auto; }
 .logo-dark { display: none; }
@@ -75,9 +73,6 @@
 :host-context(body.dark-mode) .logo-dark {
     display: block !important;
     margin: 0 auto 1rem auto;
-    
-    /* Si tu imagen 'logo-dark' sigue siendo negra, usa este filtro para volverla blanca.
-       Si ya subiste una imagen blanca real, BORRA la línea de filter. */
     filter: invert(1) brightness(200%);
     opacity: 0.9;
 }
@@ -99,20 +94,28 @@
 
 /* --- CAMPOS DEL FORMULARIO --- */
 .form-section {
-    display: flex; flex-direction: column; gap: 1.5rem;
+    display: flex; 
+    flex-direction: column; 
+    gap: 1rem; /* Espacio general entre campos reducido */
 }
 
 .field {
-    display: flex; flex-direction: column; gap: 0.5rem;
+    display: flex; 
+    flex-direction: column; 
+    gap: 0.25rem; /* Espacio entre Label e Input reducido */
 }
 
 .field label {
-    font-weight: 600; color: var(--text-main); font-size: 0.9rem; margin-left: 4px;
+    font-weight: 600; 
+    color: var(--text-main); 
+    font-size: 0.9rem; 
+    margin-left: 4px;
 }
 
 /* Input Group */
 .input-group {
-    display: flex; align-items: stretch;
+    display: flex; 
+    align-items: stretch;
     border-radius: 12px;
     border: 1px solid var(--border-color);
     background: var(--bg-main);
@@ -126,8 +129,11 @@
 }
 
 .input-icon {
-    display: flex; align-items: center; justify-content: center;
-    width: 45px; background-color: transparent;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    width: 45px; 
+    background-color: transparent;
     color: var(--text-secondary);
 }
 
@@ -135,56 +141,98 @@
     color: var(--primary-color);
 }
 
-/* Inputs Clean */
+/* Inputs más delgados */
 :host ::ng-deep .custom-input,
 :host ::ng-deep .custom-input-password {
-    border: none !important; background: transparent !important;
-    box-shadow: none !important; width: 100%; padding: 0.9rem;
-    color: var(--text-main); font-weight: 500;
+    border: none !important; 
+    background: transparent !important;
+    box-shadow: none !important; 
+    width: 100%; 
+    padding: 0.7rem; /* Relleno reducido */
+    color: var(--text-main); 
+    font-weight: 500;
 }
 
-:host ::ng-deep .p-password, :host ::ng-deep .p-password-input { width: 100%; }
+:host ::ng-deep .p-password, 
+:host ::ng-deep .p-password-input { 
+    width: 100%; 
+}
 
 /* --- BOTÓN --- */
+/* Botón ligeramente más delgado */
 :host ::ng-deep .btn-login {
-    width: 100%; padding: 1rem; font-size: 1rem; font-weight: 700;
-    border-radius: 12px; background: var(--primary-color);
-    border: none; box-shadow: 0 4px 14px 0 rgba(0,0,0,0.15);
-    color: white; transition: transform 0.2s;
+    width: 100%; 
+    padding: 0.8rem; /* Relleno reducido */
+    font-size: 1rem; 
+    font-weight: 700;
+    border-radius: 12px; 
+    background: var(--primary-color);
+    border: none; 
+    box-shadow: 0 4px 14px 0 rgba(0,0,0,0.15);
+    color: white; 
+    transition: transform 0.2s;
 }
 
 :host ::ng-deep .btn-login:hover {
-    transform: translateY(-2px); filter: brightness(0.9);
+    transform: translateY(-2px); 
+    filter: brightness(0.9);
 }
 
 /* --- LINK RECUPERAR --- */
-.forgot-password { text-align: center; margin-top: 1rem; }
-.forgot-password a {
-    color: var(--text-secondary); font-size: 0.9rem; text-decoration: none;
-    cursor: pointer; transition: color 0.2s;
+.forgot-password { 
+    text-align: center; 
+    margin-top: 1rem; 
 }
-.forgot-password a:hover { color: var(--primary-color); text-decoration: underline; }
+
+.forgot-password a {
+    color: var(--text-secondary); 
+    font-size: 0.9rem; 
+    text-decoration: none;
+    cursor: pointer; 
+    transition: color 0.2s;
+}
+
+.forgot-password a:hover { 
+    color: var(--primary-color); 
+    text-decoration: underline; 
+}
 
 /* --- UTILS --- */
 .text-main { color: var(--text-main); }
 .text-secondary { color: var(--text-secondary); }
 
 .btn-secundario-centrado {
-    display: flex;       /* Mantiene el icono y el texto alineados por dentro */
-    margin-left: auto;   /* Empuja el botón hacia el centro desde la izquierda */
-    margin-right: auto;  /* Empuja el botón hacia el centro desde la derecha */
+    display: flex;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* --- MOBILE --- */
 @media (max-width: 576px) {
-    .login-wrapper { align-items: flex-start; padding-top: 4rem; }
-    :host ::ng-deep .login-card {
-        border-radius: 0; box-shadow: none; background: transparent; border: none;
+    .login-wrapper { 
+        align-items: flex-start; 
+        padding-top: 4rem; 
     }
-    :host ::ng-deep .p-card-body { padding: 0 1rem; }
-    .logo-img { height: 70px; }
-    .logo-section h2 { font-size: 1.6rem; }
-    :host ::ng-deep .custom-input, :host ::ng-deep .custom-input-password {
-        padding: 1rem; font-size: 16px;
+    :host ::ng-deep .login-card {
+        border-radius: 0; 
+        box-shadow: none; 
+        background: transparent; 
+        border: none;
+    }
+    :host ::ng-deep .p-card-body { 
+        padding: 0 1rem; 
+    }
+    /* Logo en móvil proporcionado al nuevo tamaño */
+    .logo-img { 
+        height: 55px; 
+    }
+    .logo-section h2 { 
+        font-size: 1.6rem; 
+    }
+    /* Inputs en móvil un poco más compactos pero amigables al tacto */
+    :host ::ng-deep .custom-input, 
+    :host ::ng-deep .custom-input-password {
+        padding: 0.85rem; 
+        font-size: 16px;
     }
 }

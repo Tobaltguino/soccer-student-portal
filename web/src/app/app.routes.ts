@@ -75,7 +75,6 @@ export const routes: Routes = [
     // ==========================================
     { path: 'login', component: LoginComponent },
     { path: 'update-password', component: UpdatePasswordComponent },
-    // ✅ 2. AGREGAMOS LA RUTA DE TÉRMINOS
     { path: 'terminos', component: TerminosComponent },
 
     // ==========================================

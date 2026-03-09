@@ -19,7 +19,7 @@
 
             <div class="filter-item">
                 <p-select [options]="grupos" [(ngModel)]="filtroGrupo" optionLabel="nombre" 
-                          placeholder="Categorías Asignadas" 
+                          placeholder="Grupos Asignadas" 
                           (onChange)="aplicarFiltros()" [showClear]="true" 
                           styleClass="w-full" appendTo="body"></p-select>
             </div>
@@ -43,7 +43,7 @@
             <ng-template pTemplate="header">
                 <tr>
                     <th style="width: 25%">Fecha</th>
-                    <th style="width: 30%">Categoría</th>
+                    <th style="width: 30%">Grupo</th>
                     <th style="width: 30%">Prueba Física</th>
                     <th style="width: 15%" class="text-center">Resultados</th>
                 </tr>
@@ -71,7 +71,7 @@
                 </tr>
             </ng-template>
             <ng-template pTemplate="emptymessage">
-                <tr><td colspan="4" class="text-center p-4">No hay evaluaciones finalizadas para tus categorías.</td></tr>
+                <tr><td colspan="4" class="text-center p-4">No hay evaluaciones finalizadas para tus grupos.</td></tr>
             </ng-template>
         </p-table>
     </div>
@@ -84,7 +84,7 @@
                     <span class="text-xl font-bold text-900">{{evalLogistica.tipo_evaluacion?.nombre}}</span>
                 </div>
                 <div class="text-right">
-                    <span class="text-sm text-600 block">Categoría</span>
+                    <span class="text-sm text-600 block">Grupo</span>
                     <p-tag [value]="evalLogistica.grupos?.nombre" severity="info" styleClass="text-base"></p-tag>
                 </div>
             </div>
@@ -112,7 +112,7 @@
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="emptymessage">
-                    <tr><td colspan="3" class="text-center p-4">No hay pacientes en esta categoría.</td></tr>
+                    <tr><td colspan="3" class="text-center p-4">No hay pacientes en esta grupo.</td></tr>
                 </ng-template>
             </p-table>
         </ng-template>
