@@ -1,25 +1,27 @@
-<div class="home-wrapper">
+<div class="home-wrapper fadein animation-duration-500">
     <nav class="navbar">
-        <div class="logo-container">
-            <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="Logo ProFutbol" class="logo-img logo-dark-mode">
-            <img src="assets/images/ProFutbol_Transparentenegro.png" alt="Logo ProFutbol" class="logo-img logo-light-mode">
-            <span class="brand-text">ProFutbol</span>
-        </div>
-        
-        <div class="nav-links hidden-mobile">
-            <a (click)="scrollTo('nosotros')">Metodología</a>
-            <a (click)="scrollTo('programas')">Programas</a>
-            <a (click)="scrollTo('beneficios')">Beneficios</a>
-        </div>
+        <div class="nav-container">
+            <div class="logo-container">
+                <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="Logo ProFutbol" class="logo-img logo-dark-mode">
+                <img src="assets/images/ProFutbol_Transparentenegro.png" alt="Logo ProFutbol" class="logo-img logo-light-mode">
+                <span class="brand-text">ProFutbol</span>
+            </div>
+            
+            <div class="nav-links hidden-mobile">
+                <a (click)="scrollTo('nosotros')">Metodología</a>
+                <a (click)="scrollTo('programas')">Programas</a>
+                <a (click)="scrollTo('beneficios')">Beneficios</a>
+            </div>
 
-        <div class="nav-actions flex align-items-center gap-3">
-            <button pButton 
-                    [icon]="isDarkMode ? 'pi pi-sun' : 'pi pi-moon'" 
-                    class="p-button-rounded p-button-text p-button-secondary" 
-                    (click)="toggleTheme()"
-                    aria-label="Cambiar tema">
-            </button>
-            <button pButton label="Portal Alumnos" icon="pi pi-user" class="p-button-outlined p-button-sm md:p-button-md" (click)="irAlLogin()"></button>
+            <div class="nav-actions flex align-items-center gap-3">
+                <button pButton 
+                        [icon]="isDarkMode ? 'pi pi-sun' : 'pi pi-moon'" 
+                        class="p-button-rounded p-button-text p-button-secondary theme-toggle-btn" 
+                        (click)="toggleTheme()"
+                        aria-label="Cambiar tema">
+                </button>
+                <button pButton label="Portal Profutbol" icon="pi pi-user" class="p-button-outlined p-button-sm md:p-button-md btn-portal" (click)="irAlLogin()"></button>
+            </div>
         </div>
     </nav>
 
@@ -28,95 +30,101 @@
         
         <div class="hero-content fade-in-up">
             <span class="badge">Academia de Fútbol de Alto Rendimiento</span>
-            <h1 class="hero-title" [innerHTML]="heroTitulo"></h1>
-            <p class="hero-subtitle">{{ heroSubtitulo }}</p>
+            <h1 class="hero-title text-wrap">TU MEJOR VERSIÓN COMIENZA AQUÍ</h1>
+            <p class="hero-subtitle text-wrap">Trabajamos con un grupo de profesionales expertos en el área para mejorar tu rendimiento deportivo de manera integral.</p>
             
             <div class="hero-buttons">
-                <button pButton label="Únete a Nosotros" icon="pi pi-whatsapp" size="large" class="p-button-primary shadow-4 mr-3" (click)="irA(linkWhatsApp)"></button>
-                <button pButton label="Conocer Más" icon="pi pi-arrow-down" size="large" class="p-button-outlined p-button-secondary bg-white-alpha-10 text-white border-white hover:bg-white-alpha-20" (click)="scrollTo('nosotros')"></button>
+                <button pButton label="Únete a Nosotros" icon="pi pi-whatsapp" class="p-button-primary shadow-4 btn-hero" (click)="irA('https://wa.me/56923721673?text=Hola,%20vengo%20desde%20la%20página%20web%20y%20quiero%20información%20sobre%20la%20academia.')"></button>
+                <button pButton label="Conocer Más" icon="pi pi-arrow-down" class="p-button-outlined p-button-secondary btn-hero bg-white-alpha-10 text-white border-white hover:bg-white-alpha-20" (click)="scrollTo('nosotros')"></button>
             </div>
         </div>
     </header>
 
     <section id="nosotros" class="info-section">
-        <div class="section-header text-center mb-5">
-            <h2 class="section-title">Nuestra Metodología</h2>
-            <div class="title-divider"></div>
-            <p class="section-desc">No solo formamos jugadores, formamos atletas integrales apoyados por un equipo de profesionales de primer nivel.</p>
-        </div>
+        <div class="section-container">
+            <div class="section-header text-center mb-5">
+                <h2 class="section-title text-wrap">Nuestra Metodología</h2>
+                <div class="title-divider"></div>
+                <p class="section-desc text-wrap">No solo formamos jugadores, formamos atletas integrales apoyados por un equipo de profesionales de primer nivel.</p>
+            </div>
 
-        <div class="features-grid">
-            <div class="feature-card" *ngFor="let m of metodologias">
-                <div class="icon-wrapper"><i class="pi {{ m.icono }}"></i></div>
-                <h3>{{ m.titulo }}</h3>
-                <p>{{ m.descripcion }}</p>
+            <div class="features-grid">
+                <div class="feature-card main-card" *ngFor="let m of metodologias">
+                    <div class="icon-wrapper"><i class="pi {{ m.icono }}"></i></div>
+                    <h3 class="text-wrap">{{ m.titulo }}</h3>
+                    <p class="text-wrap">{{ m.descripcion }}</p>
+                </div>
             </div>
         </div>
     </section>
 
     <section id="programas" class="programs-section">
-        <div class="section-header text-center mb-5">
-            <h2 class="section-title">Nuestras Categorías</h2>
-            <div class="title-divider"></div>
-        </div>
+        <div class="section-container">
+            <div class="section-header text-center mb-5">
+                <h2 class="section-title text-wrap">Nuestras Categorías</h2>
+                <div class="title-divider"></div>
+            </div>
 
-        <div class="programs-grid">
-            <div class="program-card" *ngFor="let p of programas">
-                <div class="program-img {{ p.color_fondo }} flex align-items-center justify-content-center h-10rem border-round-top">
-                    <i class="pi {{ p.icono }} text-5xl {{ p.color_texto }}"></i>
-                </div>
-                <div class="program-content">
-                    <h3>{{ p.titulo }}</h3>
-                    <p>{{ p.descripcion }}</p>
+            <div class="programs-grid">
+                <div class="program-card main-card p-0" *ngFor="let p of programas">
+                    <div class="program-img {{ p.color_fondo }} flex align-items-center justify-content-center h-10rem border-round-top">
+                        <i class="pi {{ p.icono }} text-5xl {{ p.color_texto }}"></i>
+                    </div>
+                    <div class="program-content">
+                        <h3 class="text-wrap">{{ p.titulo }}</h3>
+                        <p class="text-wrap">{{ p.descripcion }}</p>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
     <section id="beneficios" class="sponsors-section">
-        <div class="section-header text-center mb-5">
-            <h2 class="section-title">Alianzas y Beneficios</h2>
-            <div class="title-divider"></div>
-            <p class="section-desc">Trabajamos con las mejores marcas e instituciones para ofrecer beneficios exclusivos a todos nuestros jugadores y sus familias.</p>
-        </div>
+        <div class="section-container">
+            <div class="section-header text-center mb-5">
+                <h2 class="section-title text-wrap">Alianzas y Beneficios</h2>
+                <div class="title-divider"></div>
+                <p class="section-desc text-wrap">Trabajamos con las mejores marcas e instituciones para ofrecer beneficios exclusivos a todos nuestros jugadores y sus familias.</p>
+            </div>
 
-        <div class="sponsors-grid">
-            <div class="sponsor-card" *ngFor="let a of alianzas">
-                <div class="sponsor-logo-wrapper mb-4">
-                    <img [src]="a.imagen_url || 'assets/images/default-sponsor.png'" [alt]="a.nombre" class="sponsor-logo">
+            <div class="sponsors-grid">
+                <div class="sponsor-card main-card" *ngFor="let a of alianzas">
+                    <div class="sponsor-logo-wrapper mb-4">
+                        <img [src]="a.imagen_url || 'assets/images/default-sponsor.png'" [alt]="a.nombre" class="sponsor-logo">
+                    </div>
+                    <h3 class="text-wrap">{{ a.nombre }}</h3>
+                    <p class="text-wrap">{{ a.descripcion }}</p>
                 </div>
-                <h3>{{ a.nombre }}</h3>
-                <p>{{ a.descripcion }}</p>
             </div>
         </div>
     </section>
 
     <footer id="contacto" class="footer-section">
-        <div class="footer-container">
+        <div class="section-container footer-container">
             <div class="footer-brand">
                 <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="Logo" class="footer-logo mb-3">
-                <p>Cambiando la forma de vivir el fútbol formativo. Únete a la evolución deportiva.</p>
+                <p class="text-wrap">Cambiando la forma de vivir el fútbol formativo. Únete a la evolución deportiva.</p>
             </div>
             
             <div class="footer-links">
                 <h4>Contacto</h4>
-                <p><i class="pi pi-whatsapp mr-3 text-xl"></i> {{ telefonoAcademia }}</p>
-                <p><i class="pi pi-envelope mr-3 text-xl"></i> {{ correoAcademia }}</p>
+                <p class="text-wrap"><i class="pi pi-whatsapp mr-3 text-xl"></i> +56 9 2372 1673</p>
+                <p class="text-wrap"><i class="pi pi-envelope mr-3 text-xl"></i> profutbol@gmail.com</p>
             </div>
 
             <div class="footer-links social-column">
                 <h4>Síguenos</h4>
-                <p class="mb-3 text-sm" style="color: #94a3b8;">Descubre nuestro día a día</p>
+                <p class="mb-3 text-sm text-400">Descubre nuestro día a día</p>
                 
                 <div class="social-list mt-3">
-                    <div class="social-item cursor-pointer" (click)="irA(linkInstagram)">
+                    <div class="social-item cursor-pointer" (click)="irA('https://www.instagram.com/pro_futbol2026?igsh=ZWN2aDVvMW50dW15')">
                         <div class="icon-circle"><i class="pi pi-instagram text-xl"></i></div>
-                        <span class="social-name">{{ nombreInstagram }}</span>
+                        <span class="social-name text-wrap">ProFutbol</span>
                     </div>
 
-                    <div class="social-item cursor-pointer" (click)="irA(linkFacebook)">
+                    <div class="social-item cursor-pointer" (click)="irA('https://www.facebook.com/share/1BG7rABUks/')">
                         <div class="icon-circle"><i class="pi pi-facebook text-xl"></i></div>
-                        <span class="social-name">{{ nombreFacebook }}</span>
+                        <span class="social-name text-wrap">Pro Fútbol Arica</span>
                     </div>
                 </div>
             </div>
