@@ -2,7 +2,7 @@
 :host {
     display: block;
     min-height: 100vh;
-    padding: 1rem;
+    padding: 1.5rem; /* Sincronizado con main-content del Dashboard */
 }
 
 .groups-container {
@@ -15,20 +15,20 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem; /* Achicado de 2rem a 1.5rem */
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: 0.75rem; /* Achicado de 1rem */
 }
 
 .header-content {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
 }
 
 .header-content h1 {
     margin: 0;
-    font-size: 1.5rem;
+    font-size: 1.4rem; /* Sincronizado con h1 de dashboard/usuarios */
     font-weight: 700;
     color: var(--text-main);
 }
@@ -36,48 +36,32 @@
 .header-content p {
     margin: 0.25rem 0 0;
     color: var(--text-secondary);
-    font-size: 0.9rem;
+    font-size: 0.85rem; /* Sincronizado */
 }
 
-.btn-create {
+/* BOTÓN CREAR GRUPO (ULTRA COMPACTO) */
+:host ::ng-deep .btn-create {
+    padding: 0.5rem 1rem !important;
+    border-radius: 8px !important;
+    font-size: 0.85rem !important;
     white-space: nowrap;
+}
+:host ::ng-deep .btn-create .p-button-icon {
+    font-size: 0.8rem !important;
+    margin-right: 6px !important;
 }
 
 /* --- TABLA --- */
 .card-table {
     background-color: var(--bg-card);
-    padding: 0.5rem;
-    border-radius: 16px;
+    padding: 1rem 1.25rem; /* Sincronizado con las tarjetas del dashboard */
+    border-radius: 12px; /* Reducido de 16px a 12px */
     border: 1px solid var(--border-color);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02); /* Sombra suave homologada */
     overflow-x: auto; 
 }
 
-/* Asegura que los botones se mantengan juntos y al centro */
-.action-buttons {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 0.75rem; 
-    width: 100%;
-}
-
-.text-secondary { 
-    color: var(--text-secondary); 
-}
-
-/* --- UTILIDADES RESPONSIVAS --- */
-.hidden-mobile { display: table-cell; }
-.visible-mobile { display: none; }
-
-.mobile-desc {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    margin-top: 4px;
-    font-style: italic;
-}
-
-/* --- ESTILOS DEL FORMULARIO --- */
+/* --- ESTILOS DEL FORMULARIO (MODAL) --- */
 .field {
     display: block !important;
     width: 100%;
@@ -87,10 +71,10 @@
 
 .field label {
     display: block !important;
-    margin-bottom: 0.5rem !important;
+    margin-bottom: 4px !important; /* Más pegado al input */
     font-weight: 600;
     color: var(--text-main);
-    font-size: 0.95rem;
+    font-size: 0.85rem; /* Sincronizado con modales */
 }
 
 .field input, 
@@ -106,25 +90,26 @@
 }
 
 /* =========================================
-   PRIMENG OVERRIDES - CENTRADO TOTAL
+   PRIMENG OVERRIDES - COMPACTO Y CENTRADO
    ========================================= */
 
 :host ::ng-deep .p-datatable .p-datatable-header {
     background: transparent; 
     border: none; 
-    padding: 1rem 0;
+    padding: 0.5rem 0 1rem 0; /* Padding superior reducido */
 }
 
-/* 1. Centrar todos los encabezados (TH) */
+/* 1. Centrar y achicar todos los encabezados (TH) */
 :host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
     background: var(--bg-main) !important;
     color: var(--text-secondary) !important;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.75rem !important; /* Letra ultra compacta */
     text-transform: uppercase;
-    padding: 1rem;
+    padding: 0.5rem 0.4rem !important; /* Relleno mínimo */
     border-bottom: 1px solid var(--border-color);
-    text-align: center !important; /* Centrado forzado global */
+    text-align: center !important; 
+    white-space: nowrap;
 }
 
 /* Forzar centrado del contenido flex de los encabezados */
@@ -135,43 +120,84 @@
     width: 100%;
 }
 
-/* 2. Centrar todas las celdas (TD) */
+/* 2. Centrar y achicar todas las celdas (TD) */
 :host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
-    padding: 1rem;
+    padding: 0.5rem 0.4rem !important; /* Relleno mínimo */
+    font-size: 0.8rem !important; /* Sincronizado con tabla de usuarios */
     border-bottom: 1px solid var(--bg-main);
     color: var(--text-main);
     vertical-align: middle;
-    text-align: center !important; /* Centrado forzado global */
+    text-align: center !important; 
 }
 
-/* 3. Centrar contenedores internos (como el nombre y descripción) */
+/* 3. Centrar contenedores internos */
 :host ::ng-deep .p-datatable .p-datatable-tbody > tr > td > * {
     margin-left: auto;
     margin-right: auto;
 }
 
-/* 4. Asegurar que los p-tag queden exactamente al medio */
+/* 4. Asegurar que los p-tag queden al medio y achicarlos */
 :host ::ng-deep .p-datatable .p-datatable-tbody > tr > td p-tag {
     display: inline-flex !important;
     justify-content: center;
     align-items: center;
     margin: 0 auto;
+    font-size: 0.65rem !important; /* Achicado */
+    padding: 0.2rem 0.4rem !important; /* Achicado */
+}
+
+/* --- ACCIONES DE LA TABLA (ÍCONOS ACHICADOS) --- */
+.action-buttons { 
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    gap: 0.15rem; /* Más juntos */
+    width: 100%;
+}
+
+/* Forzar tamaño de los botones de acción */
+:host ::ng-deep .action-buttons .p-button {
+    width: 1.8rem !important; 
+    height: 1.8rem !important; 
+    padding: 0 !important;
+}
+
+:host ::ng-deep .action-buttons .p-button .p-button-icon {
+    font-size: 0.85rem !important; 
+}
+
+/* --- UTILIDADES RESPONSIVAS --- */
+.text-secondary { 
+    color: var(--text-secondary); 
+}
+
+.hidden-mobile { display: table-cell; }
+.visible-mobile { display: none; }
+
+.mobile-desc {
+    font-size: 0.75rem; /* Achicado */
+    color: var(--text-secondary);
+    margin-top: 4px;
+    font-style: italic;
 }
 
 /* =========================================
    MEDIA QUERIES (MÓVIL < 768px)
    ========================================= */
 @media (max-width: 768px) {
-    :host { padding: 0.5rem; }
+    :host { padding: 1rem; } /* Match con mobile padding del dashboard */
 
     /* Header */
     .page-header {
         flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: 1rem;
+        align-items: flex-start; /* Alineado a la izquierda como en usuarios */
+        text-align: left;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
     }
-    .header-content { justify-content: center; width: 100%; }
+    .header-content { justify-content: flex-start; width: 100%; }
+    .header-content h1 { font-size: 1.25rem; } /* H1 móvil */
+    
     .btn-create { width: 100%; justify-content: center; }
 
     /* Tabla */
@@ -179,9 +205,9 @@
     .visible-mobile { display: block !important; }
     
     :host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
-        padding: 0.8rem 0.5rem;
-        font-size: 0.9rem;
+        padding: 0.6rem 0.4rem !important;
+        font-size: 0.85rem !important;
     }
 
-    .action-buttons { gap: 0.5rem; }
+    .action-buttons { gap: 0.25rem; }
 }

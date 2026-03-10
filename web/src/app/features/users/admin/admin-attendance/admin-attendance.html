@@ -1,36 +1,36 @@
-<div class="attendance-container p-3 fadein animation-duration-500">
+<div class="attendance-container fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
 
     <header class="page-header">
         <div class="header-content">
-            <h1 class="text-2xl font-bold m-0 text-main">Control Global de Asistencia</h1>
+            <h1 class="m-0 text-main">Control Global de Asistencia</h1>
             <p class="text-secondary m-0 mt-1">Supervisión mensual de participación de toda la academia.</p>
         </div>
     </header>
 
-    <div class="filter-bar card mb-4 p-3 surface-card border-round shadow-1">
+    <div class="filter-bar">
         <div class="filter-row">
             
             <div class="filter-item flex-grow-1">
                 <label><i class="pi pi-users mr-1"></i> Grupo</label>
                 <p-select [options]="grupos" [(ngModel)]="grupoSeleccionado" optionLabel="nombre" optionValue="id" 
-                          placeholder="Escoge un grupo" (onChange)="onFilterChange()" styleClass="w-full"></p-select>
+                          placeholder="Escoge un grupo" (onChange)="onFilterChange()" appendTo="body" styleClass="w-full"></p-select>
             </div>
 
             <div class="filter-item flex-grow-1">
                 <label><i class="pi pi-calendar mr-1"></i> Mes</label>
-                <p-select [options]="meses" [(ngModel)]="filtroMes" (onChange)="onFilterChange()" styleClass="w-full"></p-select>
+                <p-select [options]="meses" [(ngModel)]="filtroMes" (onChange)="onFilterChange()" appendTo="body" styleClass="w-full"></p-select>
             </div>
 
             <div class="filter-item flex-grow-1">
                 <label><i class="pi pi-calendar-plus mr-1"></i> Año</label>
-                <p-select [options]="anios" [(ngModel)]="filtroAnio" (onChange)="onFilterChange()" styleClass="w-full"></p-select>
+                <p-select [options]="anios" [(ngModel)]="filtroAnio" (onChange)="onFilterChange()" appendTo="body" styleClass="w-full"></p-select>
             </div>
 
         </div>
     </div>
 
-    <div class="card shadow-2 border-round surface-card p-0 overflow-hidden" *ngIf="!loading && estudiantesAsistencia.length > 0">
+    <div class="main-card overflow-hidden" *ngIf="!loading && estudiantesAsistencia.length > 0">
         <p-table [value]="estudiantesAsistencia" [rows]="10" [paginator]="true" styleClass="p-datatable-sm" responsiveLayout="stack">
             <ng-template pTemplate="header">
                 <tr>
@@ -66,14 +66,13 @@
                     </td>
                     <td class="text-center">
                         <span class="p-column-title font-bold text-secondary hidden-desktop">Rendimiento:</span>
-                        <p-tag [value]="est.porcentaje + '%'" [severity]="getSeverity(est.porcentaje)" styleClass="px-3 py-1 text-sm"></p-tag>
+                        <p-tag [value]="est.porcentaje + '%'" [severity]="getSeverity(est.porcentaje)"></p-tag>
                     </td>
                     <td class="text-center">
                         <button pButton icon="pi pi-search-plus" 
                                 class="p-button-rounded p-button-text p-button-info btn-historial" 
                                 (click)="verHistorialIndividual(est)"
                                 pTooltip="Ver detalle diario">
-                            <span class="hidden-desktop ml-2 font-bold">Ver Historial</span>
                         </button>
                     </td>
                 </tr>
@@ -86,7 +85,7 @@
         <p class="mt-3 text-500">Calculando estadísticas...</p>
     </div>
 
-    <div *ngIf="!loading && grupoSeleccionado && estudiantesAsistencia.length === 0" class="text-center p-5 card shadow-1">
+    <div *ngIf="!loading && grupoSeleccionado && estudiantesAsistencia.length === 0" class="main-card text-center p-5">
         <i class="pi pi-info-circle text-400 mb-3" style="font-size: 2rem"></i>
         <p class="text-600 m-0">No se encontraron registros de asistencia para este grupo en el periodo seleccionado.</p>
     </div>
@@ -95,8 +94,8 @@
               [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" [draggable]="false" [resizable]="false">
         
         <div class="flex gap-2 mb-4 bg-gray-100 p-2 border-round">
-            <p-select [options]="meses" [(ngModel)]="filtroMes" (onChange)="cargarDetalleHistorial()" styleClass="flex-grow-1"></p-select>
-            <p-select [options]="anios" [(ngModel)]="filtroAnio" (onChange)="cargarDetalleHistorial()"></p-select>
+            <p-select [options]="meses" [(ngModel)]="filtroMes" (onChange)="cargarDetalleHistorial()" appendTo="body" styleClass="flex-grow-1"></p-select>
+            <p-select [options]="anios" [(ngModel)]="filtroAnio" (onChange)="cargarDetalleHistorial()" appendTo="body"></p-select>
         </div>
 
         <div *ngIf="loadingHistorial" class="text-center p-4"><i class="pi pi-spin pi-spinner text-4xl text-primary"></i></div>

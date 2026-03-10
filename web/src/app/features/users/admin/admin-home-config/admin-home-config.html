@@ -1,13 +1,17 @@
-<div class="p-3 fadein animation-duration-500">
+<div class="users-container fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
     <p-confirmDialog></p-confirmDialog>
 
-    <header class="mb-4">
-        <h1 class="text-2xl font-bold m-0 text-main">Editor de Landing Page</h1>
-        <p class="text-secondary m-0 mt-1">Configura la información pública que ven los visitantes.</p>
+    <header class="page-header">
+        <div class="header-content">
+            <div>
+                <h1 class="m-0 text-main">Editor de Landing Page</h1>
+                <p class="text-secondary m-0 mt-1">Configura la información pública que ven los visitantes.</p>
+            </div>
+        </div>
     </header>
 
-    <div class="card shadow-2 border-round surface-card p-3">
+    <div class="main-card">
         <p-tabs value="0">
             <p-tablist>
                 <p-tab value="0"><i class="pi pi-cog mr-2"></i>Textos y Contacto</p-tab>
@@ -17,67 +21,68 @@
             </p-tablist>
 
             <p-tabpanels>
+                
                 <p-tabpanel value="0">
                     <div class="grid mt-3">
                         <div class="col-12 md:col-6">
-                            <h3 class="mt-0 text-primary">Portada (Hero)</h3>
+                            <h3 class="mt-0 text-primary mb-3">Portada (Hero)</h3>
                             <div class="field mb-3">
-                                <label class="font-bold block mb-1">Título Principal</label>
+                                <label>Título Principal</label>
                                 <input pInputText [(ngModel)]="config.hero_titulo" class="w-full" />
                             </div>
                             <div class="field mb-4">
-                                <label class="font-bold block mb-1">Subtítulo</label>
+                                <label>Subtítulo</label>
                                 <textarea pTextarea [(ngModel)]="config.hero_subtitulo" rows="3" class="w-full"></textarea>
                             </div>
 
-                            <h3 class="mt-0 text-primary border-top-1 surface-border pt-4">Contacto</h3>
+                            <h3 class="mt-0 text-primary border-top-1 surface-border pt-4 mb-3">Contacto</h3>
                             <div class="formgrid grid">
                                 <div class="field col-6 mb-3">
-                                    <label class="font-bold block mb-1">Teléfono</label>
+                                    <label>Teléfono</label>
                                     <input pInputText [(ngModel)]="config.telefono" class="w-full" />
                                 </div>
                                 <div class="field col-6 mb-3">
-                                    <label class="font-bold block mb-1">Correo Electrónico</label>
+                                    <label>Correo Electrónico</label>
                                     <input pInputText [(ngModel)]="config.correo" class="w-full" />
                                 </div>
                             </div>
                             <div class="field mb-4">
-                                <label class="font-bold block mb-1">Mensaje Predeterminado WhatsApp</label>
+                                <label>Mensaje Predeterminado WhatsApp</label>
                                 <textarea pTextarea [(ngModel)]="config.whatsapp_mensaje" rows="2" class="w-full"></textarea>
                             </div>
                         </div>
 
                         <div class="col-12 md:col-6">
-                            <h3 class="mt-0 text-primary">Redes Sociales</h3>
+                            <h3 class="mt-0 text-primary mb-3">Redes Sociales</h3>
                             <div class="field mb-3">
-                                <label class="font-bold block mb-1"><i class="pi pi-instagram mr-1"></i> Nombre Instagram</label>
+                                <label><i class="pi pi-instagram mr-1"></i> Nombre Instagram</label>
                                 <input pInputText [(ngModel)]="config.instagram_nombre" class="w-full" />
                             </div>
                             <div class="field mb-4">
-                                <label class="font-bold block mb-1">URL Instagram</label>
+                                <label>URL Instagram</label>
                                 <input pInputText [(ngModel)]="config.instagram_url" class="w-full" />
                             </div>
 
                             <div class="field mb-3 border-top-1 surface-border pt-4">
-                                <label class="font-bold block mb-1"><i class="pi pi-facebook mr-1"></i> Nombre Facebook</label>
+                                <label><i class="pi pi-facebook mr-1"></i> Nombre Facebook</label>
                                 <input pInputText [(ngModel)]="config.facebook_nombre" class="w-full" />
                             </div>
                             <div class="field mb-4">
-                                <label class="font-bold block mb-1">URL Facebook</label>
+                                <label>URL Facebook</label>
                                 <input pInputText [(ngModel)]="config.facebook_url" class="w-full" />
                             </div>
                         </div>
                     </div>
                     <div class="flex justify-content-end mt-4">
-                        <button pButton label="Guardar Configuración General" icon="pi pi-save" (click)="guardarConfigGeneral()" [loading]="loading"></button>
+                        <button pButton label="Guardar Configuración General" icon="pi pi-save" (click)="guardarConfigGeneral()" [loading]="loading" class="btn-create"></button>
                     </div>
                 </p-tabpanel>
 
                 <p-tabpanel value="1">
                     <div class="flex justify-content-end mb-3 mt-2">
-                        <button pButton label="Añadir Metodología" icon="pi pi-plus" (click)="abrirNuevo('metodologia')"></button>
+                        <button pButton label="Añadir Metodología" icon="pi pi-plus" (click)="abrirNuevo('metodologia')" class="btn-create"></button>
                     </div>
-                    <p-table [value]="metodologias" styleClass="p-datatable-sm p-datatable-striped">
+                    <p-table [value]="metodologias" styleClass="p-datatable-sm">
                         <ng-template pTemplate="header">
                             <tr>
                                 <th>Icono</th><th>Título</th><th>Descripción</th><th class="text-center">Acciones</th>
@@ -86,11 +91,13 @@
                         <ng-template pTemplate="body" let-item>
                             <tr>
                                 <td><i class="pi {{item.icono}} text-xl text-primary"></i></td>
-                                <td class="font-bold">{{item.titulo}}</td>
+                                <td class="font-bold text-main">{{item.titulo}}</td>
                                 <td>{{item.descripcion}}</td>
-                                <td class="text-center">
-                                    <button pButton icon="pi pi-pencil" class="p-button-text p-button-rounded p-button-warning" (click)="editarItem('metodologia', item)"></button>
-                                    <button pButton icon="pi pi-trash" class="p-button-text p-button-rounded p-button-danger" (click)="confirmarEliminar('metodologia', item.id)"></button>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning" (click)="editarItem('metodologia', item)"></button>
+                                        <button pButton icon="pi pi-trash" class="p-button-text p-button-danger" (click)="confirmarEliminar('metodologia', item.id)"></button>
+                                    </div>
                                 </td>
                             </tr>
                         </ng-template>
@@ -99,9 +106,9 @@
 
                 <p-tabpanel value="2">
                     <div class="flex justify-content-end mb-3 mt-2">
-                        <button pButton label="Añadir Categoría" icon="pi pi-plus" (click)="abrirNuevo('programa')"></button>
+                        <button pButton label="Añadir Categoría" icon="pi pi-plus" (click)="abrirNuevo('programa')" class="btn-create"></button>
                     </div>
-                    <p-table [value]="programas" styleClass="p-datatable-sm p-datatable-striped">
+                    <p-table [value]="programas" styleClass="p-datatable-sm">
                         <ng-template pTemplate="header">
                             <tr>
                                 <th>Diseño</th><th>Título</th><th>Descripción</th><th class="text-center">Acciones</th>
@@ -109,12 +116,18 @@
                         </ng-template>
                         <ng-template pTemplate="body" let-item>
                             <tr>
-                                <td><div class="{{item.color_fondo}} p-2 border-round text-center w-3rem"><i class="pi {{item.icono}} {{item.color_texto}} text-xl"></i></div></td>
-                                <td class="font-bold">{{item.titulo}}</td>
+                                <td>
+                                    <div class="{{item.color_fondo}} p-2 border-round text-center w-3rem mx-auto">
+                                        <i class="pi {{item.icono}} {{item.color_texto}} text-lg"></i>
+                                    </div>
+                                </td>
+                                <td class="font-bold text-main">{{item.titulo}}</td>
                                 <td>{{item.descripcion}}</td>
-                                <td class="text-center">
-                                    <button pButton icon="pi pi-pencil" class="p-button-text p-button-rounded p-button-warning" (click)="editarItem('programa', item)"></button>
-                                    <button pButton icon="pi pi-trash" class="p-button-text p-button-rounded p-button-danger" (click)="confirmarEliminar('programa', item.id)"></button>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning" (click)="editarItem('programa', item)"></button>
+                                        <button pButton icon="pi pi-trash" class="p-button-text p-button-danger" (click)="confirmarEliminar('programa', item.id)"></button>
+                                    </div>
                                 </td>
                             </tr>
                         </ng-template>
@@ -123,27 +136,30 @@
 
                 <p-tabpanel value="3">
                     <div class="flex justify-content-end mb-3 mt-2">
-                        <button pButton label="Añadir Alianza" icon="pi pi-plus" (click)="abrirNuevo('alianza')"></button>
+                        <button pButton label="Añadir Alianza" icon="pi pi-plus" (click)="abrirNuevo('alianza')" class="btn-create"></button>
                     </div>
-                    <p-table [value]="alianzas" styleClass="p-datatable-sm p-datatable-striped">
-    <ng-template pTemplate="header">
-        <tr>
-            <th>Logo</th><th>Marca</th><th>Descripción</th><th class="text-center">Acciones</th>
-        </tr>
-    </ng-template>
-    <ng-template pTemplate="body" let-item>
-        <tr>
-            <td class="text-center"> <img [src]="item.imagen_url || 'assets/images/default-sponsor.png'" alt="Logo" class="logo-tabla border-round bg-white p-1 border-1 surface-border">
-            </td>
-            <td class="font-bold">{{item.nombre}}</td>
-            <td>{{item.descripcion}}</td>
-            <td class="text-center">
-                <button pButton icon="pi pi-pencil" class="p-button-text p-button-rounded p-button-warning" (click)="editarItem('alianza', item)"></button>
-                <button pButton icon="pi pi-trash" class="p-button-text p-button-rounded p-button-danger" (click)="confirmarEliminar('alianza', item.id)"></button>
-            </td>
-        </tr>
-    </ng-template>
-</p-table>
+                    <p-table [value]="alianzas" styleClass="p-datatable-sm">
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th>Logo</th><th>Marca</th><th>Descripción</th><th class="text-center">Acciones</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-item>
+                            <tr>
+                                <td> 
+                                    <img [src]="item.imagen_url || 'assets/images/default-sponsor.png'" alt="Logo" class="logo-tabla bg-white p-1 border-1 surface-border">
+                                </td>
+                                <td class="font-bold text-main">{{item.nombre}}</td>
+                                <td>{{item.descripcion}}</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning" (click)="editarItem('alianza', item)"></button>
+                                        <button pButton icon="pi pi-trash" class="p-button-text p-button-danger" (click)="confirmarEliminar('alianza', item.id)"></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
                 </p-tabpanel>
 
             </p-tabpanels>
@@ -152,7 +168,7 @@
 
     <p-dialog [(visible)]="displayDialogMetodologia" [header]="isEditing ? 'Editar Metodología' : 'Nueva Metodología'" [modal]="true" styleClass="p-fluid" [style]="{width: '450px'}">
         <div class="field mt-2">
-            <label class="font-bold">Icono Visual</label>
+            <label>Icono Visual</label>
             <p-select [options]="listaIconos" [(ngModel)]="itemForm.icono" optionLabel="label" optionValue="value" placeholder="Selecciona un icono" appendTo="body" styleClass="w-full">
                 <ng-template pTemplate="selectedItem" let-selectedOption>
                     <div class="flex align-items-center gap-2" *ngIf="selectedOption">
@@ -169,15 +185,15 @@
             </p-select>
         </div>
         <div class="field">
-            <label class="font-bold">Título</label>
+            <label>Título</label>
             <input pInputText [(ngModel)]="itemForm.titulo" />
         </div>
         <div class="field">
-            <label class="font-bold">Descripción</label>
+            <label>Descripción</label>
             <textarea pTextarea [(ngModel)]="itemForm.descripcion" rows="3"></textarea>
         </div>
         <ng-template pTemplate="footer">
-            <button pButton label="Cancelar" class="p-button-text" (click)="displayDialogMetodologia = false"></button>
+            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="displayDialogMetodologia = false"></button>
             <button pButton label="Guardar" icon="pi pi-check" (click)="guardarMetodologia()"></button>
         </ng-template>
     </p-dialog>
@@ -185,11 +201,11 @@
     <p-dialog [(visible)]="displayDialogPrograma" [header]="isEditing ? 'Editar Categoría' : 'Nueva Categoría'" [modal]="true" styleClass="p-fluid" [style]="{width: '450px'}">
         <div class="formgrid grid mt-2">
             <div class="field col-12">
-                <label class="font-bold">Título</label>
+                <label>Título</label>
                 <input pInputText [(ngModel)]="itemForm.titulo" placeholder="Ej: Iniciación (5 a 9 años)" />
             </div>
             <div class="field col-12">
-                <label class="font-bold">Icono Visual</label>
+                <label>Icono Visual</label>
                 <p-select [options]="listaIconos" [(ngModel)]="itemForm.icono" optionLabel="label" optionValue="value" placeholder="Selecciona un icono" appendTo="body" styleClass="w-full">
                     <ng-template pTemplate="selectedItem" let-selectedOption>
                         <div class="flex align-items-center gap-2" *ngIf="selectedOption">
@@ -206,26 +222,25 @@
                 </p-select>
             </div>
             <div class="field col-6">
-                <label class="font-bold">Fondo (Color)</label>
+                <label>Fondo (Color)</label>
                 <input pInputText [(ngModel)]="itemForm.color_fondo" placeholder="Ej: bg-blue-100" />
             </div>
             <div class="field col-6">
-                <label class="font-bold">Texto (Color)</label>
+                <label>Texto (Color)</label>
                 <input pInputText [(ngModel)]="itemForm.color_texto" placeholder="Ej: text-blue-500" />
             </div>
         </div>
         <div class="field">
-            <label class="font-bold">Descripción</label>
+            <label>Descripción</label>
             <textarea pTextarea [(ngModel)]="itemForm.descripcion" rows="3"></textarea>
         </div>
         <ng-template pTemplate="footer">
-            <button pButton label="Cancelar" class="p-button-text" (click)="displayDialogPrograma = false"></button>
+            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="displayDialogPrograma = false"></button>
             <button pButton label="Guardar" icon="pi pi-check" (click)="guardarPrograma()"></button>
         </ng-template>
     </p-dialog>
 
     <p-dialog [(visible)]="displayDialogAlianza" [header]="isEditing ? 'Editar Alianza' : 'Nueva Alianza'" [modal]="true" styleClass="p-fluid" [style]="{width: '450px'}">
-        
         <div class="field flex flex-column align-items-center mt-3">
             <div class="w-8rem h-8rem border-circle border-1 surface-border bg-white flex align-items-center justify-content-center overflow-hidden mb-3 shadow-2 relative">
                 <img *ngIf="previewUrl || itemForm.imagen_url" [src]="previewUrl || itemForm.imagen_url" alt="Logo" class="w-full h-full object-contain p-2">
@@ -236,23 +251,22 @@
                 </div>
             </div>
             
-            <p-fileUpload mode="basic" chooseIcon="pi pi-upload" chooseLabel="Subir Logo" accept="image/*" [auto]="true" [customUpload]="true" (uploadHandler)="onFileSelected($event)" class="p-button-outlined"></p-fileUpload>
+            <p-fileUpload mode="basic" chooseIcon="pi pi-upload" chooseLabel="Subir Logo" accept="image/*" [auto]="true" [customUpload]="true" (uploadHandler)="onFileSelected($event)" class="p-button-outlined btn-create"></p-fileUpload>
         </div>
 
         <div class="field mt-2">
-            <label class="font-bold">Nombre de la Marca</label>
+            <label>Nombre de la Marca</label>
             <input pInputText [(ngModel)]="itemForm.nombre" />
         </div>
 
         <div class="field">
-            <label class="font-bold">Descripción / Beneficio</label>
+            <label>Descripción / Beneficio</label>
             <textarea pTextarea [(ngModel)]="itemForm.descripcion" rows="3"></textarea>
         </div>
 
         <ng-template pTemplate="footer">
-            <button pButton label="Cancelar" class="p-button-text" (click)="cerrarModalAlianza()"></button>
+            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarModalAlianza()"></button>
             <button pButton label="Guardar" icon="pi pi-check" (click)="guardarAlianza()" [loading]="uploadingLogo"></button>
         </ng-template>
     </p-dialog>
-
 </div>

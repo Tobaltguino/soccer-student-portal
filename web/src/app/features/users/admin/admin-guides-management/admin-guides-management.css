@@ -2,89 +2,218 @@
 :host {
     display: block;
     min-height: 100vh;
-    padding: 1rem;
+    padding: 1.5rem; /* Sincronizado con el Dashboard */
 }
 
-.guides-container { max-width: 1400px; margin: 0 auto; }
-
-/* --- HEADER INSPIRADO EN CLASES --- */
-.page-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
+.guides-container { 
+    max-width: 1200px; 
+    margin: 0 auto; 
 }
-.header-content h1 { margin: 0; font-size: 1.5rem; font-weight: 700; color: var(--text-main); }
-.header-content p { margin: 0.25rem 0 0; color: var(--text-secondary); font-size: 0.9rem; }
-.btn-create { white-space: nowrap; }
 
-/* Textos adaptados al tema */
+/* --- TEXTOS --- */
 .text-main { color: var(--text-main); }
 .text-secondary { color: var(--text-secondary); }
+.text-primary { color: var(--primary-color); }
+
+/* --- ENCABEZADO --- */
+.page-header {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    margin-bottom: 1.5rem; 
+    flex-wrap: wrap; 
+    gap: 0.75rem; 
+}
+
+.header-content h1 { 
+    margin: 0; 
+    font-size: 1.4rem; 
+    font-weight: 700; 
+}
+
+.header-content p { 
+    margin: 0.25rem 0 0; 
+    font-size: 0.85rem; 
+}
+
+/* --- BOTÓN NUEVO (ULTRA COMPACTO) --- */
+:host ::ng-deep .btn-create {
+    padding: 0.5rem 1rem !important;
+    border-radius: 8px !important;
+    font-size: 0.85rem !important;
+    white-space: nowrap;
+}
+:host ::ng-deep .btn-create .p-button-icon {
+    font-size: 0.8rem !important;
+    margin-right: 6px !important;
+}
+
+/* --- TARJETA PRINCIPAL PARA TABLAS --- */
+.main-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    padding: 1rem 1.25rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    overflow-x: auto;
+}
 
 /* --- CAJA DE SUBIDA DE ARCHIVOS (Drag & Drop) --- */
 .file-upload-container {
     border-style: dashed !important;
     border-width: 2px !important;
-    border-color: var(--border-color, #ccc) !important;
-    border-radius: 8px;
-    background-color: var(--bg-card, #f9fafb);
+    border-color: var(--border-color) !important;
+    border-radius: 12px; 
+    background-color: var(--bg-main); 
     transition: all 0.2s ease-in-out;
+    padding: 1.5rem;
 }
 
 .file-upload-container:hover {
-    background-color: var(--surface-100);
+    background-color: var(--bg-card);
     border-color: var(--primary-color) !important;
 }
 
 .file-upload-container.opacity-50 {
     opacity: 0.6;
     cursor: not-allowed !important;
-    border-color: var(--surface-300) !important;
 }
 
-/* --- ESTILOS DE TEXTO PARA LA TABLA --- */
+/* --- TABLAS ULTRA COMPACTAS Y CENTRADAS --- */
+:host ::ng-deep .p-datatable .p-datatable-header {
+    background: transparent; border: none; padding: 0.5rem 0 1rem 0;
+}
+
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+    background: var(--bg-main) !important;
+    color: var(--text-secondary) !important;
+    font-weight: 600; font-size: 0.75rem !important;
+    text-transform: uppercase; padding: 0.5rem 0.4rem !important;
+    border-bottom: 1px solid var(--border-color);
+    text-align: center !important; white-space: nowrap;
+}
+
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th .p-column-header-content {
+    display: flex; justify-content: center !important; align-items: center; width: 100%;
+}
+
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+    padding: 0.5rem 0.4rem !important; font-size: 0.8rem !important;
+    border-bottom: 1px solid var(--bg-main); color: var(--text-main);
+    vertical-align: middle; text-align: center !important;
+}
+
+/* --- ACCIONES DE LA TABLA --- */
+.action-buttons { 
+    display: flex; justify-content: center; align-items: center;
+    gap: 0.15rem; width: 100%;
+}
+
+:host ::ng-deep .action-buttons .p-button {
+    width: 1.8rem !important; height: 1.8rem !important; padding: 0 !important;
+}
+
+:host ::ng-deep .action-buttons .p-button .p-button-icon {
+    font-size: 0.85rem !important; 
+}
+
+/* --- FORMULARIOS Y MODALES --- */
+.field {
+    margin-bottom: 1.25rem;
+}
+
+label {
+    color: var(--text-main);
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 4px;
+}
+
+textarea {
+    resize: vertical;
+}
+
+:host ::ng-deep .p-dialog-content {
+    padding-top: 1rem !important;
+    overflow-y: auto;
+}
+
+/* =========================================
+   SOLUCIÓN PARA TEXTOS LARGOS (TÍTULO Y DESCRIPCIÓN)
+   ========================================= */
+:host ::ng-deep .p-datatable-tbody > tr > td {
+    white-space: normal !important; /* Permite que la celda baje de línea */
+}
+
+:host ::ng-deep .p-datatable-tbody > tr > td span:not(.p-column-title) {
+    display: inline-block !important;
+    max-width: 100% !important; 
+    white-space: normal !important; 
+    /* word-break: break-word es inteligente: corta con espacios, y solo rompe una palabra si es una url eterna */
+    word-break: break-word !important; 
+    overflow-wrap: break-word !important;
+}
+
 .line-height-2 {
     line-height: 1.5;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    /* Destruimos el "-webkit-line-clamp" que ponía los "..." */
 }
 
 .white-space-nowrap {
     white-space: nowrap;
 }
 
-/* --- MEDIA QUERIES (RESPONSIVE) --- */
+/* =========================================
+   MEDIA QUERIES (RESPONSIVE)
+   ========================================= */
 @media screen and (max-width: 768px) {
-    :host { padding: 0.5rem; }
-    .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
-    .header-content, .btn-create { width: 100%; justify-content: center; }
+    :host { padding: 1rem; } 
+    
+    .page-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; margin-bottom: 1rem;}
+    .header-content { justify-content: flex-start; width: 100%; }
+    .header-content h1 { font-size: 1.25rem; }
+    .btn-create { width: 100%; justify-content: center; }
 
-    .p-datatable-sm .p-datatable-tbody > tr > td {
-        text-align: left !important;
-        display: block;
+    /* --- TABLA MÓVIL (Estilo Tarjeta) --- */
+    :host ::ng-deep .p-datatable-sm .p-datatable-thead { display: none !important; }
+
+    :host ::ng-deep .p-datatable-sm .p-datatable-tbody > tr {
+        display: flex; flex-direction: column;
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 12px; margin-bottom: 1rem;
+        padding: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    :host ::ng-deep .p-datatable-sm .p-datatable-tbody > tr > td {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
         width: 100% !important;
         box-sizing: border-box;
         border: 0 none !important;
-        padding: 0.75rem 1rem !important;
+        border-bottom: 1px solid var(--border-color) !important;
+        padding: 0.6rem 0 !important;
+        font-size: 0.85rem !important;
+        text-align: right !important;
     }
 
-    .p-datatable-sm .p-datatable-tbody > tr > td .p-column-title {
-        display: block;
+    :host ::ng-deep .p-datatable-sm .p-datatable-tbody > tr > td .p-column-title {
+        display: inline-block !important;
         font-weight: 700;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0;
         font-size: 0.85rem;
         color: var(--text-secondary);
-        text-transform: uppercase;
+        text-transform: none;
     }
 
-    .p-datatable-sm .p-datatable-tbody > tr > td:last-child {
-        border-bottom: 2px solid var(--border-color) !important;
-        padding-bottom: 1.5rem !important;
+    :host ::ng-deep .p-datatable-sm .p-datatable-tbody > tr > td:last-child {
+        border-bottom: none !important;
+        padding-top: 0.75rem !important;
+        padding-bottom: 0 !important;
+        justify-content: center !important;
     }
 
-    .p-datatable-sm .p-datatable-tbody > tr > td:last-child .flex {
-        justify-content: flex-start !important;
-    }
+    .action-buttons { gap: 0.25rem; }
 }
