@@ -1,13 +1,15 @@
 <div class="guides-container fadein animation-duration-500 max-w-full">
     <header class="page-header">
         <div class="header-content">
-            <h1>Guías de Ejercicios</h1>
-            <p>Documentos y guías compartidas por la administración.</p>
+            <h1 class="m-0 text-main">Guías de Ejercicios</h1>
+            <p class="text-secondary m-0 mt-1">Documentos y guías compartidas por la administración.</p>
         </div>
-        <button pButton icon="pi pi-sync" class="p-button-rounded p-button-text p-button-primary" (click)="cargarGuias()" [loading]="loading" pTooltip="Actualizar lista"></button>
+        <div class="header-actions">
+            <button pButton icon="pi pi-sync" class="p-button-outlined p-button-secondary btn-create" (click)="cargarGuias()" [loading]="loading" pTooltip="Actualizar lista"></button>
+        </div>
     </header>
 
-    <div class="filter-bar card mb-4 p-3 surface-card border-round shadow-1">
+    <div class="filter-bar">
         <div class="filter-row">
             
             <div class="filter-item flex-grow-1">
@@ -20,25 +22,25 @@
                 <label><i class="pi pi-calendar mr-1"></i> Fecha de Subida</label>
                 <p-datepicker [(ngModel)]="filtroFecha" placeholder="Seleccionar Fecha" 
                               (onSelect)="aplicarFiltros()" [showClear]="true" (onClear)="aplicarFiltros()" 
-                              dateFormat="dd/mm/yy" styleClass="w-full"></p-datepicker>
+                              dateFormat="dd/mm/yy" styleClass="w-full" appendTo="body"></p-datepicker>
             </div>
 
-            <div class="filter-item-btn">
-                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary w-full" 
+            <div class="filter-btn">
+                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary" 
                         (click)="limpiarFiltros()" pTooltip="Limpiar Filtros"></button>
             </div>
 
         </div>
     </div>
 
-    <div class="card shadow-2 border-round surface-card p-3 table-responsive card-table">
-        <p-table [value]="guiasFiltradas" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="stack">
+    <div class="main-card">
+        <p-table [value]="guiasFiltradas" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="stack" [breakpoint]="'768px'">
             
             <ng-template pTemplate="header">
                 <tr>
                     <th style="width: 30%">Título</th>
                     <th style="width: 45%">Descripción</th>
-                    <th style="width: 15%">Fecha de Subida</th>
+                    <th style="width: 15%" class="text-center">Fecha de Subida</th>
                     <th style="width: 10%" class="text-center">Acciones</th>
                 </tr>
             </ng-template>
@@ -46,21 +48,22 @@
             <ng-template pTemplate="body" let-guia>
                 <tr>
                     <td>
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Título:</span>
-                        <span class="font-bold text-main text-lg">{{guia.titulo}}</span>
+                        <span class="p-column-title hidden-desktop">Título</span>
+                        <span class="font-bold text-main">{{guia.titulo}}</span>
                     </td>
                     <td>
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Descripción:</span>
-                        <span class="text-sm text-secondary line-height-2">{{guia.descripcion || 'Sin descripción adicional.'}}</span>
+                        <span class="p-column-title hidden-desktop">Descripción</span>
+                        <span class="text-secondary line-height-2">{{guia.descripcion || 'Sin descripción adicional.'}}</span>
                     </td>
-                    <td>
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Fecha:</span>
+                    <td class="text-center">
+                        <span class="p-column-title hidden-desktop">Fecha</span>
                         <span class="text-secondary"><i class="pi pi-calendar mr-1"></i> {{guia.created_at | date:'dd/MM/yyyy'}}</span>
                     </td>
                     <td class="text-center">
+                        <span class="p-column-title hidden-desktop">Acciones</span>
                         <div class="action-buttons">
-                            <a [href]="guia.archivo_url" target="_blank" class="no-underline w-full">
-                                <button pButton icon="pi pi-download" label="Descargar Documento" class="p-button-outlined p-button-primary w-full justify-content-center"></button>
+                            <a [href]="guia.archivo_url" target="_blank" class="no-underline">
+                                <button pButton icon="pi pi-download" class="p-button-text p-button-primary" pTooltip="Descargar"></button>
                             </a>
                         </div>
                     </td>

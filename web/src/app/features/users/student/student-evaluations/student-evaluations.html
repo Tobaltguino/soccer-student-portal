@@ -1,86 +1,93 @@
 <div class="evaluations-container fadein animation-duration-500">
     <header class="page-header">
         <div class="header-content">
-            <h1>Mis Evaluaciones</h1>
-            <p>Historial de pruebas físicas y evolución técnica</p>
+            <h1 class="m-0 text-main">Mis Evaluaciones</h1>
+            <p class="text-secondary m-0 mt-1">Historial de pruebas físicas y evolución técnica</p>
         </div>
-        <button pButton icon="pi pi-sync" class="p-button-rounded p-button-text" 
-                (click)="cargarEvaluaciones()" [loading]="loading"></button>
+        <div class="header-actions">
+            <button pButton icon="pi pi-sync" class="p-button-outlined p-button-secondary btn-create" 
+                    (click)="cargarEvaluaciones()" [loading]="loading" pTooltip="Actualizar"></button>
+        </div>
     </header>
 
-    <div class="filters-container card mb-4">
-        <div class="filters-row">
-            <div class="filter-item">
+    <div class="filter-bar">
+        <div class="filter-row">
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-calendar mr-1"></i> Fecha</label>
                 <p-datepicker [(ngModel)]="filtroFecha" placeholder="Filtrar por Fecha" 
                               (onSelect)="aplicarFiltros()" 
-                              [showClear]="true" dateFormat="dd/mm/yy" [style]="{'width':'100%'}">
-                </p-datepicker>
+                              [showClear]="true" dateFormat="dd/mm/yy" 
+                              styleClass="w-full" appendTo="body"></p-datepicker>
             </div>
 
-            <div class="filter-item">
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-bolt mr-1"></i> Prueba Evaluada</label>
                 <p-select [options]="tiposTests" [(ngModel)]="filtroPrueba" optionLabel="nombre" 
                           placeholder="Filtrar por Prueba" 
                           (onChange)="aplicarFiltros()" [showClear]="true" 
-                          [style]="{'width':'100%'}"></p-select>
+                          styleClass="w-full" appendTo="body"></p-select>
             </div>
 
-            <div class="filter-item button-item">
-                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary w-full" 
+            <div class="filter-btn">
+                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary" 
                         (click)="limpiarFiltros()" pTooltip="Limpiar Filtros"></button>
             </div>
         </div>
     </div>
 
-    <div class="card-table table-responsive">
+    <div class="main-card">
         <p-table #dt [value]="evaluaciones" [loading]="loading" [rows]="10" [paginator]="true" 
-                 styleClass="p-datatable-sm" [rowHover]="true" responsiveLayout="stack" [breakpoint]="'960px'">
+                 styleClass="p-datatable-sm p-datatable-striped" [rowHover]="true" 
+                 responsiveLayout="stack" [breakpoint]="'768px'">
             
             <ng-template pTemplate="header">
                 <tr>
-                    <th style="width: 20%"><i class="pi pi-calendar"></i> Fecha</th>
-                    <th style="width: 30%"><i class="pi pi-bolt"></i> Prueba Evaluada</th>
-                    <th style="width: 25%"><i class="pi pi-chart-line"></i> Resultado</th>
-                    <th style="width: 15%" class="text-center"><i class="pi pi-shield"></i> Nivel</th>
-                    <th style="width: 10%" class="text-center"><i class="pi pi-info-circle"></i> Info</th>
+                    <th style="width: 20%">Fecha</th>
+                    <th style="width: 30%">Prueba Evaluada</th>
+                    <th style="width: 25%" class="text-center">Resultado</th>
+                    <th style="width: 15%" class="text-center">Nivel</th>
+                    <th style="width: 10%" class="text-center">Info</th>
                 </tr>
             </ng-template>
 
             <ng-template pTemplate="body" let-eval>
                 <tr>
                     <td>
-                        <span class="p-column-title">Fecha</span>
-                        <div class="font-bold text-main">{{ eval.fecha | date:'dd/MM/yyyy' }}</div>
+                        <span class="p-column-title hidden-desktop">Fecha</span>
+                        <div class="font-bold text-main text-right md:text-left">{{ eval.fecha | date:'dd/MM/yyyy' }}</div>
                     </td>
 
                     <td>
-                        <span class="p-column-title">Prueba Evaluada</span>
-                        <div>
+                        <span class="p-column-title hidden-desktop">Prueba Evaluada</span>
+                        <div class="flex flex-column align-items-end md:align-items-start">
                             <span class="text-main font-bold block">{{ eval.test_nombre }}</span>
-                            <small class="text-500 font-medium block mt-1" *ngIf="eval.edad_evaluacion > 0">
+                            <small class="text-secondary font-medium block mt-1" *ngIf="eval.edad_evaluacion > 0">
                                 Evaluado a los {{ eval.edad_evaluacion }} años
                             </small>
                         </div>
                     </td>
 
-                    <td>
-                        <span class="p-column-title">Resultado</span>
-                        <div class="flex align-items-baseline">
-                            <span class="text-xl font-bold text-main">{{ eval.resultado }}</span>
-                            &nbsp; <small class="text-500 font-medium">{{ eval.unidad }}</small>
+                    <td class="text-center">
+                        <span class="p-column-title hidden-desktop">Resultado</span>
+                        <div class="flex align-items-baseline justify-content-end md:justify-content-center">
+                            <span class="text-lg font-bold text-main">{{ eval.resultado }}</span>
+                            &nbsp; <small class="text-secondary font-medium">{{ eval.unidad }}</small>
                         </div>
                     </td>
 
                     <td class="text-center">
-                        <span class="p-column-title">Nivel</span>
+                        <span class="p-column-title hidden-desktop">Nivel</span>
                         <p-tag [value]="eval.nivel" 
-                               [style]="{'background-color': eval.color, 'color': '#ffffff', 'padding': '0.3rem 0.8rem'}">
+                               [style]="{'background-color': eval.color, 'color': '#ffffff', 'padding': '0.2rem 0.6rem', 'font-size': '0.75rem'}">
                         </p-tag>
                     </td>
 
                     <td class="text-center">
-                        <span class="p-column-title">Info</span>
-                        <button pButton icon="pi pi-eye" class="p-button-text p-button-info p-button-rounded" 
-                                (click)="verDetalle(eval)" pTooltip="Ver Detalles"></button>
+                        <span class="p-column-title hidden-desktop">Información</span>
+                        <div class="action-buttons">
+                            <button pButton icon="pi pi-eye" class="p-button-text p-button-info" 
+                                    (click)="verDetalle(eval)" pTooltip="Ver Detalles"></button>
+                        </div>
                     </td>
                 </tr>
             </ng-template>
@@ -88,6 +95,7 @@
             <ng-template pTemplate="emptymessage">
                 <tr>
                     <td colspan="5" class="text-center p-5 text-secondary">
+                        <i class="pi pi-chart-line text-400 mb-3 block" style="font-size: 2rem"></i>
                         No hay evaluaciones registradas en el periodo seleccionado.
                     </td>
                 </tr>
@@ -98,29 +106,29 @@
     <p-dialog [(visible)]="displayDetalle" header="Detalle de Evaluación" 
               [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" [draggable]="false" [resizable]="false" styleClass="p-fluid">
         
-        <div *ngIf="selectedEval" class="animation-fade-in pb-2">
+        <div *ngIf="selectedEval" class="animation-fade-in pb-2 mt-2">
             
-            <div class="modal-header-info mb-4 border-bottom-1 border-300 pb-4 mt-2">
+            <div class="modal-header-info mb-4 border-bottom-1 border-300 pb-3">
                 <div class="info-block">
                     <span class="info-label">Prueba Seleccionada</span>
                     <span class="info-value text-primary">{{selectedEval.test_nombre}}</span>
                 </div>
                 <div class="info-block text-right" *ngIf="selectedEval.edad_evaluacion > 0">
                     <span class="info-label">Edad al rendir</span>
-                    <p-tag [value]="selectedEval.edad_evaluacion + ' años'" severity="info" styleClass="px-3 py-2 text-sm font-bold shadow-1"></p-tag>
+                    <p-tag [value]="selectedEval.edad_evaluacion + ' años'" severity="info" styleClass="px-2 py-1 text-xs font-bold"></p-tag>
                 </div>
             </div>
 
             <div class="field mb-4" *ngIf="selectedEval.test_descripcion">
-                <label class="modal-label"><i class="pi pi-book text-primary"></i> Descripción de la Prueba</label>
-                <div class="modal-content-box">
+                <label class="modal-label"><i class="pi pi-book text-primary mr-1"></i> Descripción de la Prueba</label>
+                <div class="modal-content-box text-sm">
                     {{ selectedEval.test_descripcion }}
                 </div>
             </div>
 
             <div class="field mb-2">
-                <label class="modal-label"><i class="pi pi-comment text-primary"></i> Observaciones del Entrenador</label>
-                <div class="modal-content-box" [ngClass]="{'empty-state': !selectedEval.observacion}">
+                <label class="modal-label"><i class="pi pi-comment text-primary mr-1"></i> Observaciones del Entrenador</label>
+                <div class="modal-content-box text-sm" [ngClass]="{'empty-state': !selectedEval.observacion}">
                     {{ selectedEval.observacion || 'Sin observaciones registradas para esta sesión.' }}
                 </div>
             </div>
@@ -128,7 +136,7 @@
         </div>
 
         <ng-template pTemplate="footer">
-            <button pButton label="Cerrar" icon="pi pi-times" class="p-button-outlined p-button-secondary w-full sm:w-auto" (click)="displayDetalle = false"></button>
+            <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text" (click)="displayDetalle = false"></button>
         </ng-template>
     </p-dialog>
 </div>

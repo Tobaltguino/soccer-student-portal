@@ -231,6 +231,39 @@ export class SupabaseService {
       .eq('kinesiologo_id', kineId);
   }
 
+  // 2. Obtener el Kinesiólogo asignado a un Estudiante específico
+  async getKinesiologosDeEstudiante(estudianteId: string) {
+    
+    // PASO 1: Descubrir a qué grupo pertenece el alumno
+    // (Cambia 'usuarios' por el nombre de tu tabla de alumnos si se llama distinto)
+    const { data: alumno, error: errorAlumno } = await this.supabase
+      .from('estudiantes') 
+      .select('grupo_id')
+      .eq('id', estudianteId)
+      .single();
+
+    if (errorAlumno || !alumno || !alumno.grupo_id) {
+      return { data: null, error: errorAlumno || new Error('Alumno sin grupo') };
+    }
+
+    // PASO 2: Buscar al Kinesiólogo de ese grupo usando la tabla intermedia 'grupos_kine'
+    // Al poner kinesiologos(*), Supabase trae automáticamente los datos de la tabla kinesiologos
+    const { data: dataKine, error: errorKine } = await this.supabase
+      .from('grupos_kine')
+      .select(`
+        kinesiologos (*)
+      `)
+      .eq('grupo_id', alumno.grupo_id);
+
+    if (errorKine) return { data: null, error: errorKine };
+
+    // PASO 3: Limpiamos la respuesta para devolver solo los datos del kinesiólogo
+    // (Porque Supabase lo devuelve envuelto dentro del objeto de la tabla intermedia)
+    const kines = dataKine.map(item => item.kinesiologos).filter(k => k !== null);
+
+    return { data: kines, error: null };
+  }
+
   // 2. (Solo Admin) Asignar un grupo a un kinesiólogo
   async asignarGrupoAKine(kineId: string, grupoId: string) {
     return await this.supabase

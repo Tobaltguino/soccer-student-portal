@@ -1,184 +1,190 @@
+/* =========================================
+   1. CONFIGURACIÓN BASE Y LAYOUT
+   ========================================= */
 :host {
     display: block;
-    width: 100%;
+    min-height: 100vh;
+    padding: 1.5rem; /* Sincronizado con el Dashboard */
 }
 
-/* --- LAYOUT GENERAL --- */
-.main-content {
-    padding: 2rem;
-    max-width: 1400px;
+.coaches-container {
+    max-width: 1200px; /* Estándar */
     margin: 0 auto;
 }
 
-.top-bar {
-    margin-bottom: 2rem;
+/* =========================================
+   2. HEADER PRINCIPAL
+   ========================================= */
+.page-header {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    margin-bottom: 2rem; 
+    flex-wrap: wrap; 
+    gap: 0.75rem;
 }
 
-.welcome-text h1 {
-    margin: 0;
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: var(--text-color, #1e293b);
+.header-content h1 { 
+    margin: 0; 
+    font-size: 1.4rem; 
+    font-weight: 700; 
+    color: var(--text-main); 
 }
 
-.welcome-text p {
-    margin: 0.5rem 0 0;
-    color: var(--text-secondary-color, #64748b);
+.header-content p { 
+    margin: 0.25rem 0 0; 
+    color: var(--text-secondary); 
+    font-size: 0.85rem; 
 }
 
-/* --- GRID RESPONSIVO --- */
-.stats-grid {
+/* =========================================
+   3. GRID RESPONSIVO
+   ========================================= */
+.teachers-grid {
     display: grid;
-    /* Crea columnas automáticas que no bajen de 300px */
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
 }
 
-/* --- TARJETA DEL PROFESOR --- */
-.card {
-    background: var(--surface-card, #ffffff);
-    border: 1px solid var(--surface-border, #dfe7ef);
-    border-radius: 20px; /* Bordes más redondeados */
+/* =========================================
+   4. TARJETA DEL PROFESOR (.main-card)
+   ========================================= */
+.main-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px; 
     padding: 1.5rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-    transition: all 0.3s ease;
-    position: relative;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
     overflow: hidden;
 }
 
 .teacher-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
-    border-color: #3b82f6; /* Borde azul al pasar el mouse */
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    border-color: var(--primary-color);
 }
 
-/* Contenido interno de la tarjeta */
 .card-content {
     display: flex;
-    align-items: flex-start; /* Alineación superior */
+    align-items: center; /* Alineación centrada para que el avatar y texto encajen mejor */
     gap: 1.25rem;
 }
 
-/* --- AVATAR (Foto o Iniciales) --- */
+/* --- AVATAR --- */
 .teacher-avatar {
-    width: 70px;  /* Ajusta según tu diseño actual */
-    height: 70px; /* Debe ser igual al ancho */
+    width: 65px;  
+    height: 65px; 
     border-radius: 50%;
-    overflow: hidden;
-    flex-shrink: 0; /* Evita que el círculo se aplaste en pantallas pequeñas */
+    flex-shrink: 0; 
 }
 
 .avatar-img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Recorte perfecto al centro */
-    
-    /* Mejoras de nitidez para evitar pixelado */
-    image-rendering: -webkit-optimize-contrast;
-    backface-visibility: hidden;
-    transform: translateZ(0);
-    border: 2px solid white;
+    object-fit: cover; 
+    border-radius: 50%;
+    border: 3px solid var(--bg-main);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-/* Estilo para cuando son iniciales (div) */
 .avatar-placeholder {
     width: 100%;
     height: 100%;
-    border-radius: 50%; /* Círculo perfecto */
-    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); /* Degradado azul suave */
-    color: #2563eb;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.2) 100%);
+    color: var(--primary-color);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.75rem;
+    font-size: 1.5rem;
     font-weight: 700;
-    border: 4px solid #fff; /* Anillo blanco */
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+    border: 3px solid var(--bg-main); 
 }
 
-/* Estilo para cuando es imagen (img) */
-.teacher-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 4px solid #fff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-/* --- INFORMACIÓN DEL PROFESOR --- */
+/* --- INFORMACIÓN --- */
 .item-info {
     display: flex;
     flex-direction: column;
     justify-content: center;
     width: 100%;
+    min-width: 0; /* Vital para que el flex-child no empuje la tarjeta si el texto es muy largo */
 }
 
-.item-info h3 {
-    color: var(--text-color, #0f172a);
-    margin-bottom: 0.25rem;
+/* Magia de salto de línea para nombres y correos largos */
+.text-wrap {
+    white-space: normal !important; 
+    word-break: break-word !important; 
+    overflow-wrap: break-word !important;
 }
 
-/* Badge del Rol (Entrenador, etc) */
-.badge-score {
-    background: #f1f5f9;
-    color: #475569;
-    border: 1px solid #e2e8f0;
-    padding: 0.35rem 0.75rem;
+.email-wrap {
+    word-break: break-all !important; /* El correo se corta letra por letra si no cabe */
+    line-height: 1.3;
+}
+
+.badge-role {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: var(--primary-color);
+    padding: 0.3rem 0.8rem;
     font-size: 0.75rem;
-    font-weight: 600;
-    border-radius: 99px; /* Forma de píldora */
+    font-weight: 700;
+    border-radius: 50px; 
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    align-self: flex-start; /* Pegado a la izquierda */
+    align-self: flex-start; 
 }
 
-/* Iconos de contacto */
-.item-info i {
-    font-size: 0.9rem;
-    opacity: 0.8;
-}
-
-/* --- ESTADO VACÍO --- */
+/* =========================================
+   5. ESTADO VACÍO
+   ========================================= */
 .empty-state {
-    text-align: center;
-    padding: 3rem 1rem;
-    background: var(--surface-ground, #f8fafc);
-    border-radius: 16px;
-    border: 2px dashed var(--surface-border, #e2e8f0);
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 2px dashed var(--border-color);
 }
 
 .icon-circle {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    width: 60px; 
+    height: 60px; 
+    border-radius: 50%; 
+    background-color: var(--bg-main);
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
 }
 
-/* --- ANIMACIONES --- */
-.fadein {
-    animation: fadeIn 0.5s ease-out;
-}
+/* =========================================
+   6. COLORES Y UTILIDADES GLOBALES
+   ========================================= */
+.text-main { color: var(--text-main); }
+.text-secondary { color: var(--text-secondary); }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* --- RESPONSIVIDAD --- */
+/* =========================================
+   7. RESPONSIVE (MÓVIL)
+   ========================================= */
 @media (max-width: 768px) {
-    .main-content {
-        padding: 1rem;
-    }
+    :host { padding: 1rem; }
     
-    .stats-grid {
+    .page-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; margin-bottom: 1.5rem;}
+    .header-content h1 { font-size: 1.25rem; }
+
+    .teachers-grid {
         grid-template-columns: 1fr; /* Una sola columna en móvil */
+        gap: 1rem;
+    }
+
+    .main-card {
+        padding: 1.25rem;
     }
 
     .teacher-avatar {
-        width: 60px;
-        height: 60px;
+        width: 55px;
+        height: 55px;
     }
 
     .avatar-placeholder {
-        font-size: 1.25rem;
+        font-size: 1.2rem;
     }
 }

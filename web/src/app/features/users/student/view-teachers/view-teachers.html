@@ -1,54 +1,56 @@
-<div class="main-content fadein">
-  <header class="top-bar">
-    <div class="welcome-text">
-      <h1>Cuerpo Técnico</h1>
-      <p>Entrenadores y profesores encargados de tu grupo.</p>
-    </div>
-  </header>
-
-  <div *ngIf="loading" class="flex justify-content-center p-5">
-    <i class="pi pi-spin pi-spinner" style="font-size: 2rem; color: var(--primary-color);"></i>
-  </div>
-
-  <div *ngIf="errorMessage && !loading" class="p-3 border-round bg-red-50 text-red-600 mb-3">
-    <i class="pi pi-exclamation-circle mr-2"></i> {{ errorMessage }}
-  </div>
-
-  <div class="stats-grid" *ngIf="!loading && !errorMessage">
-    <div class="card teacher-card" *ngFor="let prof of profesores">
-      <div class="card-content flex flex-row align-items-center gap-3">
-        
-        <div class="teacher-avatar">
-          <img *ngIf="prof.foto_url" [src]="prof.foto_url" class="avatar-img">
-          
-          <div *ngIf="!prof.foto_url" class="avatar-placeholder">
-            {{ prof.nombre.charAt(0) }}{{ prof.apellido.charAt(0) }}
-          </div>
+<div class="coaches-container fadein animation-duration-500">
+    
+    <header class="page-header">
+        <div class="header-content">
+            <h1 class="m-0 text-main">Cuerpo Técnico</h1>
+            <p class="text-secondary m-0 mt-1">Entrenadores y profesores encargados de tu grupo.</p>
         </div>
-        
-        <div class="item-info flex-grow-1">
-          <h3 class="text-900 font-bold m-0 text-xl">{{ prof.nombre }} {{ prof.apellido }}</h3>
-          
-          <span class="badge badge-score mt-1 inline-block">
-              {{ prof.tipo_profesor || 'Entrenador' }}
-          </span>
-          
-          <div class="mt-3">
-            <span class="text-sm text-600 flex align-items-center">
-                <i class="pi pi-envelope mr-2 text-primary"></i> 
-                {{ prof.email }}
-            </span>
-          </div>
+    </header>
+
+    <div *ngIf="loading" class="flex justify-content-center p-5">
+        <i class="pi pi-spin pi-spinner text-primary" style="font-size: 2rem;"></i>
+    </div>
+
+    <div *ngIf="errorMessage && !loading" class="p-3 border-round bg-red-50 text-red-600 mb-4 border-1 border-red-200">
+        <i class="pi pi-exclamation-circle mr-2"></i> {{ errorMessage }}
+    </div>
+
+    <div class="teachers-grid" *ngIf="!loading && !errorMessage">
+        <div class="main-card teacher-card" *ngFor="let prof of profesores">
+            <div class="card-content flex flex-row align-items-center gap-3">
+                
+                <div class="teacher-avatar">
+                    <img *ngIf="prof.foto_url" [src]="prof.foto_url" class="avatar-img" alt="Foto de {{prof.nombre}}">
+                    
+                    <div *ngIf="!prof.foto_url" class="avatar-placeholder">
+                        {{ prof.nombre.charAt(0) }}{{ prof.apellido.charAt(0) }}
+                    </div>
+                </div>
+                
+                <div class="item-info flex-grow-1">
+                    <h3 class="text-main font-bold m-0 text-xl text-wrap">{{ prof.nombre }} {{ prof.apellido }}</h3>
+                    
+                    <span class="badge-role mt-2">
+                        {{ prof.tipo_profesor || 'Entrenador' }}
+                    </span>
+                    
+                    <div class="mt-3">
+                        <span class="text-sm text-secondary flex align-items-center email-wrap">
+                            <i class="pi pi-envelope mr-2 text-primary"></i> 
+                            {{ prof.email }}
+                        </span>
+                    </div>
+                </div>
+
+            </div>
         </div>
-
-      </div>
     </div>
-  </div>
 
-  <div class="empty-state py-5 text-center" *ngIf="profesores.length === 0 && !loading && !errorMessage">
-    <div class="icon-circle bg-gray-100 m-auto mb-3" style="width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-        <i class="pi pi-users text-gray-400" style="font-size: 1.5rem;"></i>
+    <div class="empty-state py-5 text-center" *ngIf="profesores.length === 0 && !loading && !errorMessage">
+        <div class="icon-circle mb-3 mx-auto">
+            <i class="pi pi-users text-400" style="font-size: 1.8rem;"></i>
+        </div>
+        <p class="text-secondary m-0">No se encontraron profesores asignados a tu grupo.</p>
     </div>
-    <p class="text-secondary m-0">No se encontraron profesores asignados a tu grupo.</p>
-  </div>
+    
 </div>
