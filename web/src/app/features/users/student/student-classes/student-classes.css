@@ -105,6 +105,7 @@
     height: 36px;
     display: flex;
     align-items: center;
+    box-sizing: border-box !important;
 }
 
 .filter-btn {
@@ -145,10 +146,6 @@
     text-align: center !important; white-space: nowrap;
 }
 
-:host ::ng-deep .p-datatable .p-datatable-thead > tr > th .p-column-header-content {
-    display: flex; justify-content: center !important; align-items: center; width: 100%;
-}
-
 /* Estilo de las celdas (TD) */
 :host ::ng-deep .p-datatable .p-datatable-tbody > tr > td { 
     vertical-align: middle; 
@@ -158,6 +155,21 @@
     text-align: center !important; 
     color: var(--text-main);
     white-space: normal !important;
+}
+
+/* Alinear PC a la izquierda donde corresponda */
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td:nth-child(1),
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td:nth-child(2) {
+    text-align: left !important;
+}
+
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th:nth-child(1) .p-column-header-content,
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th:nth-child(2) .p-column-header-content {
+    justify-content: flex-start !important;
+}
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th:nth-child(3) .p-column-header-content,
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th:nth-child(4) .p-column-header-content {
+    justify-content: center !important;
 }
 
 /* Magia de salto de línea para textos largos en la tabla */
@@ -183,15 +195,15 @@
 }
 
 :host ::ng-deep .action-buttons .p-button {
-    width: 1.8rem !important; height: 1.8rem !important; padding: 0 !important;
+    width: 2rem !important; height: 2rem !important; padding: 0 !important;
 }
 
 :host ::ng-deep .action-buttons .p-button .p-button-icon {
-    font-size: 0.85rem !important; 
+    font-size: 0.9rem !important; 
 }
 
 /* =========================================
-   5. FORMULARIOS (MODALES) Y ESTILOS
+   5. ESTILOS DEL MODAL (VER PLANIFICACIÓN)
    ========================================= */
 .field { 
     display: flex !important; 
@@ -201,24 +213,30 @@
     width: 100% !important; 
 }
 
-.field label { 
-    font-weight: 600 !important; 
-    color: var(--text-main); 
-    font-size: 0.85rem; 
-    margin: 0 !important; 
-    display: block;
-}
-
 :host ::ng-deep .p-dialog-content {
     padding-top: 1rem !important;
     overflow-y: auto !important;
     max-height: 70vh !important;
 }
 
-/* Estilos extra para el modal de entrenamiento (Modo oscuro compatible) */
-.bg-main { background-color: var(--bg-main) !important; }
-.surface-ground { background-color: var(--bg-card) !important; }
-.text-primary { color: var(--primary-color) !important; }
+.modal-label {
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem !important;
+    font-size: 0.85rem;
+}
+
+.modal-content-box {
+    background-color: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    color: var(--text-main);
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
 
 /* ANIMACIONES */
 .animation-fade-in { animation: fadeIn 0.3s ease-in-out; }
@@ -228,8 +246,10 @@
 }
 
 /* =========================================
-   6. FIXES DE PRIMENG
+   6. UTILIDADES Y FIXES DE PRIMENG
    ========================================= */
+.text-main { color: var(--text-main); }
+.text-secondary { color: var(--text-secondary); }
 
 /* FIX: TAMAÑO DE LAS OPCIONES DEL SELECT FLOTANTE */
 ::ng-deep .p-select-panel .p-select-item,
@@ -250,22 +270,19 @@
     overflow-y: auto !important; 
 }
 
-:host ::ng-deep .filter-bar .p-select,
-:host ::ng-deep .filter-bar .p-dropdown {
-    box-sizing: border-box !important;
-}
-
 /* =========================================
-   7. RESPONSIVE (MÓVIL)
+   7. RESPONSIVE (MÓVIL Y TARJETAS)
    ========================================= */
 @media (max-width: 768px) {
     :host { padding: 1rem; }
     
     .page-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; margin-bottom: 1rem;}
+    .header-content { width: 100%; }
     .header-content h1 { font-size: 1.25rem; }
     .header-actions { width: 100%; justify-content: flex-start; }
+    .header-actions button { flex: 1; justify-content: center; }
 
-    /* FILTROS APILADOS */
+    /* --- FILTROS APILADOS --- */
     .filter-row { 
         flex-direction: column !important; 
         align-items: stretch !important; 
@@ -278,10 +295,10 @@
     .filter-btn, .filter-btn button { 
         width: 100% !important; 
     }
-    
-    .hidden-desktop { display: inline-block !important; }
 
-    /* TABLA A TARJETAS MÓVILES */
+    /* --- MAGIA: TABLA A TARJETAS MÓVILES --- */
+    .hidden-desktop { display: inline-block !important; }
+    
     :host ::ng-deep .main-card .p-datatable-thead { display: none !important; }
 
     :host ::ng-deep .main-card .p-datatable-tbody > tr {
@@ -293,19 +310,19 @@
     }
 
     :host ::ng-deep .main-card .p-datatable-tbody > tr > td {
-        display: flex !important; align-items: center !important; justify-content: space-between !important; 
+        display: flex !important; flex-direction: column !important; align-items: flex-start !important; 
         width: 100% !important; padding: 0.6rem 0 !important;
         border: none !important; border-bottom: 1px solid var(--border-color) !important;
-        text-align: right !important; white-space: normal; font-size: 0.85rem !important;
+        text-align: left !important; white-space: normal; font-size: 0.85rem !important;
     }
 
     :host ::ng-deep .main-card .p-datatable-tbody > tr > td .p-column-title {
-        display: inline-block !important; font-weight: 700; margin-bottom: 0;
+        display: inline-block !important; font-weight: 700; margin-bottom: 0.5rem;
         font-size: 0.85rem; color: var(--text-secondary); text-transform: none;
     }
 
     :host ::ng-deep .main-card .p-datatable-tbody > tr > td:last-child {
-        border-bottom: none !important; padding-top: 0.75rem !important; justify-content: center !important;
+        border-bottom: none !important; padding-top: 1.25rem !important; align-items: center !important;
     }
 
     .action-buttons {

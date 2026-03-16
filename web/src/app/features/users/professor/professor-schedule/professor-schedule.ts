@@ -133,7 +133,7 @@ export class ProfessorScheduleComponent implements OnInit {
             const end = new Date(start.getTime() + 90 * 60000); 
 
             return {
-              title: `${nombreGrupo} | ${clase.lugar}`,
+              title: `${clase.lugar}`,
               start: start.toISOString(),
               end: end.toISOString(),
               extendedProps: { ...clase, grupoNombre: nombreGrupo },
