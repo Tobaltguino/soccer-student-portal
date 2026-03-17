@@ -1,34 +1,40 @@
-<div class="guides-container fadein animation-duration-500 max-w-full">
+<div class="guides-container fadein animation-duration-500">
     
-    <header class="flex justify-content-between align-items-center mb-4 page-header">
+    <header class="page-header">
         <div class="header-content">
-            <h1 class="text-2xl font-bold m-0 text-main">Guías y Protocolos</h1>
+            <h1 class="m-0 text-main">Guías y Protocolos</h1>
             <p class="text-secondary m-0 mt-1">Documentos, rutinas de rehabilitación y protocolos del área médica.</p>
         </div>
-        <div class="flex gap-2 header-actions">
-            <button pButton icon="pi pi-sync" class="p-button-rounded p-button-text p-button-primary" (click)="cargarGuias()" [loading]="loading" pTooltip="Actualizar lista"></button>
+        <div class="header-actions">
+            <button pButton icon="pi pi-sync" class="p-button-outlined p-button-secondary btn-create" 
+                    (click)="cargarGuias()" [loading]="loading" pTooltip="Actualizar lista"></button>
         </div>
     </header>
 
-    <div class="filter-bar card mb-3 p-3 surface-card border-round shadow-1">
+    <div class="filter-bar">
         <div class="filter-row">
             <div class="filter-item flex-grow-1">
                 <label><i class="pi pi-search mr-1"></i> Buscar Título</label>
-                <span class="p-input-icon-left w-full">
-                    <input pInputText type="text" [(ngModel)]="filtroTitulo" (input)="aplicarFiltros()" placeholder="Buscar por título de la guía..." class="w-full" />
-                </span>
+                <input pInputText type="text" [(ngModel)]="filtroTitulo" (input)="aplicarFiltros()" 
+                       placeholder="Buscar por título de la guía..." class="w-full" />
+            </div>
+            <div class="filter-btn">
+                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary" 
+                        (click)="filtroTitulo = ''; aplicarFiltros()" pTooltip="Limpiar"></button>
             </div>
         </div>
     </div>
 
-    <div class="card shadow-2 border-round surface-card p-3 table-responsive card-table">
-        <p-table [value]="guias" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="stack">
+    <div class="main-card">
+        <p-table [value]="guias" [loading]="loading" [rows]="10" [paginator]="true" 
+                 styleClass="p-datatable-sm p-datatable-striped" [rowHover]="true" 
+                 responsiveLayout="stack" [breakpoint]="'768px'">
             
             <ng-template pTemplate="header">
                 <tr>
                     <th style="width: 30%">Título</th>
                     <th style="width: 45%">Descripción</th>
-                    <th style="width: 15%">Fecha de Subida</th>
+                    <th style="width: 15%" class="text-center">Fecha de Subida</th>
                     <th style="width: 10%" class="text-center">Acciones</th>
                 </tr>
             </ng-template>
@@ -36,21 +42,22 @@
             <ng-template pTemplate="body" let-guia>
                 <tr>
                     <td>
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Título:</span>
-                        <span class="font-bold text-main text-lg">{{guia.titulo}}</span>
+                        <span class="p-column-title hidden-desktop">Título</span>
+                        <span class="font-bold text-main">{{guia.titulo}}</span>
                     </td>
                     <td>
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Descripción:</span>
-                        <span class="text-sm text-secondary line-height-2">{{guia.descripcion || 'Sin descripción adicional.'}}</span>
-                    </td>
-                    <td>
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Fecha:</span>
-                        <span class="font-bold"><i class="pi pi-calendar mr-1 text-primary"></i> {{guia.created_at | date:'dd/MM/yyyy'}}</span>
+                        <span class="p-column-title hidden-desktop">Descripción</span>
+                        <span class="text-secondary line-height-2">{{guia.descripcion || 'Sin descripción adicional.'}}</span>
                     </td>
                     <td class="text-center">
+                        <span class="p-column-title hidden-desktop">Fecha</span>
+                        <span class="text-secondary"><i class="pi pi-calendar mr-1"></i> {{guia.created_at | date:'dd/MM/yyyy'}}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="p-column-title hidden-desktop">Acciones</span>
                         <div class="action-buttons">
-                            <a [href]="guia.archivo_url" target="_blank" class="no-underline w-full">
-                                <button pButton icon="pi pi-download" label="Descargar" class="p-button-outlined p-button-primary w-full justify-content-center"></button>
+                            <a [href]="guia.archivo_url" target="_blank" class="no-underline w-full sm:w-auto">
+                                <button pButton icon="pi pi-download" class="p-button-text p-button-primary w-full" pTooltip="Descargar"></button>
                             </a>
                         </div>
                     </td>
@@ -60,6 +67,7 @@
             <ng-template pTemplate="emptymessage">
                 <tr>
                     <td colspan="4" class="text-center p-5 text-secondary">
+                        <i class="pi pi-file text-400 mb-3 block" style="font-size: 2rem"></i>
                         <div *ngIf="filtroTitulo; else sinGuias">No se encontraron documentos que coincidan con "{{filtroTitulo}}".</div>
                         <ng-template #sinGuias>Aún no hay material ni protocolos publicados.</ng-template>
                     </td>
