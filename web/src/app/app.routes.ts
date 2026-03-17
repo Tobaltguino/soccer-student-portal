@@ -63,6 +63,7 @@ import { KineStudentProfileComponent } from './features/users/kine/kine-student-
 import { NutriLayoutComponent } from './features/users/nutri/nutri-layout/nutri-layout';
 import { NutriDashboardComponent } from './features/users/nutri/nutri-dashboard/nutri-dashboard';
 import { NutriEvaluationsComponent } from './features/users/nutri/nutri-evaluation/nutri-evaluation';
+import { NutriGuidesComponent } from './features/users/nutri/nutri-guides/nutri-guides';
 
 export const routes: Routes = [
     // ==========================================
@@ -174,7 +175,8 @@ export const routes: Routes = [
         data: { roles: ['nutri', 'nutricionista'] },
         children: [
             { path: 'dashboard', component: NutriDashboardComponent },
-            { path: 'evaluations', component: NutriEvaluationsComponent }
+            { path: 'evaluations', component: NutriEvaluationsComponent },
+            { path: 'guides', component: NutriGuidesComponent}
         ]
         
     },

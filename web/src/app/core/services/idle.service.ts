@@ -61,7 +61,6 @@ export class IdleService {
 
       // Si la diferencia es mayor a 10 segundos, el PC se durmió y acaba de despertar
       if (diferencia > this.margenSuspension) {
-        console.warn(`💻 El PC se suspendió por ${Math.round(diferencia/1000)} segundos. Verificando sesión...`);
         this.verificarSesionAlDespertar();
       }
 
@@ -74,13 +73,11 @@ export class IdleService {
     const { data, error } = await this.supabaseService.supabase.auth.getSession();
 
     if (error || !data.session) {
-      console.error('La sesión murió mientras el PC estaba suspendido.');
       this.ngZone.run(() => {
         // Aquí podrías mostrar un alert o Toast indicando que la sesión expiró
         this.cerrarSesionPorInactividad();
       });
     } else {
-      console.log('La sesión sobrevivió a la suspensión. Todo OK.');
     }
   }
   // ==========================================

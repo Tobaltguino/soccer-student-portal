@@ -910,16 +910,22 @@ export class SupabaseService {
   // GUÍAS DE TRABAJO (MATERIAL DE ESTUDIO)
   // ==========================================
 
-  // 1. Obtener todas las guías (Con el nombre del grupo)
-  // 1. Obtener TODAS las guías globales
-  async getGuias() {
-    return await this.supabase
+  // 1. Obtener TODAS las guías globales (o filtradas por tipo)
+  async getGuias(tipoMaterial?: string) {
+    let query = this.supabase
       .from('work_guides')
       .select('*')
       .order('created_at', { ascending: false });
+
+    // Si le enviamos un tipo (ej: 'NUTRICION'), le dice a Supabase que filtre
+    if (tipoMaterial) {
+      query = query.eq('tipo_material', tipoMaterial);
+    }
+
+    return await query;
   }
 
-  // 2. Subir el archivo al Storage usando el TÍTULO DE LA GUÍA
+  // 2. Subir el archivo al Storage usando el TÍTULO DE LA GUÍA + FECHA (Timestamp)
   async uploadGuiaFile(file: File, tituloGuia: string) {
     const fileExt = file.name.split('.').pop();
     
@@ -931,18 +937,20 @@ export class SupabaseService {
       .replace(/_+/g, '_') // Evita múltiples guiones bajos seguidos
       .toLowerCase(); // Lo pasamos a minúsculas para mayor consistencia
 
-    const fileName = `${tituloLimpio}.${fileExt}`;
+    // 2. Generamos una marca de tiempo única y la unimos al nombre
+    const timestamp = new Date().getTime();
+    const fileName = `${tituloLimpio}_${timestamp}.${fileExt}`;
 
-    // 2. Subimos con upsert: true (Si ya existe un archivo con ese nombre, lo sobreescribe)
+    // 3. Subimos al Storage. upsert: false porque el nombre ya es único.
     const { data, error } = await this.supabase.storage
       .from('guias_trabajo')
       .upload(fileName, file, {
-        upsert: true 
+        upsert: false 
       });
 
     if (error) throw error;
 
-    // 3. Obtener la URL pública
+    // 4. Obtener la URL pública
     const { data: urlData } = this.supabase.storage
       .from('guias_trabajo')
       .getPublicUrl(fileName);
@@ -1082,16 +1090,30 @@ export class SupabaseService {
       .order('apellido', { ascending: true });
   }
 
-  // 6. Subir el archivo PDF/Imagen al Storage
+  // 6. Subir el archivo PDF/Imagen al Storage (Con Sanitización)
   async subirArchivoNutricion(file: File, fileName: string) {
-    const filePath = `evaluaciones/${Date.now()}_${fileName}`;
+    const fileExt = fileName.split('.').pop();
+    const nombreSinExtension = fileName.substring(0, fileName.lastIndexOf('.'));
+    
+    // 1. Limpiamos el nombre original del archivo (quitar tildes, espacios y ñ)
+    const nombreLimpio = nombreSinExtension
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Elimina tildes
+      .replace(/[^a-zA-Z0-9]/g, '_') // Reemplaza símbolos y espacios por '_'
+      .replace(/_+/g, '_') // Evita múltiples guiones bajos seguidos
+      .toLowerCase();
+
+    // 2. Armamos la ruta: carpeta/1731456789123_nombre_limpio.pdf
+    const filePath = `evaluaciones/${Date.now()}_${nombreLimpio}.${fileExt}`;
+    
     const { data, error } = await this.supabase.storage
       .from('documentos_nutricion')
-      .upload(filePath, file);
+      .upload(filePath, file, {
+        upsert: false // Nos aseguramos de que no intente sobreescribir
+      });
 
     if (error) throw error;
     
-    // Devolvemos la URL pública para guardarla en la tabla
+    // 3. Devolvemos la URL pública para guardarla en la tabla
     const { data: publicUrlData } = this.supabase.storage
       .from('documentos_nutricion')
       .getPublicUrl(filePath);
