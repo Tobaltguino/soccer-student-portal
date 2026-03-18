@@ -45,6 +45,7 @@ import { ProfessorKinesiologyComponent } from './features/users/professor/profes
 import { ProfessorNutritionComponent } from './features/users/professor/professor-nutrition/professor-nutrition';
 import { ProfessorScheduleComponent } from './features/users/professor/professor-schedule/professor-schedule';
 import { ProfessorViewGuidesComponent } from './features/users/professor/professor-view-guides/professor-view-guides';
+import { ProfessorViewStudentsComponent } from './features/users/professor/professor-view-students/professor-view-students';
 
 // --- KINE IMPORTS ---
 import { KineLayoutComponent } from './features/users/kine/kine-layout/kine-layout';
@@ -139,6 +140,7 @@ export const routes: Routes = [
             { path: 'nutrition', component: ProfessorNutritionComponent },
             { path: 'schedule', component: ProfessorScheduleComponent },
             { path: 'guides', component: ProfessorViewGuidesComponent },
+            { path: 'students', component: ProfessorViewStudentsComponent },
         ]
     },
 

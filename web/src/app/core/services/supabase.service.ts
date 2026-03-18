@@ -1177,4 +1177,66 @@ export class SupabaseService {
       `)
       .eq('estudiante_id', estudianteId);
   }
+
+  // ✅ NUEVO: Obtener solo los estudiantes que pertenecen a los grupos de un profesor específico
+  async getEstudiantesDeProfesor(profesorId: string) {
+    // 1. Primero buscamos los IDs de los grupos asignados a este profesor
+    const { data: grupos, error: errGrupos } = await this.supabase
+      .from('grupos_profesores')
+      .select('grupo_id')
+      .eq('profesor_id', profesorId);
+
+    if (errGrupos || !grupos || grupos.length === 0) {
+      return { data: [], error: errGrupos };
+    }
+
+    // Extraemos solo los números/IDs en un arreglo
+    const gruposIds = grupos.map(g => g.grupo_id);
+
+    // 2. Traemos a todos los estudiantes que pertenezcan a esos grupos (con sus posiciones y nombre del grupo)
+    return await this.supabase
+      .from('estudiantes')
+      .select(`
+        *,
+        grupos ( id, nombre ),
+        estudiantes_posiciones (
+          posicion_id,
+          posiciones ( nombre, orden )
+        )
+      `)
+      .in('grupo_id', gruposIds)
+      .eq('activo', true) // Opcional: Solo traer a los activos
+      .order('apellido', { ascending: true });
+  }
+
+  // ✅ NUEVO: Obtener solo los estudiantes que pertenecen a los grupos de un Kinesiólogo
+  async getEstudiantesDeKine(kineId: string) {
+    // 1. Primero buscamos los IDs de los grupos asignados a este kine
+    const { data: grupos, error: errGrupos } = await this.supabase
+      .from('grupos_kine')
+      .select('grupo_id')
+      .eq('kinesiologo_id', kineId);
+
+    if (errGrupos || !grupos || grupos.length === 0) {
+      return { data: [], error: errGrupos };
+    }
+
+    // Extraemos los IDs
+    const gruposIds = grupos.map(g => g.grupo_id);
+
+    // 2. Traemos a los estudiantes de esos grupos
+    return await this.supabase
+      .from('estudiantes')
+      .select(`
+        *,
+        grupos ( id, nombre ),
+        estudiantes_posiciones (
+          posicion_id,
+          posiciones ( nombre, orden )
+        )
+      `)
+      .in('grupo_id', gruposIds)
+      .eq('activo', true) 
+      .order('apellido', { ascending: true });
+  }
 }

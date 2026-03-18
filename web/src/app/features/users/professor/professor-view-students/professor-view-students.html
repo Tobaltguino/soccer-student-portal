@@ -1,0 +1,187 @@
+<div class="users-container fadein animation-duration-500">
+
+    <header class="page-header">
+        <div class="header-content">
+            <div>
+                <h1>Mis Estudiantes</h1>
+                <p>Directorio de jugadores de los grupos a tu cargo.</p>
+            </div>
+        </div>
+        <button pButton icon="pi pi-sync" class="p-button-outlined p-button-secondary btn-create" 
+                (click)="cargarDatos()" [loading]="loading" pTooltip="Actualizar lista"></button>
+    </header>
+
+    <div class="filter-bar card mb-3 p-3 surface-card border-round shadow-1">
+        <div class="filter-row">
+            
+            <div class="filter-item flex-grow-2">
+                <label>Buscador Global</label>
+                <input pInputText type="text" [(ngModel)]="filtros.global" 
+                       (input)="dt.filterGlobal(filtros.global, 'contains')" 
+                       placeholder="Buscar por Nombre, RUT o Email..." class="w-full"/>
+            </div>
+
+            <div class="filter-item flex-grow-1">
+                <label>Mis Grupos</label>
+                <p-multiSelect [options]="listaGrupos" [(ngModel)]="filtros.grupo" 
+                               optionLabel="nombre" optionValue="id" placeholder="Todos" 
+                               (onChange)="dt.filter($event.value, 'grupo_id', 'in')" 
+                               display="chip" [showClear]="true" styleClass="w-full"
+                               [maxSelectedLabels]="1" selectedItemsLabel="{0} grupos"></p-multiSelect>
+            </div>
+            
+            <div class="filter-item flex-grow-1">
+                <label>Posiciones</label>
+                <p-multiSelect [options]="listaPosiciones" [(ngModel)]="filtros.posicion"
+                               optionLabel="nombre" optionValue="id" placeholder="Todas"
+                               (onChange)="dt.filter($event.value, 'estudiantes_posiciones', 'contienePosicion')"
+                               display="chip" [showClear]="true" styleClass="w-full"
+                               [maxSelectedLabels]="1" selectedItemsLabel="{0} pos."></p-multiSelect>
+            </div>
+
+            <div class="filter-item w-10rem">
+                <label>Estado</label>
+                <p-select [options]="opcionesEstado" [(ngModel)]="filtros.estado" 
+                          placeholder="Todos" (onChange)="dt.filter($event.value, 'activo', 'equals')" 
+                          [showClear]="true" styleClass="w-full">
+                    <ng-template let-option pTemplate="item">
+                        <p-tag [value]="option.label" [severity]="option.value ? 'success' : 'danger'"></p-tag>
+                    </ng-template>
+                </p-select>
+            </div>
+
+            <div class="filter-item-btn">
+                <button pButton icon="pi pi-filter-slash" 
+                        class="p-button-outlined p-button-secondary w-full" 
+                        (click)="limpiarFiltros()" pTooltip="Limpiar Filtros"></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-card">
+        <p-table #dt [value]="dataList" [loading]="loading" [rows]="10" [paginator]="true" 
+                 styleClass="p-datatable-sm" [rowHover]="true" responsiveLayout="stack"
+                 [globalFilterFields]="['nombre', 'apellido', 'rut', 'email']">
+            
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width: 4rem"></th> 
+                    <th pSortableColumn="nombre">Jugador</th>
+                    <th class="text-center">F. Nac</th>
+                    <th>Grupo</th>
+                    <th>Posiciones</th>
+                    <th class="hidden-mobile">Email</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-center">Acción</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-item>
+                <tr [ngClass]="{'row-inactive': !item.activo}">
+                    
+                    <td>
+                        <div class="flex align-items-center justify-content-center sm:justify-content-start">
+                            <img [src]="item.foto_url || 'assets/images/default-user.png'" 
+                                alt="Avatar" class="avatar-img">
+                        </div>
+                    </td>
+
+                    <td>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Jugador:</span>
+                        <div class="text-right sm:text-left">
+                            <div class="font-bold text-main">{{ item.nombre }} {{ item.apellido }}</div>
+                            <div class="text-xs text-secondary mt-1 justify-content-end sm:justify-content-start flex align-items-center"><i class="pi pi-id-card"></i> {{ item.rut || 'Sin RUT' }}</div>
+                        </div>
+                    </td>
+                    
+                    <td class="text-center">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">F. Nacimiento:</span>
+                        <div *ngIf="item.fecha_nacimiento" class="fecha-nac-container text-right sm:text-center">
+                            <span class="fecha-nac-text">{{ item.fecha_nacimiento | date:'dd/MM/yyyy' }}</span>
+                            <span class="edad-text"><i class="pi pi-calendar mr-1"></i> {{ calcularEdad(item.fecha_nacimiento) }} años</span>
+                        </div>
+                        <span *ngIf="!item.fecha_nacimiento" class="text-secondary">-</span>
+                    </td>
+
+                    <td>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Grupo:</span>
+                        <p-tag [value]="item.grupos?.nombre || 'Sin Grupo'" [severity]="item.grupos ? 'info' : 'secondary'"></p-tag>
+                    </td>
+
+                    <td>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Posiciones:</span>
+                        <div class="flex gap-1 flex-wrap justify-content-end sm:justify-content-start">
+                            <p-tag *ngFor="let p of item.estudiantes_posiciones" [value]="p.posiciones?.nombre" severity="warn"></p-tag>
+                            <span *ngIf="!item.estudiantes_posiciones?.length" class="text-500 text-xs italic">N/A</span>
+                        </div>
+                    </td>
+
+                    <td class="text-sm">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Email:</span>
+                        <span>{{ item.email || 'No registrado' }}</span>
+                    </td>
+
+                    <td class="text-center">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Estado:</span>
+                        <p-tag [severity]="item.activo ? 'success' : 'danger'" [value]="item.activo ? 'ACTIVO' : 'INACTIVO'" [rounded]="true"></p-tag>
+                    </td>
+
+                    <td class="text-center">
+                        <div class="action-buttons">
+                            <button pButton icon="pi pi-user" class="p-button-text p-button-info" 
+                                    (click)="verDetalle(item)" pTooltip="Ver Ficha Técnica"></button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="8" class="text-center p-5 text-secondary">
+                        <i class="pi pi-users text-400 mb-3 block" style="font-size: 2rem"></i>
+                        No se encontraron estudiantes registrados en tus grupos.
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <p-dialog [(visible)]="displayDetalle" header="Ficha del Jugador" [modal]="true" [style]="{width: '90vw', maxWidth: '450px'}" styleClass="p-fluid">
+        <div *ngIf="selectedEstudiante" class="flex flex-column pt-2">
+
+            <div class="flex flex-column align-items-center mb-4 border-bottom-1 border-300 pb-4 mt-2">
+                <img [src]="selectedEstudiante.foto_url || 'assets/images/default-user.png'" 
+                     alt="Avatar" class="avatar-preview-container shadow-2">
+                
+                <h2 class="m-0 mt-3 text-main">{{selectedEstudiante.nombre}} {{selectedEstudiante.apellido}}</h2>
+                <span class="text-secondary mt-1"><i class="pi pi-id-card mr-1"></i> {{selectedEstudiante.rut || 'Sin RUT'}}</span>
+                <p-tag [value]="selectedEstudiante.grupos?.nombre || 'General'" severity="info" styleClass="mt-2"></p-tag>
+            </div>
+
+            <div class="grid formgrid">
+                <div class="col-6 mb-3">
+                    <span class="text-xs text-secondary font-bold uppercase block mb-1">F. Nacimiento</span>
+                    <span class="font-bold text-main">{{ selectedEstudiante.fecha_nacimiento ? (selectedEstudiante.fecha_nacimiento | date:'dd/MM/yyyy') : '--/--/----' }}</span>
+                </div>
+                <div class="col-6 mb-3">
+                    <span class="text-xs text-secondary font-bold uppercase block mb-1">Teléfono</span>
+                    <span class="font-bold text-main">{{ selectedEstudiante.telefono || 'No registrado' }}</span>
+                </div>
+                <div class="col-12 mb-3">
+                    <span class="text-xs text-secondary font-bold uppercase block mb-1">Correo Electrónico</span>
+                    <span class="font-bold text-main">{{ selectedEstudiante.email || 'No registrado' }}</span>
+                </div>
+                <div class="col-12 mb-2">
+                    <span class="text-xs text-secondary font-bold uppercase block mb-1">Contacto Emergencia / Apoderado</span>
+                    <div class="surface-100 p-2 border-round">
+                        <span class="font-bold text-main block">{{ selectedEstudiante.nombre_apoderado || 'No registrado' }}</span>
+                        <span class="text-sm text-secondary">{{ selectedEstudiante.telefono_apoderado || '-' }}</span>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        <ng-template pTemplate="footer">
+            <button pButton label="Cerrar Ficha" icon="pi pi-times" class="p-button-text p-button-secondary w-full sm:w-auto" (click)="displayDetalle = false"></button>
+        </ng-template>
+    </p-dialog>
+</div>
