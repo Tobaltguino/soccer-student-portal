@@ -54,8 +54,12 @@ export class KinePatientsComponent implements OnInit {
   };
 
   loading: boolean = false;
+  
+  // --- VARIABLES PARA LA FICHA MÉDICA ---
   displayDetalle: boolean = false;
   selectedEstudiante: any = null;
+  historialClinico: any[] = [];
+  loadingHistorial: boolean = false;
 
   constructor(
     private supabase: SupabaseService,
@@ -103,7 +107,6 @@ export class KinePatientsComponent implements OnInit {
 
       if (!userId) return;
 
-      // Usamos la nueva función del Kine
       const res = await this.supabase.getEstudiantesDeKine(userId); 
       
       if (res?.data) {
@@ -127,8 +130,36 @@ export class KinePatientsComponent implements OnInit {
     return age;
   }
 
-  verDetalle(estudiante: any) {
+  // ✅ FUNCIÓN ACTUALIZADA PARA ABRIR LA FICHA Y CARGAR EL HISTORIAL
+  async verDetalle(estudiante: any) {
     this.selectedEstudiante = estudiante;
     this.displayDetalle = true;
+    this.loadingHistorial = true;
+    this.historialClinico = [];
+    this.cdr.detectChanges();
+
+    try {
+        const res = await this.supabase.getHistorialClinico(estudiante.id);
+        this.historialClinico = res.data || [];
+    } catch (error) {
+        console.error("Error cargando historial", error);
+    } finally {
+        this.loadingHistorial = false;
+        this.cdr.detectChanges();
+    }
+  }
+
+  // ✅ HELPER PARA COLORES DEL HISTORIAL (Tipado estricto)
+  getSeveridadHistorial(tipo: string): 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast' {
+      if (tipo === 'LESION') return 'danger';
+      if (tipo === 'ALERGIA') return 'warning';
+      return 'info'; // PATOLOGIA
+  }
+
+  // ✅ HELPER PARA EL ESTADO DE LA LESIÓN (Tipado estricto)
+  getSeveridadEstado(estado: string): 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast' {
+      if (estado === 'RECUPERADO') return 'success';
+      if (estado === 'ACTIVO') return 'danger';
+      return 'warning'; // EN_TRATAMIENTO
   }
 }

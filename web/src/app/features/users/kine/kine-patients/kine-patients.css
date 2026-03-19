@@ -64,7 +64,9 @@
 
 /* --- GESTIÓN DE CORREO LARGO --- */
 :host ::ng-deep .p-datatable-tbody > tr > td.text-sm { width: auto; max-width: 150px; }
-:host ::ng-deep .p-datatable-tbody > tr > td.text-sm span:not(.p-column-title) { display: inline-block !important; max-width: 100% !important; white-space: normal !important; word-break: break-all !important; overflow-wrap: break-word !important; }
+:host ::ng-deep .p-datatable-tbody > tr > td.text-sm span:not(.p-column-title), .break-email { 
+    display: inline-block !important; max-width: 100% !important; white-space: normal !important; word-break: break-all !important; overflow-wrap: break-word !important; 
+}
 
 @media (min-width: 769px) { .hidden-desktop { display: none !important; } }
 
@@ -86,6 +88,43 @@
 }
 
 :host ::ng-deep .p-dialog-content { padding-top: 1rem !important; overflow-y: auto !important; max-height: 75vh !important; }
+
+/* =========================================
+   FICHA MÉDICA (VISTA ÚNICA OSCURA)
+   ========================================= */
+.section-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-main);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.field { display: flex !important; flex-direction: column !important; gap: 4px !important; margin-bottom: 1.25rem !important; width: 100% !important; }
+.field label { font-weight: 600 !important; color: var(--text-main); font-size: 0.85rem; margin: 0 !important; display: flex; align-items: center; }
+.field label i { margin-right: 6px !important; }
+
+/* CAJA OSCURA ESTILO TEXTAREA */
+.read-only-box {
+    background-color: var(--bg-main); 
+    border: 1px solid var(--border-color); 
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    color: var(--text-secondary); 
+    font-size: 0.9rem;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.animation-fade-in { animation: fadeIn 0.3s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
 
 /* =========================================
    6. RESPONSIVE Y TARJETAS MÓVILES

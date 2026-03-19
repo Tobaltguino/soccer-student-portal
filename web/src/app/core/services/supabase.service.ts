@@ -1239,4 +1239,15 @@ export class SupabaseService {
       .eq('activo', true) 
       .order('apellido', { ascending: true });
   }
+
+  // ==========================================
+  // --- HISTORIAL CLÍNICO ---
+  // ==========================================
+  async getHistorialClinico(estudianteId: string) {
+    return await this.supabase
+      .from('historial_clinico')
+      .select('*')
+      .eq('estudiante_id', estudianteId)
+      .order('fecha_evento', { ascending: false });
+  }
 }

@@ -61,6 +61,10 @@ export class ProfessorViewStudentsComponent implements OnInit {
   displayDetalle: boolean = false;
   selectedEstudiante: any = null;
 
+  // --- VARIABLES PARA LA FICHA MÉDICA ---
+  historialClinico: any[] = [];
+  loadingHistorial: boolean = false;
+
   constructor(
     private supabase: SupabaseService,
     private cdr: ChangeDetectorRef,
@@ -102,13 +106,11 @@ export class ProfessorViewStudentsComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      // 1. Obtenemos el ID del profesor actualmente logueado
       const authData = await this.supabase.getUser();
       const userId = authData.data.user?.id;
 
       if (!userId) return;
 
-      // 2. Llamamos a la función que cruza los datos y trae solo a sus alumnos
       const res = await this.supabase.getEstudiantesDeProfesor(userId); 
       
       if (res?.data) {
@@ -132,8 +134,36 @@ export class ProfessorViewStudentsComponent implements OnInit {
     return age;
   }
 
-  verDetalle(estudiante: any) {
+  // ✅ NUEVA FUNCIÓN PARA ABRIR LA FICHA Y CARGAR EL HISTORIAL
+  async verDetalle(estudiante: any) {
     this.selectedEstudiante = estudiante;
     this.displayDetalle = true;
+    this.loadingHistorial = true;
+    this.historialClinico = [];
+    this.cdr.detectChanges();
+
+    try {
+        const res = await this.supabase.getHistorialClinico(estudiante.id);
+        this.historialClinico = res.data || [];
+    } catch (error) {
+        console.error("Error cargando historial", error);
+    } finally {
+        this.loadingHistorial = false;
+        this.cdr.detectChanges();
+    }
+  }
+
+  // ✅ HELPER PARA COLORES DEL HISTORIAL (Tipado estricto)
+  getSeveridadHistorial(tipo: string): 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast' {
+      if (tipo === 'LESION') return 'danger';
+      if (tipo === 'ALERGIA') return 'warning';
+      return 'info'; // PATOLOGIA
+  }
+
+  // ✅ HELPER PARA EL ESTADO DE LA LESIÓN (Tipado estricto)
+  getSeveridadEstado(estado: string): 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast' {
+      if (estado === 'RECUPERADO') return 'success';
+      if (estado === 'ACTIVO') return 'danger';
+      return 'warning'; // EN_TRATAMIENTO
   }
 }
