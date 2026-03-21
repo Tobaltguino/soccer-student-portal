@@ -1,8 +1,8 @@
-<div class="guides-container fadein animation-duration-500">
+<div class="guides-container fadein animation-duration-500 max-w-full">
     
     <header class="page-header">
         <div class="header-content">
-            <h1 class="m-0 text-main">Guías y Protocolos</h1>
+            <h1 class="m-0 text-main">Material Complementario</h1>
             <p class="text-secondary m-0 mt-1">Documentos, rutinas de rehabilitación y protocolos del área médica.</p>
         </div>
         <div class="header-actions">
@@ -13,15 +13,32 @@
 
     <div class="filter-bar">
         <div class="filter-row">
+            
             <div class="filter-item flex-grow-1">
                 <label><i class="pi pi-search mr-1"></i> Buscar Título</label>
                 <input pInputText type="text" [(ngModel)]="filtroTitulo" (input)="aplicarFiltros()" 
-                       placeholder="Buscar por título de la guía..." class="w-full" />
+                       placeholder="Ej: Protocolo de tobillo..." class="w-full" />
             </div>
+
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-briefcase mr-1"></i> Área</label>
+                <p-select [options]="tiposMaterial" [(ngModel)]="filtroArea" placeholder="Todas"
+                          (onChange)="aplicarFiltros()" [showClear]="true" optionLabel="label" 
+                          optionValue="value" styleClass="w-full" appendTo="body"></p-select>
+            </div>
+
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-calendar mr-1"></i> Fecha de Subida</label>
+                <p-datepicker [(ngModel)]="filtroFecha" placeholder="Seleccionar Fecha" 
+                              (onSelect)="aplicarFiltros()" [showClear]="true" (onClear)="aplicarFiltros()" 
+                              dateFormat="dd/mm/yy" styleClass="w-full" appendTo="body"></p-datepicker>
+            </div>
+
             <div class="filter-btn">
                 <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary" 
-                        (click)="filtroTitulo = ''; aplicarFiltros()" pTooltip="Limpiar"></button>
+                        (click)="limpiarFiltros()" pTooltip="Limpiar Filtros"></button>
             </div>
+
         </div>
     </div>
 
@@ -32,9 +49,9 @@
             
             <ng-template pTemplate="header">
                 <tr>
-                    <th style="width: 30%">Título</th>
-                    <th style="width: 45%">Descripción</th>
-                    <th style="width: 15%" class="text-center">Fecha de Subida</th>
+                    <th style="width: 25%">Título</th>
+                    <th style="width: 40%">Descripción</th>
+                    <th style="width: 15%" class="text-center">Área</th> <th style="width: 10%" class="text-center">Fecha</th>
                     <th style="width: 10%" class="text-center">Acciones</th>
                 </tr>
             </ng-template>
@@ -49,6 +66,12 @@
                         <span class="p-column-title hidden-desktop">Descripción</span>
                         <span class="text-secondary line-height-2">{{guia.descripcion || 'Sin descripción adicional.'}}</span>
                     </td>
+
+                    <td class="text-center">
+                        <span class="p-column-title hidden-desktop">Área</span>
+                        <span class="text-sm font-medium border-round px-2 py-1 area-badge">{{ getNombreArea(guia.tipo_material) }}</span>
+                    </td>
+
                     <td class="text-center">
                         <span class="p-column-title hidden-desktop">Fecha</span>
                         <span class="text-secondary"><i class="pi pi-calendar mr-1"></i> {{guia.created_at | date:'dd/MM/yyyy'}}</span>
@@ -66,10 +89,10 @@
 
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="4" class="text-center p-5 text-secondary">
+                    <td colspan="5" class="text-center p-5 text-secondary">
                         <i class="pi pi-file text-400 mb-3 block" style="font-size: 2rem"></i>
-                        <div *ngIf="filtroTitulo; else sinGuias">No se encontraron documentos que coincidan con "{{filtroTitulo}}".</div>
-                        <ng-template #sinGuias>Aún no hay material ni protocolos publicados.</ng-template>
+                        <div *ngIf="filtroTitulo || filtroArea || filtroFecha; else sinGuias">No se encontraron documentos con esos filtros.</div>
+                        <ng-template #sinGuias>Aún no hay material de estudio ni protocolos publicados.</ng-template>
                     </td>
                 </tr>
             </ng-template>

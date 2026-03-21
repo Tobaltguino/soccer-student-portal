@@ -106,11 +106,13 @@ export class ProfessorViewStudentsComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
+      // 1. Obtenemos el ID del profesor actualmente logueado
       const authData = await this.supabase.getUser();
       const userId = authData.data.user?.id;
 
       if (!userId) return;
 
+      // 2. Llamamos a la función que cruza los datos y trae solo a sus alumnos
       const res = await this.supabase.getEstudiantesDeProfesor(userId); 
       
       if (res?.data) {
@@ -153,17 +155,17 @@ export class ProfessorViewStudentsComponent implements OnInit {
     }
   }
 
-  // ✅ HELPER PARA COLORES DEL HISTORIAL (Tipado estricto)
-  getSeveridadHistorial(tipo: string): 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast' {
+  // ✅ HELPER PARA COLORES DEL HISTORIAL (Cambiado 'warning' por 'warn')
+  getSeveridadHistorial(tipo: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
       if (tipo === 'LESION') return 'danger';
-      if (tipo === 'ALERGIA') return 'warning';
+      if (tipo === 'ALERGIA') return 'warn';
       return 'info'; // PATOLOGIA
   }
 
-  // ✅ HELPER PARA EL ESTADO DE LA LESIÓN (Tipado estricto)
-  getSeveridadEstado(estado: string): 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast' {
+  // ✅ HELPER PARA EL ESTADO DE LA LESIÓN (Cambiado 'warning' por 'warn')
+  getSeveridadEstado(estado: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
       if (estado === 'RECUPERADO') return 'success';
       if (estado === 'ACTIVO') return 'danger';
-      return 'warning'; // EN_TRATAMIENTO
+      return 'warn'; // EN_TRATAMIENTO
   }
 }

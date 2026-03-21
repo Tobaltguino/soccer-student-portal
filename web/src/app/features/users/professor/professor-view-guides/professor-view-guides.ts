@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; // ✅ Importante para ngModel
+import { FormsModule } from '@angular/forms'; 
 
 import { SupabaseService } from '../../../../core/services/supabase.service';
 
@@ -8,7 +8,9 @@ import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { TableModule } from 'primeng/table';
-import { InputTextModule } from 'primeng/inputtext'; // ✅ Importante para pInputText
+import { InputTextModule } from 'primeng/inputtext'; 
+import { DatePickerModule } from 'primeng/datepicker'; // ✅ Nuevo
+import { SelectModule } from 'primeng/select'; // ✅ Nuevo
 
 @Component({
   selector: 'app-professor-view-guides',
@@ -20,7 +22,9 @@ import { InputTextModule } from 'primeng/inputtext'; // ✅ Importante para pInp
     ButtonModule, 
     TooltipModule, 
     TableModule, 
-    InputTextModule
+    InputTextModule,
+    DatePickerModule, // ✅ Añadido
+    SelectModule      // ✅ Añadido
   ],
   templateUrl: './professor-view-guides.html',
   styleUrls: ['./professor-view-guides.css']
@@ -28,10 +32,20 @@ import { InputTextModule } from 'primeng/inputtext'; // ✅ Importante para pInp
 export class ProfessorViewGuidesComponent implements OnInit {
   
   guias: any[] = [];
-  guiasOriginales: any[] = []; // ✅ Respaldo para los filtros
-  
-  filtroTitulo: string = ''; // ✅ Variable del buscador
+  guiasOriginales: any[] = []; 
   loading: boolean = true;
+
+  // --- FILTROS ---
+  filtroTitulo: string = ''; 
+  filtroFecha: Date | null = null;
+  filtroArea: string | null = null;
+
+  // ✅ Opciones exactas para la base de datos
+  tiposMaterial = [
+    { label: 'Técnico / Físico', value: 'TECNICO_FISICO' },
+    { label: 'Nutrición', value: 'NUTRICION' },
+    { label: 'Kinesiología', value: 'KINESIOLOGIA' }
+  ];
 
   constructor(
     private supabase: SupabaseService,
@@ -51,7 +65,7 @@ export class ProfessorViewGuidesComponent implements OnInit {
       if (error) throw error;
       
       this.guiasOriginales = data || [];
-      this.aplicarFiltros(); // ✅ Aplicamos filtro inicial por si hay algo escrito
+      this.aplicarFiltros(); 
       
     } catch (error) {
     } finally {
@@ -60,17 +74,45 @@ export class ProfessorViewGuidesComponent implements OnInit {
     }
   }
 
-  // ✅ Función que realiza la búsqueda
+  // --- LÓGICA DE FILTRADO MÚLTIPLE ---
   aplicarFiltros() {
-    if (this.filtroTitulo && this.filtroTitulo.trim() !== '') {
-      const busqueda = this.filtroTitulo.toLowerCase().trim();
-      this.guias = this.guiasOriginales.filter(guia => 
-        (guia.titulo || '').toLowerCase().includes(busqueda)
-      );
-    } else {
-      // Si el input está vacío, restauramos la lista original
-      this.guias = [...this.guiasOriginales];
-    }
+    this.guias = this.guiasOriginales.filter(guia => {
+      // 1. Filtrar por Título
+      const coincideTitulo = (guia.titulo || '').toLowerCase().includes(this.filtroTitulo.toLowerCase().trim());
+      
+      // 2. Filtrar por Fecha
+      let coincideFecha = true;
+      if (this.filtroFecha) {
+        const fechaGuia = new Date(guia.created_at);
+        const fechaFiltro = new Date(this.filtroFecha);
+        
+        coincideFecha = fechaGuia.getFullYear() === fechaFiltro.getFullYear() &&
+                        fechaGuia.getMonth() === fechaFiltro.getMonth() &&
+                        fechaGuia.getDate() === fechaFiltro.getDate();
+      }
+
+      // 3. Filtrar por Área (tipo_material)
+      let coincideArea = true;
+      if (this.filtroArea) {
+        coincideArea = guia.tipo_material === this.filtroArea;
+      }
+
+      return coincideTitulo && coincideFecha && coincideArea;
+    });
+
     this.cdr.detectChanges();
+  }
+
+  limpiarFiltros() {
+    this.filtroTitulo = '';
+    this.filtroFecha = null;
+    this.filtroArea = null;
+    this.aplicarFiltros(); 
+  }
+
+  // ✅ Helper visual para mostrar el nombre del área en la tabla
+  getNombreArea(valor: string): string {
+    const area = this.tiposMaterial.find(t => t.value === valor);
+    return area ? area.label : 'General';
   }
 }

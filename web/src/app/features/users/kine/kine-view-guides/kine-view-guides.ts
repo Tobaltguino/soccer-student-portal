@@ -9,6 +9,8 @@ import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext'; 
+import { DatePickerModule } from 'primeng/datepicker'; // ✅ Nuevo
+import { SelectModule } from 'primeng/select'; // ✅ Nuevo
 
 @Component({
   selector: 'app-kine-view-guides',
@@ -20,7 +22,9 @@ import { InputTextModule } from 'primeng/inputtext';
     ButtonModule, 
     TooltipModule, 
     TableModule, 
-    InputTextModule
+    InputTextModule,
+    DatePickerModule, // ✅ Añadido
+    SelectModule      // ✅ Añadido
   ],
   templateUrl: './kine-view-guides.html',
   styleUrls: ['./kine-view-guides.css']
@@ -29,9 +33,19 @@ export class KineViewGuidesComponent implements OnInit {
   
   guias: any[] = [];
   guiasOriginales: any[] = []; 
-  
-  filtroTitulo: string = ''; 
   loading: boolean = true;
+
+  // --- FILTROS ---
+  filtroTitulo: string = ''; 
+  filtroFecha: Date | null = null;
+  filtroArea: string | null = null;
+
+  // ✅ Opciones exactas para la base de datos
+  tiposMaterial = [
+    { label: 'Técnico / Físico', value: 'TECNICO_FISICO' },
+    { label: 'Nutrición', value: 'NUTRICION' },
+    { label: 'Kinesiología', value: 'KINESIOLOGIA' }
+  ];
 
   constructor(
     private supabase: SupabaseService,
@@ -47,7 +61,6 @@ export class KineViewGuidesComponent implements OnInit {
     this.cdr.detectChanges(); 
 
     try {
-      // ✅ El Kinesiólogo también puede ver las guías compartidas por la administración
       const { data, error } = await this.supabase.getGuias();
       if (error) throw error;
       
@@ -61,15 +74,45 @@ export class KineViewGuidesComponent implements OnInit {
     }
   }
 
+  // --- LÓGICA DE FILTRADO MÚLTIPLE ---
   aplicarFiltros() {
-    if (this.filtroTitulo && this.filtroTitulo.trim() !== '') {
-      const busqueda = this.filtroTitulo.toLowerCase().trim();
-      this.guias = this.guiasOriginales.filter(guia => 
-        (guia.titulo || '').toLowerCase().includes(busqueda)
-      );
-    } else {
-      this.guias = [...this.guiasOriginales];
-    }
+    this.guias = this.guiasOriginales.filter(guia => {
+      // 1. Filtrar por Título
+      const coincideTitulo = (guia.titulo || '').toLowerCase().includes(this.filtroTitulo.toLowerCase().trim());
+      
+      // 2. Filtrar por Fecha
+      let coincideFecha = true;
+      if (this.filtroFecha) {
+        const fechaGuia = new Date(guia.created_at);
+        const fechaFiltro = new Date(this.filtroFecha);
+        
+        coincideFecha = fechaGuia.getFullYear() === fechaFiltro.getFullYear() &&
+                        fechaGuia.getMonth() === fechaFiltro.getMonth() &&
+                        fechaGuia.getDate() === fechaFiltro.getDate();
+      }
+
+      // 3. Filtrar por Área (tipo_material)
+      let coincideArea = true;
+      if (this.filtroArea) {
+        coincideArea = guia.tipo_material === this.filtroArea;
+      }
+
+      return coincideTitulo && coincideFecha && coincideArea;
+    });
+
     this.cdr.detectChanges();
+  }
+
+  limpiarFiltros() {
+    this.filtroTitulo = '';
+    this.filtroFecha = null;
+    this.filtroArea = null;
+    this.aplicarFiltros(); 
+  }
+
+  // ✅ Helper visual para mostrar el nombre del área en la tabla
+  getNombreArea(valor: string): string {
+    const area = this.tiposMaterial.find(t => t.value === valor);
+    return area ? area.label : 'General';
   }
 }

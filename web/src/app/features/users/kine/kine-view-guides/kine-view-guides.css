@@ -91,8 +91,15 @@
 }
 
 /* Forzar ancho y altura de los inputs */
-:host ::ng-deep .filter-bar .p-inputtext {
+:host ::ng-deep .filter-bar .p-select,
+:host ::ng-deep .filter-bar .p-datepicker,
+:host ::ng-deep .filter-bar .p-inputtext,
+:host ::ng-deep .filter-bar .p-dropdown {
     width: 100%;
+}
+
+:host ::ng-deep .filter-bar .p-inputtext,
+:host ::ng-deep .filter-bar .p-select .p-select-label {
     padding: 0.4rem 0.5rem !important; 
     font-size: 0.8rem !important; 
     height: 36px;
@@ -160,6 +167,10 @@
 :host ::ng-deep .p-datatable .p-datatable-thead > tr > th:nth-child(2) .p-column-header-content {
     justify-content: flex-start !important;
 }
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th:nth-child(3) .p-column-header-content,
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th:nth-child(4) .p-column-header-content {
+    justify-content: center !important;
+}
 
 /* Magia de salto de línea para textos largos en la tabla */
 :host ::ng-deep .p-datatable-tbody > tr > td span:not(.p-column-title):not(.p-button-label) {
@@ -192,6 +203,13 @@
 
 .line-height-2 {
     line-height: 1.5;
+}
+
+/* ✅ Etiqueta (Badge) para el Área */
+.area-badge {
+    background-color: rgba(59, 130, 246, 0.1); 
+    color: var(--primary-color) !important;
+    white-space: nowrap !important;
 }
 
 .animation-fade-in { animation: fadeIn 0.3s ease-in-out; }

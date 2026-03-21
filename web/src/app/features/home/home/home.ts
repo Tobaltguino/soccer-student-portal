@@ -4,12 +4,13 @@ import { Router } from '@angular/router';
 
 // PrimeNG & Servicios
 import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip'; // ✅ Añadido para mostrar tooltip al pasar el mouse
 import { SupabaseService } from '../../../core/services/supabase.service';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, ButtonModule],
+  imports: [CommonModule, ButtonModule, TooltipModule],
   templateUrl: './home.html',
   styleUrls: ['./home.css']
 })
@@ -35,7 +36,7 @@ export class HomeComponent implements OnInit {
   heroSubtitulo = 'Descubre tu máximo potencial. En ProFutbol unimos pasión, disciplina y tecnología deportiva para llevar tu talento al siguiente nivel, dentro y fuera de la cancha.';
 
   // ==========================================
-  // LISTAS POR DEFECTO (Se sobrescriben si hay datos en DB)
+  // LISTAS POR DEFECTO
   // ==========================================
   metodologias: any[] = [
     { icono: 'pi-star-fill', titulo: 'Formación Técnica', descripcion: 'Entrenamientos planificados enfocados en el desarrollo técnico, táctico y cognitivo del jugador moderno.' },
@@ -49,18 +50,20 @@ export class HomeComponent implements OnInit {
     { icono: 'pi-shield', color_fondo: 'bg-orange-100', color_texto: 'text-orange-500', titulo: 'Proyección (15 a 18 años)', descripcion: 'Alto rendimiento, exigencia física, apoyo nutricional y preparación para competencias exigentes.' }
   ];
 
-  // ✅ ALIANZAS ACTUALIZADAS PARA USAR IMÁGENES
+  // ✅ NUEVA LISTA DE AUSPICIADORES
+  auspiciadores: any[] = [
+    { imagen_url: 'assets/images/default-sponsor.png', nombre: 'Barbería & Tattoo', descripcion: 'Descuentos en cortes para jugadores.', instagram_url: 'https://instagram.com' }
+  ];
+
   alianzas: any[] = [
     { imagen_url: 'assets/images/default-sponsor.png', nombre: 'SportFit Store', descripcion: '20% de descuento en zapatos de fútbol, canilleras e indumentaria deportiva para todos nuestros alumnos activos.' },
-    { imagen_url: 'assets/images/default-sponsor.png', nombre: 'Clínica Traumatológica', descripcion: 'Convenio con atención preferencial, urgencias sin costo de ingreso y descuentos en Rayos X y Resonancias.' },
-    { imagen_url: 'assets/images/default-sponsor.png', nombre: 'Agua Pura', descripcion: 'Patrocinador oficial de hidratación. Garantiza estaciones de agua mineralizada en entrenamientos y partidos.' },
-    { imagen_url: 'assets/images/default-sponsor.png', nombre: 'NutriLife Supplements', descripcion: 'Charlas nutricionales gratuitas para padres y precios de mayorista en suplementos vitamínicos y deportivos.' }
+    { imagen_url: 'assets/images/default-sponsor.png', nombre: 'Clínica Traumatológica', descripcion: 'Convenio con atención preferencial, urgencias sin costo de ingreso y descuentos en Rayos X y Resonancias.' }
   ];
 
   constructor(
     private router: Router,
     private supabase: SupabaseService,
-    private cdr: ChangeDetectorRef // ✅ Agregado aquí
+    private cdr: ChangeDetectorRef 
   ) {}
 
   ngOnInit() {
@@ -71,11 +74,12 @@ export class HomeComponent implements OnInit {
   // --- OBTENER DATOS DE SUPABASE ---
   async cargarDatosDinamicos() {
     try {
-      const [config, met, prog, ali] = await Promise.all([
+      const [config, met, prog, ali, aus] = await Promise.all([
         this.supabase.getConfiguracionWeb(),
         this.supabase.getWebMetodologias(),
         this.supabase.getWebProgramas(),
-        this.supabase.getWebAlianzas()
+        this.supabase.getWebAlianzas(),
+        this.supabase.getWebAuspiciadores() // ✅ Añadido a la consulta paralela
       ]);
 
       if (config.data && !config.error) {
@@ -93,13 +97,11 @@ export class HomeComponent implements OnInit {
       if (met.data && met.data.length > 0) this.metodologias = met.data;
       if (prog.data && prog.data.length > 0) this.programas = prog.data;
       if (ali.data && ali.data.length > 0) this.alianzas = ali.data;
+      if (aus.data && aus.data.length > 0) this.auspiciadores = aus.data; // ✅ Asignado
 
     } catch (error) {
-      // Al no hacer nada aquí, la aplicación simplemente se queda con los datos 
-      // hardcodeados (los que definiste al principio del componente).
-      // Esto es un comportamiento elegante y silencioso.
+      // Mantiene datos por defecto si falla
     } finally {
-      // Le avisamos a Angular que ya llegaron los datos y debe dibujar la pantalla
       this.cdr.detectChanges(); 
     }
   }

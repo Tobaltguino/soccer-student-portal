@@ -41,21 +41,23 @@ export class AdminHomeConfigComponent implements OnInit {
   metodologias: any[] = [];
   programas: any[] = [];
   alianzas: any[] = [];
+  auspiciadores: any[] = []; // ✅ NUEVA LISTA
 
   // Dialogos
   displayDialogMetodologia = false;
   displayDialogPrograma = false;
   displayDialogAlianza = false;
+  displayDialogAuspiciador = false; // ✅ NUEVO DIALOGO
 
   // Formularios temporales
   itemForm: any = {};
   isEditing = false;
 
-  // Variables para la imagen de alianza
+  // Variables para imágenes
   previewUrl: string | null = null;
   uploadingLogo = false;
 
-  // Lista de iconos clásicos seguros
+  // Lista de iconos
   listaIconos = [
     { label: 'Estrella Rellena', value: 'pi-star-fill' },
     { label: 'Estrella', value: 'pi-star' },
@@ -93,17 +95,19 @@ export class AdminHomeConfigComponent implements OnInit {
     this.cdr.detectChanges(); 
 
     try {
-      const [conf, met, prog, ali] = await Promise.all([
+      const [conf, met, prog, ali, aus] = await Promise.all([
         this.supabase.getConfiguracionWeb(),
         this.supabase.getWebMetodologias(),
         this.supabase.getWebProgramas(),
-        this.supabase.getWebAlianzas()
+        this.supabase.getWebAlianzas(),
+        this.supabase.getWebAuspiciadores() // ✅ CARGA DE AUSPICIADORES
       ]);
 
       this.config = conf.data || {};
       this.metodologias = met.data || [];
       this.programas = prog.data || [];
       this.alianzas = ali.data || [];
+      this.auspiciadores = aus.data || []; // ✅ ASIGNACIÓN
     } catch (e) {
       this.mostrarError('Error al cargar la información');
     } finally {
@@ -139,6 +143,11 @@ export class AdminHomeConfigComponent implements OnInit {
         this.previewUrl = null;
         this.displayDialogAlianza = true;
     }
+    // ✅ MANEJO AUSPICIADOR
+    if (tipo === 'auspiciador') {
+        this.previewUrl = null;
+        this.displayDialogAuspiciador = true;
+    }
   }
 
   editarItem(tipo: string, item: any) {
@@ -150,6 +159,11 @@ export class AdminHomeConfigComponent implements OnInit {
         this.previewUrl = null; 
         this.displayDialogAlianza = true;
     }
+    // ✅ MANEJO AUSPICIADOR
+    if (tipo === 'auspiciador') {
+        this.previewUrl = null;
+        this.displayDialogAuspiciador = true;
+    }
   }
 
   cerrarModalAlianza() {
@@ -157,8 +171,13 @@ export class AdminHomeConfigComponent implements OnInit {
     this.previewUrl = null;
   }
 
-  // --- SUBIDA DE IMAGEN (ALIANZAS) ---
-  async onFileSelected(event: any) {
+  cerrarModalAuspiciador() {
+    this.displayDialogAuspiciador = false;
+    this.previewUrl = null;
+  }
+
+  // --- SUBIDA DE IMAGEN (Ahora reutilizable) ---
+  async onFileSelected(event: any, bucket: string = 'alianzas') {
     const file: File = event.files[0];
     if (file) {
       this.uploadingLogo = true;
@@ -167,8 +186,8 @@ export class AdminHomeConfigComponent implements OnInit {
       reader.onload = (e: any) => this.previewUrl = e.target.result;
       reader.readAsDataURL(file);
 
-      // Usamos el nuevo bucket 'alianzas'
-      const url = await this.supabase.subirFoto(file, 'alianzas'); 
+      // Usamos el bucket 'alianzas' para todo lo de la web
+      const url = await this.supabase.subirFoto(file, bucket); 
       
       if (url) {
         this.itemForm.imagen_url = url;
@@ -222,6 +241,23 @@ export class AdminHomeConfigComponent implements OnInit {
     }
   }
 
+  // ✅ GUARDAR AUSPICIADOR
+  async guardarAuspiciador() {
+    try {
+      this.loading = true;
+      if (this.isEditing) await this.supabase.updateWebAuspiciador(this.itemForm.id, this.itemForm);
+      else await this.supabase.createWebAuspiciador(this.itemForm);
+      
+      this.cerrarModalAuspiciador();
+      this.cargarTodo();
+      this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Auspiciador guardado' });
+    } catch (e) { 
+      this.mostrarError('Error al guardar'); 
+    } finally {
+      this.loading = false;
+    }
+  }
+
   confirmarEliminar(tipo: string, id: number) {
     this.confirmationService.confirm({
       message: '¿Estás seguro de que deseas eliminar este elemento? Desaparecerá de la web pública.',
@@ -235,6 +271,7 @@ export class AdminHomeConfigComponent implements OnInit {
           if (tipo === 'metodologia') await this.supabase.deleteWebMetodologia(id);
           if (tipo === 'programa') await this.supabase.deleteWebPrograma(id);
           if (tipo === 'alianza') await this.supabase.deleteWebAlianza(id);
+          if (tipo === 'auspiciador') await this.supabase.deleteWebAuspiciador(id); // ✅ ELIMINAR AUSPICIADOR
           
           this.cargarTodo();
           this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Elemento eliminado correctamente' });

@@ -130,7 +130,6 @@ export class KinePatientsComponent implements OnInit {
     return age;
   }
 
-  // ✅ FUNCIÓN ACTUALIZADA PARA ABRIR LA FICHA Y CARGAR EL HISTORIAL
   async verDetalle(estudiante: any) {
     this.selectedEstudiante = estudiante;
     this.displayDetalle = true;
@@ -149,17 +148,17 @@ export class KinePatientsComponent implements OnInit {
     }
   }
 
-  // ✅ HELPER PARA COLORES DEL HISTORIAL (Tipado estricto)
-  getSeveridadHistorial(tipo: string): 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast' {
+  // ✅ HELPER CORREGIDO ('warn' en lugar de 'warning')
+  getSeveridadHistorial(tipo: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
       if (tipo === 'LESION') return 'danger';
-      if (tipo === 'ALERGIA') return 'warning';
+      if (tipo === 'ALERGIA') return 'warn';
       return 'info'; // PATOLOGIA
   }
 
-  // ✅ HELPER PARA EL ESTADO DE LA LESIÓN (Tipado estricto)
-  getSeveridadEstado(estado: string): 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast' {
+  // ✅ HELPER CORREGIDO ('warn' en lugar de 'warning')
+  getSeveridadEstado(estado: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
       if (estado === 'RECUPERADO') return 'success';
       if (estado === 'ACTIVO') return 'danger';
-      return 'warning'; // EN_TRATAMIENTO
+      return 'warn'; // EN_TRATAMIENTO
   }
 }

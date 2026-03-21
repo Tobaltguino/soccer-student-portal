@@ -8,6 +8,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TooltipModule } from 'primeng/tooltip';
+import { SelectModule } from 'primeng/select'; // ✅ Agregado para el Dropdown
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { SupabaseService } from '../../../../core/services/supabase.service'; 
 
@@ -16,7 +17,8 @@ import { SupabaseService } from '../../../../core/services/supabase.service';
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, ButtonModule, 
-    DialogModule, InputTextModule, ToastModule, ConfirmDialogModule, TooltipModule
+    DialogModule, InputTextModule, ToastModule, ConfirmDialogModule, TooltipModule,
+    SelectModule // ✅ Asegúrate de importarlo aquí
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './admin-guides-management.html',
@@ -27,10 +29,17 @@ export class AdminGuidesManagementComponent implements OnInit {
   loading: boolean = true;
   displayDialog: boolean = false;
   
-  // Agregamos 'id' para saber si estamos editando
-  nuevaGuia: any = { id: null, titulo: '', descripcion: '', archivo_url: '' };
+  // ✅ Formulario inicializado con el campo 'tipo_material'
+  nuevaGuia: any = { id: null, titulo: '', descripcion: '', archivo_url: '', tipo_material: null };
   archivoSeleccionado: File | null = null;
   subiendoArchivo: boolean = false;
+
+  // ✅ Opciones exactas para la base de datos
+  tiposMaterial = [
+    { label: 'Técnico / Físico', value: 'TECNICO_FISICO' },
+    { label: 'Nutrición', value: 'NUTRICION' },
+    { label: 'Kinesiología', value: 'KINESIOLOGIA' }
+  ];
 
   constructor(
     private supabase: SupabaseService,
@@ -57,15 +66,14 @@ export class AdminGuidesManagementComponent implements OnInit {
   }
 
   abrirNuevo() {
-    this.nuevaGuia = { id: null, titulo: '', descripcion: '', archivo_url: '' };
+    this.nuevaGuia = { id: null, titulo: '', descripcion: '', archivo_url: '', tipo_material: null };
     this.archivoSeleccionado = null;
     this.displayDialog = true;
   }
 
-  // ✅ NUEVA FUNCIÓN PARA EDITAR
   editarGuia(guia: any) {
-    this.nuevaGuia = { ...guia }; // Copiamos los datos al formulario
-    this.archivoSeleccionado = null; // Reseteamos el archivo físico
+    this.nuevaGuia = { ...guia }; 
+    this.archivoSeleccionado = null; 
     this.displayDialog = true;
   }
 
@@ -82,8 +90,9 @@ export class AdminGuidesManagementComponent implements OnInit {
   }
 
   async guardarGuia() {
-    if (!this.nuevaGuia.titulo || (!this.nuevaGuia.id && !this.archivoSeleccionado)) {
-      this.messageService.add({ severity: 'warn', summary: 'Incompleto', detail: 'Debe ingresar un título y asegurarse de tener un archivo adjunto.' });
+    // ✅ Validación actualizada: ahora exige tipo_material
+    if (!this.nuevaGuia.titulo || !this.nuevaGuia.tipo_material || (!this.nuevaGuia.id && !this.archivoSeleccionado)) {
+      this.messageService.add({ severity: 'warn', summary: 'Incompleto', detail: 'Debe ingresar un título, seleccionar el área y adjuntar un archivo.' });
       return;
     }
 
@@ -94,29 +103,24 @@ export class AdminGuidesManagementComponent implements OnInit {
       let urlFinal = this.nuevaGuia.archivo_url;
       let archivoViejoParaBorrar = null; 
 
-      // 1. Si el profe seleccionó un NUEVO archivo, lo subimos
       if (this.archivoSeleccionado) {
-        
-        // Si estamos editando y ya había una URL, la guardamos para borrarla al final
         if (this.nuevaGuia.id && this.nuevaGuia.archivo_url) {
           archivoViejoParaBorrar = this.nuevaGuia.archivo_url;
         }
-        
         urlFinal = await this.supabase.uploadGuiaFile(this.archivoSeleccionado, this.nuevaGuia.titulo);
       }
       
       const guiaParaBD = {
         titulo: this.nuevaGuia.titulo,
         descripcion: this.nuevaGuia.descripcion,
+        tipo_material: this.nuevaGuia.tipo_material, // ✅ Guardamos el tipo de material
         archivo_url: urlFinal
       };
 
-      // 2. ¿Creamos o Actualizamos en la Base de Datos?
       if (this.nuevaGuia.id) {
         const { error } = await this.supabase.updateGuia(this.nuevaGuia.id, guiaParaBD);
         if (error) throw error;
         
-        // ✅ 3. LA MAGIA: Si todo se actualizó bien en la BD y hay un archivo viejo, lo borramos
         if (archivoViejoParaBorrar) {
           await this.supabase.deleteGuiaFile(archivoViejoParaBorrar);
         }
@@ -158,5 +162,11 @@ export class AdminGuidesManagementComponent implements OnInit {
         }
       }
     });
+  }
+
+  // ✅ Helper visual para mostrar el nombre del área en la tabla
+  getNombreArea(valor: string): string {
+    const area = this.tiposMaterial.find(t => t.value === valor);
+    return area ? area.label : 'General';
   }
 }

@@ -137,17 +137,50 @@ textarea {
     overflow-y: auto;
 }
 
-/* --- IMÁGENES --- */
+/* =========================================
+   IMÁGENES Y PREVIEW DE LOGOS
+   ========================================= */
 .object-contain {
     object-fit: contain;
 }
 
 .logo-tabla {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     object-fit: contain;
     display: block;
     margin: 0 auto;
+    border-radius: 6px;
+}
+
+/* ✅ CONTENEDOR RECTANGULAR CORREGIDO (Oculta imágenes desbordadas) */
+.sponsor-preview-container {
+    width: 100%;
+    max-width: 250px;
+    height: 120px;
+    margin: 0 auto 1.5rem auto;
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; /* Oculta TODO lo que se pase de los 250x120px */
+    position: relative;
+    background-color: transparent;
+}
+
+.sponsor-preview-container img {
+    max-width: 100% !important; /* Fuerza el ancho máximo al 100% de la caja */
+    max-height: 100% !important; /* Fuerza el alto máximo al 100% de la caja */
+    object-fit: contain !important; /* Contiene sin recortar */
+    padding: 1rem;
+    display: block;
+}
+
+.sponsor-preview-container i.pi-image {
+    font-size: 3rem;
+    color: var(--text-secondary);
+    opacity: 0.4;
 }
 
 /* =========================================

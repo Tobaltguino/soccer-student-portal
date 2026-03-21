@@ -90,6 +90,7 @@
 
 /* Forzar ancho y altura de los inputs */
 :host ::ng-deep .filter-bar .p-datepicker,
+:host ::ng-deep .filter-bar .p-select,
 :host ::ng-deep .filter-bar .p-inputtext {
     width: 100%;
 }
@@ -200,6 +201,13 @@
     line-height: 1.5;
 }
 
+/* ✅ Etiqueta (Badge) para el Área */
+.area-badge {
+    background-color: rgba(59, 130, 246, 0.1); 
+    color: var(--primary-color) !important;
+    white-space: nowrap !important;
+}
+
 /* =========================================
    5. RESPONSIVE Y TARJETAS MÓVILES
    ========================================= */
@@ -270,7 +278,6 @@
         color: var(--primary-color) !important;
     }
     
-    /* Le inyectamos el texto "Descargar" en móvil a través de CSS para no ensuciar el HTML de PC */
     :host ::ng-deep .action-buttons .p-button::after {
         content: "Descargar Documento";
         margin-left: 8px;

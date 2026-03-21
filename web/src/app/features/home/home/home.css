@@ -50,12 +50,14 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: nowrap; /* Evita que los elementos salten de línea */
 }
 
 .logo-container {
     display: flex;
     align-items: center;
     gap: 10px;
+    white-space: nowrap;
 }
 
 .logo-img { height: 40px; }
@@ -88,10 +90,17 @@
     color: var(--primary-color);
 }
 
+.nav-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap !important; /* Forza a que los botones estén en 1 línea */
+}
+
 .btn-portal {
     padding: 0.5rem 1.25rem !important;
     border-radius: 8px !important;
     font-weight: 600 !important;
+    white-space: nowrap;
 }
 
 /* ==========================================================
@@ -145,7 +154,8 @@
     color: var(--text-main); 
 }
 
-.hero-title span { color: var(--primary-color); }
+/* Soporte para inyectar <span> desde la base de datos */
+:host ::ng-deep .hero-title span { color: var(--primary-color); }
 
 .hero-subtitle {
     font-size: 1.15rem;
@@ -170,9 +180,9 @@
 }
 
 /* ==========================================================
-   4. SECCIONES DE CONTENIDO Y ENCABEZADOS CENTRADOS
+   4. SECCIONES DE CONTENIDO (ALTERNANDO FONDOS)
    ========================================================== */
-.info-section, .sponsors-section {
+.info-section {
     padding: 5rem 1.5rem;
     background-color: var(--bg-main); 
 }
@@ -182,7 +192,6 @@
     background-color: var(--bg-card); 
 }
 
-/* --- FIX: ENCABEZADOS PERFECTAMENTE CENTRADOS --- */
 .section-header {
     display: flex;
     flex-direction: column;
@@ -218,10 +227,8 @@
 }
 
 /* ==========================================================
-   5. GRIDS DE TARJETAS (4 COLUMNAS FORZADAS)
+   5. GRIDS DE TARJETAS
    ========================================================== */
-
-/* FIX: Obligamos a Metodologías a tener exactamente 4 columnas en PC */
 .features-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr); 
@@ -229,7 +236,6 @@
     margin-top: 3rem;
 }
 
-/* Categorías y Alianzas siguen adaptándose al espacio */
 .programs-grid, .sponsors-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -256,7 +262,6 @@
     box-shadow: 0 12px 24px -5px rgba(0,0,0,0.1);
 }
 
-/* --- ICONOS Y LOGOS --- */
 .icon-wrapper {
     width: 60px;
     height: 60px;
@@ -302,6 +307,20 @@
 
 .program-content h3 { margin: 0 0 0.75rem 0; font-size: 1.25rem; color: var(--text-main); }
 .program-content p { color: var(--text-secondary); margin: 0; line-height: 1.5; font-size: 0.9rem;}
+
+/* ✅ ESTILOS DEL BOTÓN DE INSTAGRAM PARA AUSPICIADORES */
+:host ::ng-deep .btn-instagram {
+    color: #E1306C !important;
+    border: 1px solid rgba(225, 48, 108, 0.4) !important;
+    background: transparent !important;
+    transition: all 0.2s ease;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+}
+:host ::ng-deep .btn-instagram:hover {
+    background: rgba(225, 48, 108, 0.1) !important;
+    border-color: #E1306C !important;
+}
 
 /* ==========================================================
    6. FOOTER
@@ -420,22 +439,39 @@
 
 /* ==========================================================
    8. RESPONSIVE (MÓVIL Y TABLET)
-   ========================================================== */
+   ========================================= */
 
-/* FIX TABLET: Pasamos a 2 columnas si la pantalla no es muy ancha */
 @media (max-width: 1024px) {
     .features-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
-/* FIX CELULAR: Todo a 1 columna y ajustes de padding */
+/* FIX CELULAR COMPLETO */
 @media (max-width: 768px) {
-    .hidden-mobile { display: none; }
+    .hidden-mobile { display: none !important; }
     
-    .features-grid {
-        grid-template-columns: 1fr; /* 1 columna en móvil */
+    /* FIX NAVBAR MÓVIL (Solución al sol y botón sobrepuestos) */
+    .navbar { padding: 0.75rem 1rem; }
+    .logo-img { height: 32px; }
+    .brand-text { font-size: 1.1rem; }
+    
+    /* Forza los botones de la barra a no romperse */
+    .nav-actions { 
+        gap: 0.5rem !important; 
     }
+    
+    .btn-portal { 
+        padding: 0.4rem 0.75rem !important; 
+        font-size: 0.85rem !important; 
+    }
+    
+    .theme-toggle-btn { 
+        width: 2rem !important; 
+        height: 2rem !important; 
+    }
+    
+    .features-grid { grid-template-columns: 1fr; }
 
     .hero-section { padding: 5rem 1.5rem; }
     .hero-title { font-size: 2.25rem; }
@@ -447,7 +483,7 @@
     }
     .hero-buttons button { margin: 0 !important; width: 100%; }
     
-    .info-section, .programs-section, .sponsors-section { padding: 3rem 1.5rem; }
+    .info-section, .programs-section { padding: 3rem 1.5rem; }
     .section-title { font-size: 1.8rem; }
     
     .footer-section { padding: 3rem 1.5rem 1.5rem 1.5rem; }
@@ -457,4 +493,15 @@
     .footer-brand p { margin: 0 auto; }
     
     .social-list { align-items: center; }
+}
+
+/* FIX PANTALLAS SÚPER PEQUEÑAS (Ej: iPhone SE, menos de 400px) */
+@media (max-width: 400px) {
+    .brand-text { 
+        display: none; 
+    }
+    .btn-portal { 
+        padding: 0.4rem 0.5rem !important; 
+        font-size: 0.8rem !important; 
+    }
 }

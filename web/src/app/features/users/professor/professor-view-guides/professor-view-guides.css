@@ -205,6 +205,13 @@
     line-height: 1.5;
 }
 
+/* ✅ Etiqueta (Badge) para el Área */
+.area-badge {
+    background-color: rgba(59, 130, 246, 0.1); 
+    color: var(--primary-color) !important;
+    white-space: nowrap !important;
+}
+
 .animation-fade-in { animation: fadeIn 0.3s ease-in-out; }
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(5px); }

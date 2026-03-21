@@ -1250,4 +1250,35 @@ export class SupabaseService {
       .eq('estudiante_id', estudianteId)
       .order('fecha_evento', { ascending: false });
   }
+
+  // ==========================================
+  // --- CRUD AUSPICIADORES (LANDING PAGE) ---
+  // ==========================================
+
+  async getWebAuspiciadores() {
+    return await this.supabase
+      .from('web_auspiciadores')
+      .select('*')
+      .order('orden', { ascending: true });
+  }
+
+  async createWebAuspiciador(datos: any) {
+    return await this.supabase
+      .from('web_auspiciadores')
+      .insert(datos);
+  }
+
+  async updateWebAuspiciador(id: number, datos: any) {
+    return await this.supabase
+      .from('web_auspiciadores')
+      .update(datos)
+      .eq('id', id);
+  }
+
+  async deleteWebAuspiciador(id: number) {
+    return await this.supabase
+      .from('web_auspiciadores')
+      .delete()
+      .eq('id', id);
+  }
 }
