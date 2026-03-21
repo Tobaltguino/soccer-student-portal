@@ -32,8 +32,8 @@ export class HomeComponent implements OnInit {
 
   mensajeWhatsApp = 'Hola, vengo desde la página web y quiero información sobre la academia.';
   
-  heroTitulo = 'Formamos a los líderes del <span>mañana</span>';
-  heroSubtitulo = 'Descubre tu máximo potencial. En ProFutbol unimos pasión, disciplina y tecnología deportiva para llevar tu talento al siguiente nivel, dentro y fuera de la cancha.';
+  heroTitulo = 'TU MEJOR VERSIÓN COMIENZA AQUÍ';
+  heroSubtitulo = 'Trabajamos con un grupo de profesionales expertos en el área para mejorar tu rendimiento deportivo de manera integral.';
 
   // ==========================================
   // LISTAS POR DEFECTO

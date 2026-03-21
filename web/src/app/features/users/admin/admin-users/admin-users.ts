@@ -393,7 +393,6 @@ export class AdminUsersComponent implements OnInit {
         const res = await this.supabase.getHistorialClinico(estudiante.id);
         this.historialClinico = res.data || [];
     } catch (error) {
-        console.error("Error cargando historial", error);
     } finally {
         this.loadingHistorial = false;
         this.cdr.detectChanges();
