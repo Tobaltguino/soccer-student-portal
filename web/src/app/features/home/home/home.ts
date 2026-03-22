@@ -4,8 +4,10 @@ import { Router } from '@angular/router';
 
 // PrimeNG & Servicios
 import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip'; // ✅ Añadido para mostrar tooltip al pasar el mouse
-import { SupabaseService } from '../../../core/services/supabase.service';
+import { TooltipModule } from 'primeng/tooltip'; 
+
+// 🚀 CAMBIO 1: Importamos ContentService
+import { ContentService } from '../../../core/services/content.service';
 
 @Component({
   selector: 'app-home',
@@ -50,7 +52,6 @@ export class HomeComponent implements OnInit {
     { icono: 'pi-shield', color_fondo: 'bg-orange-100', color_texto: 'text-orange-500', titulo: 'Proyección (15 a 18 años)', descripcion: 'Alto rendimiento, exigencia física, apoyo nutricional y preparación para competencias exigentes.' }
   ];
 
-  // ✅ NUEVA LISTA DE AUSPICIADORES
   auspiciadores: any[] = [
     { imagen_url: 'assets/images/default-sponsor.png', nombre: 'Barbería & Tattoo', descripcion: 'Descuentos en cortes para jugadores.', instagram_url: 'https://instagram.com' }
   ];
@@ -62,7 +63,8 @@ export class HomeComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private supabase: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos ContentService
+    private contentService: ContentService,
     private cdr: ChangeDetectorRef 
   ) {}
 
@@ -74,12 +76,13 @@ export class HomeComponent implements OnInit {
   // --- OBTENER DATOS DE SUPABASE ---
   async cargarDatosDinamicos() {
     try {
+      // 🚀 CAMBIO 3: Usamos this.contentService para todo
       const [config, met, prog, ali, aus] = await Promise.all([
-        this.supabase.getConfiguracionWeb(),
-        this.supabase.getWebMetodologias(),
-        this.supabase.getWebProgramas(),
-        this.supabase.getWebAlianzas(),
-        this.supabase.getWebAuspiciadores() // ✅ Añadido a la consulta paralela
+        this.contentService.getConfiguracionWeb(),
+        this.contentService.getWebMetodologias(),
+        this.contentService.getWebProgramas(),
+        this.contentService.getWebAlianzas(),
+        this.contentService.getWebAuspiciadores() 
       ]);
 
       if (config.data && !config.error) {
@@ -97,7 +100,7 @@ export class HomeComponent implements OnInit {
       if (met.data && met.data.length > 0) this.metodologias = met.data;
       if (prog.data && prog.data.length > 0) this.programas = prog.data;
       if (ali.data && ali.data.length > 0) this.alianzas = ali.data;
-      if (aus.data && aus.data.length > 0) this.auspiciadores = aus.data; // ✅ Asignado
+      if (aus.data && aus.data.length > 0) this.auspiciadores = aus.data; 
 
     } catch (error) {
       // Mantiene datos por defecto si falla

@@ -9,7 +9,8 @@ import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 
-import { SupabaseService } from '../../../core/services/supabase.service';
+// 🚀 CAMBIO 1: Importamos el AuthService
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-update-password',
@@ -25,7 +26,8 @@ export class UpdatePasswordComponent {
   loading = false;
 
   constructor(
-    private supabaseService: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos el AuthService
+    private authService: AuthService,
     private router: Router,
     private messageService: MessageService
   ) {}
@@ -49,15 +51,16 @@ export class UpdatePasswordComponent {
     this.loading = true;
 
     try {
-      const { error } = await this.supabaseService.updatePassword(this.nuevaPassword);
+      // 🚀 CAMBIO 3: Usamos this.authService
+      const { error } = await this.authService.updatePassword(this.nuevaPassword);
 
       if (error) {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: error.message });
       } else {
         this.messageService.add({ severity: 'success', summary: '¡Éxito!', detail: 'Tu contraseña ha sido actualizada correctamente.' });
         
-        // Cerramos la sesión temporal y mandamos al login
-        await this.supabaseService.logout();
+        // 🚀 CAMBIO 4: Usamos this.authService para el logout
+        await this.authService.logout();
         
         setTimeout(() => {
           this.router.navigate(['/login']);

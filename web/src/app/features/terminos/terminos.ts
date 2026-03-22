@@ -2,13 +2,15 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { SupabaseService } from '../../core/services/supabase.service';
 
 // PrimeNG
 import { CheckboxModule } from 'primeng/checkbox';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+
+// 🚀 CAMBIO 1: Importamos el nuevo AuthService
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-terminos',
@@ -28,19 +30,21 @@ export class TerminosComponent implements OnInit {
   userEmail: string = '';
 
   constructor(
-    private supabase: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos el AuthService
+    private authService: AuthService,
     private router: Router,
     private messageService: MessageService
   ) {}
 
   async ngOnInit() {
-    // Obtenemos el usuario actual para saber a quién actualizar
-    const { data: { user } } = await this.supabase.getUser();
+    // 🚀 CAMBIO 3: Usamos this.authService.getUser()
+    const { data: { user } } = await this.authService.getUser();
     if (user && user.email) {
       this.userId = user.id;
       this.userEmail = user.email;
-      // Usamos la función segura que creaste para obtener el rol/tabla
-      this.userRole = await this.supabase.getRolSeguro(user.id);
+      
+      // 🚀 CAMBIO 4: Usamos this.authService.getRolSeguro()
+      this.userRole = await this.authService.getRolSeguro(user.id);
     } else {
       this.router.navigate(['/login']);
     }
@@ -51,23 +55,21 @@ export class TerminosComponent implements OnInit {
 
     this.guardando = true;
     try {
-      // Determinamos la tabla real basada en el rol
       let tabla = 'estudiantes';
       if (this.userRole === 'admin') tabla = 'admins';
       else if (this.userRole === 'professor') tabla = 'profesores';
       else if (this.userRole === 'kine') tabla = 'kinesiologos';
       else if (this.userRole === 'nutri') tabla = 'nutricionistas';
 
-      // ✅ Usamos el nuevo método seguro y directo
-      const { error } = await this.supabase.registrarFirmaTerminos(tabla, this.userId);
+      // 🚀 CAMBIO 5: Usamos this.authService.registrarFirmaTerminos()
+      const { error } = await this.authService.registrarFirmaTerminos(tabla, this.userId);
       
       if (error) throw error;
 
-      // ¡Firmado! Lo mandamos a su panel correspondiente
       this.redirigirPorRol(this.userRole);
 
     } catch (error) {
-      console.error(error); // Para que veas si hay problemas de permisos (RLS) en el desarrollo local
+      console.error(error); 
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo registrar la aceptación. Intente nuevamente.' });
     } finally {
       this.guardando = false;
@@ -85,7 +87,8 @@ export class TerminosComponent implements OnInit {
   }
 
   rechazar() {
-    this.supabase.logout();
+    // 🚀 CAMBIO 6: Usamos this.authService.logout()
+    this.authService.logout();
     this.router.navigate(['/login']);
   }
 }

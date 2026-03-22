@@ -12,8 +12,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
 
-// Servicios y Directivas
-import { SupabaseService } from '../../../core/services/supabase.service';
+// 🚀 CAMBIO 1: Importamos el nuevo AuthService en lugar de SupabaseService
+import { AuthService } from '../../../core/services/auth.service'; 
 import { RutFormatDirective } from '../../../shared/directives/rut-format.directive';
 import { RutValidator } from '../../../shared/directives/rut-validator.directive';
 
@@ -51,92 +51,62 @@ export class LoginComponent implements OnInit, OnDestroy {
   private themeObserver!: MutationObserver;
 
   constructor(
-    private supabaseService: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos el authService
+    private authService: AuthService, 
     private router: Router,
     private messageService: MessageService
   ) {}
 
   ngOnInit() {
-    // 1. Verificar el tema al cargar la pantalla
     this.actualizarLogoTema();
-
-    // 2. Escuchar si el usuario cambia el tema en tiempo real
     this.themeObserver = new MutationObserver(() => {
       this.actualizarLogoTema();
     });
-    
     this.themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
   }
 
   ngOnDestroy() {
-    // Apagar el observador cuando salimos del login para ahorrar memoria
     if (this.themeObserver) {
       this.themeObserver.disconnect();
     }
   }
 
-  // --- FUNCIÓN QUE DECIDE QUÉ LOGO MOSTRAR ---
   actualizarLogoTema() {
     const isDarkMode = document.body.classList.contains('dark-mode');
-    
     if (isDarkMode) {
-      // Logo para fondo oscuro (letras blancas/claras)
       this.logoUrl = 'assets/images/ProFutbol_Transparenteblanco.png';
     } else {
-      // Logo para fondo claro (letras oscuras)
-      // ⚠️ Asegúrate de que este archivo exista en tu carpeta assets/images/
       this.logoUrl = 'assets/images/ProFutbol_Transparentenegro.png'; 
     }
   }
 
-  /**
-   * Proceso de inicio de sesión usando el RUT como identificador.
-   * Incluye verificación de estado de cuenta y Términos y Condiciones.
-   */
   async ingresar() {
-    // 1. Validación básica de campos
     if (!this.rut || !this.password) {
-      this.messageService.add({ 
-        severity: 'warn', 
-        summary: 'Atención', 
-        detail: 'Por favor, ingresa tu RUT y contraseña.' 
-      });
+      this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Por favor, ingresa tu RUT y contraseña.' });
       return;
     }
 
     if (!RutValidator.esValido(this.rut)) {
-      this.messageService.add({ 
-        severity: 'error', 
-        summary: 'RUT Incorrecto', 
-        detail: 'El RUT ingresado no es válido legalmente.' 
-      });
+      this.messageService.add({ severity: 'error', summary: 'RUT Incorrecto', detail: 'El RUT ingresado no es válido legalmente.' });
       return;
     }
 
     this.loading = true;
 
     try {
-      // 2. Preparar el RUT (limpieza de espacios)
       const rutBusqueda = this.rut.trim();
 
-      // 3. Llamada al servicio: ahora recibimos también "aceptoTerminos"
-      const { data, error, role, aceptoTerminos } = await this.supabaseService.loginConRut(rutBusqueda, this.password);
+      // 🚀 CAMBIO 3: Usamos this.authService
+      const { data, error, role, aceptoTerminos } = await this.authService.loginConRut(rutBusqueda, this.password);
 
-      // 4. Manejo de Errores (Credenciales incorrectas o Cuenta Desactivada)
       if (error) {
-        this.messageService.add({ 
-          severity: 'error', 
-          summary: 'Acceso Denegado', 
-          detail: error.message || 'Credenciales inválidas o usuario no encontrado.' 
-        });
+        this.messageService.add({ severity: 'error', summary: 'Acceso Denegado', detail: error.message || 'Credenciales inválidas o usuario no encontrado.' });
         this.loading = false;
         return;
       }
 
-      // 5. Éxito: Evaluación de Términos y Redirección
       if (data?.user && role) {
         
-        // Mapeamos los roles de la BD a los roles de las Rutas
         const mapRoles: any = {
           'admins': 'admin',
           'estudiantes': 'student',
@@ -148,34 +118,13 @@ export class LoginComponent implements OnInit, OnDestroy {
         const rolEstandarizado = mapRoles[role] || 'student';
         localStorage.setItem('userRole', rolEstandarizado);
 
-        // ✅ LÓGICA DE TÉRMINOS Y CONDICIONES
         if (aceptoTerminos === false || aceptoTerminos === null) {
-          
-          this.messageService.add({ 
-            severity: 'info', 
-            summary: 'Atención Requerida', 
-            detail: 'Debes aceptar los Términos y Condiciones para continuar.' 
-          });
-
-          setTimeout(() => {
-            this.router.navigate(['/terminos']); // Mandamos a la pantalla de firmas
-          }, 1200);
-
+          this.messageService.add({ severity: 'info', summary: 'Atención Requerida', detail: 'Debes aceptar los Términos y Condiciones para continuar.' });
+          setTimeout(() => { this.router.navigate(['/terminos']); }, 1200);
         } else {
-          
-          // Ya firmó, lo mandamos directo a su Dashboard
-          this.messageService.add({ 
-            severity: 'success', 
-            summary: 'Acceso Autorizado', 
-            detail: 'Cargando tu perfil, por favor espera...' 
-          });
-
+          this.messageService.add({ severity: 'success', summary: 'Acceso Autorizado', detail: 'Cargando tu perfil, por favor espera...' });
           const rutaDestino = `/${rolEstandarizado}/dashboard`; 
-          
-          setTimeout(() => {
-            this.router.navigate([rutaDestino]);
-          }, 1200);
-
+          setTimeout(() => { this.router.navigate([rutaDestino]); }, 1200);
         }
         
       } else {
@@ -183,16 +132,10 @@ export class LoginComponent implements OnInit, OnDestroy {
       }
 
     } catch (e: any) {
-      this.messageService.add({ 
-        severity: 'error', 
-        summary: 'Error de Sistema', 
-        detail: 'Ocurrió un problema al conectar con el servidor.' 
-      });
+      this.messageService.add({ severity: 'error', summary: 'Error de Sistema', detail: 'Ocurrió un problema al conectar con el servidor.' });
       this.loading = false;
     }
   }
-
-  // --- Métodos de Recuperación de Contraseña ---
 
   abrirDialogoRecuperacion() {
     this.rutRecuperacion = ''; 
@@ -200,13 +143,11 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   async enviarCorreoRecuperacion() {
-    // 1. Validar que no esté vacío
     if (!this.rutRecuperacion) {
       this.messageService.add({ severity: 'warn', summary: 'Falta RUT', detail: 'Ingresa tu RUT para continuar.' });
       return;
     }
 
-    // 2. Validar que el RUT sea real usando tu validador
     if (!RutValidator.esValido(this.rutRecuperacion)) {
       this.messageService.add({ severity: 'error', summary: 'RUT Incorrecto', detail: 'El formato del RUT no es válido.' });
       return;
@@ -215,18 +156,14 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.loadingReset = true;
 
     try {
-      // 3. Llamar a la nueva función del servicio que busca por RUT
-      const { error } = await this.supabaseService.resetPasswordPorRut(this.rutRecuperacion);
+      // 🚀 CAMBIO 4: Usamos this.authService
+      const { error } = await this.authService.resetPasswordPorRut(this.rutRecuperacion);
 
       if (error) {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: error.message });
       } else {
         this.displayResetDialog = false;
-        this.messageService.add({ 
-            severity: 'success', 
-            summary: 'Correo Enviado', 
-            detail: 'Hemos enviado un enlace de recuperación al correo asociado a este RUT.' 
-        });
+        this.messageService.add({ severity: 'success', summary: 'Correo Enviado', detail: 'Hemos enviado un enlace de recuperación al correo asociado a este RUT.' });
       }
     } catch (e) {
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error de conexión con el servidor.' });
