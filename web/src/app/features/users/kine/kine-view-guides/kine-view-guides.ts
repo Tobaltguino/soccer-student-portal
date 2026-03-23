@@ -2,15 +2,16 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms'; 
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
+// 🚀 CAMBIO 1: Importamos el ContentService en lugar del SupabaseService
+import { ContentService } from '../../../../core/services/content.service';
 
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext'; 
-import { DatePickerModule } from 'primeng/datepicker'; // ✅ Nuevo
-import { SelectModule } from 'primeng/select'; // ✅ Nuevo
+import { DatePickerModule } from 'primeng/datepicker'; 
+import { SelectModule } from 'primeng/select'; 
 
 @Component({
   selector: 'app-kine-view-guides',
@@ -23,8 +24,8 @@ import { SelectModule } from 'primeng/select'; // ✅ Nuevo
     TooltipModule, 
     TableModule, 
     InputTextModule,
-    DatePickerModule, // ✅ Añadido
-    SelectModule      // ✅ Añadido
+    DatePickerModule, 
+    SelectModule      
   ],
   templateUrl: './kine-view-guides.html',
   styleUrls: ['./kine-view-guides.css']
@@ -40,7 +41,6 @@ export class KineViewGuidesComponent implements OnInit {
   filtroFecha: Date | null = null;
   filtroArea: string | null = null;
 
-  // ✅ Opciones exactas para la base de datos
   tiposMaterial = [
     { label: 'Técnico / Físico', value: 'TECNICO_FISICO' },
     { label: 'Nutrición', value: 'NUTRICION' },
@@ -48,7 +48,8 @@ export class KineViewGuidesComponent implements OnInit {
   ];
 
   constructor(
-    private supabase: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos el contentService
+    private contentService: ContentService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -61,13 +62,15 @@ export class KineViewGuidesComponent implements OnInit {
     this.cdr.detectChanges(); 
 
     try {
-      const { data, error } = await this.supabase.getGuias();
+      // 🚀 CAMBIO 3: Usamos el contentService
+      const { data, error } = await this.contentService.getGuias();
       if (error) throw error;
       
       this.guiasOriginales = data || [];
       this.aplicarFiltros(); 
       
     } catch (error) {
+      console.error('Error al cargar guías:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges(); 
@@ -110,7 +113,6 @@ export class KineViewGuidesComponent implements OnInit {
     this.aplicarFiltros(); 
   }
 
-  // ✅ Helper visual para mostrar el nombre del área en la tabla
   getNombreArea(valor: string): string {
     const area = this.tiposMaterial.find(t => t.value === valor);
     return area ? area.label : 'General';

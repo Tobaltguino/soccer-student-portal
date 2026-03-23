@@ -13,7 +13,10 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
+// 🚀 CAMBIO 1: Importamos nuestros servicios especializados
+import { AuthService } from '../../../../core/services/auth.service';
+import { HealthService } from '../../../../core/services/health.service';
+import { AcademyService } from '../../../../core/services/academy.service';
 
 @Component({
   selector: 'app-kine-schedule',
@@ -89,7 +92,10 @@ export class KineScheduleComponent implements OnInit {
   grupos: any[] = [];
 
   constructor(
-    private supabase: SupabaseService, 
+    // 🚀 CAMBIO 2: Inyectamos los servicios de dominio correspondientes
+    private authService: AuthService,
+    private healthService: HealthService,
+    private academyService: AcademyService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -100,18 +106,16 @@ export class KineScheduleComponent implements OnInit {
   async cargarClasesCalendario() {
     this.loading = true;
     try {
-      const { data: { user } } = await this.supabase.getUser();
+      // 🚀 CAMBIO 3: AuthService para obtener al usuario
+      const { data: { user } } = await this.authService.getUser();
       if (!user?.email) return;
 
-      const { data: kine } = await this.supabase.supabase
-          .from('kinesiologos')
-          .select('id')
-          .eq('email', user.email)
-          .maybeSingle();
+      // 🚀 CAMBIO 4: HealthService para buscar su ID de Kine
+      const { data: kine } = await this.healthService.getKineByEmail(user.email);
       if (!kine) return;
 
-      // ✅ Obtenemos los grupos asignados al Kinesiólogo
-      const { data: gruposData } = await this.supabase.getGruposDeKine(kine.id);
+      // 🚀 CAMBIO 5: HealthService para ver qué grupos atiende
+      const { data: gruposData } = await this.healthService.getGruposDeKine(kine.id);
       this.grupos = gruposData ? gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null) : [];
       
       const misGrupoIds = this.grupos.map(g => g.id);
@@ -120,7 +124,8 @@ export class KineScheduleComponent implements OnInit {
         const hoy = new Date();
         const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
 
-        const { data: clases, error } = await this.supabase.getClasesPorGrupos(misGrupoIds, inicioMes);
+        // 🚀 CAMBIO 6: AcademyService para traer las clases de esos grupos (¡La función que hicimos antes!)
+        const { data: clases, error } = await this.academyService.getClasesPorGruposYFecha(misGrupoIds, inicioMes);
         if (error) throw error;
 
         const eventos = (clases || []).map((clase: any) => {
@@ -144,6 +149,7 @@ export class KineScheduleComponent implements OnInit {
         this.calendarOptions = { ...this.calendarOptions, events: eventos };
       }
     } catch (error) {
+      console.error('Error al cargar calendario del kine', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();

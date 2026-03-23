@@ -2,7 +2,8 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common'; 
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
+// 🚀 CAMBIO 1: Solo necesitamos el AuthService. ¡Adiós SupabaseService!
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-kine-layout',
@@ -23,7 +24,8 @@ export class KineLayoutComponent implements OnInit {
   userPhotoUrl: string | null = null;
 
   constructor(
-    private supabase: SupabaseService, 
+    // 🚀 CAMBIO 2: Inyectamos el AuthService
+    private authService: AuthService, 
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
@@ -64,7 +66,8 @@ export class KineLayoutComponent implements OnInit {
   // --- CARGA DE PERFIL KINESIÓLOGO ---
   async cargarUsuario() {
     try {
-      const { data: { user } } = await this.supabase.getUser();
+      // 🚀 CAMBIO 3: Obtenemos el usuario autenticado
+      const { data: { user } } = await this.authService.getUser();
       
       if (!user || !user.email) {
         this.userName = 'Invitado';
@@ -72,17 +75,13 @@ export class KineLayoutComponent implements OnInit {
         return;
       }
 
-      // ✅ Búsqueda directa en tabla de kinesiólogos
-      const { data } = await this.supabase.supabase
-          .from('kinesiologos')
-          .select('nombre, apellido, foto_url')
-          .eq('email', user.email)
-          .maybeSingle();
+      // 🚀 CAMBIO 4: Usamos nuestro método global indicándole que busque directamente el rol 'kine'
+      const { data: perfil } = await this.authService.getPerfilCompleto(user.email, 'kine');
 
-      if (data) {
-          this.userName = `${data.nombre} ${data.apellido}`;
-          this.userInitial = data.nombre ? data.nombre.charAt(0).toUpperCase() : 'K';
-          this.userPhotoUrl = data.foto_url;
+      if (perfil) {
+          this.userName = `${perfil.nombre} ${perfil.apellido}`;
+          this.userInitial = perfil.nombre ? perfil.nombre.charAt(0).toUpperCase() : 'K';
+          this.userPhotoUrl = perfil.foto_url;
       } else {
           this.userName = user.email.split('@')[0];
           this.userPhotoUrl = null;
@@ -101,7 +100,8 @@ export class KineLayoutComponent implements OnInit {
   closeMobileMenu() { this.isMobileMenuOpen = false; }
 
   async logout() {
-    await this.supabase.logout();
+    // 🚀 CAMBIO 5: Logout a través del authService
+    await this.authService.logout();
     localStorage.removeItem('userRole');
     this.router.navigate(['/login']);
   }

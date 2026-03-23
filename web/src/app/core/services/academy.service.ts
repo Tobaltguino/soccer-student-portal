@@ -323,4 +323,36 @@ export class AcademyService {
 
     return { data: procesados, error: null };
   }
+
+  // ==========================================
+  // DASHBOARDS Y CRUCES MASIVOS
+  // ==========================================
+
+  // Obtiene clases futuras o de hoy para varios grupos a la vez
+  async getClasesPorGruposYFecha(grupoIds: number[], fechaDesde: string) {
+    return await this.supabase
+      .from('clases')
+      .select('*, grupos(nombre)')
+      .in('grupo_id', grupoIds)
+      .gte('fecha', fechaDesde)
+      .order('fecha', { ascending: true })
+      .order('hora', { ascending: true });
+  }
+
+  // Obtiene estudiantes activos filtrados por una lista de grupos
+  async getEstudiantesActivosPorGrupos(grupoIds: number[]) {
+    return await this.supabase
+      .from('estudiantes')
+      .select('*, grupos(nombre)')
+      .in('grupo_id', grupoIds)
+      .eq('activo', true);
+  }
+
+  // Obtiene TODOS los estudiantes (activos e inactivos) de una lista de grupos
+  async getTodosEstudiantesPorGrupos(grupoIds: number[]) {
+    return await this.supabase
+      .from('estudiantes')
+      .select('*, grupos(nombre), estudiantes_posiciones(posicion_id)')
+      .in('grupo_id', grupoIds);
+  }
 }

@@ -113,15 +113,12 @@ export class HealthService {
       .order('fecha', { ascending: false });
   }
 
-  async getSesionesEvaluacionPorGrupos(grupoIds: string[]) {
+  async getSesionesEvaluacionPorGrupos(grupoIds: any[]) {
     return await this.supabase
-      .from('evaluaciones_sesiones') 
-      .select(`
-        id, fecha, estado, grupo_id, tipo_evaluacion_id,
-        grupos (nombre),
-        tipo_evaluacion (nombre, unidad_medida)
-      `)
-      .in('grupo_id', grupoIds);
+      .from('evaluacion_sesiones')
+      .select('*, tipo_evaluacion:evaluacion_tipos(nombre, unidad_medida)')
+      .in('grupo_id', grupoIds)
+      .order('fecha', { ascending: false });
   }
 
   async crearSesionEvaluacion(datos: any) { return await this.supabase.from('evaluaciones_sesiones').insert(datos).select().single(); }
@@ -316,4 +313,15 @@ async prepararPlanillaCalificaciones(grupoId: number, sesionId: string, alumnos:
       .select('*')
       .order('apellido', { ascending: true });
   }
+
+  // Obtiene el ID del kinesiólogo según su email (usado al iniciar sesión)
+  async getKineByEmail(email: string) {
+    return await this.supabase
+      .from('kinesiologos')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
+  }
+
+  
 }

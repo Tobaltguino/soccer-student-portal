@@ -12,7 +12,10 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
+// 🚀 CAMBIO 1: Importamos nuestros servicios especializados
+import { AuthService } from '../../../../core/services/auth.service';
+import { HealthService } from '../../../../core/services/health.service';
+import { AcademyService } from '../../../../core/services/academy.service';
 
 @Component({
   selector: 'app-kine-classes',
@@ -44,7 +47,10 @@ export class KineClassesComponent implements OnInit {
   selectedClase: any = null;
 
   constructor(
-    private supabaseService: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos los 3 servicios correspondientes
+    private authService: AuthService,
+    private healthService: HealthService,
+    private academyService: AcademyService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -56,22 +62,19 @@ export class KineClassesComponent implements OnInit {
   async cargarGrupos() {
     this.loading = true;
     try {
-      const { data: { user } } = await this.supabaseService.getUser();
-      if (!user) return;
+      // 🚀 CAMBIO 3: Usamos authService
+      const { data: { user } } = await this.authService.getUser();
+      if (!user || !user.email) return;
 
-      // 1. Obtener ID del kinesiólogo
-      const { data: kine } = await this.supabaseService.supabase
-        .from('kinesiologos')
-        .select('id')
-        .eq('email', user.email)
-        .single();
+      // 🚀 CAMBIO 4: Usamos la nueva función del healthService
+      const { data: kine } = await this.healthService.getKineByEmail(user.email);
 
       if (kine) {
-        // 2. Obtener solo los grupos asignados a este kinesiólogo
-        const { data: gruposData } = await this.supabaseService.getGruposDeKine(kine.id);
+        // 🚀 CAMBIO 5: Usamos healthService
+        const { data: gruposData } = await this.healthService.getGruposDeKine(kine.id);
 
         if (gruposData && gruposData.length > 0) {
-          this.grupos = gruposData.map((g: any) => g.grupos).filter(g => g !== null);
+          this.grupos = gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null);
           if (this.grupos.length > 0) {
             this.selectedGrupoId = this.grupos[0].id;
             await this.cargarClasesPorGrupo();
@@ -79,6 +82,7 @@ export class KineClassesComponent implements OnInit {
         }
       }
     } catch (error) {
+      console.error('Error al cargar grupos del kine:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
@@ -91,14 +95,12 @@ export class KineClassesComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      const { data, error } = await this.supabaseService.supabase
-        .from('clases')
-        .select('*')
-        .eq('grupo_id', this.selectedGrupoId);
+      // 🚀 CAMBIO 6: Usamos academyService en lugar de consulta directa
+      const { data, error } = await this.academyService.getClasesPorGrupo(this.selectedGrupoId);
 
       if (error) throw error;
 
-      this.clasesOriginales = (data || []).sort((a, b) => {
+      this.clasesOriginales = (data || []).sort((a: any, b: any) => {
         const tiempoA = new Date(`${a.fecha}T${a.hora}`).getTime();
         const tiempoB = new Date(`${b.fecha}T${b.hora}`).getTime();
         return tiempoB - tiempoA;
@@ -106,6 +108,7 @@ export class KineClassesComponent implements OnInit {
 
       this.aplicarFiltros();
     } catch (error) {
+      console.error('Error al cargar clases:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();

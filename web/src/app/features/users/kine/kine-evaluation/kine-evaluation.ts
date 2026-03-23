@@ -13,9 +13,12 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
-
 import { MessageService } from 'primeng/api';
-import { SupabaseService } from '../../../../core/services/supabase.service';
+
+// 🚀 CAMBIO 1: Importamos los servicios de dominio
+import { AuthService } from '../../../../core/services/auth.service';
+import { HealthService } from '../../../../core/services/health.service';
+import { AcademyService } from '../../../../core/services/academy.service';
 
 @Component({
   selector: 'app-kine-evaluation',
@@ -50,7 +53,10 @@ export class KineEvaluationComponent implements OnInit {
   evalLogistica: any = {};
 
   constructor(
-    private supabase: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos los servicios
+    private authService: AuthService,
+    private healthService: HealthService,
+    private academyService: AcademyService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -65,29 +71,29 @@ export class KineEvaluationComponent implements OnInit {
   async cargarDatosIniciales() {
     this.loading = true;
     try {
-      const { data: { user } } = await this.supabase.getUser();
+      // 🚀 CAMBIO 3: Obtenemos el usuario con authService
+      const { data: { user } } = await this.authService.getUser();
       if (!user?.email) return;
 
-      const { data: kine } = await this.supabase.supabase
-          .from('kinesiologos')
-          .select('id')
-          .eq('email', user.email)
-          .maybeSingle();
+      // 🚀 CAMBIO 4: Buscamos el Kine con la función que hicimos antes
+      const { data: kine } = await this.healthService.getKineByEmail(user.email);
 
       if (kine) {
-        const { data: gruposData } = await this.supabase.getGruposDeKine(kine.id);
+        // 🚀 CAMBIO 5: Traemos sus grupos
+        const { data: gruposData } = await this.healthService.getGruposDeKine(kine.id);
         
         this.grupos = gruposData ? gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null) : [];
         const misGrupoIds = this.grupos.map(g => g.id);
 
-        const { data: tData } = await this.supabase.getTiposEvaluacion();
+        const { data: tData } = await this.healthService.getTiposEvaluacion();
         this.tiposEvaluacion = tData || [];
 
         if (misGrupoIds.length > 0) {
-          const { data: sData, error: errorSesiones } = await this.supabase.getSesionesEvaluacionPorGrupos(misGrupoIds);
+          // 🚀 CAMBIO 6: Usamos la nueva función del healthService
+          const { data: sData } = await this.healthService.getSesionesEvaluacionPorGrupos(misGrupoIds);
                     
           // ✅ SOLO GUARDAMOS LAS FINALIZADAS
-          this.sesionesOriginales = (sData || []).filter(s => s.estado === 'FINALIZADO');
+          this.sesionesOriginales = (sData || []).filter((s: any) => s.estado === 'FINALIZADO');
         } else {
           this.sesionesOriginales = [];
         }
@@ -151,26 +157,18 @@ export class KineEvaluationComponent implements OnInit {
   async abrirCalificador(sesion: any) {
     this.evalLogistica = { ...sesion };
     this.loading = true;
-    this.cdr.detectChanges(); // Primer llamado para mostrar el círculo de carga
+    this.cdr.detectChanges(); 
 
     try {
-      const [resAlumnos, resResultados] = await Promise.all([
-         this.supabase.getAlumnosPorGrupo(sesion.grupo_id),
-         this.supabase.getResultadosPorSesion(sesion.id)
-      ]);
+      // 🚀 CAMBIO 7: Traemos alumnos con academyService
+      const { data: alumnos } = await this.academyService.getAlumnosPorGrupo(sesion.grupo_id);
 
-      const alumnos = resAlumnos.data || [];
-      const resultados = resResultados.data || [];
-
-      this.estudiantesGrupo = alumnos.map((alumno: any) => {
-          const notaExistente = resultados.find((r: any) => r.estudiante_id === alumno.id);
-          return {
-              nombre: alumno.nombre,
-              apellido: alumno.apellido,
-              valor_numerico: notaExistente ? notaExistente.valor_numerico : null,
-              observacion: notaExistente ? notaExistente.observacion : ''
-          };
-      });
+      // 🚀 CAMBIO 8: ¡Reutilizamos la lógica que creamos para el Admin!
+      this.estudiantesGrupo = await this.healthService.prepararPlanillaCalificaciones(
+        sesion.grupo_id, 
+        sesion.id, 
+        alumnos || []
+      );
       
       this.displayGradesDialog = true;
 
@@ -179,8 +177,7 @@ export class KineEvaluationComponent implements OnInit {
     } finally {
       this.loading = false;
       
-      // ✅ EL DESPERTADOR DEFINITIVO DE ANGULAR
-      // Lo metemos en un setTimeout de 0ms para obligar a Angular a dibujar el modal en el siguiente ciclo del procesador.
+      // ✅ EL DESPERTADOR DEFINITIVO DE ANGULAR (Mantenido)
       setTimeout(() => {
           this.cdr.markForCheck();
           this.cdr.detectChanges();

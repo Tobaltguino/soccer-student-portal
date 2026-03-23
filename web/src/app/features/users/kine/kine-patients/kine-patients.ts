@@ -13,7 +13,10 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { FilterService } from 'primeng/api';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
+// 🚀 CAMBIO 1: Importamos los servicios especializados (Adiós SupabaseService)
+import { AuthService } from '../../../../core/services/auth.service';
+import { AcademyService } from '../../../../core/services/academy.service';
+import { HealthService } from '../../../../core/services/health.service';
 
 @Component({
   selector: 'app-kine-patients',
@@ -62,7 +65,10 @@ export class KinePatientsComponent implements OnInit {
   loadingHistorial: boolean = false;
 
   constructor(
-    private supabase: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos nuestros servicios de dominio
+    private authService: AuthService,
+    private academyService: AcademyService,
+    private healthService: HealthService,
     private cdr: ChangeDetectorRef,
     private filterService: FilterService
   ) {}
@@ -82,10 +88,11 @@ export class KinePatientsComponent implements OnInit {
   }
 
   async cargarMaestros() {
-    const resGrupos = await this.supabase.getGrupos();
+    // 🚀 CAMBIO 3: academyService para listas maestras
+    const resGrupos = await this.academyService.getGrupos();
     if(resGrupos.data) this.listaGrupos = resGrupos.data;
     
-    const resPos = await this.supabase.getPosiciones();
+    const resPos = await this.academyService.getPosiciones();
     if(resPos.data) this.listaPosiciones = resPos.data;
 
     this.cdr.detectChanges();
@@ -102,12 +109,20 @@ export class KinePatientsComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      const authData = await this.supabase.getUser();
-      const userId = authData.data.user?.id;
+      // 🚀 CAMBIO 4: Lógica secuencial limpia
+      const { data: { user } } = await this.authService.getUser();
+      if (!user || !user.email) return;
 
-      if (!userId) return;
+      const { data: kine } = await this.healthService.getKineByEmail(user.email);
+      if (!kine) return;
 
-      const res = await this.supabase.getEstudiantesDeKine(userId); 
+      const { data: gruposData } = await this.healthService.getGruposDeKine(kine.id);
+      if (!gruposData || gruposData.length === 0) return;
+
+      const grupoIds = gruposData.map((g: any) => g.grupo_id);
+
+      // Usamos la nueva función para traer todos los estudiantes de esos grupos
+      const res = await this.academyService.getTodosEstudiantesPorGrupos(grupoIds); 
       
       if (res?.data) {
         this.dataList = res.data;
@@ -138,7 +153,8 @@ export class KinePatientsComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-        const res = await this.supabase.getHistorialClinico(estudiante.id);
+        // 🚀 CAMBIO 5: healthService para la historia clínica
+        const res = await this.healthService.getHistorialClinico(estudiante.id);
         this.historialClinico = res.data || [];
     } catch (error) {
         console.error("Error cargando historial", error);
@@ -148,14 +164,12 @@ export class KinePatientsComponent implements OnInit {
     }
   }
 
-  // ✅ HELPER CORREGIDO ('warn' en lugar de 'warning')
   getSeveridadHistorial(tipo: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
       if (tipo === 'LESION') return 'danger';
       if (tipo === 'ALERGIA') return 'warn';
       return 'info'; // PATOLOGIA
   }
 
-  // ✅ HELPER CORREGIDO ('warn' en lugar de 'warning')
   getSeveridadEstado(estado: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
       if (estado === 'RECUPERADO') return 'success';
       if (estado === 'ACTIVO') return 'danger';
