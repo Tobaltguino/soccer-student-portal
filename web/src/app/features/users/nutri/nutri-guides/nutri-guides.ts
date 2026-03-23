@@ -11,7 +11,9 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 
-import { SupabaseService } from '../../../../core/services/supabase.service'; 
+// 🚀 Servicios de dominio
+import { ContentService } from '../../../../core/services/content.service';
+import { StorageService } from '../../../../core/services/storage.service';
 
 @Component({
   selector: 'app-nutri-guides',
@@ -41,7 +43,8 @@ export class NutriGuidesComponent implements OnInit {
   subiendoArchivo: boolean = false;
 
   constructor(
-    private supabase: SupabaseService,
+    private contentService: ContentService,
+    private storageService: StorageService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -55,11 +58,11 @@ export class NutriGuidesComponent implements OnInit {
     this.cdr.detectChanges();
     
     try {
-      // ✅ Petición optimizada: Le pedimos a Supabase que traiga SOLAMENTE las guías de Nutrición.
-      // (Si no modificaste el servicio con el parámetro opcional, puedes hacer: 
-      // const res = await this.supabase.getGuias(); y luego hacer el .filter() aquí mismo)
-      const guiasRes = await this.supabase.getGuias('NUTRICION'); 
-      this.guias = guiasRes.data || [];
+      // Usamos ContentService y filtramos estrictamente por NUTRICION
+      const { data, error } = await this.contentService.getGuias(); 
+      if (error) throw error;
+
+      this.guias = (data || []).filter((g: any) => g.tipo_material === 'NUTRICION');
       
     } catch (error) {
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los documentos.' });
@@ -97,10 +100,10 @@ export class NutriGuidesComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      // 1. Subimos el archivo a Storage
-      const urlFinal = await this.supabase.uploadGuiaFile(this.archivoSeleccionado, this.nuevaGuia.titulo);
+      // ✅ AHORA SÍ: Usamos el método correcto de tu StorageService
+      const urlFinal = await this.storageService.uploadGuiaFile(this.archivoSeleccionado, this.nuevaGuia.titulo);
       
-      // 2. Armamos el objeto forzando la categoría (Sello de seguridad)
+      // Armamos el objeto forzando la categoría (Sello de seguridad)
       const guiaParaBD = {
         titulo: this.nuevaGuia.titulo,
         descripcion: this.nuevaGuia.descripcion,
@@ -108,8 +111,8 @@ export class NutriGuidesComponent implements OnInit {
         tipo_material: 'NUTRICION' // 🔒 Esta etiqueta categoriza el material automáticamente
       };
 
-      // 3. Creamos el registro en la BD
-      const { error } = await this.supabase.createGuia(guiaParaBD);
+      // Usamos ContentService para crear el registro
+      const { error } = await this.contentService.createGuia(guiaParaBD);
       if (error) throw error;
       
       this.messageService.add({ severity: 'success', summary: 'Publicado', detail: 'El material se subió correctamente.' });

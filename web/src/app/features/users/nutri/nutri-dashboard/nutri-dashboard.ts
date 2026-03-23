@@ -1,7 +1,10 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { SupabaseService } from '../../../../core/services/supabase.service';
+
+// 🚀 CAMBIO 1: Importamos los servicios de dominio
+import { AcademyService } from '../../../../core/services/academy.service';
+import { HealthService } from '../../../../core/services/health.service';
 
 @Component({
   selector: 'app-nutri-dashboard',
@@ -19,7 +22,9 @@ export class NutriDashboardComponent implements OnInit {
   proximosCumpleanos: any[] = [];
 
   constructor(
-    private supabaseService: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos los servicios específicos en lugar del genérico
+    private academyService: AcademyService,
+    private healthService: HealthService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -30,37 +35,27 @@ export class NutriDashboardComponent implements OnInit {
   async cargarDatosDashboard() {
     this.loading = true;
     try {
-      // 1. Cargar Estudiantes para el total y los cumpleaños
-      const { data: estudiantes, error: errEst } = await this.supabaseService.supabase
-        .from('estudiantes')
-        .select('id, nombre, apellido, fecha_nacimiento, activo')
-        .eq('activo', true);
+      // 🚀 CAMBIO 3: Ejecutamos ambas promesas en paralelo para mayor velocidad
+      const [resEstudiantes, resEvaluacion] = await Promise.all([
+        this.academyService.getEstudiantesActivos(),
+        this.healthService.getUltimaEvaluacionNutriFinalizada()
+      ]);
 
+      const estudiantes = resEstudiantes.data;
+      
       if (estudiantes) {
         this.totalEstudiantes = estudiantes.length;
         this.procesarCumpleanos(estudiantes);
       }
 
-      // 2. Cargar ÚLTIMA Evaluación Nutricional (Solo FINALIZADAS)
-      const { data: evaluaciones, error: errEval } = await this.supabaseService.supabase
-        .from('evaluacion_nutri') 
-        .select(`
-          id, 
-          fecha, 
-          tipo_evaluacion_nutri(nombre) 
-        `)
-        .eq('estado', 'FINALIZADO')
-        .order('fecha', { ascending: false })
-        .limit(1);
-
-      if (errEval) {
-      }
-
-      if (evaluaciones && evaluaciones.length > 0) {
-        this.ultimaEvaluacionGlobal = evaluaciones[0];
+      // 🚀 CAMBIO 4: Asignamos la evaluación directamente gracias a maybeSingle()
+      if (resEvaluacion.data) {
+        this.ultimaEvaluacionGlobal = resEvaluacion.data;
       } else {
         this.ultimaEvaluacionGlobal = null;
       }
+
+      this.supabaseStatus = 'online';
 
     } catch (error) {
       this.supabaseStatus = 'offline';

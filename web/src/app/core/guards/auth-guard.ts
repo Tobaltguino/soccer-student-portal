@@ -1,15 +1,17 @@
 import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
-import { SupabaseService } from '../services/supabase.service'; 
+
+// 🚀 Importamos el nuevo AuthService de dominio
+import { AuthService } from '../services/auth.service'; 
 
 export const authGuard: CanActivateFn = async (route, state) => {
   const router = inject(Router);
-  const supabase = inject(SupabaseService);
+  const authService = inject(AuthService);
 
-  // 1. Verificamos si hay una sesión activa en Supabase
-  const { data: { session } } = await supabase.supabase.auth.getSession();
+  // 1. Verificamos si hay una sesión activa usando el AuthService
+  const { data: { user } } = await authService.getUser();
 
-  if (!session) {
+  if (!user || !user.email) {
     // Si no está logueado, lo pateamos al login de inmediato
     router.navigate(['/login']);
     return false;
@@ -20,15 +22,15 @@ export const authGuard: CanActivateFn = async (route, state) => {
   
   if (rolesPermitidos && rolesPermitidos.length > 0) {
     
-    // 🚀 MAGIA DE SEGURIDAD: Le preguntamos al servicio (BD o Memoria), NO al localStorage
-    const rolReal = await supabase.getRolSeguro(session.user.id); 
+    // 🚀 MAGIA DE SEGURIDAD: Le preguntamos al AuthService el rol real
+    const rolReal = await authService.getRolSeguro(user.email); 
 
     if (!rolesPermitidos.includes(rolReal)) {
       // Si el rol REAL no coincide con el permitido, lo devolvemos a su casa
-      console.warn('Acceso denegado: Intento de violación de roles detectado.');
+      console.warn(`🛑 Acceso denegado: Eres '${rolReal}' intentando entrar a zona de '${rolesPermitidos.join(', ')}'`);
       
       // Construimos la ruta segura basada en su rol real
-      const rutaSegura = rolReal ? `/${rolReal}/dashboard` : '/login';
+      const rutaSegura = (rolReal && rolReal !== 'login') ? `/${rolReal}/dashboard` : '/login';
       router.navigate([rutaSegura]);
       return false;
     }

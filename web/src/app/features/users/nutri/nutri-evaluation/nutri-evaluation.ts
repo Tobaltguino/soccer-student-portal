@@ -2,8 +2,6 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
-
 // Importaciones de PrimeNG
 import { TableModule } from 'primeng/table';
 import { DialogModule } from 'primeng/dialog';
@@ -17,6 +15,12 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService, ConfirmationService } from 'primeng/api';
+
+// 🚀 CAMBIO 1: Importamos los servicios de dominio
+import { AuthService } from '../../../../core/services/auth.service';
+import { HealthService } from '../../../../core/services/health.service';
+import { AcademyService } from '../../../../core/services/academy.service';
+import { StorageService } from '../../../../core/services/storage.service';
 
 @Component({
   selector: 'app-nutri-evaluation',
@@ -58,7 +62,11 @@ export class NutriEvaluationsComponent implements OnInit {
   evalLogistica: any = {};
 
   constructor(
-    private supabase: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos los servicios específicos
+    private authService: AuthService,
+    private healthService: HealthService,
+    private academyService: AcademyService,
+    private storageService: StorageService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef 
   ) {}
@@ -72,22 +80,24 @@ export class NutriEvaluationsComponent implements OnInit {
       this.loading = true;
       this.cdr.detectChanges(); 
 
-      const { data: { user } } = await this.supabase.getUser();
-      if (user) {
-        const { data: nutri } = await this.supabase.supabase
-          .from('nutricionistas')
-          .select('id')
-          .eq('email', user.email)
-          .single();
+      // 🚀 CAMBIO 3: Usamos AuthService
+      const { data: { user } } = await this.authService.getUser();
+      if (user && user.email) {
+        // 🚀 CAMBIO 4: Usamos HealthService con la nueva función
+        const { data: nutri } = await this.healthService.getNutriByEmail(user.email);
         this.nutricionistaId = nutri?.id;
       }
 
-      const resTipos = await this.supabase.getTiposEvaluacionNutri();
+      // 🚀 CAMBIO 5: Promesas en paralelo para tipos de evaluación y estudiantes
+      const [resTipos, resEst] = await Promise.all([
+          this.healthService.getTiposEvaluacionNutri(),
+          this.academyService.getEstudiantesBasico()
+      ]);
+
       this.tiposEvaluacion = resTipos.data || [];
 
-      const resEst = await this.supabase.getEstudiantesBasico();
       // ✅ Preparamos a los estudiantes con los nuevos campos
-      this.estudiantes = (resEst.data || []).map(est => ({
+      this.estudiantes = (resEst.data || []).map((est: any) => ({
         ...est,
         archivoSeleccionado: null,
         archivo_url_previo: null,
@@ -106,7 +116,8 @@ export class NutriEvaluationsComponent implements OnInit {
   }
 
   async cargarSesiones() {
-    const res = await this.supabase.getEvaluacionesNutri();
+    // 🚀 CAMBIO 6: Usamos HealthService
+    const res = await this.healthService.getEvaluacionesNutri();
     this.sesiones = res.data || [];
     this.aplicarFiltros();
     this.cdr.detectChanges(); 
@@ -180,10 +191,12 @@ export class NutriEvaluationsComponent implements OnInit {
       };
 
       if (this.evalLogistica.id) {
-        await this.supabase.actualizarEvaluacionNutri(this.evalLogistica.id, payload);
+        // 🚀 CAMBIO 7: Usamos HealthService
+        await this.healthService.actualizarEvaluacionNutri(this.evalLogistica.id, payload);
         this.mostrarExito('Sesión actualizada correctamente');
       } else {
-        await this.supabase.crearEvaluacionNutri(payload);
+        // 🚀 CAMBIO 8: Usamos HealthService
+        await this.healthService.crearEvaluacionNutri(payload);
         this.mostrarExito('Sesión creada correctamente');
       }
 
@@ -205,13 +218,13 @@ export class NutriEvaluationsComponent implements OnInit {
       this.loading = true;
       this.cdr.detectChanges();
 
-      // ✅ 1. Buscamos resultados previos
-      const resResultados = await this.supabase.getResultadosPorSesionNutri(sesion.id);
+      // 🚀 CAMBIO 9: Usamos HealthService
+      const resResultados = await this.healthService.getResultadosPorSesionNutri(sesion.id);
       const resultadosPrevios = resResultados.data || [];
 
-      // ✅ 2. Mapeamos la lista limpiando la selección actual pero cargando el historial
+      // ✅ Mapeamos la lista limpiando la selección actual pero cargando el historial
       this.estudiantes.forEach(est => {
-        const resultadoGuardado = resultadosPrevios.find(r => r.estudiante_id === est.id);
+        const resultadoGuardado = resultadosPrevios.find((r: any) => r.estudiante_id === est.id);
 
         est.archivoSeleccionado = null; 
         est.archivo_url_previo = resultadoGuardado ? resultadoGuardado.archivo_url : null;
@@ -275,9 +288,11 @@ export class NutriEvaluationsComponent implements OnInit {
       this.cdr.detectChanges(); 
 
       for (const est of porGuardar) {
-        const archivoUrl = await this.supabase.subirArchivoNutricion(est.archivoSeleccionado, est.archivoSeleccionado.name);
+        // 🚀 CAMBIO 10: Usamos StorageService para subir el archivo
+        const archivoUrl = await this.storageService.subirArchivoNutricion(est.archivoSeleccionado, est.archivoSeleccionado.name);
         
-        await this.supabase.guardarResultadoNutri({
+        // 🚀 CAMBIO 11: Usamos HealthService para guardar el registro
+        await this.healthService.guardarResultadoNutri({
           evaluacion_id: this.evalLogistica.id,
           estudiante_id: est.id,
           archivo_url: archivoUrl,

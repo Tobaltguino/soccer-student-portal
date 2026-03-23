@@ -355,4 +355,12 @@ export class AcademyService {
       .select('*, grupos(nombre), estudiantes_posiciones(posicion_id)')
       .in('grupo_id', grupoIds);
   }
+
+  // Obtiene solo los estudiantes activos (ideal para dashboards y contadores)
+  async getEstudiantesActivos() {
+    return await this.supabase
+      .from('estudiantes')
+      .select('id, nombre, apellido, fecha_nacimiento, activo')
+      .eq('activo', true);
+  }
 }

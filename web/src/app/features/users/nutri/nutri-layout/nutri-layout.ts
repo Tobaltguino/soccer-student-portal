@@ -2,8 +2,8 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common'; 
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
-
+// 🚀 CAMBIO 1: Importamos nuestro AuthService (Adiós SupabaseService)
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-nutri-layout',
@@ -24,7 +24,8 @@ export class NutriLayoutComponent implements OnInit {
   userPhotoUrl: string | null = null;
 
   constructor(
-    private supabase: SupabaseService, 
+    // 🚀 CAMBIO 2: Inyectamos AuthService
+    private authService: AuthService, 
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
@@ -65,7 +66,8 @@ export class NutriLayoutComponent implements OnInit {
   // --- USUARIO ---
   async cargarUsuario() {
     try {
-      const { data: { user } } = await this.supabase.getUser();
+      // 🚀 CAMBIO 3: Usamos authService para obtener el usuario actual
+      const { data: { user } } = await this.authService.getUser();
       
       if (!user || !user.email) {
         this.userName = 'Invitado';
@@ -73,18 +75,14 @@ export class NutriLayoutComponent implements OnInit {
         return;
       }
 
-      // ✅ Buscamos en la tabla de nutricionistas
-      const { data } = await this.supabase.supabase
-          .from('nutricionistas')
-          .select('nombre, apellido, foto_url')
-          .eq('email', user.email)
-          .maybeSingle();
+      // 🚀 CAMBIO 4: Llamamos a nuestra función centralizada pasando el rol 'nutri'
+      const { data: perfil } = await this.authService.getPerfilCompleto(user.email, 'nutri');
 
-      if (data) {
-          this.userName = `${data.nombre} ${data.apellido}`;
+      if (perfil) {
+          this.userName = `${perfil.nombre} ${perfil.apellido}`;
           this.userRole = 'Nutricionista';
-          this.userInitial = data.nombre ? data.nombre.charAt(0).toUpperCase() : 'N';
-          this.userPhotoUrl = data.foto_url;
+          this.userInitial = perfil.nombre ? perfil.nombre.charAt(0).toUpperCase() : 'N';
+          this.userPhotoUrl = perfil.foto_url;
       } else {
           this.userName = user.email.split('@')[0];
           this.userPhotoUrl = null;
@@ -103,7 +101,8 @@ export class NutriLayoutComponent implements OnInit {
   closeMobileMenu() { this.isMobileMenuOpen = false; }
 
   async logout() {
-    await this.supabase.logout();
+    // 🚀 CAMBIO 5: Logout mediante authService
+    await this.authService.logout();
     localStorage.removeItem('userRole');
     this.router.navigate(['/login']);
   }

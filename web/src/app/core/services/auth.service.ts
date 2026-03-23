@@ -95,27 +95,30 @@ export class AuthService {
   /**
    * Obtiene el rol del usuario de forma 100% segura usando un bucle dinámico.
    */
-  async getRolSeguro(userId: string): Promise<string> {
-    if (this.rolCache) return this.rolCache;
+  // ==========================================
+  // SEGURIDAD DE RUTAS (GUARD)
+  // ==========================================
+  
+  // Devuelve el rol real del usuario buscando directamente en las tablas
+  async getRolSeguro(email: string): Promise<string> {
+    if (!email) return 'login';
 
-    // Mapa para traducir el nombre de la tabla al rol que usa el frontend
-    const roleMap: Record<string, string> = {
-      'admins': 'admin',
-      'profesores': 'professor',
-      'estudiantes': 'student',
-      'kinesiologos': 'kine',
-      'nutricionistas': 'nutri'
-    };
+    const { data: admin } = await this.supabase.from('admins').select('id').eq('email', email).maybeSingle();
+    if (admin) return 'admin';
+    
+    const { data: est } = await this.supabase.from('estudiantes').select('id').eq('email', email).maybeSingle();
+    if (est) return 'student';
+    
+    const { data: prof } = await this.supabase.from('profesores').select('id').eq('email', email).maybeSingle();
+    if (prof) return 'professor';
+    
+    const { data: kine } = await this.supabase.from('kinesiologos').select('id').eq('email', email).maybeSingle();
+    if (kine) return 'kine';
+    
+    const { data: nutri } = await this.supabase.from('nutricionistas').select('id').eq('email', email).maybeSingle();
+    if (nutri) return 'nutri';
 
-    for (const tabla of this.TABLAS_USUARIOS) {
-      const { data } = await this.supabase.from(tabla).select('id').eq('id', userId).maybeSingle();
-      if (data) {
-        this.rolCache = roleMap[tabla];
-        return this.rolCache;
-      }
-    }
-
-    return 'student'; // Rol por defecto de emergencia
+    return 'login'; // Si no existe en ninguna tabla, no pasa
   }
 
   // ==========================================
@@ -255,4 +258,6 @@ export class AuthService {
     // Si no lo encuentra en ningún lado
     return { data: null, error: 'Perfil no encontrado' };
   }
+
+  
 }

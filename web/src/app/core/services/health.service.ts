@@ -323,5 +323,23 @@ async prepararPlanillaCalificaciones(grupoId: number, sesionId: string, alumnos:
       .maybeSingle();
   }
 
-  
+  // Obtiene la última sesión nutricional que haya sido finalizada
+  async getUltimaEvaluacionNutriFinalizada() {
+    return await this.supabase
+      .from('evaluacion_nutri')
+      .select(`id, fecha, tipo_evaluacion_nutri(nombre)`)
+      .eq('estado', 'FINALIZADO')
+      .order('fecha', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+  }
+
+  // Obtiene el ID del nutricionista según su email
+  async getNutriByEmail(email: string) {
+    return await this.supabase
+      .from('nutricionistas')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
+  }
 }
