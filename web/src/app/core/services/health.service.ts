@@ -269,4 +269,51 @@ export class HealthService {
       .order('fecha_evento', { ascending: false });
   }
 
+  async getAllRangos() {
+  return await this.supabase.from('evaluacion_rangos').select('*');
+}
+
+// Procesa la lista de estudiantes cruzando con resultados previos
+async prepararPlanillaCalificaciones(grupoId: number, sesionId: string, alumnos: any[]) {
+  const { data: resultados } = await this.getResultadosPorSesion(sesionId);
+  
+  return alumnos.map((alumno: any) => {
+    const notaExistente = resultados?.find((r: any) => r.estudiante_id === alumno.id);
+    return {
+      estudiante_id: alumno.id,
+      nombre: alumno.nombre,
+      apellido: alumno.apellido,
+      valor_numerico: notaExistente ? notaExistente.valor_numerico : null,
+      observacion: notaExistente ? notaExistente.observacion : ''
+    };
+  });
+  }
+
+  // ==========================================
+  // NUTRICIONISTAS
+  // ==========================================
+  
+  // Obtiene la lista básica de nutricionistas para asignarlos a sesiones
+  async getNutricionistas() {
+    return await this.supabase
+      .from('nutricionistas')
+      .select('id, nombre, apellido')
+      .order('nombre', { ascending: true });
+  }
+
+  async getKinesiologos() {
+    return await this.supabase
+      .from('kinesiologos')
+      .select('*, grupos_kine(grupo_id)')
+      .order('apellido', { ascending: true });
+  }
+
+  // Usamos "Completos" para no chocar con el getNutricionistas() que creamos antes 
+  // que solo traía id y nombre para los dropdowns.
+  async getNutricionistasCompletos() {
+    return await this.supabase
+      .from('nutricionistas')
+      .select('*')
+      .order('apellido', { ascending: true });
+  }
 }

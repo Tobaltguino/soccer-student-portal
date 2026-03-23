@@ -197,4 +197,62 @@ export class AuthService {
   async deleteUsuario(tabla: string, id: string) {
     return await this.supabase.rpc('admin_eliminar_usuario', { id_usuario: id, tabla_nombre: tabla });
   }
+
+  async getAdmins() {
+    return await this.supabase
+      .from('admins')
+      .select('*')
+      .order('apellido', { ascending: true });
+  }
+
+  // ==========================================
+  // PERFIL DE USUARIO GLOBAL
+  // ==========================================
+  
+  // Busca los datos del usuario navegando por las tablas según su rol
+  async getPerfilCompleto(email: string, rolGuardado: string | null) {
+    const roleMap: Record<string, { tabla: string, display: string }> = {
+      'admin': { tabla: 'admins', display: 'Administrador' },
+      'profesor': { tabla: 'profesores', display: 'Profesor' },
+      'estudiante': { tabla: 'estudiantes', display: 'Estudiante' },
+      'kine': { tabla: 'kinesiologos', display: 'Kinesiólogo' },
+      'nutri': { tabla: 'nutricionistas', display: 'Nutricionista' },
+      'professor': { tabla: 'profesores', display: 'Profesor' },
+      'student': { tabla: 'estudiantes', display: 'Estudiante' }
+    };
+
+    // 1. Intento rápido: Buscar en la tabla del rol guardado
+    if (rolGuardado && roleMap[rolGuardado]) {
+      const config = roleMap[rolGuardado];
+      const { data } = await this.supabase
+        .from(config.tabla)
+        .select('nombre, apellido, foto_url')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (data) return { data: { ...data, rol_display: config.display }, error: null };
+    }
+
+    // 2. Fallback de rescate: Iterar por todas las tablas
+    const tablasFallback = [
+      { tabla: 'admins',        rol: 'Administrador' },
+      { tabla: 'profesores',    rol: 'Profesor' },
+      { tabla: 'estudiantes',   rol: 'Estudiante' },
+      { tabla: 'kinesiologos',  rol: 'Kinesiólogo' },
+      { tabla: 'nutricionistas',rol: 'Nutricionista' }
+    ];
+
+    for (const t of tablasFallback) {
+      const { data } = await this.supabase
+        .from(t.tabla)
+        .select('nombre, apellido, foto_url')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (data) return { data: { ...data, rol_display: t.rol }, error: null };
+    }
+
+    // Si no lo encuentra en ningún lado
+    return { data: null, error: 'Perfil no encontrado' };
+  }
 }

@@ -10,10 +10,11 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TagModule } from 'primeng/tag';
-import { ToastModule } from 'primeng/toast'; // <--- IMPORTANTE: Faltaba este módulo
-import { ConfirmationService, MessageService } from 'primeng/api'; // <--- Faltaba MessageService
+import { ToastModule } from 'primeng/toast'; 
+import { ConfirmationService, MessageService } from 'primeng/api'; 
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
+// 🚀 CAMBIO 1: Importamos el AcademyService en lugar del SupabaseService
+import { AcademyService } from '../../../../core/services/academy.service';
 
 @Component({
   selector: 'app-admin-groups',
@@ -28,9 +29,9 @@ import { SupabaseService } from '../../../../core/services/supabase.service';
     TextareaModule, 
     ConfirmDialogModule,
     TagModule,
-    ToastModule // <--- Agregado para que funcione <p-toast>
+    ToastModule
   ],
-  providers: [ConfirmationService, MessageService], // <--- Agregado MessageService
+  providers: [ConfirmationService, MessageService],
   templateUrl: './admin-groups.html',
   styleUrls: ['./admin-groups.css']
 })
@@ -45,9 +46,10 @@ export class AdminGroupsComponent implements OnInit {
   grupoForm: any = { id: null, nombre: '', descripcion: '' };
 
   constructor(
-    private supabase: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos el AcademyService
+    private academyService: AcademyService,
     private confirmationService: ConfirmationService,
-    private messageService: MessageService, // <--- Inyectado para notificaciones
+    private messageService: MessageService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -57,13 +59,13 @@ export class AdminGroupsComponent implements OnInit {
 
   async cargarGrupos() {
     this.loading = true;
-    const { data, error } = await this.supabase.getGrupos();
+    
+    // 🚀 CAMBIO 3: Usamos academyService
+    const { data, error } = await this.academyService.getGrupos();
     
     if (data) {
-      // Mapeamos los datos para obtener la cantidad de alumnos de forma segura
       this.grupos = data.map((g: any) => ({
           ...g,
-          // Verifica si existe la propiedad y si es un array con elementos
           cantidad_alumnos: (g.estudiantes && g.estudiantes.length > 0) ? g.estudiantes[0].count : 0
       }));
     } else {
@@ -77,13 +79,12 @@ export class AdminGroupsComponent implements OnInit {
   // --- ABRIR DIÁLOGOS ---
   abrirNuevo() {
     this.tituloDialogo = 'Nuevo Grupo';
-    this.grupoForm = { id: null, nombre: '', descripcion: '' }; // Limpiar form
+    this.grupoForm = { id: null, nombre: '', descripcion: '' }; 
     this.displayDialog = true;
   }
 
   abrirEditar(grupo: any) {
     this.tituloDialogo = 'Editar Grupo';
-    // Usamos spread operator (...) para crear una copia y no editar la tabla directamente
     this.grupoForm = { ...grupo }; 
     this.displayDialog = true;
   }
@@ -102,11 +103,11 @@ export class AdminGroupsComponent implements OnInit {
 
     let result;
     if (this.grupoForm.id) {
-      // Actualizar
-      result = await this.supabase.updateGrupo(this.grupoForm.id, datos);
+      // 🚀 CAMBIO 4: Usamos academyService
+      result = await this.academyService.updateGrupo(this.grupoForm.id, datos);
     } else {
-      // Crear nuevo
-      result = await this.supabase.createGrupo(datos);
+      // 🚀 CAMBIO 5: Usamos academyService
+      result = await this.academyService.createGrupo(datos);
     }
 
     if (result.error) {
@@ -128,7 +129,8 @@ export class AdminGroupsComponent implements OnInit {
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-danger p-button-text',
       accept: async () => {
-        const { error } = await this.supabase.deleteGrupo(id);
+        // 🚀 CAMBIO 6: Usamos academyService
+        const { error } = await this.academyService.deleteGrupo(id);
         if (!error) {
             this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Grupo eliminado correctamente.' });
             this.cargarGrupos();

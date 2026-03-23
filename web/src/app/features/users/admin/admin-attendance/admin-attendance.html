@@ -94,8 +94,8 @@
               [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" [draggable]="false" [resizable]="false">
         
         <div class="flex gap-2 mb-4 bg-gray-100 p-2 border-round">
-            <p-select [options]="meses" [(ngModel)]="filtroMes" (onChange)="cargarDetalleHistorial()" appendTo="body" styleClass="flex-grow-1"></p-select>
-            <p-select [options]="anios" [(ngModel)]="filtroAnio" (onChange)="cargarDetalleHistorial()" appendTo="body"></p-select>
+            <p-select [options]="meses" [(ngModel)]="filtroMes" (onChange)="verHistorialIndividual(alumnoSeleccionado)" appendTo="body" styleClass="flex-grow-1"></p-select>
+            <p-select [options]="anios" [(ngModel)]="filtroAnio" (onChange)="verHistorialIndividual(alumnoSeleccionado)" appendTo="body"></p-select>
         </div>
 
         <div *ngIf="loadingHistorial" class="text-center p-4"><i class="pi pi-spin pi-spinner text-4xl text-primary"></i></div>

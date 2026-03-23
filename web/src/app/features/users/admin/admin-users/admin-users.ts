@@ -20,7 +20,13 @@ import { FileUploadModule } from 'primeng/fileupload';
 
 // Services & Directives
 import { FilterService, ConfirmationService, MessageService } from 'primeng/api';
-import { SupabaseService } from '../../../../core/services/supabase.service';
+
+// 🚀 SERVICIOS DE DOMINIO (Adiós SupabaseCoreService)
+import { AuthService } from '../../../../core/services/auth.service';
+import { AcademyService } from '../../../../core/services/academy.service';
+import { HealthService } from '../../../../core/services/health.service';
+import { StorageService } from '../../../../core/services/storage.service';
+
 import { RutFormatDirective } from '../../../../shared/directives/rut-format.directive';
 import { RutValidator } from '../../../../shared/directives/rut-validator.directive';
 
@@ -41,12 +47,10 @@ import { RutValidator } from '../../../../shared/directives/rut-validator.direct
 export class AdminUsersComponent implements OnInit {
   @ViewChild('dt') dt: Table | undefined;
 
-  // --- DATOS ---
   dataList: any[] = []; 
   listaGrupos: any[] = [];
   listaPosiciones: any[] = [];
   
-  // --- CONFIGURACIÓN DE VISTA ---
   vistaActual: string = 'estudiantes';
   
   opcionesVista = [
@@ -70,25 +74,21 @@ export class AdminUsersComponent implements OnInit {
 
   filtros: any = { global: '', grupo: null, posicion: null, tipoProfesor: null, estado: null };
 
-  // --- ESTADOS UI ---
   loading: boolean = false;
   displayDialog: boolean = false;
   isEditing: boolean = false;
   tituloDialogo: string = '';
   maxDate: Date = new Date(); 
 
-  // --- VARIABLES PARA FOTOS ---
   archivoSeleccionado: File | null = null;
   previewUrl: string | null = null;
   uploadingFoto: boolean = false;
 
-  // --- VARIABLES PARA LA FICHA MÉDICA ---
   displayFicha: boolean = false;
   selectedEstudianteFicha: any = null;
   historialClinico: any[] = [];
   loadingHistorial: boolean = false;
 
-  // --- FORMULARIO ---
   userForm: any = {
     id: null, nombre: '', apellido: '', rut: '', email: '', password: '', 
     fecha_nacimiento: null, activo: true, grupo_id: null, tipo_profesor: '',
@@ -97,7 +97,10 @@ export class AdminUsersComponent implements OnInit {
   };
 
   constructor(
-    private supabase: SupabaseService,
+    private authService: AuthService,
+    private academyService: AcademyService,
+    private healthService: HealthService,
+    private storageService: StorageService,
     private cdr: ChangeDetectorRef,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
@@ -119,10 +122,10 @@ export class AdminUsersComponent implements OnInit {
   }
 
   async cargarMaestros() {
-    const resGrupos = await this.supabase.getGrupos();
+    const resGrupos = await this.academyService.getGrupos();
     if(resGrupos.data) this.listaGrupos = resGrupos.data;
     
-    const resPos = await this.supabase.getPosiciones();
+    const resPos = await this.academyService.getPosiciones();
     if(resPos.data) this.listaPosiciones = resPos.data;
 
     this.cdr.detectChanges();
@@ -143,12 +146,13 @@ export class AdminUsersComponent implements OnInit {
     this.dataList = [];
     try {
       let res: any;
+      // 🚀 CAMBIO CLAVE: Todo delegado a sus respectivos servicios de dominio
       switch(this.vistaActual) {
-        case 'estudiantes': res = await this.supabase.getEstudiantes(); break;
-        case 'profesores': res = await this.supabase.getProfesores(); break;
-        case 'admins': res = await this.supabase.getAdmins(); break;
-        case 'kinesiologos': res = await this.supabase.supabase.from('kinesiologos').select(`*, grupos_kine (grupo_id)`); break;
-        case 'nutricionistas': res = await this.supabase.getNutricionistas(); break;
+        case 'estudiantes': res = await this.academyService.getEstudiantes(); break;
+        case 'profesores': res = await this.academyService.getProfesores(); break;
+        case 'admins': res = await this.authService.getAdmins(); break;
+        case 'kinesiologos': res = await this.healthService.getKinesiologos(); break;
+        case 'nutricionistas': res = await this.healthService.getNutricionistasCompletos(); break;
       }
       if (res?.data) this.dataList = res.data;
     } finally {
@@ -253,12 +257,6 @@ export class AdminUsersComponent implements OnInit {
         this.messageService.add({ severity: 'error', summary: 'RUT Inválido', detail: 'Formato incorrecto.' }); return;
     }
 
-    if (this.vistaActual === 'estudiantes' && !this.userForm.fecha_nacimiento) {
-        this.messageService.add({ severity: 'warn', summary: 'Faltan Datos', detail: 'La fecha es obligatoria.' }); return;
-    } else if (this.vistaActual === 'profesores' && !this.userForm.tipo_profesor) {
-        this.messageService.add({ severity: 'warn', summary: 'Faltan Datos', detail: 'Especialidad obligatoria.' }); return;
-    }
-
     this.loading = true;
     this.cdr.detectChanges();
 
@@ -267,10 +265,9 @@ export class AdminUsersComponent implements OnInit {
 
         if (this.archivoSeleccionado) {
             this.uploadingFoto = true;
-            const urlSubida = await this.supabase.subirFoto(this.archivoSeleccionado);
-            if (urlSubida) { finalFotoUrl = urlSubida; this.cdr.detectChanges(); }
+            const urlSubida = await this.storageService.subirFoto(this.archivoSeleccionado);
+            if (urlSubida) { finalFotoUrl = urlSubida; }
             this.uploadingFoto = false;
-            this.cdr.detectChanges();
         } else if (this.previewUrl === null) {
             finalFotoUrl = null;
         }
@@ -286,12 +283,10 @@ export class AdminUsersComponent implements OnInit {
             }
             datosBase.fecha_nacimiento = fechaDb;
             datosBase.grupo_id = this.userForm.grupo_id;
-            
             datosBase.direccion = this.userForm.direccion || null;
             datosBase.prevision = this.userForm.prevision || null;
             datosBase.peso = this.userForm.peso || null;
             datosBase.altura = this.userForm.altura || null;
-        
         } else if (this.vistaActual === 'profesores') {
             datosBase.tipo_profesor = this.userForm.tipo_profesor;
         }
@@ -299,29 +294,28 @@ export class AdminUsersComponent implements OnInit {
         let userId = this.userForm.id;
 
         if (this.isEditing) {
-            const { error } = await this.supabase.updateUsuario(this.vistaActual, userId, datosBase, this.userForm.email.toLowerCase());
+            const { error } = await this.authService.updateUsuario(this.vistaActual, userId, datosBase, this.userForm.email.toLowerCase());
             if (error) throw error;
         } else {
             const generatedPassword = rutLimpio.replace(/-/g, '');
-            const { data, error } = await this.supabase.crearUsuarioCompleto(this.userForm.email.toLowerCase(), generatedPassword, datosBase, this.vistaActual);
+            const { data, error } = await this.authService.crearUsuarioCompleto(this.userForm.email.toLowerCase(), generatedPassword, datosBase, this.vistaActual);
             if (error) throw error;
             userId = data?.user?.id;
         }
 
         if (userId) {
-            if (this.vistaActual === 'estudiantes') await this.supabase.actualizarPosicionesEstudiante(userId, this.userForm.posicionesIds);
-            if (this.vistaActual === 'profesores') await this.supabase.actualizarGruposProfesor(userId, this.userForm.gruposIds);
+            if (this.vistaActual === 'estudiantes') await this.academyService.actualizarPosicionesEstudiante(userId, this.userForm.posicionesIds);
+            if (this.vistaActual === 'profesores') await this.academyService.actualizarGruposProfesor(userId, this.userForm.gruposIds);
             if (this.vistaActual === 'kinesiologos') {
-                const res = await this.supabase.getGruposDeKine(userId);
+                const res = await this.healthService.getGruposDeKine(userId);
                 const gruposViejos = res.data || [];
-                for (let viejo of gruposViejos) await this.supabase.removerGrupoDeKine(userId, viejo.grupo_id);
-                for (let nuevoGrupoId of this.userForm.gruposIds) await this.supabase.asignarGrupoAKine(userId, nuevoGrupoId);
+                for (let viejo of gruposViejos) await this.healthService.removerGrupoDeKine(userId, viejo.grupo_id);
+                for (let nuevoGrupoId of this.userForm.gruposIds) await this.healthService.asignarGrupoAKine(userId, nuevoGrupoId);
             }
         }
 
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario guardado.' });
         this.displayDialog = false;
-        
         setTimeout(() => this.cargarDatos(), 100);
 
     } catch (error: any) {
@@ -329,7 +323,7 @@ export class AdminUsersComponent implements OnInit {
     } finally {
         this.loading = false;
         this.uploadingFoto = false;
-        this.cdr.markForCheck(); 
+        this.cdr.detectChanges(); 
     }
   }
 
@@ -352,7 +346,7 @@ export class AdminUsersComponent implements OnInit {
         }
 
         try {
-          await this.supabase.updateUsuario(this.vistaActual, usuario.id, datosUpdate, usuario.email);
+          await this.authService.updateUsuario(this.vistaActual, usuario.id, datosUpdate, usuario.email);
           usuario.activo = nuevoEstado; 
           this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Estado actualizado.' });
           this.cdr.detectChanges();
@@ -368,7 +362,7 @@ export class AdminUsersComponent implements OnInit {
       header: 'Confirmar', icon: 'pi pi-trash',
       acceptLabel: 'Sí', acceptButtonStyleClass: 'p-button-danger', rejectLabel: 'Cancelar',
       accept: async () => {
-        const { error } = await this.supabase.deleteUsuario(this.vistaActual, usuario.id);
+        const { error } = await this.authService.deleteUsuario(this.vistaActual, usuario.id);
         if (!error) {
           this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Usuario borrado.' });
           this.cargarDatos();
@@ -381,7 +375,6 @@ export class AdminUsersComponent implements OnInit {
     const grupo = this.listaGrupos.find(g => g.id === grupoId); return grupo ? grupo.nombre : 'Desconocido';
   }
 
-  // ✅ FUNCIONES DE LA FICHA CLÍNICA
   async abrirFicha(estudiante: any) {
     this.selectedEstudianteFicha = estudiante;
     this.displayFicha = true;
@@ -390,7 +383,7 @@ export class AdminUsersComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-        const res = await this.supabase.getHistorialClinico(estudiante.id);
+        const res = await this.healthService.getHistorialClinico(estudiante.id);
         this.historialClinico = res.data || [];
     } catch (error) {
     } finally {

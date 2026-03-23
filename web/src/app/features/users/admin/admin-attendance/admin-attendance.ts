@@ -13,7 +13,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
+import { AcademyService } from '../../../../core/services/academy.service';
 
 @Component({
   selector: 'app-admin-attendance',
@@ -29,19 +29,16 @@ import { SupabaseService } from '../../../../core/services/supabase.service';
 })
 export class AdminAttendanceComponent implements OnInit {
   
-  // Datos principales
   grupos: any[] = [];
   grupoSeleccionado: any = null;
   estudiantesAsistencia: any[] = [];
   loading: boolean = false;
 
-  // Modal Historial
   displayHistorial: boolean = false;
   alumnoSeleccionado: any = null;
   historialAlumno: any[] = [];
   loadingHistorial: boolean = false;
 
-  // Filtros de Fecha
   meses = [
     { label: 'Enero', value: 1 }, { label: 'Febrero', value: 2 }, { label: 'Marzo', value: 3 },
     { label: 'Abril', value: 4 }, { label: 'Mayo', value: 5 }, { label: 'Junio', value: 6 },
@@ -53,34 +50,23 @@ export class AdminAttendanceComponent implements OnInit {
   filtroAnio: number = new Date().getFullYear();
 
   constructor(
-    private supabase: SupabaseService,
+    private academyService: AcademyService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef
   ) {}
 
-  async ngOnInit() {
-    await this.cargarTodosLosGrupos();
+  ngOnInit() {
+    this.cargarTodosLosGrupos();
   }
 
-  /**
-   * Carga TODOS los grupos disponibles en la academia (Vista Admin)
-   */
   async cargarTodosLosGrupos() {
     this.loading = true;
-    try {
-      const { data } = await this.supabase.getGrupos();
-      this.grupos = data || [];
-    } catch (error) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los grupos' });
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
+    const { data } = await this.academyService.getGrupos();
+    this.grupos = data || [];
+    this.loading = false;
+    this.cdr.detectChanges();
   }
 
-  /**
-   * Se ejecuta al cambiar de grupo o de mes/año
-   */
   async onFilterChange() {
     if (!this.grupoSeleccionado) {
       this.estudiantesAsistencia = [];
@@ -88,84 +74,44 @@ export class AdminAttendanceComponent implements OnInit {
     }
 
     this.loading = true;
-    try {
-      // 1. Obtener alumnos activos del grupo
-      const { data: alumnos } = await this.supabase.getAlumnosPorGrupo(this.grupoSeleccionado);
-      
-      // 2. Definir rango de fechas válido
-      const mesStr = ('0' + this.filtroMes).slice(-2);
-      const primerDia = `${this.filtroAnio}-${mesStr}-01`;
-      const ultimoDiaNum = new Date(this.filtroAnio, this.filtroMes, 0).getDate();
-      const ultimoDia = `${this.filtroAnio}-${mesStr}-${ultimoDiaNum}`;
+    const { inicio, fin } = this.getFechasRango();
 
-      // 3. Obtener asistencias del grupo en ese rango de fechas
-      const { data: asistenciasMes, error } = await this.supabase.supabase
-        .from('asistencias')
-        .select('estudiante_id, presente, clases!inner(fecha)')
-        .eq('clases.grupo_id', this.grupoSeleccionado)
-        .gte('clases.fecha', primerDia)
-        .lte('clases.fecha', ultimoDia);
+    // 🚀 TODA la lógica pesada ahora vive en una sola línea del servicio
+    const { data, error } = await this.academyService.getEstudiantesConEstadisticas(
+      this.grupoSeleccionado, inicio, fin
+    );
 
-      if (error) throw error;
-
-      // 4. Procesar y calcular porcentajes
-      this.estudiantesAsistencia = (alumnos || []).map(est => {
-        const registrosAlumno = asistenciasMes?.filter(a => a.estudiante_id === est.id) || [];
-        const totalClases = registrosAlumno.length;
-        const totalPresentes = registrosAlumno.filter(a => a.presente).length;
-        const porcentaje = totalClases > 0 ? Math.round((totalPresentes / totalClases) * 100) : 0;
-
-        return { 
-          ...est, 
-          porcentaje, 
-          resumen: `${totalPresentes} / ${totalClases}` 
-        };
-      });
-
-    } catch (error) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al calcular estadísticas' });
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
+    if (error) {
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Fallo al procesar estadísticas' });
+    } else {
+      this.estudiantesAsistencia = data || [];
     }
+
+    this.loading = false;
+    this.cdr.detectChanges();
   }
 
-  /**
-   * Abre el modal de historial detallado
-   */
   async verHistorialIndividual(alumno: any) {
     this.alumnoSeleccionado = alumno;
     this.displayHistorial = true;
-    await this.cargarDetalleHistorial();
+    this.loadingHistorial = true;
+    
+    const { inicio, fin } = this.getFechasRango();
+    const { data } = await this.academyService.getHistorialAsistenciaAlumno(alumno.id, inicio, fin);
+    
+    this.historialAlumno = data || [];
+    this.loadingHistorial = false;
+    this.cdr.detectChanges();
   }
 
-  /**
-   * Carga el detalle de asistencias día por día para el modal
-   */
-  async cargarDetalleHistorial() {
-    this.loadingHistorial = true;
-    try {
-      const mesStr = ('0' + this.filtroMes).slice(-2);
-      const primerDia = `${this.filtroAnio}-${mesStr}-01`;
-      const ultimoDiaNum = new Date(this.filtroAnio, this.filtroMes, 0).getDate();
-      const ultimoDia = `${this.filtroAnio}-${mesStr}-${ultimoDiaNum}`;
-
-      const { data, error } = await this.supabase.supabase
-        .from('asistencias')
-        .select('presente, clases!inner(fecha, hora, lugar)')
-        .eq('estudiante_id', this.alumnoSeleccionado.id)
-        .gte('clases.fecha', primerDia)
-        .lte('clases.fecha', ultimoDia)
-        .order('clases(fecha)', { ascending: false });
-
-      if (error) throw error;
-      this.historialAlumno = data || [];
-    } catch (error) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el historial.' });
-    } finally {
-      this.loadingHistorial = false;
-      this.cdr.detectChanges();
-    }
+  // Helper privado para no repetir lógica de fechas
+  private getFechasRango() {
+    const mesStr = ('0' + this.filtroMes).slice(-2);
+    const ultimoDiaNum = new Date(this.filtroAnio, this.filtroMes, 0).getDate();
+    return {
+      inicio: `${this.filtroAnio}-${mesStr}-01`,
+      fin: `${this.filtroAnio}-${mesStr}-${ultimoDiaNum}`
+    };
   }
 
   getSeverity(porcentaje: number): "success" | "warn" | "danger" | "secondary" {

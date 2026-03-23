@@ -1,7 +1,9 @@
 import { Component, OnInit, ChangeDetectorRef, Renderer2, RendererFactory2 } from '@angular/core'; 
 import { CommonModule } from '@angular/common'; 
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
-import { SupabaseService } from '../../../../core/services/supabase.service';
+
+// 🚀 CAMBIO 1: Solo necesitamos AuthService. Adiós SupabaseCoreService.
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-admin-layout',
@@ -15,7 +17,6 @@ export class AdminLayoutComponent implements OnInit {
   isCollapsed: boolean = false;      
   isMobileMenuOpen: boolean = false; 
   
-  // Estado del tema
   isDarkMode: boolean = false;
 
   userName: string = 'Cargando...';
@@ -26,20 +27,17 @@ export class AdminLayoutComponent implements OnInit {
   private renderer: Renderer2;
 
   constructor(
-    private supabase: SupabaseService, 
+    // 🚀 CAMBIO 2: Limpieza de inyecciones
+    private authService: AuthService,
     private router: Router,
     private cdr: ChangeDetectorRef,
     rendererFactory: RendererFactory2
   ) {
-    // Inicializamos el Renderer2 de forma segura
     this.renderer = rendererFactory.createRenderer(null, null);
-    
-    // 1. Aplicar tema guardado lo antes posible (evita el pestañeo blanco)
     this.checkThemePreference(); 
   }
 
   async ngOnInit() {
-    // 2. Cargar usuario una vez que el componente ya está inicializado
     await this.cargarUsuario();  
   }
 
@@ -67,7 +65,7 @@ export class AdminLayoutComponent implements OnInit {
 
   enableDarkMode() {
     this.isDarkMode = true;
-    this.renderer.addClass(document.body, 'dark-mode'); // Uso correcto en Angular
+    this.renderer.addClass(document.body, 'dark-mode');
     localStorage.setItem('theme', 'dark');
   }
 
@@ -78,81 +76,35 @@ export class AdminLayoutComponent implements OnInit {
   }
 
   // ==========================================
-  // CARGA DE USUARIO (Optimizada)
+  // CARGA DE USUARIO (Súper Optimizada)
   // ==========================================
   async cargarUsuario() {
     try {
-      const { data: { user } } = await this.supabase.getUser();
+      const { data: { user } } = await this.authService.getUser();
       
       if (!user || !user.email) {
         this.setFallbackUser('Invitado', 'Sin Rol');
         return;
       }
 
-      // 💡 OPTIMIZACIÓN: Buscamos primero según el rol guardado en caché al loguearse
       const rolGuardado = localStorage.getItem('userRole');
       
-      const roleMap: Record<string, { tabla: string, display: string }> = {
-        'admin': { tabla: 'admins', display: 'Administrador' },
-        'profesor': { tabla: 'profesores', display: 'Profesor' },
-        'estudiante': { tabla: 'estudiantes', display: 'Estudiante' },
-        'kine': { tabla: 'kinesiologos', display: 'Kinesiólogo' },
-        'nutri': { tabla: 'nutricionistas', display: 'Nutricionista' },
-        // Fallbacks de idioma por si en tu Auth los guardaste diferente:
-        'professor': { tabla: 'profesores', display: 'Profesor' },
-        'student': { tabla: 'estudiantes', display: 'Estudiante' }
-      };
+      // 🚀 CAMBIO 3: Delegamos TODO el bucle y búsqueda al AuthService
+      const { data: perfil } = await this.authService.getPerfilCompleto(user.email, rolGuardado);
 
-      if (rolGuardado && roleMap[rolGuardado]) {
-        const config = roleMap[rolGuardado];
-        const { data } = await this.supabase.supabase
-          .from(config.tabla)
-          .select('nombre, apellido, foto_url') 
-          .eq('email', user.email)
-          .maybeSingle();
-
-        if (data) {
-          this.setUserData(data.nombre, data.apellido, config.display, data.foto_url);
-          return; // Salimos de la función, nos ahorramos el bucle
-        }
-      }
-
-      // 🔄 FALLBACK: Si no había caché o falló, hacemos el bucle por seguridad
-      const tablasFallback = [
-        { tabla: 'admins',        rol: 'Administrador' },
-        { tabla: 'profesores',    rol: 'Profesor' },
-        { tabla: 'estudiantes',   rol: 'Estudiante' },
-        { tabla: 'kinesiologos',  rol: 'Kinesiólogo' },
-        { tabla: 'nutricionistas',rol: 'Nutricionista' }
-      ];
-
-      let encontrado = false;
-
-      for (const t of tablasFallback) {
-        const { data } = await this.supabase.supabase
-          .from(t.tabla)
-          .select('nombre, apellido, foto_url') 
-          .eq('email', user.email)
-          .maybeSingle();
-
-        if (data) {
-          this.setUserData(data.nombre, data.apellido, t.rol, data.foto_url);
-          encontrado = true;
-          break; 
-        }
-      }
-
-      if (!encontrado) {
+      if (perfil) {
+        this.setUserData(perfil.nombre, perfil.apellido, perfil.rol_display, perfil.foto_url);
+      } else {
         this.setFallbackUser(user.email.split('@')[0], 'Sin Rol');
       }
 
     } catch (error) {
-      console.error('Error al cargar perfil de Supabase:', error);
+      console.error('Error al cargar perfil:', error);
       this.setFallbackUser('Error', '');
     }
   }
 
-  // --- HELPERS PARA SETEAR ESTADOS (Mantienen el código DRY) ---
+  // --- HELPERS PARA SETEAR ESTADOS ---
   private setUserData(nombre: string, apellido: string, rol: string, fotoUrl: string | null) {
     this.userName = `${nombre} ${apellido}`;
     this.userRole = rol;
@@ -177,10 +129,9 @@ export class AdminLayoutComponent implements OnInit {
   closeMobileMenu() { this.isMobileMenuOpen = false; }
 
   async logout() {
-    await this.supabase.logout();
-    // Limpiamos todo rastro de la sesión
+    await this.authService.logout();
     localStorage.removeItem('userRole');
-    localStorage.removeItem('theme'); // Opcional: si quieres que olvide el tema al salir
+    localStorage.removeItem('theme');
     this.router.navigate(['/login']);
   }
 }

@@ -17,7 +17,8 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { DatePickerModule } from 'primeng/datepicker';
 import { CheckboxModule } from 'primeng/checkbox';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
+// 🚀 CAMBIO 1: Importamos el AcademyService
+import { AcademyService } from '../../../../core/services/academy.service';
 
 @Component({
   selector: 'app-admin-classes',
@@ -67,7 +68,8 @@ export class AdminClassesComponent implements OnInit {
   };
 
   constructor(
-    private supabase: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos el AcademyService
+    private academyService: AcademyService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private cdr: ChangeDetectorRef
@@ -80,13 +82,13 @@ export class AdminClassesComponent implements OnInit {
   async cargarDatos() {
     this.loading = true;
     
-    // Cargar Clases
-    const { data: dataClases } = await this.supabase.getClases();
+    // 🚀 CAMBIO 3: Usamos academyService
+    const { data: dataClases } = await this.academyService.getClases();
     this.clasesOriginales = dataClases || [];
     this.aplicarFiltros(); 
     
-    // Cargar Grupos
-    const { data: dataGrupos } = await this.supabase.getGrupos();
+    // 🚀 CAMBIO 4: Usamos academyService
+    const { data: dataGrupos } = await this.academyService.getGrupos();
     this.grupos = dataGrupos || [];
     
     this.loading = false;
@@ -126,14 +128,13 @@ export class AdminClassesComponent implements OnInit {
     this.displayAttendanceDialog = true;
     this.loadingAsistencia = true;
 
-    // 1. Obtener alumnos del grupo
-    const { data: alumnosGrupo } = await this.supabase.getAlumnosPorGrupo(clase.grupo_id);
+    // 🚀 CAMBIO 5: Usamos academyService
+    const { data: alumnosGrupo } = await this.academyService.getAlumnosPorGrupo(clase.grupo_id);
     
-    // 2. Obtener asistencia ya guardada (si existe)
-    const { data: asistenciaGuardada } = await this.supabase.getAsistenciaPorClase(clase.id);
+    // 🚀 CAMBIO 6: Usamos academyService
+    const { data: asistenciaGuardada } = await this.academyService.getAsistenciaPorClase(clase.id);
 
     if (alumnosGrupo) {
-       // Fusionar
        this.alumnosAsistencia = alumnosGrupo.map(alumno => {
            const registro = asistenciaGuardada?.find((r: any) => r.estudiante_id === alumno.id);
            return { 
@@ -154,7 +155,8 @@ export class AdminClassesComponent implements OnInit {
       presente: a.presente
     }));
 
-    const { error } = await this.supabase.saveAsistencia(registros);
+    // 🚀 CAMBIO 7: Usamos academyService
+    const { error } = await this.academyService.saveAsistencia(registros);
     
     if (!error) {
       this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Asistencia actualizada correctamente' });
@@ -171,7 +173,6 @@ export class AdminClassesComponent implements OnInit {
     this.limpiarForm(); 
     this.vistaFormulario = 'logistica';
     
-    // Asignar la hora actual por defecto en formato "HH:mm"
     const ahora = new Date();
     this.claseForm.hora = ('0' + ahora.getHours()).slice(-2) + ':' + ('0' + ahora.getMinutes()).slice(-2);
     
@@ -184,7 +185,6 @@ export class AdminClassesComponent implements OnInit {
     this.vistaFormulario = 'logistica';
     
     const fechaObj = new Date(clase.fecha + 'T00:00:00');
-    // Guardamos la hora directamente como string "HH:mm"
     const horaString = clase.hora ? clase.hora.slice(0, 5) : ''; 
     
     this.claseForm = { ...clase, fecha: fechaObj, hora: horaString };
@@ -192,7 +192,6 @@ export class AdminClassesComponent implements OnInit {
   }
 
   async guardarClase() {
-    // ✅ Validamos que TODOS los campos de logística estén completos
     if (!this.claseForm.grupo_id || !this.claseForm.fecha || !this.claseForm.hora || !this.claseForm.lugar || this.claseForm.lugar.trim() === '') {
         this.messageService.add({ 
             severity: 'warn', 
@@ -205,7 +204,7 @@ export class AdminClassesComponent implements OnInit {
     const datosParaEnviar: any = {
       grupo_id: this.claseForm.grupo_id,
       fecha: this.formatearFecha(this.claseForm.fecha),
-      hora: this.claseForm.hora, // ✅ Ya es un string, no necesita formateo
+      hora: this.claseForm.hora, 
       lugar: this.claseForm.lugar || '',
       objetivo: this.claseForm.objetivo || '',
       calentamiento: this.claseForm.calentamiento || '',
@@ -215,9 +214,11 @@ export class AdminClassesComponent implements OnInit {
 
     let result;
     if (this.isEditing) {
-      result = await this.supabase.updateClase(this.claseForm.id, datosParaEnviar);
+      // 🚀 CAMBIO 8: Usamos academyService
+      result = await this.academyService.updateClase(this.claseForm.id, datosParaEnviar);
     } else {
-      result = await this.supabase.createClase(datosParaEnviar);
+      // 🚀 CAMBIO 9: Usamos academyService
+      result = await this.academyService.createClase(datosParaEnviar);
     }
 
     if (result.error) {
@@ -236,7 +237,8 @@ export class AdminClassesComponent implements OnInit {
         icon: 'pi pi-exclamation-triangle',
         acceptButtonStyleClass: 'p-button-danger p-button-text',
         accept: async () => { 
-            await this.supabase.deleteClase(id); 
+            // 🚀 CAMBIO 10: Usamos academyService
+            await this.academyService.deleteClase(id); 
             this.cargarDatos(); 
         } 
     });

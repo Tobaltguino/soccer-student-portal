@@ -1,7 +1,11 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-import { SupabaseService } from '../../../../core/services/supabase.service';
+
+// 🚀 CAMBIO 1: Importamos los 3 servicios específicos
+import { AuthService } from '../../../../core/services/auth.service';
+import { AcademyService } from '../../../../core/services/academy.service';
+import { HealthService } from '../../../../core/services/health.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -25,7 +29,10 @@ export class AdminDashboardComponent implements OnInit {
   supabaseStatus: 'online' | 'offline' | 'checking' = 'checking';
 
   constructor(
-    private supabaseService: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos los 3 servicios
+    private authService: AuthService,
+    private academyService: AcademyService,
+    private healthService: HealthService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
@@ -38,7 +45,9 @@ export class AdminDashboardComponent implements OnInit {
   async verificarConexion() {
     try {
       this.supabaseStatus = 'checking';
-      const { data: { user }, error } = await this.supabaseService.getUser();
+      
+      // 🚀 CAMBIO 3: Usamos authService para validar la sesión
+      const { data: { user }, error } = await this.authService.getUser();
       
       if (error || !user) {
         this.supabaseStatus = 'offline';
@@ -54,40 +63,34 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   async cargarDatos() {
-    this.loading = true;
-    try {
-      // 1. Estudiantes: Traemos la lista completa
-      const { data: estudiantes, error } = await this.supabaseService.getEstudiantes();
-      
-      if (estudiantes) {
-        // Filtramos el arreglo para quedarnos solo con los que tienen activo === true
-        const estudiantesActivos = estudiantes.filter((est: any) => est.activo === true);
+    this.loading = true;
+    try {
+      // 🚀 CAMBIO 4: Usamos academyService para traer alumnos
+      const { data: estudiantes, error } = await this.academyService.getEstudiantes();
+      
+      if (estudiantes) {
+        const estudiantesActivos = estudiantes.filter((est: any) => est.activo === true);
+        this.totalEstudiantes = estudiantesActivos.length;
+        this.cumpleanosList = this.filtrarProximosCumpleanos(estudiantesActivos);
+      } else {
+        this.totalEstudiantes = 0;
+      }
 
-        // Ahora contamos solo el largo del arreglo de los activos
-        this.totalEstudiantes = estudiantesActivos.length;
-        
-        // Procesamos los cumpleaños usando la lista de estudiantes activos
-        this.cumpleanosList = this.filtrarProximosCumpleanos(estudiantesActivos);
-      } else {
-        this.totalEstudiantes = 0;
-      }
+      // 🚀 CAMBIO 5: Usamos academyService para traer clases
+      const { data: clases } = await this.academyService.getClasesHoy();
+      this.clasesHoy = clases || [];
 
-      // 2. Clases de Hoy
-      const { data: clases } = await this.supabaseService.getClasesHoy();
-      this.clasesHoy = clases || [];
+      // 🚀 CAMBIO 6: Usamos healthService para traer evaluaciones médicas/físicas
+      const { data: actividad } = await this.healthService.getActividadReciente();
+      this.actividadReciente = actividad || [];
 
-      // 3. Evaluaciones (Para la tarjeta morada)
-      const { data: actividad } = await this.supabaseService.getActividadReciente();
-      this.actividadReciente = actividad || [];
-
-    } catch (error) {
-      // Si falla la carga, simplemente dejamos los valores iniciales (0 o vacíos)
-      // No necesitamos loguear esto para el usuario.
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
-  }
+    } catch (error) {
+      // Si falla la carga, simplemente dejamos los valores iniciales
+    } finally {
+      this.loading = false;
+      this.cdr.detectChanges();
+    }
+  }
 
   // Lógica para filtrar cumpleaños próximos (0 a 7 días)
   filtrarProximosCumpleanos(estudiantes: any[]): any[] {
@@ -98,13 +101,10 @@ export class AdminDashboardComponent implements OnInit {
       .map(est => {
         if (!est.fecha_nacimiento) return null;
 
-        // Asegurar formato fecha (YYYY-MM-DD T00:00:00) para evitar desfases
         const nacimiento = new Date(est.fecha_nacimiento + 'T00:00:00');
-        
         const cumpleEsteAno = new Date(hoy.getFullYear(), nacimiento.getMonth(), nacimiento.getDate());
         
         let proximoCumple = cumpleEsteAno;
-        // Si ya pasó el cumpleaños este año, calculamos el del próximo
         if (proximoCumple < hoy) {
             proximoCumple = new Date(hoy.getFullYear() + 1, nacimiento.getMonth(), nacimiento.getDate());
         }
@@ -120,9 +120,7 @@ export class AdminDashboardComponent implements OnInit {
           nuevaEdad: nuevaEdad
         };
       })
-      // Filtramos solo los que son hoy o en los próximos 7 días
       .filter(item => item !== null && item.diasRestantes >= 0 && item.diasRestantes <= 7)
-      // Ordenamos del más cercano al más lejano
       .sort((a, b) => a.diasRestantes - b.diasRestantes);
 
     return listaProcesada;

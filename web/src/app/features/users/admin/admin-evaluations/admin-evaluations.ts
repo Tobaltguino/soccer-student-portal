@@ -20,7 +20,10 @@ import { RadioButtonModule } from 'primeng/radiobutton';
 import { TextareaModule } from 'primeng/textarea';
 
 import { MessageService, ConfirmationService } from 'primeng/api';
-import { SupabaseService } from '../../../../core/services/supabase.service';
+
+// Servicios
+import { AcademyService } from '../../../../core/services/academy.service';
+import { HealthService } from '../../../../core/services/health.service';
 
 @Component({
   selector: 'app-admin-evaluations',
@@ -42,7 +45,7 @@ export class AdminEvaluationsComponent implements OnInit {
   sesionesOriginales: any[] = [];  
   grupos: any[] = [];
   tiposEvaluacion: any[] = [];
-  todosLosRangos: any[] = [];      // ✅ GUARDAMOS LOS RANGOS EN MEMORIA
+  todosLosRangos: any[] = [];      
   estudiantesGrupo: any[] = [];    
 
   // --- FILTROS ---
@@ -70,7 +73,6 @@ export class AdminEvaluationsComponent implements OnInit {
   displayMainDialog: boolean = false;   
   displayTipoDialog: boolean = false;   
   displayGradesDialog: boolean = false; 
-  
   usarRangos: boolean = false;
 
   // --- FORMULARIOS ---
@@ -87,15 +89,12 @@ export class AdminEvaluationsComponent implements OnInit {
   };
 
   evalLogistica: any = {
-    id: null,
-    grupo_id: null,
-    tipo_evaluacion_id: null,
-    fecha: new Date(),
-    estado: 'PENDIENTE'
+    id: null, grupo_id: null, tipo_evaluacion_id: null, fecha: new Date(), estado: 'PENDIENTE'
   };
 
   constructor(
-    private supabase: SupabaseService,
+    private academyService: AcademyService,
+    private healthService: HealthService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private cdr: ChangeDetectorRef
@@ -111,24 +110,23 @@ export class AdminEvaluationsComponent implements OnInit {
   async cargarDatosIniciales() {
     this.loading = true;
     try {
-      // ✅ Agregamos la consulta de los rangos aquí para que carguen al principio
       const [g, t, s, r] = await Promise.all([
-        this.supabase.getGrupos(),
-        this.supabase.getTiposEvaluacion(),
-        this.supabase.getSesionesEvaluacion(),
-        this.supabase.supabase.from('evaluacion_rangos').select('*') // Descarga masiva
+        this.academyService.getGrupos(),
+        this.healthService.getTiposEvaluacion(),
+        this.healthService.getSesionesEvaluacion(),
+        this.healthService.getAllRangos() // Centralizado en el servicio
       ]);
 
       this.grupos = g.data || [];
       this.tiposEvaluacion = t.data || [];
       this.sesionesOriginales = s.data || [];
-      this.todosLosRangos = r.data || []; // Guardamos en memoria
+      this.todosLosRangos = r.data || []; 
       
       this.sesiones = [...this.sesionesOriginales];
       this.aplicarFiltros(); 
 
     } catch (error: any) {
-      this.messageService.add({ severity: 'error', summary: 'Error General', detail: 'Fallo de conexión al cargar datos.' });
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Fallo al conectar con el servidor.' });
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
@@ -140,27 +138,22 @@ export class AdminEvaluationsComponent implements OnInit {
   // ==========================================
   aplicarFiltros() {
     this.sesiones = this.sesionesOriginales.filter(sesion => {
-        let cumpleFecha = true;
-        let cumpleGrupo = true;
-        let cumplePrueba = true;
-        let cumpleEstado = true;
+        let f = true, g = true, p = true, e = true;
 
         if (this.filtroFecha) {
-            const fechaFiltroStr = this.formatearFecha(this.filtroFecha);
-            const fechaSesionStr = (sesion.fecha || '').substring(0, 10); 
-            cumpleFecha = fechaSesionStr === fechaFiltroStr;
+            f = (sesion.fecha || '').substring(0, 10) === this.formatearFecha(this.filtroFecha);
         }
         if (this.filtroGrupo) {
-            cumpleGrupo = sesion.grupo_id === this.filtroGrupo.id;
+            g = sesion.grupo_id === this.filtroGrupo.id;
         }
         if (this.filtroPrueba) {
-            cumplePrueba = sesion.tipo_evaluacion_id === this.filtroPrueba.id;
+            p = sesion.tipo_evaluacion_id === this.filtroPrueba.id;
         }
         if (this.filtroEstado) {
-            cumpleEstado = sesion.estado === this.filtroEstado;
+            e = sesion.estado === this.filtroEstado;
         }
 
-        return cumpleFecha && cumpleGrupo && cumplePrueba && cumpleEstado;
+        return f && g && p && e;
     });
   }
 
@@ -174,12 +167,7 @@ export class AdminEvaluationsComponent implements OnInit {
 
   formatearFecha(date: Date): string {
     const d = new Date(date);
-    let month = '' + (d.getMonth() + 1);
-    let day = '' + d.getDate();
-    const year = d.getFullYear();
-    if (month.length < 2) month = '0' + month;
-    if (day.length < 2) day = '0' + day;
-    return [year, month, day].join('-');
+    return `${d.getFullYear()}-${('0' + (d.getMonth() + 1)).slice(-2)}-${('0' + d.getDate()).slice(-2)}`;
   }
 
   // ==========================================
@@ -197,68 +185,36 @@ export class AdminEvaluationsComponent implements OnInit {
     this.nuevoRango = { edad_min: null, edad_max: null, nombre_etiqueta: '', valor_min: null, valor_max: null, color_sugerido: '#22c55e' };
   }
 
-  // ✅ AHORA ES SÍNCRONA Y ALTIRO
   editarTipoTest(test: any) {
     this.tipoForm = { ...test }; 
-    
-    // Filtramos los rangos directamente desde la memoria
     this.rangosForm = this.todosLosRangos
       .filter(r => r.tipo_evaluacion_id === test.id)
-      .sort((a, b) => a.edad_min - b.edad_min || a.valor_min - b.valor_min); // Ordenar por edad y luego por valor
+      .sort((a, b) => a.edad_min - b.edad_min || a.valor_min - b.valor_min); 
 
     this.usarRangos = this.rangosForm.length > 0;
-    this.cdr.detectChanges(); // Se dibuja instantáneamente
+    this.cdr.detectChanges(); 
   }
 
   agregarRangoALista() {
     if (this.nuevoRango.edad_min === null || this.nuevoRango.edad_max === null || !this.nuevoRango.nombre_etiqueta || this.nuevoRango.valor_min === null || this.nuevoRango.valor_max === null) {
-      this.messageService.add({ severity: 'warn', summary: 'Incompleto', detail: 'Llene todos los campos del rango (*)' });
+      this.messageService.add({ severity: 'warn', summary: 'Incompleto', detail: 'Llene todos los campos.' });
       return;
     }
-
-    if (this.nuevoRango.edad_min > this.nuevoRango.edad_max) {
-      this.messageService.add({ severity: 'warn', summary: 'Edad Inválida', detail: 'La edad mínima no puede ser mayor a la máxima' });
-      return;
-    }
-    
-    if (this.nuevoRango.valor_min > this.nuevoRango.valor_max) {
-      this.messageService.add({ severity: 'warn', summary: 'Valor Inválido', detail: 'El valor mínimo no puede ser mayor al máximo' });
-      return;
-    }
-
-    const eMinNuevo = this.nuevoRango.edad_min;
-    const eMaxNuevo = this.nuevoRango.edad_max;
-    const vMinNuevo = this.nuevoRango.valor_min;
-    const vMaxNuevo = this.nuevoRango.valor_max;
-    const etiquetaNueva = this.nuevoRango.nombre_etiqueta.trim().toUpperCase();
 
     const conflicto = this.rangosForm.find(r => {
-      const solapanEdades = (eMinNuevo <= r.edad_max) && (eMaxNuevo >= r.edad_min);
-      const solapanValores = (vMinNuevo <= r.valor_max) && (vMaxNuevo >= r.valor_min);
-      const mismaEtiqueta = (r.nombre_etiqueta.trim().toUpperCase() === etiquetaNueva);
-
+      const solapanEdades = (this.nuevoRango.edad_min <= r.edad_max) && (this.nuevoRango.edad_max >= r.edad_min);
+      const solapanValores = (this.nuevoRango.valor_min <= r.valor_max) && (this.nuevoRango.valor_max >= r.valor_min);
+      const mismaEtiqueta = (r.nombre_etiqueta.trim().toUpperCase() === this.nuevoRango.nombre_etiqueta.trim().toUpperCase());
       return (solapanEdades && solapanValores) || (solapanEdades && mismaEtiqueta);
     });
 
     if (conflicto) {
-      this.messageService.add({ 
-        severity: 'error', 
-        summary: 'Cruce de Datos Detectado', 
-        detail: `No se puede agregar. Los valores chocan con el rango '${conflicto.nombre_etiqueta}' para las mismas edades.` 
-      });
+      this.messageService.add({ severity: 'error', summary: 'Cruce detectado', detail: `Choca con el rango '${conflicto.nombre_etiqueta}'.` });
       return;
     }
 
     this.rangosForm.push({ ...this.nuevoRango });
-    
-    this.nuevoRango = { 
-        edad_min: this.nuevoRango.edad_min, 
-        edad_max: this.nuevoRango.edad_max, 
-        nombre_etiqueta: '', 
-        valor_min: null, 
-        valor_max: null, 
-        color_sugerido: this.nuevoRango.color_sugerido 
-    };
+    this.nuevoRango = { ...this.nuevoRango, nombre_etiqueta: '', valor_min: null, valor_max: null };
   }
 
   quitarRangoDeLista(index: number) {
@@ -267,50 +223,34 @@ export class AdminEvaluationsComponent implements OnInit {
 
   async guardarNuevoTipo() {
     if (!this.tipoForm.nombre || !this.tipoForm.unidad_medida) {
-      this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'El Nombre y la Unidad son obligatorios (*)' });
+      this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Nombre y Unidad son obligatorios.' });
       return;
     }
     
     this.loading = true;
     try {
       let testId = this.tipoForm.id;
-      
+      const payload = { nombre: this.tipoForm.nombre, unidad_medida: this.tipoForm.unidad_medida, descripcion: this.tipoForm.descripcion };
+
       if (testId) {
-        // Actualizar
-        const payload = { nombre: this.tipoForm.nombre, unidad_medida: this.tipoForm.unidad_medida, descripcion: this.tipoForm.descripcion };
-        const { error } = await this.supabase.updateTipoEvaluacion(testId, payload);
-        if (error) throw error;
-        
-        await this.supabase.eliminarRangosPorTipo(testId); 
+        await this.healthService.updateTipoEvaluacion(testId, payload);
+        await this.healthService.eliminarRangosPorTipo(testId); 
       } else {
-        // Crear
-        const payload = { nombre: this.tipoForm.nombre, unidad_medida: this.tipoForm.unidad_medida, descripcion: this.tipoForm.descripcion };
-        const { data, error } = await this.supabase.createTipoEvaluacion(payload);
-        if (error) throw error;
+        const { data } = await this.healthService.createTipoEvaluacion(payload);
         testId = (data as any[])[0].id;
       }
 
       if (this.usarRangos && this.rangosForm.length > 0) {
-        const rangosParaDB = this.rangosForm.map(r => ({
-          edad_min: r.edad_min,
-          edad_max: r.edad_max,
-          nombre_etiqueta: r.nombre_etiqueta,
-          valor_min: r.valor_min,
-          valor_max: r.valor_max,
-          color_sugerido: r.color_sugerido,
-          tipo_evaluacion_id: testId
-        }));
-        
-        const { error: errorRangos } = await this.supabase.createRango(rangosParaDB);
-        if (errorRangos) throw errorRangos;
+        const rangosParaDB = this.rangosForm.map(r => ({ ...r, tipo_evaluacion_id: testId }));
+        await this.healthService.createRango(rangosParaDB);
       }
 
-      this.messageService.add({ severity: 'success', summary: 'Éxito', detail: testId ? 'Test actualizado correctamente' : 'Test configurado correctamente' });
+      this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Test guardado.' });
       this.cancelarEdicionTipo(); 
-      this.cargarDatosIniciales(); // Al recargar se actualiza la memoria "todosLosRangos"
+      this.cargarDatosIniciales(); 
 
     } catch (err: any) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message || 'Error al guardar' });
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar el test.' });
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
@@ -319,32 +259,26 @@ export class AdminEvaluationsComponent implements OnInit {
 
   async eliminarTipoTest(id: number) {
     this.confirmationService.confirm({
-      message: '¿Estás seguro de eliminar este test?\n\n⚠️ IMPORTANTE: Se eliminarán todas las sesiones planificadas y TODOS LOS RESULTADOS históricos de los alumnos asociados a esta prueba.\n\nEsta acción no se puede deshacer.',
-      header: 'Confirmar Eliminación Crítica',
+      message: '¿Estás seguro? Se borrarán todos los resultados históricos de este test.',
+      header: 'Eliminación Crítica',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Sí, eliminar todo',
-      rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-danger', 
       accept: async () => {
         try {
-          await this.supabase.eliminarRangosPorTipo(id);
-          const { error } = await this.supabase.eliminarTipoEvaluacion(id);
-          if (error) throw error;
-          this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Test y datos asociados eliminados' });
-          
-          if (this.tipoForm.id === id) {
-              this.cancelarEdicionTipo();
-          }
+          await this.healthService.eliminarRangosPorTipo(id);
+          await this.healthService.eliminarTipoEvaluacion(id);
+          this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Datos eliminados.' });
           this.cargarDatosIniciales();
         } catch (err: any) {
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el test.' });
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al eliminar.' });
         }
       }
     });
   }
 
   // ==========================================
-  // 4. GESTIÓN DE SESIONES (CRUD LOGÍSTICA)
+  // 4. GESTIÓN DE SESIONES
   // ==========================================
   abrirNuevo() {
     this.evalLogistica = { id: null, grupo_id: null, tipo_evaluacion_id: null, fecha: new Date(), estado: 'PENDIENTE' };
@@ -359,52 +293,37 @@ export class AdminEvaluationsComponent implements OnInit {
 
   async crearSesionPlanificada() {
     if (!this.evalLogistica.grupo_id || !this.evalLogistica.tipo_evaluacion_id || !this.evalLogistica.fecha) {
-        this.messageService.add({ severity: 'warn', summary: 'Faltan datos', detail: 'Complete todos los campos obligatorios marcados con (*)' });
+        this.messageService.add({ severity: 'warn', summary: 'Faltan datos', detail: 'Complete los campos obligatorios (*)' });
         return;
     }
 
-    const fechaSeleccionada = new Date(this.evalLogistica.fecha);
-    if (isNaN(fechaSeleccionada.getTime())) {
-        this.messageService.add({ severity: 'warn', summary: 'Fecha Inválida', detail: 'Ingrese una fecha válida para la sesión.' });
-        return;
-    }
-
-    const fechaStr = fechaSeleccionada.toISOString().split('T')[0];
     const payload = {
         grupo_id: this.evalLogistica.grupo_id,
         tipo_evaluacion_id: this.evalLogistica.tipo_evaluacion_id,
-        fecha: fechaStr,
+        fecha: this.formatearFecha(this.evalLogistica.fecha),
         estado: this.evalLogistica.estado || 'PENDIENTE'
     };
 
     try {
-      let result;
-      if (this.evalLogistica.id) {
-          result = await this.supabase.updateSesionEvaluacion(this.evalLogistica.id, payload);
-      } else {
-          result = await this.supabase.crearSesionEvaluacion(payload);
-      }
-
-      if (result.error) throw result.error;
+      if (this.evalLogistica.id) await this.healthService.updateSesionEvaluacion(this.evalLogistica.id, payload);
+      else await this.healthService.crearSesionEvaluacion(payload);
 
       this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Sesión guardada' });
       this.displayMainDialog = false;
       this.cargarDatosIniciales(); 
     } catch (error: any) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: error.message });
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al guardar la sesión.' });
     }
   }
 
   async eliminarSesion(id: string) {
       this.confirmationService.confirm({
-          message: '¿Eliminar sesión y todas sus notas asociadas?',
+          message: '¿Eliminar sesión y todas sus notas?',
           header: 'Confirmar Eliminación',
           icon: 'pi pi-trash',
-          acceptLabel: 'Eliminar',
           acceptButtonStyleClass: 'p-button-danger p-button-text',
           accept: async () => {
-              const { error } = await this.supabase.eliminarSesionEvaluacion(id);
-              if (error) throw error;
+              await this.healthService.eliminarSesionEvaluacion(id);
               this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Sesión borrada' });
               this.cargarDatosIniciales();
           }
@@ -412,7 +331,7 @@ export class AdminEvaluationsComponent implements OnInit {
   }
 
   // ==========================================
-  // 5. CALIFICACIÓN DE ESTUDIANTES
+  // 5. CALIFICACIÓN (PLANILLA)
   // ==========================================
   async abrirCalificador(sesion: any) {
     this.evalLogistica = { ...sesion };
@@ -420,43 +339,22 @@ export class AdminEvaluationsComponent implements OnInit {
     this.cdr.detectChanges(); 
 
     try {
-      const [resAlumnos, resResultados] = await Promise.all([
-         this.supabase.getAlumnosPorGrupo(sesion.grupo_id),
-         this.supabase.getResultadosPorSesion(sesion.id)
-      ]);
-
-      const alumnos = resAlumnos.data || [];
-      const resultados = resResultados.data || [];
-
-      this.estudiantesGrupo = alumnos.map((alumno: any) => {
-          const notaExistente = resultados.find((r: any) => r.estudiante_id === alumno.id);
-          
-          return {
-              estudiante_id: alumno.id,
-              nombre: alumno.nombre,
-              apellido: alumno.apellido,
-              valor_numerico: notaExistente ? notaExistente.valor_numerico : null,
-              observacion: notaExistente ? notaExistente.observacion : ''
-          };
-      });
+      const { data: alumnos } = await this.academyService.getAlumnosPorGrupo(sesion.grupo_id);
+      
+      // 🚀 Lógica centralizada en el servicio: cruza alumnos con resultados existentes
+      this.estudiantesGrupo = await this.healthService.prepararPlanillaCalificaciones(
+        sesion.grupo_id, 
+        sesion.id, 
+        alumnos || []
+      );
       
       this.displayGradesDialog = true;
-
     } catch (e: any) {
-      this.messageService.add({ 
-        severity: 'error', 
-        summary: 'Error', 
-        detail: 'No se pudo cargar la lista de estudiantes. Intente nuevamente.' 
-      });
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar la planilla.' });
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
     }
-  }
-
-  limpiarFila(estudiante: any) {
-    estudiante.valor_numerico = null;
-    estudiante.observacion = '';
   }
 
   async guardarNotasFinales() {
@@ -469,24 +367,24 @@ export class AdminEvaluationsComponent implements OnInit {
         observacion: e.observacion || ''
       }));
 
-    if (notasAGuardar.length === 0) {
-      this.messageService.add({ severity: 'info', summary: 'Sin cambios', detail: 'No hay notas para guardar.' });
-      return;
-    }
+    if (notasAGuardar.length === 0) return;
 
     this.loading = true;
     try {
-      const { error } = await this.supabase.guardarResultadosMasivos(notasAGuardar);
-      if (error) throw error; 
-
-      this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Resultados actualizados correctamente' });
+      await this.healthService.guardarResultadosMasivos(notasAGuardar);
+      this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Resultados guardados.' });
       this.displayGradesDialog = false;
       this.cargarDatosIniciales(); 
     } catch (error: any) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Fallo al guardar: posible duplicado o error de conexión.' });
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Fallo al guardar resultados.' });
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
     }
+  }
+
+  limpiarFila(estudiante: any) {
+    estudiante.valor_numerico = null;
+    estudiante.observacion = '';
   }
 }

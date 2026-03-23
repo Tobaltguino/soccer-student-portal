@@ -1,7 +1,8 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { SupabaseService } from '../../../../core/services/supabase.service';
+
+// PrimeNG Imports
 import { TableModule } from 'primeng/table';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -14,6 +15,11 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService, ConfirmationService } from 'primeng/api';
+
+// 🚀 SERVICIOS DE DOMINIO
+import { HealthService } from '../../../../core/services/health.service';
+import { AcademyService } from '../../../../core/services/academy.service';
+import { StorageService } from '../../../../core/services/storage.service';
 
 @Component({
   selector: 'app-admin-nutri',
@@ -53,7 +59,9 @@ export class AdminNutriComponent implements OnInit {
   nuevoTipo = { nombre: '', descripcion: '' };
 
   constructor(
-    private supabase: SupabaseService,
+    private healthService: HealthService,
+    private academyService: AcademyService,
+    private storageService: StorageService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService, 
     private cdr: ChangeDetectorRef
@@ -63,25 +71,33 @@ export class AdminNutriComponent implements OnInit {
     await this.cargarDatosBase();
   }
 
+  // ==========================================
+  // CARGA DE DATOS
+  // ==========================================
   async cargarDatosBase() {
     try {
       this.loading = true;
       this.cdr.detectChanges();
 
-      await this.cargarTiposEvaluacion();
+      // 🚀 Promesas en paralelo para mayor velocidad en la UI
+      const [resTipos, resNutris, resEst] = await Promise.all([
+        this.healthService.getTiposEvaluacionNutri(),
+        this.healthService.getNutricionistas(),
+        this.academyService.getEstudiantesBasico()
+      ]);
 
-      const resNutris = await this.supabase.supabase.from('nutricionistas').select('id, nombre, apellido');
-      this.nutricionistas = (resNutris.data || []).map(n => ({
+      this.tiposEvaluacion = resTipos.data || [];
+      
+      this.nutricionistas = (resNutris.data || []).map((n: any) => ({
         id: n.id,
         nombreCompleto: `${n.nombre} ${n.apellido}`
       }));
 
-      const resEst = await this.supabase.getEstudiantesBasico();
-      this.estudiantes = (resEst.data || []).map(est => ({
+      this.estudiantes = (resEst.data || []).map((est: any) => ({
         ...est,
         archivoSeleccionado: null,
         archivo_url_previo: null,
-        nombre_archivo_previo: null, // ✅ Nueva propiedad para el nombre bonito
+        nombre_archivo_previo: null, 
         observacion: ''
       }));
 
@@ -95,47 +111,16 @@ export class AdminNutriComponent implements OnInit {
     }
   }
 
-  async cargarTiposEvaluacion() {
-    const resTipos = await this.supabase.getTiposEvaluacionNutri();
-    this.tiposEvaluacion = resTipos.data || [];
-  }
-
   async cargarSesiones() {
-    const res = await this.supabase.getEvaluacionesNutri();
+    const res = await this.healthService.getEvaluacionesNutri();
     this.sesiones = res.data || [];
     this.aplicarFiltros();
     this.cdr.detectChanges();
   }
 
-  aplicarFiltros() {
-    this.sesionesFiltradas = this.sesiones.filter(s => {
-      let cumpleFecha = true;
-      let cumplePrueba = true;
-      let cumpleEstado = true;
-
-      if (this.filtroFecha) {
-        const dFiltro = this.filtroFecha.toISOString().split('T')[0];
-        cumpleFecha = s.fecha === dFiltro;
-      }
-      if (this.filtroPrueba) {
-        cumplePrueba = s.tipo_id === this.filtroPrueba.id;
-      }
-      if (this.filtroEstado) {
-        cumpleEstado = s.estado === this.filtroEstado;
-      }
-
-      return cumpleFecha && cumplePrueba && cumpleEstado;
-    });
-    this.cdr.detectChanges();
-  }
-
-  limpiarFiltros() {
-    this.filtroFecha = null;
-    this.filtroPrueba = null;
-    this.filtroEstado = null;
-    this.aplicarFiltros();
-  }
-
+  // ==========================================
+  // GESTIÓN DE TIPOS (CONFIGURACIÓN)
+  // ==========================================
   abrirConfiguracionTipos() {
     this.nuevoTipo = { nombre: '', descripcion: '' };
     this.displayTiposDialog = true;
@@ -146,10 +131,12 @@ export class AdminNutriComponent implements OnInit {
     if (!this.nuevoTipo.nombre) return;
     try {
       this.loading = true;
-      await this.supabase.crearTipoEvaluacionNutri(this.nuevoTipo);
+      await this.healthService.crearTipoEvaluacionNutri(this.nuevoTipo);
       this.mostrarExito('Test agregado correctamente');
       this.nuevoTipo = { nombre: '', descripcion: '' };
-      await this.cargarTiposEvaluacion(); 
+      
+      const res = await this.healthService.getTiposEvaluacionNutri();
+      this.tiposEvaluacion = res.data || [];
     } catch (error) {
       this.mostrarError('Error al guardar el tipo de test');
     } finally {
@@ -170,9 +157,11 @@ export class AdminNutriComponent implements OnInit {
         try {
           this.loading = true;
           this.cdr.detectChanges();
-          await this.supabase.eliminarTipoEvaluacionNutri(tipo.id);
+          await this.healthService.eliminarTipoEvaluacionNutri(tipo.id);
           this.mostrarExito('Test eliminado correctamente');
-          await this.cargarTiposEvaluacion(); 
+          
+          const res = await this.healthService.getTiposEvaluacionNutri();
+          this.tiposEvaluacion = res.data || [];
         } catch (error: any) {
           if (error.code === '23503') {
             this.mostrarError('No se puede eliminar porque ya hay sesiones usando este test.');
@@ -187,13 +176,12 @@ export class AdminNutriComponent implements OnInit {
     });
   }
 
+  // ==========================================
+  // GESTIÓN DE SESIONES (LOGÍSTICA)
+  // ==========================================
   abrirNuevo() {
     this.evalLogistica = {
-      id: null,
-      fecha: new Date(),
-      tipo_id: null,
-      nutricionista_id: null, 
-      estado: 'PENDIENTE'
+      id: null, fecha: new Date(), tipo_id: null, nutricionista_id: null, estado: 'PENDIENTE'
     };
     this.displayMainDialog = true;
     this.cdr.detectChanges();
@@ -217,20 +205,18 @@ export class AdminNutriComponent implements OnInit {
 
     try {
       this.loading = true;
-      this.cdr.detectChanges();
-      
       const payload = {
         tipo_id: this.evalLogistica.tipo_id,
         nutricionista_id: this.evalLogistica.nutricionista_id,
-        fecha: this.evalLogistica.fecha.toISOString().split('T')[0],
+        fecha: this.formatearFecha(this.evalLogistica.fecha),
         estado: this.evalLogistica.estado
       };
 
       if (this.evalLogistica.id) {
-        await this.supabase.actualizarEvaluacionNutri(this.evalLogistica.id, payload);
+        await this.healthService.actualizarEvaluacionNutri(this.evalLogistica.id, payload);
         this.mostrarExito('Sesión actualizada correctamente');
       } else {
-        await this.supabase.crearEvaluacionNutri(payload);
+        await this.healthService.crearEvaluacionNutri(payload);
         this.mostrarExito('Sesión creada correctamente');
       }
 
@@ -246,7 +232,7 @@ export class AdminNutriComponent implements OnInit {
 
   eliminarSesion(sesion: any) {
     this.confirmationService.confirm({
-      message: `¿Estás seguro de eliminar la sesión "${sesion.tipo_evaluacion?.nombre}"? Se perderán todos los archivos adjuntos de los estudiantes.`,
+      message: `¿Estás seguro de eliminar la sesión "${sesion.tipo_evaluacion?.nombre}"? Se perderán todos los archivos adjuntos.`,
       header: 'Confirmar Eliminación',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Sí, Eliminar',
@@ -256,7 +242,7 @@ export class AdminNutriComponent implements OnInit {
         try {
           this.loading = true;
           this.cdr.detectChanges();
-          await this.supabase.eliminarEvaluacionNutri(sesion.id);
+          await this.healthService.eliminarEvaluacionNutri(sesion.id);
           this.mostrarExito('Sesión eliminada correctamente');
           await this.cargarSesiones();
         } catch (error) {
@@ -269,24 +255,24 @@ export class AdminNutriComponent implements OnInit {
     });
   }
 
+  // ==========================================
+  // CALIFICACIÓN Y ARCHIVOS
+  // ==========================================
   async abrirCalificador(sesion: any) {
     this.evalLogistica = sesion;
-    
-    try {
-      this.loading = true;
-      this.cdr.detectChanges();
+    this.loading = true;
+    this.cdr.detectChanges();
 
-      const resResultados = await this.supabase.getResultadosPorSesionNutri(sesion.id);
-      const resultadosPrevios = resResultados.data || [];
+    try {
+      const { data: resultadosPrevios } = await this.healthService.getResultadosPorSesionNutri(sesion.id);
 
       this.estudiantes.forEach(est => {
-        const resultadoGuardado = resultadosPrevios.find(r => r.estudiante_id === est.id);
+        const resultadoGuardado = resultadosPrevios?.find((r: any) => r.estudiante_id === est.id);
 
         est.archivoSeleccionado = null; 
         est.archivo_url_previo = resultadoGuardado ? resultadoGuardado.archivo_url : null;
         est.observacion = resultadoGuardado ? resultadoGuardado.observaciones : '';
 
-        // ✅ Extraer y limpiar el nombre del archivo de la URL
         if (est.archivo_url_previo) {
           const urlParts = est.archivo_url_previo.split('/');
           const rawName = decodeURIComponent(urlParts[urlParts.length - 1]);
@@ -299,7 +285,7 @@ export class AdminNutriComponent implements OnInit {
 
       this.displayGradesDialog = true;
     } catch (error) {
-      this.mostrarError('Error al cargar los resultados previos.');
+      this.mostrarError('Error al cargar resultados.');
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
@@ -308,7 +294,6 @@ export class AdminNutriComponent implements OnInit {
 
   onFileSelected(event: any, estudiante: any) {
     const file = event.target.files[0];
-    
     if (file) {
       if (file.type !== 'application/pdf') {
         this.mostrarError('Formato inválido. Sube únicamente archivos PDF.');
@@ -317,7 +302,6 @@ export class AdminNutriComponent implements OnInit {
         this.cdr.detectChanges();
         return;
       }
-      
       estudiante.archivoSeleccionado = file;
       this.cdr.detectChanges();
     }
@@ -326,15 +310,14 @@ export class AdminNutriComponent implements OnInit {
   limpiarFila(estudiante: any, fileInput: any) {
     estudiante.archivoSeleccionado = null;
     estudiante.observacion = '';
-    if(fileInput) fileInput.value = ''; // Limpia el input nativo oculto
+    if(fileInput) fileInput.value = ''; 
     this.cdr.detectChanges();
   }
 
   async guardarNotasFinales() {
     const porGuardar = this.estudiantes.filter(e => e.archivoSeleccionado);
-
     if (porGuardar.length === 0) {
-      this.mostrarError('No has adjuntado ningún archivo nuevo para guardar.');
+      this.mostrarError('No hay archivos nuevos para guardar.');
       return;
     }
 
@@ -344,9 +327,9 @@ export class AdminNutriComponent implements OnInit {
       this.cdr.detectChanges();
 
       for (const est of porGuardar) {
-        const archivoUrl = await this.supabase.subirArchivoNutricion(est.archivoSeleccionado, est.archivoSeleccionado.name);
+        const archivoUrl = await this.storageService.subirArchivoNutricion(est.archivoSeleccionado, est.archivoSeleccionado.name);
         
-        await this.supabase.guardarResultadoNutri({
+        await this.healthService.guardarResultadoNutri({
           evaluacion_id: this.evalLogistica.id,
           estudiante_id: est.id,
           archivo_url: archivoUrl,
@@ -354,9 +337,9 @@ export class AdminNutriComponent implements OnInit {
         });
       }
 
-      this.mostrarExito('Todos los resultados se guardaron correctamente');
+      this.mostrarExito('Resultados guardados correctamente');
       this.displayGradesDialog = false;
-
+      await this.cargarSesiones();
     } catch (error: any) {
       if (error.code === '23505') {
          this.mostrarError('Algunos estudiantes ya tenían resultados registrados en esta sesión.');
@@ -369,12 +352,33 @@ export class AdminNutriComponent implements OnInit {
     }
   }
 
-  mostrarExito(mensaje: string) {
-    this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
-    this.cdr.detectChanges();
+  // ==========================================
+  // HELPERS
+  // ==========================================
+  aplicarFiltros() {
+    this.sesionesFiltradas = this.sesiones.filter(s => {
+      let f = true, p = true, e = true;
+      if (this.filtroFecha) f = s.fecha === this.formatearFecha(this.filtroFecha);
+      if (this.filtroPrueba) p = s.tipo_id === this.filtroPrueba.id;
+      if (this.filtroEstado) e = s.estado === this.filtroEstado;
+      return f && p && e;
+    });
   }
-  mostrarError(mensaje: string) {
-    this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
-    this.cdr.detectChanges();
+
+  limpiarFiltros() {
+    this.filtroFecha = null;
+    this.filtroPrueba = null;
+    this.filtroEstado = null;
+    this.aplicarFiltros();
   }
+
+  formatearFecha(date: Date): string {
+    const d = new Date(date);
+    return `${d.getFullYear()}-${('0' + (d.getMonth() + 1)).slice(-2)}-${('0' + d.getDate()).slice(-2)}`;
+  }
+
+  mostrarExito(m: string) { this.messageService.add({ severity: 'success', summary: 'Éxito', detail: m }); }
+  mostrarError(m: string) { this.messageService.add({ severity: 'error', summary: 'Error', detail: m }); }
+
+
 }

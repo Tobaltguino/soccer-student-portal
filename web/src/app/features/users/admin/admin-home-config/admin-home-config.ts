@@ -16,7 +16,9 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SelectModule } from 'primeng/select'; 
 import { FileUploadModule } from 'primeng/fileupload';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
+// 🚀 CAMBIO 1: Importamos los nuevos servicios especializados
+import { ContentService } from '../../../../core/services/content.service';
+import { StorageService } from '../../../../core/services/storage.service';
 
 @Component({
   selector: 'app-admin-home-config',
@@ -41,13 +43,13 @@ export class AdminHomeConfigComponent implements OnInit {
   metodologias: any[] = [];
   programas: any[] = [];
   alianzas: any[] = [];
-  auspiciadores: any[] = []; // ✅ NUEVA LISTA
+  auspiciadores: any[] = [];
 
   // Dialogos
   displayDialogMetodologia = false;
   displayDialogPrograma = false;
   displayDialogAlianza = false;
-  displayDialogAuspiciador = false; // ✅ NUEVO DIALOGO
+  displayDialogAuspiciador = false;
 
   // Formularios temporales
   itemForm: any = {};
@@ -57,7 +59,6 @@ export class AdminHomeConfigComponent implements OnInit {
   previewUrl: string | null = null;
   uploadingLogo = false;
 
-  // Lista de iconos
   listaIconos = [
     { label: 'Estrella Rellena', value: 'pi-star-fill' },
     { label: 'Estrella', value: 'pi-star' },
@@ -80,7 +81,9 @@ export class AdminHomeConfigComponent implements OnInit {
   ];
 
   constructor(
-    private supabase: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos ContentService y StorageService
+    private contentService: ContentService,
+    private storageService: StorageService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private cdr: ChangeDetectorRef 
@@ -95,19 +98,20 @@ export class AdminHomeConfigComponent implements OnInit {
     this.cdr.detectChanges(); 
 
     try {
+      // 🚀 CAMBIO 3: Todas las consultas a través de contentService
       const [conf, met, prog, ali, aus] = await Promise.all([
-        this.supabase.getConfiguracionWeb(),
-        this.supabase.getWebMetodologias(),
-        this.supabase.getWebProgramas(),
-        this.supabase.getWebAlianzas(),
-        this.supabase.getWebAuspiciadores() // ✅ CARGA DE AUSPICIADORES
+        this.contentService.getConfiguracionWeb(),
+        this.contentService.getWebMetodologias(),
+        this.contentService.getWebProgramas(),
+        this.contentService.getWebAlianzas(),
+        this.contentService.getWebAuspiciadores()
       ]);
 
       this.config = conf.data || {};
       this.metodologias = met.data || [];
       this.programas = prog.data || [];
       this.alianzas = ali.data || [];
-      this.auspiciadores = aus.data || []; // ✅ ASIGNACIÓN
+      this.auspiciadores = aus.data || [];
     } catch (e) {
       this.mostrarError('Error al cargar la información');
     } finally {
@@ -116,13 +120,13 @@ export class AdminHomeConfigComponent implements OnInit {
     }
   }
 
-  // --- GUARDAR CONFIGURACIÓN GENERAL ---
   async guardarConfigGeneral() {
     this.loading = true;
     this.cdr.detectChanges();
 
     try {
-      await this.supabase.updateConfiguracionWeb(this.config);
+      // 🚀 CAMBIO 4: Actualización vía contentService
+      await this.contentService.updateConfiguracionWeb(this.config);
       this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Configuración actualizada' });
     } catch (e) {
       this.mostrarError('No se pudo actualizar la configuración');
@@ -132,7 +136,7 @@ export class AdminHomeConfigComponent implements OnInit {
     }
   }
 
-  // --- MANEJO DE LISTAS (GENÉRICO) ---
+  // --- MANEJO DE LISTAS ---
   
   abrirNuevo(tipo: string) {
     this.isEditing = false;
@@ -143,7 +147,6 @@ export class AdminHomeConfigComponent implements OnInit {
         this.previewUrl = null;
         this.displayDialogAlianza = true;
     }
-    // ✅ MANEJO AUSPICIADOR
     if (tipo === 'auspiciador') {
         this.previewUrl = null;
         this.displayDialogAuspiciador = true;
@@ -159,7 +162,6 @@ export class AdminHomeConfigComponent implements OnInit {
         this.previewUrl = null; 
         this.displayDialogAlianza = true;
     }
-    // ✅ MANEJO AUSPICIADOR
     if (tipo === 'auspiciador') {
         this.previewUrl = null;
         this.displayDialogAuspiciador = true;
@@ -176,7 +178,7 @@ export class AdminHomeConfigComponent implements OnInit {
     this.previewUrl = null;
   }
 
-  // --- SUBIDA DE IMAGEN (Ahora reutilizable) ---
+  // --- SUBIDA DE IMAGEN ---
   async onFileSelected(event: any, bucket: string = 'alianzas') {
     const file: File = event.files[0];
     if (file) {
@@ -186,8 +188,8 @@ export class AdminHomeConfigComponent implements OnInit {
       reader.onload = (e: any) => this.previewUrl = e.target.result;
       reader.readAsDataURL(file);
 
-      // Usamos el bucket 'alianzas' para todo lo de la web
-      const url = await this.supabase.subirFoto(file, bucket); 
+      // 🚀 CAMBIO 5: Subida de imagen a través de storageService
+      const url = await this.storageService.subirFoto(file, bucket); 
       
       if (url) {
         this.itemForm.imagen_url = url;
@@ -201,12 +203,12 @@ export class AdminHomeConfigComponent implements OnInit {
     }
   }
 
-  // --- GUARDADO DE TARJETAS ---
+  // --- GUARDADO DE TARJETAS (Vía contentService) ---
 
   async guardarMetodologia() {
     try {
-      if (this.isEditing) await this.supabase.updateWebMetodologia(this.itemForm.id, this.itemForm);
-      else await this.supabase.createWebMetodologia(this.itemForm);
+      if (this.isEditing) await this.contentService.updateWebMetodologia(this.itemForm.id, this.itemForm);
+      else await this.contentService.createWebMetodologia(this.itemForm);
       
       this.displayDialogMetodologia = false;
       this.cargarTodo(); 
@@ -216,8 +218,8 @@ export class AdminHomeConfigComponent implements OnInit {
 
   async guardarPrograma() {
     try {
-      if (this.isEditing) await this.supabase.updateWebPrograma(this.itemForm.id, this.itemForm);
-      else await this.supabase.createWebPrograma(this.itemForm);
+      if (this.isEditing) await this.contentService.updateWebPrograma(this.itemForm.id, this.itemForm);
+      else await this.contentService.createWebPrograma(this.itemForm);
       
       this.displayDialogPrograma = false;
       this.cargarTodo();
@@ -228,8 +230,8 @@ export class AdminHomeConfigComponent implements OnInit {
   async guardarAlianza() {
     try {
       this.loading = true;
-      if (this.isEditing) await this.supabase.updateWebAlianza(this.itemForm.id, this.itemForm);
-      else await this.supabase.createWebAlianza(this.itemForm);
+      if (this.isEditing) await this.contentService.updateWebAlianza(this.itemForm.id, this.itemForm);
+      else await this.contentService.createWebAlianza(this.itemForm);
       
       this.cerrarModalAlianza();
       this.cargarTodo();
@@ -241,12 +243,11 @@ export class AdminHomeConfigComponent implements OnInit {
     }
   }
 
-  // ✅ GUARDAR AUSPICIADOR
   async guardarAuspiciador() {
     try {
       this.loading = true;
-      if (this.isEditing) await this.supabase.updateWebAuspiciador(this.itemForm.id, this.itemForm);
-      else await this.supabase.createWebAuspiciador(this.itemForm);
+      if (this.isEditing) await this.contentService.updateWebAuspiciador(this.itemForm.id, this.itemForm);
+      else await this.contentService.createWebAuspiciador(this.itemForm);
       
       this.cerrarModalAuspiciador();
       this.cargarTodo();
@@ -268,10 +269,11 @@ export class AdminHomeConfigComponent implements OnInit {
       acceptButtonStyleClass: 'p-button-danger',
       accept: async () => {
         try {
-          if (tipo === 'metodologia') await this.supabase.deleteWebMetodologia(id);
-          if (tipo === 'programa') await this.supabase.deleteWebPrograma(id);
-          if (tipo === 'alianza') await this.supabase.deleteWebAlianza(id);
-          if (tipo === 'auspiciador') await this.supabase.deleteWebAuspiciador(id); // ✅ ELIMINAR AUSPICIADOR
+          // 🚀 CAMBIO 6: Eliminaciones vía contentService
+          if (tipo === 'metodologia') await this.contentService.deleteWebMetodologia(id);
+          if (tipo === 'programa') await this.contentService.deleteWebPrograma(id);
+          if (tipo === 'alianza') await this.contentService.deleteWebAlianza(id);
+          if (tipo === 'auspiciador') await this.contentService.deleteWebAuspiciador(id); 
           
           this.cargarTodo();
           this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Elemento eliminado correctamente' });
