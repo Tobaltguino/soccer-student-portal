@@ -15,8 +15,8 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SelectModule } from 'primeng/select'; 
 import { FileUploadModule } from 'primeng/fileupload';
+import { InputNumberModule } from 'primeng/inputnumber'; // 🚀 Importante para el orden
 
-// 🚀 CAMBIO 1: Importamos los nuevos servicios especializados
 import { ContentService } from '../../../../core/services/content.service';
 import { StorageService } from '../../../../core/services/storage.service';
 
@@ -26,7 +26,7 @@ import { StorageService } from '../../../../core/services/storage.service';
   imports: [
     CommonModule, FormsModule, CardModule, ButtonModule, InputTextModule, 
     TextareaModule, TabsModule, TableModule, DialogModule, ToastModule, 
-    ConfirmDialogModule, SelectModule, FileUploadModule
+    ConfirmDialogModule, SelectModule, FileUploadModule, InputNumberModule
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './admin-home-config.html',
@@ -35,27 +35,22 @@ import { StorageService } from '../../../../core/services/storage.service';
 export class AdminHomeConfigComponent implements OnInit {
 
   loading = false;
-
-  // Datos Generales
   config: any = {};
 
-  // Listas
+  // Listas ordenadas
   metodologias: any[] = [];
   programas: any[] = [];
   alianzas: any[] = [];
   auspiciadores: any[] = [];
 
-  // Dialogos
+  // Diálogos
   displayDialogMetodologia = false;
   displayDialogPrograma = false;
   displayDialogAlianza = false;
   displayDialogAuspiciador = false;
 
-  // Formularios temporales
   itemForm: any = {};
   isEditing = false;
-
-  // Variables para imágenes
   previewUrl: string | null = null;
   uploadingLogo = false;
 
@@ -81,7 +76,6 @@ export class AdminHomeConfigComponent implements OnInit {
   ];
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos ContentService y StorageService
     private contentService: ContentService,
     private storageService: StorageService,
     private messageService: MessageService,
@@ -98,7 +92,6 @@ export class AdminHomeConfigComponent implements OnInit {
     this.cdr.detectChanges(); 
 
     try {
-      // 🚀 CAMBIO 3: Todas las consultas a través de contentService
       const [conf, met, prog, ali, aus] = await Promise.all([
         this.contentService.getConfiguracionWeb(),
         this.contentService.getWebMetodologias(),
@@ -125,7 +118,6 @@ export class AdminHomeConfigComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      // 🚀 CAMBIO 4: Actualización vía contentService
       await this.contentService.updateConfiguracionWeb(this.config);
       this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Configuración actualizada' });
     } catch (e) {
@@ -136,36 +128,43 @@ export class AdminHomeConfigComponent implements OnInit {
     }
   }
 
+  // --- LÓGICA DE ORDEN AUTOMÁTICO ---
+  private calcularSiguienteOrden(lista: any[]): number {
+    if (!lista || lista.length === 0) return 1;
+    const max = Math.max(...lista.map(item => item.orden || 0));
+    return max + 1;
+  }
+
   // --- MANEJO DE LISTAS ---
   
   abrirNuevo(tipo: string) {
     this.isEditing = false;
-    this.itemForm = { orden: 0 };
+    this.previewUrl = null;
+    
+    // Sugerimos automáticamente el siguiente número de orden
+    let ordenBase = 1;
+    if (tipo === 'metodologia') ordenBase = this.calcularSiguienteOrden(this.metodologias);
+    if (tipo === 'programa') ordenBase = this.calcularSiguienteOrden(this.programas);
+    if (tipo === 'alianza') ordenBase = this.calcularSiguienteOrden(this.alianzas);
+    if (tipo === 'auspiciador') ordenBase = this.calcularSiguienteOrden(this.auspiciadores);
+
+    this.itemForm = { orden: ordenBase };
+
     if (tipo === 'metodologia') this.displayDialogMetodologia = true;
     if (tipo === 'programa') this.displayDialogPrograma = true;
-    if (tipo === 'alianza') {
-        this.previewUrl = null;
-        this.displayDialogAlianza = true;
-    }
-    if (tipo === 'auspiciador') {
-        this.previewUrl = null;
-        this.displayDialogAuspiciador = true;
-    }
+    if (tipo === 'alianza') this.displayDialogAlianza = true;
+    if (tipo === 'auspiciador') this.displayDialogAuspiciador = true;
   }
 
   editarItem(tipo: string, item: any) {
     this.isEditing = true;
     this.itemForm = { ...item };
+    this.previewUrl = null; 
+
     if (tipo === 'metodologia') this.displayDialogMetodologia = true;
     if (tipo === 'programa') this.displayDialogPrograma = true;
-    if (tipo === 'alianza') {
-        this.previewUrl = null; 
-        this.displayDialogAlianza = true;
-    }
-    if (tipo === 'auspiciador') {
-        this.previewUrl = null;
-        this.displayDialogAuspiciador = true;
-    }
+    if (tipo === 'alianza') this.displayDialogAlianza = true;
+    if (tipo === 'auspiciador') this.displayDialogAuspiciador = true;
   }
 
   cerrarModalAlianza() {
@@ -188,7 +187,6 @@ export class AdminHomeConfigComponent implements OnInit {
       reader.onload = (e: any) => this.previewUrl = e.target.result;
       reader.readAsDataURL(file);
 
-      // 🚀 CAMBIO 5: Subida de imagen a través de storageService
       const url = await this.storageService.subirFoto(file, bucket); 
       
       if (url) {
@@ -203,59 +201,41 @@ export class AdminHomeConfigComponent implements OnInit {
     }
   }
 
-  // --- GUARDADO DE TARJETAS (Vía contentService) ---
+  // --- GUARDADO GENÉRICO DE TARJETAS ---
 
-  async guardarMetodologia() {
+  async guardarItem(tipo: string) {
+    this.loading = true;
+    this.cdr.detectChanges();
+
     try {
-      if (this.isEditing) await this.contentService.updateWebMetodologia(this.itemForm.id, this.itemForm);
-      else await this.contentService.createWebMetodologia(this.itemForm);
-      
-      this.displayDialogMetodologia = false;
+      if (tipo === 'metodologia') {
+        if (this.isEditing) await this.contentService.updateWebMetodologia(this.itemForm.id, this.itemForm);
+        else await this.contentService.createWebMetodologia(this.itemForm);
+        this.displayDialogMetodologia = false;
+      }
+      else if (tipo === 'programa') {
+        if (this.isEditing) await this.contentService.updateWebPrograma(this.itemForm.id, this.itemForm);
+        else await this.contentService.createWebPrograma(this.itemForm);
+        this.displayDialogPrograma = false;
+      }
+      else if (tipo === 'alianza') {
+        if (this.isEditing) await this.contentService.updateWebAlianza(this.itemForm.id, this.itemForm);
+        else await this.contentService.createWebAlianza(this.itemForm);
+        this.cerrarModalAlianza();
+      }
+      else if (tipo === 'auspiciador') {
+        if (this.isEditing) await this.contentService.updateWebAuspiciador(this.itemForm.id, this.itemForm);
+        else await this.contentService.createWebAuspiciador(this.itemForm);
+        this.cerrarModalAuspiciador();
+      }
+
       this.cargarTodo(); 
-      this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Metodología guardada' });
-    } catch (e) { this.mostrarError('Error al guardar'); }
-  }
-
-  async guardarPrograma() {
-    try {
-      if (this.isEditing) await this.contentService.updateWebPrograma(this.itemForm.id, this.itemForm);
-      else await this.contentService.createWebPrograma(this.itemForm);
-      
-      this.displayDialogPrograma = false;
-      this.cargarTodo();
-      this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Programa guardado' });
-    } catch (e) { this.mostrarError('Error al guardar'); }
-  }
-
-  async guardarAlianza() {
-    try {
-      this.loading = true;
-      if (this.isEditing) await this.contentService.updateWebAlianza(this.itemForm.id, this.itemForm);
-      else await this.contentService.createWebAlianza(this.itemForm);
-      
-      this.cerrarModalAlianza();
-      this.cargarTodo();
-      this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Alianza guardada' });
+      this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Elemento guardado correctamente' });
     } catch (e) { 
       this.mostrarError('Error al guardar'); 
     } finally {
       this.loading = false;
-    }
-  }
-
-  async guardarAuspiciador() {
-    try {
-      this.loading = true;
-      if (this.isEditing) await this.contentService.updateWebAuspiciador(this.itemForm.id, this.itemForm);
-      else await this.contentService.createWebAuspiciador(this.itemForm);
-      
-      this.cerrarModalAuspiciador();
-      this.cargarTodo();
-      this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Auspiciador guardado' });
-    } catch (e) { 
-      this.mostrarError('Error al guardar'); 
-    } finally {
-      this.loading = false;
+      this.cdr.detectChanges();
     }
   }
 
@@ -269,7 +249,6 @@ export class AdminHomeConfigComponent implements OnInit {
       acceptButtonStyleClass: 'p-button-danger',
       accept: async () => {
         try {
-          // 🚀 CAMBIO 6: Eliminaciones vía contentService
           if (tipo === 'metodologia') await this.contentService.deleteWebMetodologia(id);
           if (tipo === 'programa') await this.contentService.deleteWebPrograma(id);
           if (tipo === 'alianza') await this.contentService.deleteWebAlianza(id);

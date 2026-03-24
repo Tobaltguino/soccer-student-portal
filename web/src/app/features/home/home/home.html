@@ -125,6 +125,14 @@
                     </div>
                     <h3 class="text-wrap">{{ a.nombre }}</h3>
                     <p class="text-wrap flex-grow-1">{{ a.descripcion }}</p>
+                    
+                    <div class="mt-4" *ngIf="a.instagram_url">
+                        <button pButton label="Ver Instagram" icon="pi pi-instagram" 
+                                class="btn-instagram w-full justify-content-center" 
+                                (click)="irA(a.instagram_url)">
+                        </button>
+                    </div>
+
                 </div>
             </div>
         </div>

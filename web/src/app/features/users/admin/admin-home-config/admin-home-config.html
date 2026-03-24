@@ -6,7 +6,7 @@
         <div class="header-content">
             <div>
                 <h1 class="m-0 text-main">Editor de Landing Page</h1>
-                <p class="text-secondary m-0 mt-1">Configura la información pública que ven los visitantes.</p>
+                <p class="text-secondary m-0 mt-1">Configura la información pública y el orden en que la ven los visitantes.</p>
             </div>
         </div>
     </header>
@@ -86,11 +86,16 @@
                     <p-table [value]="metodologias" styleClass="p-datatable-sm">
                         <ng-template pTemplate="header">
                             <tr>
-                                <th>Icono</th><th>Título</th><th>Descripción</th><th class="text-center">Acciones</th>
+                                <th style="width: 5rem">Orden</th>
+                                <th>Icono</th>
+                                <th>Título</th>
+                                <th>Descripción</th>
+                                <th class="text-center">Acciones</th>
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="body" let-item>
                             <tr>
+                                <td class="font-bold text-primary"># {{item.orden}}</td>
                                 <td><i class="pi {{item.icono}} text-xl text-primary"></i></td>
                                 <td class="font-bold text-main">{{item.titulo}}</td>
                                 <td>{{item.descripcion}}</td>
@@ -112,11 +117,16 @@
                     <p-table [value]="programas" styleClass="p-datatable-sm">
                         <ng-template pTemplate="header">
                             <tr>
-                                <th>Diseño</th><th>Título</th><th>Descripción</th><th class="text-center">Acciones</th>
+                                <th style="width: 5rem">Orden</th>
+                                <th>Diseño</th>
+                                <th>Título</th>
+                                <th>Descripción</th>
+                                <th class="text-center">Acciones</th>
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="body" let-item>
                             <tr>
+                                <td class="font-bold text-primary"># {{item.orden}}</td>
                                 <td>
                                     <div class="{{item.color_fondo}} p-2 border-round text-center w-3rem mx-auto">
                                         <i class="pi {{item.icono}} {{item.color_texto}} text-lg"></i>
@@ -142,16 +152,27 @@
                     <p-table [value]="alianzas" styleClass="p-datatable-sm">
                         <ng-template pTemplate="header">
                             <tr>
-                                <th>Logo</th><th>Marca</th><th>Descripción</th><th class="text-center">Acciones</th>
+                                <th style="width: 5rem">Orden</th>
+                                <th>Logo</th>
+                                <th>Marca</th>
+                                <th>Descripción</th>
+                                <th>Instagram</th> <th class="text-center">Acciones</th>
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="body" let-item>
                             <tr>
+                                <td class="font-bold text-primary"># {{item.orden}}</td>
                                 <td> 
                                     <img [src]="item.imagen_url || 'assets/images/default-sponsor.png'" alt="Logo" class="logo-tabla bg-white p-1 border-1 surface-border">
                                 </td>
                                 <td class="font-bold text-main">{{item.nombre}}</td>
                                 <td>{{item.descripcion}}</td>
+                                <td>
+                                    <a *ngIf="item.instagram_url" [href]="item.instagram_url" target="_blank" class="text-primary no-underline font-medium hover:underline">
+                                        <i class="pi pi-external-link mr-1"></i> Ver Link
+                                    </a>
+                                    <span *ngIf="!item.instagram_url" class="text-500 text-sm">Sin Link</span>
+                                </td>
                                 <td>
                                     <div class="action-buttons">
                                         <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning" (click)="editarItem('alianza', item)"></button>
@@ -170,11 +191,16 @@
                     <p-table [value]="auspiciadores" styleClass="p-datatable-sm">
                         <ng-template pTemplate="header">
                             <tr>
-                                <th>Logo</th><th>Auspiciador</th><th>Instagram</th><th class="text-center">Acciones</th>
+                                <th style="width: 5rem">Orden</th>
+                                <th>Logo</th>
+                                <th>Auspiciador</th>
+                                <th>Instagram</th>
+                                <th class="text-center">Acciones</th>
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="body" let-item>
                             <tr>
+                                <td class="font-bold text-primary"># {{item.orden}}</td>
                                 <td> 
                                     <img [src]="item.imagen_url || 'assets/images/default-sponsor.png'" alt="Logo" class="logo-tabla bg-white p-1 border-1 surface-border">
                                 </td>
@@ -202,6 +228,10 @@
 
     <p-dialog [(visible)]="displayDialogMetodologia" [header]="isEditing ? 'Editar Metodología' : 'Nueva Metodología'" [modal]="true" styleClass="p-fluid" [style]="{width: '450px'}">
         <div class="field mt-2">
+            <label>Orden de Aparición</label>
+            <p-inputNumber [(ngModel)]="itemForm.orden" [showButtons]="true" [min]="1"></p-inputNumber>
+        </div>
+        <div class="field">
             <label>Icono Visual</label>
             <p-select [options]="listaIconos" [(ngModel)]="itemForm.icono" optionLabel="label" optionValue="value" placeholder="Selecciona un icono" appendTo="body" styleClass="w-full">
                 <ng-template pTemplate="selectedItem" let-selectedOption>
@@ -228,12 +258,16 @@
         </div>
         <ng-template pTemplate="footer">
             <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="displayDialogMetodologia = false"></button>
-            <button pButton label="Guardar" icon="pi pi-check" (click)="guardarMetodologia()"></button>
+            <button pButton label="Guardar" icon="pi pi-check" (click)="guardarItem('metodologia')"></button>
         </ng-template>
     </p-dialog>
 
     <p-dialog [(visible)]="displayDialogPrograma" [header]="isEditing ? 'Editar Categoría' : 'Nueva Categoría'" [modal]="true" styleClass="p-fluid" [style]="{width: '450px'}">
         <div class="formgrid grid mt-2">
+            <div class="field col-12">
+                <label>Orden de Aparición</label>
+                <p-inputNumber [(ngModel)]="itemForm.orden" [showButtons]="true" [min]="1"></p-inputNumber>
+            </div>
             <div class="field col-12">
                 <label>Título</label>
                 <input pInputText [(ngModel)]="itemForm.titulo" placeholder="Ej: Iniciación (5 a 9 años)" />
@@ -270,11 +304,15 @@
         </div>
         <ng-template pTemplate="footer">
             <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="displayDialogPrograma = false"></button>
-            <button pButton label="Guardar" icon="pi pi-check" (click)="guardarPrograma()"></button>
+            <button pButton label="Guardar" icon="pi pi-check" (click)="guardarItem('programa')"></button>
         </ng-template>
     </p-dialog>
 
     <p-dialog [(visible)]="displayDialogAlianza" [header]="isEditing ? 'Editar Alianza' : 'Nueva Alianza'" [modal]="true" styleClass="p-fluid" [style]="{width: '450px'}">
+        <div class="field flex flex-column mt-3">
+            <label>Orden de Aparición</label>
+            <p-inputNumber [(ngModel)]="itemForm.orden" [showButtons]="true" [min]="1"></p-inputNumber>
+        </div>
         <div class="field flex flex-column mt-3">
             <label class="text-center mb-2">Logo de la Alianza</label>
             <div class="sponsor-preview-container shadow-1">
@@ -299,13 +337,23 @@
             <textarea pTextarea [(ngModel)]="itemForm.descripcion" rows="3"></textarea>
         </div>
 
+        <div class="field">
+            <label><i class="pi pi-instagram mr-1 text-primary"></i> Link de Instagram</label>
+            <input pInputText [(ngModel)]="itemForm.instagram_url" placeholder="https://instagram.com/..." />
+            <small class="text-500 mt-1">Opcional. Copia y pega la URL completa del perfil.</small>
+        </div>
+
         <ng-template pTemplate="footer">
             <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarModalAlianza()"></button>
-            <button pButton label="Guardar" icon="pi pi-check" (click)="guardarAlianza()" [loading]="uploadingLogo"></button>
+            <button pButton label="Guardar" icon="pi pi-check" (click)="guardarItem('alianza')" [loading]="uploadingLogo"></button>
         </ng-template>
     </p-dialog>
 
     <p-dialog [(visible)]="displayDialogAuspiciador" [header]="isEditing ? 'Editar Auspiciador' : 'Nuevo Auspiciador'" [modal]="true" styleClass="p-fluid" [style]="{width: '450px'}">
+        <div class="field flex flex-column mt-3">
+            <label>Orden de Aparición</label>
+            <p-inputNumber [(ngModel)]="itemForm.orden" [showButtons]="true" [min]="1"></p-inputNumber>
+        </div>
         <div class="field flex flex-column mt-3">
             <label class="text-center mb-2">Logo del Auspiciador</label>
             <div class="sponsor-preview-container shadow-1">
@@ -338,7 +386,7 @@
 
         <ng-template pTemplate="footer">
             <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarModalAuspiciador()"></button>
-            <button pButton label="Guardar" icon="pi pi-check" (click)="guardarAuspiciador()" [loading]="uploadingLogo"></button>
+            <button pButton label="Guardar" icon="pi pi-check" (click)="guardarItem('auspiciador')" [loading]="uploadingLogo"></button>
         </ng-template>
     </p-dialog>
 </div>
