@@ -81,14 +81,14 @@ export class KineDashboardComponent implements OnInit {
         const hoyStr = new Date().toISOString().split('T')[0];
 
         // 3. 🚀 CAMBIO 5: Clases usando academyService
-        const { data: clases } = await this.academyService.getClasesPorGruposYFecha(misGrupoIds, hoyStr);
+        const { data: clases } = await this.academyService.getClasesPorGrupos(misGrupoIds, hoyStr);
 
         const todasClases = clases || [];
         this.clasesHoy = todasClases.filter((c: any) => c.fecha === hoyStr);
         this.proximaClase = todasClases.length > 0 ? todasClases[0] : null;
 
         // 4. 🚀 CAMBIO 6: Alumnos y Cumpleaños usando academyService
-        const { data: alumnos } = await this.academyService.getEstudiantesActivosPorGrupos(misGrupoIds);
+        const { data: alumnos } = await this.academyService.getTodosEstudiantesPorGrupos(misGrupoIds, true);
 
         if (alumnos) {
           this.totalAlumnos = alumnos.length;

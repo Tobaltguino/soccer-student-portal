@@ -125,7 +125,7 @@ export class KineScheduleComponent implements OnInit {
         const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
 
         // 🚀 CAMBIO 6: AcademyService para traer las clases de esos grupos (¡La función que hicimos antes!)
-        const { data: clases, error } = await this.academyService.getClasesPorGruposYFecha(misGrupoIds, inicioMes);
+        const { data: clases, error } = await this.academyService.getClasesPorGrupos(misGrupoIds, inicioMes);
         if (error) throw error;
 
         const eventos = (clases || []).map((clase: any) => {

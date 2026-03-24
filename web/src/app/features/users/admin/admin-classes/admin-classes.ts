@@ -156,7 +156,7 @@ export class AdminClassesComponent implements OnInit {
     }));
 
     // 🚀 CAMBIO 7: Usamos academyService
-    const { error } = await this.academyService.saveAsistencia(registros);
+    const { error } = await this.academyService.guardarAsistenciaMasiva(registros);
     
     if (!error) {
       this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Asistencia actualizada correctamente' });
@@ -215,10 +215,10 @@ export class AdminClassesComponent implements OnInit {
     let result;
     if (this.isEditing) {
       // 🚀 CAMBIO 8: Usamos academyService
-      result = await this.academyService.updateClase(this.claseForm.id, datosParaEnviar);
+      result = await this.academyService.actualizarClase(this.claseForm.id, datosParaEnviar);
     } else {
       // 🚀 CAMBIO 9: Usamos academyService
-      result = await this.academyService.createClase(datosParaEnviar);
+      result = await this.academyService.crearClase(datosParaEnviar);
     }
 
     if (result.error) {

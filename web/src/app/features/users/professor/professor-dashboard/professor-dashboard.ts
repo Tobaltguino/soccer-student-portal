@@ -80,7 +80,7 @@ export class ProfessorDashboardComponent implements OnInit {
         const hoyStr = new Date().toISOString().split('T')[0];
 
         // 3. Clases de Hoy y Próxima Clase (¡Reutilizamos la función que hicimos para el Kine!)
-        const { data: clases } = await this.academyService.getClasesPorGruposYFecha(misGrupoIds, hoyStr);
+        const { data: clases } = await this.academyService.getClasesPorGrupos(misGrupoIds, hoyStr);
 
         const todasClases = clases || [];
         this.clasesHoy = todasClases.filter((c: any) => c.fecha === hoyStr);
@@ -93,7 +93,7 @@ export class ProfessorDashboardComponent implements OnInit {
         }
 
         // 5. Alumnos y Cumpleaños (¡Reutilizamos función del AcademyService!)
-        const { data: alumnos } = await this.academyService.getEstudiantesActivosPorGrupos(misGrupoIds);
+        const { data: alumnos } = await this.academyService.getTodosEstudiantesPorGrupos(misGrupoIds, true);
 
         if (alumnos) {
           this.totalAlumnos = alumnos.length;

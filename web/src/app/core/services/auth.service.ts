@@ -6,16 +6,14 @@ import { SupabaseCoreService } from './supabase-core.service';
 })
 export class AuthService {
   
-  // 💡 OPTIMIZACIÓN: Constante global para no repetir strings (DRY)
+  // 💡 Constante global para no repetir strings (DRY)
   private readonly TABLAS_USUARIOS = ['admins', 'profesores', 'estudiantes', 'kinesiologos', 'nutricionistas'];
   
   // Caché en memoria para no saturar la base de datos buscando el rol
   private rolCache: string | null = null;
 
-  // Inyectamos nuestro servicio Core
   constructor(private supabaseCore: SupabaseCoreService) {}
 
-  // Getter privado para que escribir "this.supabase" siga funcionando igual
   public get supabase() {
     return this.supabaseCore.client;
   }
@@ -29,8 +27,8 @@ export class AuthService {
   }
 
   async logout() {
-    this.limpiarCacheRol(); // Limpiamos la memoria al salir
-    localStorage.removeItem('userRole'); // Limpiamos el rastro del navegador
+    this.limpiarCacheRol(); 
+    localStorage.removeItem('userRole'); 
     return await this.supabase.auth.signOut();
   }
 
@@ -43,12 +41,11 @@ export class AuthService {
   }
 
   // ==========================================
-  // 2. AUTENTICACIÓN POR RUT (Lógica Avanzada)
+  // 2. AUTENTICACIÓN POR RUT
   // ==========================================
 
   async loginConRut(rutInput: string, password: string) {
     for (const tabla of this.TABLAS_USUARIOS) {
-      // 1. Buscamos el email, estado activo y términos
       const { data: userData } = await this.supabase
         .from(tabla)
         .select('email, activo, acepto_terminos')
@@ -56,30 +53,26 @@ export class AuthService {
         .maybeSingle();
 
       if (userData?.email) {
-        // 2. 🛡️ VERIFICACIÓN: Cuenta inactiva
         if (!userData.activo) {
           return { data: null, error: { message: 'Tu cuenta se encuentra desactivada. Contacta al administrador.' }, role: null, aceptoTerminos: false };
         }
 
-        // 3. Intentamos loguear en Auth
         const authResponse = await this.supabase.auth.signInWithPassword({ 
           email: userData.email, 
           password 
         });
 
         if (authResponse.error) {
-          let mensajeError = authResponse.error.message === 'Invalid login credentials' 
+          const mensajeError = authResponse.error.message === 'Invalid login credentials' 
             ? 'Contraseña incorrecta.' 
             : authResponse.error.message;
           return { data: null, error: { message: mensajeError }, role: null, aceptoTerminos: false };
         }
 
-        // ✅ ÉXITO
         return { data: authResponse.data, error: null, role: tabla, aceptoTerminos: userData.acepto_terminos };
       }
     }
     
-    // Si no encontró el RUT en ninguna tabla
     return { data: null, error: { message: `El RUT ${rutInput} no está registrado en ProFutbol.` }, role: null, aceptoTerminos: false };
   }
 
@@ -88,37 +81,28 @@ export class AuthService {
   // ==========================================
 
   async esAdmin(uid: string): Promise<boolean> {
-    const { data, error } = await this.supabase.from('admins').select('id').eq('id', uid).single();
+    const { data, error } = await this.supabase.from('admins').select('id').eq('id', uid).maybeSingle();
     return !(error || !data);
   }
-
-  /**
-   * Obtiene el rol del usuario de forma 100% segura usando un bucle dinámico.
-   */
-  // ==========================================
-  // SEGURIDAD DE RUTAS (GUARD)
-  // ==========================================
   
   // Devuelve el rol real del usuario buscando directamente en las tablas
   async getRolSeguro(email: string): Promise<string> {
     if (!email) return 'login';
 
-    const { data: admin } = await this.supabase.from('admins').select('id').eq('email', email).maybeSingle();
-    if (admin) return 'admin';
-    
-    const { data: est } = await this.supabase.from('estudiantes').select('id').eq('email', email).maybeSingle();
-    if (est) return 'student';
-    
-    const { data: prof } = await this.supabase.from('profesores').select('id').eq('email', email).maybeSingle();
-    if (prof) return 'professor';
-    
-    const { data: kine } = await this.supabase.from('kinesiologos').select('id').eq('email', email).maybeSingle();
-    if (kine) return 'kine';
-    
-    const { data: nutri } = await this.supabase.from('nutricionistas').select('id').eq('email', email).maybeSingle();
-    if (nutri) return 'nutri';
+    const roles: Record<string, string> = {
+      'admins': 'admin',
+      'estudiantes': 'student',
+      'profesores': 'professor',
+      'kinesiologos': 'kine',
+      'nutricionistas': 'nutri'
+    };
 
-    return 'login'; // Si no existe en ninguna tabla, no pasa
+    for (const tabla of Object.keys(roles)) {
+      const { data } = await this.supabase.from(tabla).select('id').eq('email', email).maybeSingle();
+      if (data) return roles[tabla];
+    }
+
+    return 'login'; 
   }
 
   // ==========================================
@@ -177,19 +161,19 @@ export class AuthService {
   }
 
   async updateUsuario(tabla: string, id: string, datos: any, email: string) {
-    // 1. Limpieza de seguridad
+    // 💡 Clonamos los datos para no mutar el objeto original de la UI
+    const datosLimpios = { ...datos };
+
     if (tabla !== 'estudiantes') {
-      delete datos.fecha_nacimiento;
-      delete datos.grupo_id;
+      delete datosLimpios.fecha_nacimiento;
+      delete datosLimpios.grupo_id;
     }
 
-    if (email) datos.email = email;
+    if (email) datosLimpios.email = email;
 
-    // 2. Actualizar datos públicos
-    const { error: dbError } = await this.supabase.from(tabla).update(datos).eq('id', id);
+    const { error: dbError } = await this.supabase.from(tabla).update(datosLimpios).eq('id', id);
     if (dbError) throw dbError; 
 
-    // 3. Actualizar el correo en Auth (Acceso real)
     if (email) {
       const { error: authError } = await this.supabase.rpc('admin_actualizar_email_auth', { usuario_id: id, nuevo_email: email });
       if (authError) throw new Error("Se actualizaron los datos, pero el sistema bloqueó el cambio de correo.");
@@ -202,22 +186,13 @@ export class AuthService {
   }
 
   async getAdmins() {
-    return await this.supabase
-      .from('admins')
-      .select('*')
-      .order('apellido', { ascending: true });
+    return await this.supabase.from('admins').select('*').order('apellido', { ascending: true });
   }
 
   // ==========================================
-  // PERFIL DE USUARIO GLOBAL
+  // 6. PERFIL DE USUARIO GLOBAL
   // ==========================================
   
-  // Busca los datos del usuario navegando por las tablas según su rol
-  // ==========================================
-  // PERFIL DE USUARIO GLOBAL
-  // ==========================================
-  
-  // Busca los datos del usuario navegando por las tablas según su rol
   async getPerfilCompleto(email: string, rolGuardado: string | null) {
     const roleMap: Record<string, { tabla: string, display: string }> = {
       'admin': { tabla: 'admins', display: 'Administrador' },
@@ -229,19 +204,13 @@ export class AuthService {
       'student': { tabla: 'estudiantes', display: 'Estudiante' }
     };
 
-    // 1. Intento rápido: Buscar en la tabla del rol guardado
     if (rolGuardado && roleMap[rolGuardado]) {
       const config = roleMap[rolGuardado];
-      const { data } = await this.supabase
-        .from(config.tabla)
-        .select('*') // 🚀 CAMBIO CLAVE: Traemos TODO (incluyendo tipo_profesor)
-        .eq('email', email)
-        .maybeSingle();
-
+      const { data } = await this.supabase.from(config.tabla).select('*').eq('email', email).maybeSingle();
       if (data) return { data: { ...data, rol_display: config.display }, error: null };
     }
 
-    // 2. Fallback de rescate: Iterar por todas las tablas
+    // Fallback: Si no tiene rol guardado, iteramos ordenadamente
     const tablasFallback = [
       { tabla: 'admins',        rol: 'Administrador' },
       { tabla: 'profesores',    rol: 'Profesor' },
@@ -251,19 +220,10 @@ export class AuthService {
     ];
 
     for (const t of tablasFallback) {
-      const { data } = await this.supabase
-        .from(t.tabla)
-        .select('*') // 🚀 CAMBIO CLAVE: Traemos TODO
-        .eq('email', email)
-        .maybeSingle();
-
+      const { data } = await this.supabase.from(t.tabla).select('*').eq('email', email).maybeSingle();
       if (data) return { data: { ...data, rol_display: t.rol }, error: null };
     }
 
-    // Si no lo encuentra en ningún lado
     return { data: null, error: 'Perfil no encontrado' };
   }
-
-  
-  
 }
