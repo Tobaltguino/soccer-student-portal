@@ -2,8 +2,6 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
-
 // Importaciones de PrimeNG
 import { TableModule } from 'primeng/table';
 import { DialogModule } from 'primeng/dialog';
@@ -15,6 +13,10 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
+// 🚀 CAMBIO 1: Importamos los servicios de dominio correspondientes
+import { HealthService } from '../../../../core/services/health.service';
+import { AcademyService } from '../../../../core/services/academy.service';
+
 @Component({
   selector: 'app-professor-nutrition',
   standalone: true,
@@ -24,7 +26,7 @@ import { MessageService } from 'primeng/api';
   ],
   providers: [MessageService],
   templateUrl: './professor-nutrition.html',
-  styleUrls: ['./professor-nutrition.css'] // Usa el mismo CSS que admin-nutri
+  styleUrls: ['./professor-nutrition.css'] 
 })
 export class ProfessorNutritionComponent implements OnInit {
   
@@ -45,7 +47,9 @@ export class ProfessorNutritionComponent implements OnInit {
   evalLogistica: any = {};
 
   constructor(
-    private supabase: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos los servicios específicos
+    private healthService: HealthService,
+    private academyService: AcademyService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -59,11 +63,15 @@ export class ProfessorNutritionComponent implements OnInit {
       this.loading = true;
       this.cdr.detectChanges();
 
-      const resTipos = await this.supabase.getTiposEvaluacionNutri();
+      // 🚀 CAMBIO 3: Llamadas en paralelo para mayor velocidad en la UI
+      const [resTipos, resEst] = await Promise.all([
+        this.healthService.getTiposEvaluacionNutri(),
+        this.academyService.getEstudiantesBasico()
+      ]);
+
       this.tiposEvaluacion = resTipos.data || [];
 
-      const resEst = await this.supabase.getEstudiantesBasico();
-      this.estudiantes = (resEst.data || []).map(est => ({
+      this.estudiantes = (resEst.data || []).map((est: any) => ({
         ...est,
         archivo_url_previo: null,
         nombre_archivo_previo: null,
@@ -81,9 +89,10 @@ export class ProfessorNutritionComponent implements OnInit {
   }
 
   async cargarSesiones() {
-    const res = await this.supabase.getEvaluacionesNutri();
+    // 🚀 CAMBIO 4: Usamos healthService
+    const res = await this.healthService.getEvaluacionesNutri();
     // ✅ Regla estricta: Solo guardamos en memoria las que están FINALIZADAS
-    this.sesiones = (res.data || []).filter(s => s.estado === 'FINALIZADO');
+    this.sesiones = (res.data || []).filter((s: any) => s.estado === 'FINALIZADO');
     this.aplicarFiltros();
     this.cdr.detectChanges();
   }
@@ -121,11 +130,12 @@ export class ProfessorNutritionComponent implements OnInit {
       this.loading = true;
       this.cdr.detectChanges();
 
-      const resResultados = await this.supabase.getResultadosPorSesionNutri(sesion.id);
+      // 🚀 CAMBIO 5: Usamos healthService
+      const resResultados = await this.healthService.getResultadosPorSesionNutri(sesion.id);
       const resultadosPrevios = resResultados.data || [];
 
       this.estudiantes.forEach(est => {
-        const resultadoGuardado = resultadosPrevios.find(r => r.estudiante_id === est.id);
+        const resultadoGuardado = resultadosPrevios.find((r: any) => r.estudiante_id === est.id);
 
         est.archivo_url_previo = resultadoGuardado ? resultadoGuardado.archivo_url : null;
         est.observacion = resultadoGuardado ? resultadoGuardado.observaciones : '';

@@ -213,6 +213,11 @@ export class AuthService {
   // ==========================================
   
   // Busca los datos del usuario navegando por las tablas según su rol
+  // ==========================================
+  // PERFIL DE USUARIO GLOBAL
+  // ==========================================
+  
+  // Busca los datos del usuario navegando por las tablas según su rol
   async getPerfilCompleto(email: string, rolGuardado: string | null) {
     const roleMap: Record<string, { tabla: string, display: string }> = {
       'admin': { tabla: 'admins', display: 'Administrador' },
@@ -229,7 +234,7 @@ export class AuthService {
       const config = roleMap[rolGuardado];
       const { data } = await this.supabase
         .from(config.tabla)
-        .select('nombre, apellido, foto_url')
+        .select('*') // 🚀 CAMBIO CLAVE: Traemos TODO (incluyendo tipo_profesor)
         .eq('email', email)
         .maybeSingle();
 
@@ -248,7 +253,7 @@ export class AuthService {
     for (const t of tablasFallback) {
       const { data } = await this.supabase
         .from(t.tabla)
-        .select('nombre, apellido, foto_url')
+        .select('*') // 🚀 CAMBIO CLAVE: Traemos TODO
         .eq('email', email)
         .maybeSingle();
 

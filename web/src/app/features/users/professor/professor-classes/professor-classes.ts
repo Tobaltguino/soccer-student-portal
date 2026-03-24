@@ -10,12 +10,13 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
 import { SelectButtonModule } from 'primeng/selectbutton';
-import { CheckboxModule } from 'primeng/checkbox'; // Añadido
-import { ToastModule } from 'primeng/toast'; // Añadido
-import { MessageService } from 'primeng/api'; // Añadido
+import { CheckboxModule } from 'primeng/checkbox'; 
+import { ToastModule } from 'primeng/toast'; 
+import { MessageService } from 'primeng/api'; 
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
-
+// 🚀 CAMBIO 1: Importamos los servicios de dominio (Adiós SupabaseService)
+import { AuthService } from '../../../../core/services/auth.service';
+import { AcademyService } from '../../../../core/services/academy.service';
 
 @Component({
   selector: 'app-professor-classes',
@@ -25,7 +26,7 @@ import { SupabaseService } from '../../../../core/services/supabase.service';
     DialogModule, InputTextModule, DatePickerModule, SelectModule, 
     TooltipModule, SelectButtonModule, CheckboxModule, ToastModule
   ],
-  providers: [MessageService], // Añadido
+  providers: [MessageService], 
   templateUrl: './professor-classes.html',
   styleUrls: ['./professor-classes.css']
 })
@@ -53,7 +54,7 @@ export class ProfessorClassesComponent implements OnInit {
   isEditing: boolean = false;
   claseForm: any = {};
 
-  // Asistencia (NUEVO)
+  // Asistencia 
   displayAttendanceDialog: boolean = false;
   alumnosAsistencia: any[] = [];
   loadingAsistencia: boolean = false;
@@ -67,7 +68,9 @@ export class ProfessorClassesComponent implements OnInit {
   ];
 
   constructor(
-    private supabaseService: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos nuestros servicios especializados
+    private authService: AuthService,
+    private academyService: AcademyService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -80,23 +83,19 @@ export class ProfessorClassesComponent implements OnInit {
   async cargarGrupos() {
     this.loading = true;
     try {
-      const { data: { user } } = await this.supabaseService.getUser();
-      if (!user) return;
+      // 🚀 CAMBIO 3: AuthService para obtener usuario
+      const { data: { user } } = await this.authService.getUser();
+      if (!user || !user.email) return; // ✅ Ahora TypeScript sabe que el email existe
 
-      const { data: prof } = await this.supabaseService.supabase
-        .from('profesores')
-        .select('id')
-        .eq('email', user.email)
-        .single();
+      // 🚀 CAMBIO 4: AcademyService para el perfil de profesor
+      const { data: prof } = await this.academyService.getProfesorByEmail(user.email);
 
       if (prof) {
-        const { data: gruposData } = await this.supabaseService.supabase
-          .from('grupos_profesores')
-          .select('grupo_id, grupos(id, nombre)')
-          .eq('profesor_id', prof.id);
+        // 🚀 CAMBIO 5: AcademyService para sus grupos
+        const { data: gruposData } = await this.academyService.getGruposDeProfesor(prof.id);
 
         if (gruposData && gruposData.length > 0) {
-          this.grupos = gruposData.map((g: any) => g.grupos).filter(g => g !== null);
+          this.grupos = gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null);
           if (this.grupos.length > 0) {
             this.selectedGrupoId = this.grupos[0].id;
             await this.cargarClasesPorGrupo();
@@ -104,6 +103,7 @@ export class ProfessorClassesComponent implements OnInit {
         }
       }
     } catch (error) {
+      console.error('Error cargando grupos:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
@@ -116,14 +116,12 @@ export class ProfessorClassesComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      const { data, error } = await this.supabaseService.supabase
-        .from('clases')
-        .select('*')
-        .eq('grupo_id', this.selectedGrupoId);
+      // 🚀 CAMBIO 6: AcademyService para obtener las clases
+      const { data, error } = await this.academyService.getClasesPorGrupo(this.selectedGrupoId);
 
       if (error) throw error;
 
-      this.clasesOriginales = (data || []).sort((a, b) => {
+      this.clasesOriginales = (data || []).sort((a: any, b: any) => {
         const tiempoA = new Date(`${a.fecha}T${a.hora}`).getTime();
         const tiempoB = new Date(`${b.fecha}T${b.hora}`).getTime();
         return tiempoB - tiempoA;
@@ -131,6 +129,7 @@ export class ProfessorClassesComponent implements OnInit {
 
       this.aplicarFiltros();
     } catch (error) {
+      console.error('Error cargando clases:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
@@ -141,21 +140,21 @@ export class ProfessorClassesComponent implements OnInit {
     this.cargarClasesPorGrupo();
   }
 
-  // --- ASISTENCIA (NUEVO) ---
+  // --- ASISTENCIA ---
   async verAsistencia(clase: any) {
     this.claseSeleccionadaAsistencia = clase;
     this.displayAttendanceDialog = true;
     this.loadingAsistencia = true;
 
     try {
-      // 1. Obtener alumnos del grupo usando el servicio existente
-      const { data: alumnosGrupo } = await this.supabaseService.getAlumnosPorGrupo(clase.grupo_id);
+      // 🚀 CAMBIO 7: AcademyService para los alumnos
+      const { data: alumnosGrupo } = await this.academyService.getAlumnosPorGrupo(clase.grupo_id);
       
-      // 2. Obtener asistencia ya guardada
-      const { data: asistenciaGuardada } = await this.supabaseService.getAsistenciaPorClase(clase.id);
+      // 🚀 CAMBIO 8: AcademyService para la asistencia previa (usando la nueva función)
+      const { data: asistenciaGuardada } = await this.academyService.getAsistenciaPorClase(clase.id);
 
       if (alumnosGrupo) {
-        this.alumnosAsistencia = alumnosGrupo.map(alumno => {
+        this.alumnosAsistencia = alumnosGrupo.map((alumno: any) => {
           const registro = asistenciaGuardada?.find((r: any) => r.estudiante_id === alumno.id);
           return { 
             ...alumno, 
@@ -164,6 +163,7 @@ export class ProfessorClassesComponent implements OnInit {
         });
       }
     } catch (error) {
+      console.error('Error cargando asistencia:', error);
     } finally {
       this.loadingAsistencia = false;
       this.cdr.detectChanges();
@@ -179,7 +179,8 @@ export class ProfessorClassesComponent implements OnInit {
     }));
 
     try {
-      const { error } = await this.supabaseService.saveAsistencia(registros);
+      // 🚀 CAMBIO 9: AcademyService para guardar la asistencia masiva
+      const { error } = await this.academyService.guardarAsistenciaMasiva(registros);
       
       if (!error) {
         this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Asistencia actualizada' });
@@ -196,18 +197,16 @@ export class ProfessorClassesComponent implements OnInit {
   }
 
   // --- FORMULARIO CREAR / EDITAR ---
-  // --- FORMULARIO CREAR / EDITAR ---
   abrirNuevaClase() {
     if (!this.selectedGrupoId) return;
     this.isEditing = false;
     this.vistaFormulario = 'logistica';
     
-    // Dejamos los campos vacíos (null) para obligar a llenarlos, igual que en admin
     this.claseForm = {
       grupo_id: this.selectedGrupoId,
-      fecha: null, // Antes era new Date()
-      hora: null,  // Antes calculaba la hora actual
-      lugar: '',   // Vacío, con el placeholder del HTML mostrando la sugerencia
+      fecha: null, 
+      hora: null,  
+      lugar: '',   
       objetivo: '',
       calentamiento: '',
       parte_principal: '',
@@ -273,16 +272,13 @@ export class ProfessorClassesComponent implements OnInit {
       };
 
       if (this.isEditing) {
-        const { error } = await this.supabaseService.supabase
-          .from('clases')
-          .update(payload)
-          .eq('id', this.claseForm.id);
+        // 🚀 CAMBIO 10: AcademyService para actualizar
+        const { error } = await this.academyService.actualizarClase(this.claseForm.id, payload);
         if (error) throw error;
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Clase actualizada correctamente.' });
       } else {
-        const { error } = await this.supabaseService.supabase
-          .from('clases')
-          .insert(payload);
+        // 🚀 CAMBIO 11: AcademyService para crear
+        const { error } = await this.academyService.crearClase(payload);
         if (error) throw error;
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Clase creada correctamente.' });
       }

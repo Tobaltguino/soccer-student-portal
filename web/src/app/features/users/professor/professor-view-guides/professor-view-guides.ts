@@ -2,15 +2,16 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms'; 
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
+// 🚀 CAMBIO 1: Importamos el ContentService (Adiós SupabaseService)
+import { ContentService } from '../../../../core/services/content.service';
 
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext'; 
-import { DatePickerModule } from 'primeng/datepicker'; // ✅ Nuevo
-import { SelectModule } from 'primeng/select'; // ✅ Nuevo
+import { DatePickerModule } from 'primeng/datepicker'; 
+import { SelectModule } from 'primeng/select'; 
 
 @Component({
   selector: 'app-professor-view-guides',
@@ -23,8 +24,8 @@ import { SelectModule } from 'primeng/select'; // ✅ Nuevo
     TooltipModule, 
     TableModule, 
     InputTextModule,
-    DatePickerModule, // ✅ Añadido
-    SelectModule      // ✅ Añadido
+    DatePickerModule, 
+    SelectModule      
   ],
   templateUrl: './professor-view-guides.html',
   styleUrls: ['./professor-view-guides.css']
@@ -48,7 +49,8 @@ export class ProfessorViewGuidesComponent implements OnInit {
   ];
 
   constructor(
-    private supabase: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos nuestro servicio especializado
+    private contentService: ContentService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -61,13 +63,15 @@ export class ProfessorViewGuidesComponent implements OnInit {
     this.cdr.detectChanges(); 
 
     try {
-      const { data, error } = await this.supabase.getGuias();
+      // 🚀 CAMBIO 3: Usamos ContentService para traer los datos
+      const { data, error } = await this.contentService.getGuias();
       if (error) throw error;
       
       this.guiasOriginales = data || [];
       this.aplicarFiltros(); 
       
     } catch (error) {
+      console.error('Error al cargar material educativo:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges(); 

@@ -2,8 +2,8 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common'; 
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
-
+// 🚀 Importamos nuestro AuthService
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-professor-layout',
@@ -24,7 +24,7 @@ export class ProfessorLayoutComponent implements OnInit {
   userPhotoUrl: string | null = null;
 
   constructor(
-    private supabase: SupabaseService, 
+    private authService: AuthService, 
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
@@ -65,7 +65,8 @@ export class ProfessorLayoutComponent implements OnInit {
   // --- CARGA DE PERFIL ---
   async cargarUsuario() {
     try {
-      const { data: { user } } = await this.supabase.getUser();
+      // Obtenemos el usuario actual autenticado
+      const { data: { user } } = await this.authService.getUser();
       
       if (!user || !user.email) {
         this.userName = 'Invitado';
@@ -73,18 +74,17 @@ export class ProfessorLayoutComponent implements OnInit {
         return;
       }
 
-      // ✅ Búsqueda directa en tabla profesores
-      const { data } = await this.supabase.supabase
-          .from('profesores')
-          .select('nombre, apellido, foto_url, tipo_profesor')
-          .eq('email', user.email)
-          .maybeSingle();
+      // Llamamos a nuestra función centralizada indicando el rol 'professor'
+      const { data: perfil } = await this.authService.getPerfilCompleto(user.email, 'professor');
 
-      if (data) {
-          this.userName = `${data.nombre} ${data.apellido}`;
-          this.userRole = data.tipo_profesor || 'Cuerpo Técnico';
-          this.userInitial = data.nombre ? data.nombre.charAt(0).toUpperCase() : 'P';
-          this.userPhotoUrl = data.foto_url;
+      if (perfil) {
+          this.userName = `${perfil.nombre} ${perfil.apellido}`;
+          
+          // ✅ APLICAMOS LA CORRECCIÓN DE TYPESCRIPT AQUÍ (as any)
+          this.userRole = (perfil as any).tipo_profesor || 'Profesor'; 
+          
+          this.userInitial = perfil.nombre ? perfil.nombre.charAt(0).toUpperCase() : 'P';
+          this.userPhotoUrl = perfil.foto_url;
       } else {
           this.userName = user.email.split('@')[0];
           this.userPhotoUrl = null;
@@ -103,7 +103,8 @@ export class ProfessorLayoutComponent implements OnInit {
   closeMobileMenu() { this.isMobileMenuOpen = false; }
 
   async logout() {
-    await this.supabase.logout();
+    // Logout a través del authService
+    await this.authService.logout();
     localStorage.removeItem('userRole');
     this.router.navigate(['/login']);
   }

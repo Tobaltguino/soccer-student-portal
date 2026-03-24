@@ -113,10 +113,14 @@ export class HealthService {
       .order('fecha', { ascending: false });
   }
 
-  async getSesionesEvaluacionPorGrupos(grupoIds: any[]) {
+  async getSesionesEvaluacionPorGrupos(grupoIds: (number | string)[]) {
     return await this.supabase
-      .from('evaluacion_sesiones')
-      .select('*, tipo_evaluacion:evaluacion_tipos(nombre, unidad_medida)')
+      .from('evaluaciones_sesiones')
+      .select(`
+        *,
+        grupos ( nombre ),
+        evaluacion_tipos:tipo_evaluacion_id ( nombre, unidad_medida )
+      `) // 🚀 Aquí: reemplaza 'tipo_evaluacion_id' por el nombre real de tu columna
       .in('grupo_id', grupoIds)
       .order('fecha', { ascending: false });
   }
@@ -342,4 +346,6 @@ async prepararPlanillaCalificaciones(grupoId: number, sesionId: string, alumnos:
       .eq('email', email)
       .maybeSingle();
   }
+
+  
 }

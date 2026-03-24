@@ -13,7 +13,10 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { FilterService } from 'primeng/api';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
+// 🚀 CAMBIO 1: Importamos nuestra triada de servicios de dominio
+import { AuthService } from '../../../../core/services/auth.service';
+import { AcademyService } from '../../../../core/services/academy.service';
+import { HealthService } from '../../../../core/services/health.service';
 
 @Component({
   selector: 'app-professor-view-students',
@@ -66,7 +69,10 @@ export class ProfessorViewStudentsComponent implements OnInit {
   loadingHistorial: boolean = false;
 
   constructor(
-    private supabase: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos los servicios específicos
+    private authService: AuthService,
+    private academyService: AcademyService,
+    private healthService: HealthService,
     private cdr: ChangeDetectorRef,
     private filterService: FilterService
   ) {}
@@ -86,10 +92,11 @@ export class ProfessorViewStudentsComponent implements OnInit {
   }
 
   async cargarMaestros() {
-    const resGrupos = await this.supabase.getGrupos();
+    // 🚀 CAMBIO 3: Usamos AcademyService
+    const resGrupos = await this.academyService.getGrupos();
     if(resGrupos.data) this.listaGrupos = resGrupos.data;
     
-    const resPos = await this.supabase.getPosiciones();
+    const resPos = await this.academyService.getPosiciones();
     if(resPos.data) this.listaPosiciones = resPos.data;
 
     this.cdr.detectChanges();
@@ -106,14 +113,16 @@ export class ProfessorViewStudentsComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      // 1. Obtenemos el ID del profesor actualmente logueado
-      const authData = await this.supabase.getUser();
-      const userId = authData.data.user?.id;
+      // 🚀 CAMBIO 4: Validación segura con AuthService
+      const { data: { user } } = await this.authService.getUser();
+      if (!user || !user.email) return;
 
-      if (!userId) return;
+      // 🚀 CAMBIO 5: Buscamos el ID real del profesor
+      const { data: prof } = await this.academyService.getProfesorByEmail(user.email);
+      if (!prof) return;
 
-      // 2. Llamamos a la función que cruza los datos y trae solo a sus alumnos
-      const res = await this.supabase.getEstudiantesDeProfesor(userId); 
+      // 🚀 CAMBIO 6: Usamos la súper función optimizada para traer los alumnos a cargo
+      const res = await this.academyService.getEstudiantesPorEncargado('grupos_profesores', 'profesor_id', prof.id); 
       
       if (res?.data) {
         this.dataList = res.data;
@@ -145,7 +154,8 @@ export class ProfessorViewStudentsComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-        const res = await this.supabase.getHistorialClinico(estudiante.id);
+        // 🚀 CAMBIO 7: Usamos HealthService
+        const res = await this.healthService.getHistorialClinico(estudiante.id);
         this.historialClinico = res.data || [];
     } catch (error) {
         console.error("Error cargando historial", error);
@@ -155,14 +165,14 @@ export class ProfessorViewStudentsComponent implements OnInit {
     }
   }
 
-  // ✅ HELPER PARA COLORES DEL HISTORIAL (Cambiado 'warning' por 'warn')
+  // ✅ HELPER PARA COLORES DEL HISTORIAL
   getSeveridadHistorial(tipo: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
       if (tipo === 'LESION') return 'danger';
       if (tipo === 'ALERGIA') return 'warn';
       return 'info'; // PATOLOGIA
   }
 
-  // ✅ HELPER PARA EL ESTADO DE LA LESIÓN (Cambiado 'warning' por 'warn')
+  // ✅ HELPER PARA EL ESTADO DE LA LESIÓN
   getSeveridadEstado(estado: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
       if (estado === 'RECUPERADO') return 'success';
       if (estado === 'ACTIVO') return 'danger';

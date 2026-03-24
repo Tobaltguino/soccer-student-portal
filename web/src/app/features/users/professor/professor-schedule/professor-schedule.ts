@@ -13,8 +13,9 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
-
+// 🚀 CAMBIO 1: Importamos nuestros servicios de dominio
+import { AuthService } from '../../../../core/services/auth.service';
+import { AcademyService } from '../../../../core/services/academy.service';
 
 @Component({
   selector: 'app-professor-schedule',
@@ -34,13 +35,13 @@ export class ProfessorScheduleComponent implements OnInit {
   
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
-    initialView: 'listWeek', // Para el profesor, ver la semana con bloques es mejor
+    initialView: 'listWeek', 
     locale: esLocale,
     
     // --- CONFIGURACIÓN DE HORAS (24 HORAS COMPLETAS) ---
-    slotMinTime: '06:00:00', // Mejor empezar a las 6 AM para ahorrar scroll
-    slotMaxTime: '23:00:00', // Termina a las 11 PM
-    scrollTime: '15:00:00',  // Se posiciona a las 3 PM al abrir (horario típico de canchas)
+    slotMinTime: '06:00:00', 
+    slotMaxTime: '23:00:00', 
+    scrollTime: '15:00:00',  
     allDaySlot: false,
     slotDuration: '00:30:00', 
     
@@ -90,7 +91,9 @@ export class ProfessorScheduleComponent implements OnInit {
   grupos: any[] = [];
 
   constructor(
-    private supabase: SupabaseService, // <-- Nombre corto
+    // 🚀 CAMBIO 2: Inyectamos los servicios especializados
+    private authService: AuthService,
+    private academyService: AcademyService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -101,16 +104,16 @@ export class ProfessorScheduleComponent implements OnInit {
   async cargarClasesCalendario() {
     this.loading = true;
     try {
-      // 1. Obtener usuario de Auth
-      const { data: { user } } = await this.supabase.getUser();
-      if (!user?.email) return;
+      // 🚀 CAMBIO 3: Validación segura con AuthService
+      const { data: { user } } = await this.authService.getUser();
+      if (!user || !user.email) return;
 
-      // 2. Obtener perfil del profesor
-      const { data: prof } = await this.supabase.getProfesorPorEmail(user.email);
+      // 🚀 CAMBIO 4: Obtener perfil del profesor usando AcademyService
+      const { data: prof } = await this.academyService.getProfesorByEmail(user.email);
       if (!prof) return;
 
-      // 3. Obtener sus grupos
-      const { data: gruposData } = await this.supabase.getGruposDeProfesor(prof.id);
+      // 🚀 CAMBIO 5: Obtener sus grupos usando AcademyService
+      const { data: gruposData } = await this.academyService.getGruposDeProfesor(prof.id);
       this.grupos = gruposData ? gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null) : [];
       
       const misGrupoIds = this.grupos.map(g => g.id);
@@ -120,8 +123,8 @@ export class ProfessorScheduleComponent implements OnInit {
         const hoy = new Date();
         const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
 
-        // Lllamada limpia al servicio
-        const { data: clases, error } = await this.supabase.getClasesPorGrupos(misGrupoIds, inicioMes);
+        // 🚀 CAMBIO 6: Llamada al método nuevo/reutilizado en AcademyService
+        const { data: clases, error } = await this.academyService.getClasesPorGrupos(misGrupoIds, inicioMes);
         if (error) throw error;
 
         // Mapear eventos
@@ -146,6 +149,7 @@ export class ProfessorScheduleComponent implements OnInit {
         this.calendarOptions = { ...this.calendarOptions, events: eventos };
       }
     } catch (error) {
+      console.error('Error al cargar calendario del profesor:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();

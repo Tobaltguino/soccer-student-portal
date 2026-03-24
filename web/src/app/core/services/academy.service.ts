@@ -14,7 +14,7 @@ export class AcademyService {
   }
 
   // ==========================================
-  // 1. DASHBOARD GENERAL (Estadísticas)
+  // 1. DASHBOARD GENERAL (Estadísticas Admin)
   // ==========================================
 
   async getTotalEstudiantes() {
@@ -63,7 +63,7 @@ export class AcademyService {
   }
 
   // ==========================================
-  // 3. GESTIÓN DE USUARIOS (Lectura)
+  // 3. GESTIÓN DE USUARIOS (Lectura base)
   // ==========================================
 
   async getEstudiantes() { 
@@ -100,8 +100,16 @@ export class AcademyService {
       .order('apellido', { ascending: true });
   }
 
+  // Obtiene solo los estudiantes activos (ideal para dashboards y contadores)
+  async getEstudiantesActivos() {
+    return await this.supabase
+      .from('estudiantes')
+      .select('id, nombre, apellido, fecha_nacimiento, activo')
+      .eq('activo', true);
+  }
+
   // ==========================================
-  // 4. RELACIONES Y ASIGNACIONES (Grupos -> Profesores/Kines)
+  // 4. RELACIONES Y ASIGNACIONES
   // ==========================================
 
   async actualizarPosicionesEstudiante(estudianteId: string, posicionesIds: number[]) {
@@ -125,10 +133,11 @@ export class AcademyService {
   }
 
   // ==========================================
-  // 5. CONSULTAS COMPLEJAS (Cruces para el Dashboard)
+  // 5. CONSULTAS DE PROFESORES Y GRUPOS
   // ==========================================
 
-  async getProfesorPorEmail(email: string) {
+  // Unificada: Obtiene el profesor por email devolviendo los datos clave
+  async getProfesorByEmail(email: string) {
     return await this.supabase
       .from('profesores')
       .select('id, nombre, apellido')
@@ -186,8 +195,17 @@ export class AcademyService {
       .order('apellido', { ascending: true });
   }
 
+  async getAlumnosPorGrupo(grupoId: number | string) {
+    return await this.supabase
+      .from('estudiantes')
+      .select('id, nombre, apellido, grupo_id, rut, foto_url')
+      .eq('grupo_id', grupoId)
+      .eq('activo', true) 
+      .order('apellido', { ascending: true });
+  }
+
   // ==========================================
-  // 6. CLASES Y ASISTENCIAS
+  // 6. GESTIÓN DE CLASES (CRUD)
   // ==========================================
 
   async getClases() {
@@ -196,22 +214,6 @@ export class AcademyService {
       .select('*, grupos (id, nombre)')
       .order('fecha', { ascending: false })
       .order('hora', { ascending: true });
-  }
-
-  async createClase(datos: any) {
-    return await this.supabase.from('clases').insert(datos).select();
-  }
-
-  async updateClase(id: number, datos: any) {
-    return await this.supabase.from('clases').update(datos).eq('id', id).select();
-  }
-
-  async deleteClase(id: number) {
-    return await this.supabase.from('clases').delete().eq('id', id);
-  }
-
-  async getClasesPorGrupos(grupoIds: string[], fechaInicio: string) {
-    return await this.supabase.from('clases').select('*').in('grupo_id', grupoIds).gte('fecha', fechaInicio);
   }
 
   async getClasesPorGrupo(grupoId: number | string) {
@@ -223,36 +225,117 @@ export class AcademyService {
       .order('hora', { ascending: false });
   }
 
-  async getAlumnosPorGrupo(grupoId: number) {
+  // Obtiene clases futuras o de hoy para varios grupos a la vez (Dashboard)
+  async getClasesPorGruposYFecha(grupoIds: number[], fechaDesde: string) {
     return await this.supabase
-      .from('estudiantes')
-      .select('id, nombre, apellido, grupo_id, rut, foto_url')
-      .eq('grupo_id', grupoId)
-      .eq('activo', true) 
-      .order('apellido', { ascending: true });
+      .from('clases')
+      .select('*, grupos(nombre)')
+      .in('grupo_id', grupoIds)
+      .gte('fecha', fechaDesde)
+      .order('fecha', { ascending: true })
+      .order('hora', { ascending: true });
   }
 
-  async saveAsistencia(registros: any[]) {
+  // Obtiene clases de una lista de grupos a partir de una fecha (Calendario)
+  async getClasesPorGrupos(grupoIds: (number | string)[], fechaInicio: string) {
+    return await this.supabase
+      .from('clases')
+      .select('*')
+      .in('grupo_id', grupoIds)
+      .gte('fecha', fechaInicio)
+      .order('fecha', { ascending: true })
+      .order('hora', { ascending: true });
+  }
+
+  // Unificamos crear/actualizar para que el admin y profesor usen la misma
+  async crearClase(payload: any) {
+    return await this.supabase.from('clases').insert(payload).select();
+  }
+  async createClase(datos: any) { return this.crearClase(datos); } // Alias para retrocompatibilidad admin
+
+  async actualizarClase(id: number | string, payload: any) {
+    return await this.supabase.from('clases').update(payload).eq('id', id).select();
+  }
+  async updateClase(id: number, datos: any) { return this.actualizarClase(id, datos); } // Alias
+
+  async deleteClase(id: number) {
+    return await this.supabase.from('clases').delete().eq('id', id);
+  }
+
+  // ==========================================
+  // 7. ASISTENCIAS (CRUD y Estadísticas)
+  // ==========================================
+
+  // Unificada: Guarda o actualiza la asistencia de forma masiva
+  async guardarAsistenciaMasiva(registros: any[]) {
     return await this.supabase
       .from('asistencias')
-      .upsert(registros, { onConflict: 'clase_id, estudiante_id' }); 
+      .upsert(registros, { onConflict: 'clase_id, estudiante_id' });
   }
+  async saveAsistencia(registros: any[]) { return this.guardarAsistenciaMasiva(registros); } // Alias
 
-  async getAsistenciaPorClase(claseId: number) {
+  async getAsistenciaPorClase(claseId: number | string) {
     return await this.supabase
       .from('asistencias')
       .select('estudiante_id, presente')
       .eq('clase_id', claseId);
   }
 
+  // Unificada: Obtiene todas las asistencias de un grupo en un rango de fechas
+  async getAsistenciasPorGrupoYFechas(grupoId: number | string, fechaInicio: string, fechaFin: string) {
+    return await this.supabase
+      .from('asistencias')
+      .select('estudiante_id, presente, clases!inner(fecha)')
+      .eq('clases.grupo_id', grupoId)
+      .gte('clases.fecha', fechaInicio)
+      .lte('clases.fecha', fechaFin);
+  }
+  // Alias de retrocompatibilidad
+  async getAsistenciasPorRangoFecha(gId: number, fIn: string, fFin: string) { return this.getAsistenciasPorGrupoYFechas(gId, fIn, fFin); }
+
+  // Obtiene el historial detallado de un alumno específico
+  async getHistorialAsistenciaAlumno(estudianteId: string, fechaInicio: string, fechaFin: string) {
+    return await this.supabase
+      .from('asistencias')
+      .select('presente, clases!inner(fecha, hora, lugar)')
+      .eq('estudiante_id', estudianteId)
+      .gte('clases.fecha', fechaInicio)
+      .lte('clases.fecha', fechaFin)
+      .order('clases(fecha)', { ascending: false });
+  }
+
+  // Lógica pesada que usa el admin para los reportes de estudiantes
+  async getEstudiantesConEstadisticas(grupoId: number, fechaInicio: string, fechaFin: string) {
+    const { data: alumnos, error: errAlumnos } = await this.getAlumnosPorGrupo(grupoId);
+    if (errAlumnos) return { data: null, error: errAlumnos };
+
+    const { data: asistencias, error: errAsis } = await this.getAsistenciasPorGrupoYFechas(grupoId, fechaInicio, fechaFin);
+    if (errAsis) return { data: null, error: errAsis };
+
+    const procesados = (alumnos || []).map((est: any) => {
+      const registrosAlumno = asistencias?.filter((a: any) => a.estudiante_id === est.id) || [];
+      const totalClases = registrosAlumno.length;
+      const totalPresentes = registrosAlumno.filter((a: any) => a.presente).length;
+      const porcentaje = totalClases > 0 ? Math.round((totalPresentes / totalClases) * 100) : 0;
+
+      return { 
+        ...est, 
+        porcentaje, 
+        resumen: `${totalPresentes} / ${totalClases}` 
+      };
+    });
+
+    return { data: procesados, error: null };
+  }
+
+  // ==========================================
+  // 8. CONSULTAS ESTUDIANTES (Dashboard y vistas)
+  // ==========================================
+
+  // Clases y asistencias para la vista del propio alumno
   async getClasesAlumno(uid: string, fechaDesde?: string) {
     try {
-      const { data: estudiante, error: errEst } = await this.supabase
-        .from('estudiantes')
-        .select('grupo_id')
-        .eq('id', uid)
-        .single();
-
+      const { data: estudiante, error: errEst } = await this.supabase.from('estudiantes').select('grupo_id').eq('id', uid).single();
       if (errEst || !estudiante?.grupo_id) return { data: [], error: errEst };
 
       let query = this.supabase
@@ -277,68 +360,6 @@ export class AcademyService {
     }
   }
 
-  // Obtiene la asistencia de un grupo en un rango de fechas
-  async getAsistenciasPorRangoFecha(grupoId: number, fechaInicio: string, fechaFin: string) {
-    return await this.supabase
-      .from('asistencias')
-      .select('estudiante_id, presente, clases!inner(fecha)')
-      .eq('clases.grupo_id', grupoId)
-      .gte('clases.fecha', fechaInicio)
-      .lte('clases.fecha', fechaFin);
-  }
-
-  // Obtiene el historial detallado de un alumno específico
-  async getHistorialAsistenciaAlumno(estudianteId: string, fechaInicio: string, fechaFin: string) {
-    return await this.supabase
-      .from('asistencias')
-      .select('presente, clases!inner(fecha, hora, lugar)')
-      .eq('estudiante_id', estudianteId)
-      .gte('clases.fecha', fechaInicio)
-      .lte('clases.fecha', fechaFin)
-      .order('clases(fecha)', { ascending: false });
-  }
-
-  async getEstudiantesConEstadisticas(grupoId: number, fechaInicio: string, fechaFin: string) {
-    // 1. Obtener alumnos activos del grupo
-    const { data: alumnos, error: errAlumnos } = await this.getAlumnosPorGrupo(grupoId);
-    if (errAlumnos) return { data: null, error: errAlumnos };
-
-    // 2. Obtener asistencias en el rango
-    const { data: asistencias, error: errAsis } = await this.getAsistenciasPorRangoFecha(grupoId, fechaInicio, fechaFin);
-    if (errAsis) return { data: null, error: errAsis };
-
-    // 3. Procesar datos (Lógica de negocio movida al servicio)
-    const procesados = (alumnos || []).map((est: any) => {
-      const registrosAlumno = asistencias?.filter(a => a.estudiante_id === est.id) || [];
-      const totalClases = registrosAlumno.length;
-      const totalPresentes = registrosAlumno.filter(a => a.presente).length;
-      const porcentaje = totalClases > 0 ? Math.round((totalPresentes / totalClases) * 100) : 0;
-
-      return { 
-        ...est, 
-        porcentaje, 
-        resumen: `${totalPresentes} / ${totalClases}` 
-      };
-    });
-
-    return { data: procesados, error: null };
-  }
-
-  // ==========================================
-  // DASHBOARDS Y CRUCES MASIVOS
-  // ==========================================
-
-  // Obtiene clases futuras o de hoy para varios grupos a la vez
-  async getClasesPorGruposYFecha(grupoIds: number[], fechaDesde: string) {
-    return await this.supabase
-      .from('clases')
-      .select('*, grupos(nombre)')
-      .in('grupo_id', grupoIds)
-      .gte('fecha', fechaDesde)
-      .order('fecha', { ascending: true })
-      .order('hora', { ascending: true });
-  }
-
   // Obtiene estudiantes activos filtrados por una lista de grupos
   async getEstudiantesActivosPorGrupos(grupoIds: number[]) {
     return await this.supabase
@@ -356,11 +377,4 @@ export class AcademyService {
       .in('grupo_id', grupoIds);
   }
 
-  // Obtiene solo los estudiantes activos (ideal para dashboards y contadores)
-  async getEstudiantesActivos() {
-    return await this.supabase
-      .from('estudiantes')
-      .select('id, nombre, apellido, fecha_nacimiento, activo')
-      .eq('activo', true);
-  }
 }

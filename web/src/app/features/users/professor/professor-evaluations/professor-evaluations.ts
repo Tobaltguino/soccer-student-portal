@@ -18,8 +18,10 @@ import { RadioButtonModule } from 'primeng/radiobutton';
 
 import { MessageService, ConfirmationService } from 'primeng/api';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
-
+// 🚀 CAMBIO 1: Importamos nuestros servicios de dominio
+import { AuthService } from '../../../../core/services/auth.service';
+import { AcademyService } from '../../../../core/services/academy.service';
+import { HealthService } from '../../../../core/services/health.service';
 
 @Component({
   selector: 'app-professor-evaluations',
@@ -67,7 +69,10 @@ export class ProfessorEvaluationsComponent implements OnInit {
   };
 
   constructor(
-    private supabase: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos los servicios especializados
+    private authService: AuthService,
+    private academyService: AcademyService,
+    private healthService: HealthService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -82,29 +87,31 @@ export class ProfessorEvaluationsComponent implements OnInit {
   async cargarDatosIniciales() {
     this.loading = true;
     try {
-      const { data: { user } } = await this.supabase.getUser();
-      if (!user?.email) return;
+      // 🚀 CAMBIO 3: Validación segura con TypeScript para el correo
+      const { data: { user } } = await this.authService.getUser();
+      if (!user || !user.email) return;
 
-      // 1. Llamada limpia al servicio (Reutilizando la que creamos antes)
-      const { data: prof } = await this.supabase.getProfesorPorEmail(user.email);
+      // 🚀 CAMBIO 4: Buscamos al profe
+      const { data: prof } = await this.academyService.getProfesorByEmail(user.email);
 
       if (prof) {
-        // 2. Llamada limpia al servicio (Reutilizando la que creamos antes)
-        const { data: gruposData } = await this.supabase.getGruposDeProfesor(prof.id);
+        // 🚀 CAMBIO 5: Buscamos sus grupos
+        const { data: gruposData } = await this.academyService.getGruposDeProfesor(prof.id);
         
         this.grupos = gruposData ? gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null) : [];
         const misGrupoIds = this.grupos.map(g => g.id);
 
-        // 3. Ya estaba usando el servicio
-        const { data: tData } = await this.supabase.getTiposEvaluacion();
+        // 🚀 CAMBIO 6: Tipos de evaluación desde HealthService
+        const { data: tData } = await this.healthService.getTiposEvaluacion();
         this.tiposEvaluacion = tData || [];
 
-        // 4. NUEVA llamada limpia al servicio
+        // 🚀 CAMBIO 7: Sesiones desde HealthService
         if (misGrupoIds.length > 0) {
-          const { data: sData, error: errorSesiones } = await this.supabase.getSesionesEvaluacionPorGrupos(misGrupoIds);
+          const { data: sData, error: errorSesiones } = await this.healthService.getSesionesEvaluacionPorGrupos(misGrupoIds);
           
-          if (errorSesiones)
-          this.sesionesOriginales = sData || [];
+          if (!errorSesiones) {
+             this.sesionesOriginales = sData || [];
+          }
         } else {
           this.sesionesOriginales = [];
         }
@@ -171,12 +178,11 @@ export class ProfessorEvaluationsComponent implements OnInit {
   // 3. GESTIÓN DE SESIONES (LOGÍSTICA)
   // ==========================================
   abrirNuevo() {
-    // Inicializamos en null para obligar a que el profesor lo llene
     this.evalLogistica = { 
       id: null, 
       grupo_id: null, 
       tipo_evaluacion_id: null, 
-      fecha: null, // <--- Cambiado de new Date() a null
+      fecha: null, 
       estado: 'PENDIENTE' 
     };
     this.displayMainDialog = true;
@@ -189,7 +195,6 @@ export class ProfessorEvaluationsComponent implements OnInit {
   }
 
   async crearSesionPlanificada() {
-    // ✅ VALIDACIÓN ESTRICTA: Faltan datos obligatorios
     if (!this.evalLogistica.fecha || !this.evalLogistica.grupo_id || !this.evalLogistica.tipo_evaluacion_id) {
         this.messageService.add({ 
           severity: 'warn', 
@@ -199,7 +204,6 @@ export class ProfessorEvaluationsComponent implements OnInit {
         return;
     }
 
-    // ✅ VALIDACIÓN: Que la fecha sea correcta
     const fechaSeleccionada = new Date(this.evalLogistica.fecha);
     if (isNaN(fechaSeleccionada.getTime())) {
         this.messageService.add({ 
@@ -221,9 +225,11 @@ export class ProfessorEvaluationsComponent implements OnInit {
     try {
       let result;
       if (this.evalLogistica.id) {
-          result = await this.supabase.updateSesionEvaluacion(this.evalLogistica.id, payload);
+          // 🚀 CAMBIO 8: Usamos HealthService
+          result = await this.healthService.updateSesionEvaluacion(this.evalLogistica.id, payload);
       } else {
-          result = await this.supabase.crearSesionEvaluacion(payload);
+          // 🚀 CAMBIO 9: Usamos HealthService
+          result = await this.healthService.crearSesionEvaluacion(payload);
       }
 
       if (result.error) throw result.error;
@@ -245,9 +251,10 @@ export class ProfessorEvaluationsComponent implements OnInit {
     this.cdr.detectChanges(); 
 
     try {
+      // 🚀 CAMBIO 10: Cruce optimizado usando los nuevos servicios
       const [resAlumnos, resResultados] = await Promise.all([
-         this.supabase.getAlumnosPorGrupo(sesion.grupo_id),
-         this.supabase.getResultadosPorSesion(sesion.id)
+         this.academyService.getAlumnosPorGrupo(sesion.grupo_id),
+         this.healthService.getResultadosPorSesion(sesion.id)
       ]);
 
       const alumnos = resAlumnos.data || [];
@@ -296,7 +303,8 @@ export class ProfessorEvaluationsComponent implements OnInit {
 
     this.loading = true;
     try {
-      const { error } = await this.supabase.guardarResultadosMasivos(notasAGuardar);
+      // 🚀 CAMBIO 11: Usamos HealthService para guardar el bloque de notas
+      const { error } = await this.healthService.guardarResultadosMasivos(notasAGuardar);
       if (error) throw error; 
 
       this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Resultados actualizados correctamente' });
