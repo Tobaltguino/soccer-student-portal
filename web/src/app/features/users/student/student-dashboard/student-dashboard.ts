@@ -2,7 +2,10 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
+// 🚀 CAMBIO 1: Importamos los servicios de dominio
+import { AuthService } from '../../../../core/services/auth.service';
+import { AcademyService } from '../../../../core/services/academy.service';
+import { HealthService } from '../../../../core/services/health.service';
 
 @Component({
   selector: 'app-student-dashboard',
@@ -18,12 +21,15 @@ export class StudentDashboardComponent implements OnInit {
   proximaClase: any = null;
   fechaFormateada: string = '';
   asistenciaAnual: number = 0;
-  ultimaEvaluacion: any = null; // ✅ Ahora se llenará con datos de Supabase
+  ultimaEvaluacion: any = null; 
   
   proximosEventos: any[] = []; 
 
   constructor(
-    private supabaseService: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos los servicios especializados
+    private authService: AuthService,
+    private academyService: AcademyService,
+    private healthService: HealthService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -34,29 +40,32 @@ export class StudentDashboardComponent implements OnInit {
   async cargarDatosDashboard() {
     this.loading = true;
     try {
-      const { data: { user } } = await this.supabaseService.getUser();
+      // 🚀 CAMBIO 3: Validación segura con AuthService
+      const { data: { user } } = await this.authService.getUser();
       if (!user) return;
 
       const inicioAnio = `${new Date().getFullYear()}-01-01`;
 
-      // 1. Cargar Clases y Asistencia
-      const { data: clases } = await this.supabaseService.getClasesAlumno(user.id, inicioAnio);
-      if (clases) {
-        this.procesarClases(clases);
+      // 🚀 CAMBIO 4: Carga de datos en paralelo para mejorar el performance
+      const [resClases, resEvals] = await Promise.all([
+        this.academyService.getClasesAlumno(user.id as string, inicioAnio),
+        this.healthService.getEvaluacionesAlumno(user.id as string)
+      ]);
+
+      // 1. Procesar Clases y Asistencia
+      if (resClases.data) {
+        this.procesarClases(resClases.data);
       }
 
-      // 2. ✅ Cargar Evaluaciones Reales
-      const { data: evaluaciones, error: errEval } = await this.supabaseService.getEvaluacionesAlumno(user.id);
-      if (evaluaciones && evaluaciones.length > 0) {
-        // Ordenamos por fecha de creación para tener la última registrada
-        const ordenadas = evaluaciones.sort((a: any, b: any) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-        this.ultimaEvaluacion = ordenadas[0];
+      // 2. Procesar Última Evaluación
+      if (resEvals.data && resEvals.data.length > 0) {
+        // La consulta ya viene ordenada por created_at desc desde el servicio
+        this.ultimaEvaluacion = resEvals.data[0];
       }
 
     } catch (error) {
       this.supabaseStatus = 'offline';
+      console.error('Error cargando dashboard del alumno:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();

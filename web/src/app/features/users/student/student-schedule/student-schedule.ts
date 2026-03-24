@@ -12,8 +12,9 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
-
+// 🚀 CAMBIO 1: Importamos los servicios de dominio correspondientes
+import { AuthService } from '../../../../core/services/auth.service';
+import { AcademyService } from '../../../../core/services/academy.service';
 
 @Component({
   selector: 'app-student-schedule',
@@ -85,7 +86,9 @@ export class StudentScheduleComponent implements OnInit {
   loading: boolean = true;
 
   constructor(
-    private supabaseService: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos los servicios especializados
+    private authService: AuthService,
+    private academyService: AcademyService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -96,12 +99,15 @@ export class StudentScheduleComponent implements OnInit {
   async cargarClasesCalendario() {
     this.loading = true;
     try {
-      const { data: { user } } = await this.supabaseService.getUser();
+      // 🚀 CAMBIO 3: Validación segura con AuthService
+      const { data: { user } } = await this.authService.getUser();
+      
       if (user) {
         const hoy = new Date();
         const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
         
-        const { data, error } = await this.supabaseService.getClasesAlumno(user.id, inicioMes);
+        // 🚀 CAMBIO 4: Usamos AcademyService para obtener las clases y asistencias del alumno
+        const { data, error } = await this.academyService.getClasesAlumno(user.id as string, inicioMes);
 
         if (error) throw error;
 
@@ -123,6 +129,7 @@ export class StudentScheduleComponent implements OnInit {
         this.calendarOptions = { ...this.calendarOptions, events: eventos };
       }
     } catch (error) {
+      console.error('Error al cargar calendario del estudiante:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
@@ -132,22 +139,22 @@ export class StudentScheduleComponent implements OnInit {
   handleEventClick(arg: any) {
     this.claseSeleccionada = arg.event.extendedProps;
     this.displayDetalle = true;
-    this.cdr.detectChanges(); // ✅ IMPORTANTE: Fuerza a Angular a abrir el modal
+    this.cdr.detectChanges(); 
   }
 
+  // Lógica de colores basada en el estado de asistencia real
   getColorEvento(clase: any): string {
-    if (clase.presente === true) return '#22c55e'; 
-    if (clase.presente === false) return '#ef4444'; 
-    return '#3b82f6'; 
+    if (clase.presente === true) return '#22c55e'; // Verde asistido
+    if (clase.presente === false) return '#ef4444'; // Rojo faltó
+    return '#3b82f6'; // Azul por venir / pendiente
   }
 
-  // ✅ NUEVA FUNCIÓN DE CANDADO
   puedeVerPlanificacion(clase: any): boolean {
     if (!clase || !clase.fecha || !clase.hora) return false;
     
     const tiempoClase = new Date(`${clase.fecha}T${clase.hora}`).getTime();
     const tiempoAhora = new Date().getTime();
     
-    return tiempoClase <= tiempoAhora; // Solo true si la hora actual ya pasó la hora de la clase
+    return tiempoClase <= tiempoAhora; 
   }
 }

@@ -16,7 +16,7 @@ export class AuthService {
   constructor(private supabaseCore: SupabaseCoreService) {}
 
   // Getter privado para que escribir "this.supabase" siga funcionando igual
-  private get supabase() {
+  public get supabase() {
     return this.supabaseCore.client;
   }
 
@@ -264,5 +264,6 @@ export class AuthService {
     return { data: null, error: 'Perfil no encontrado' };
   }
 
+  
   
 }

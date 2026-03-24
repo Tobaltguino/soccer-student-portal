@@ -1,16 +1,17 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import { ToastModule } from 'primeng/toast'; // <-- 1. IMPORTAMOS EL MÓDULO VISUAL
+import { ToastModule } from 'primeng/toast'; 
 import { MessageService } from 'primeng/api';
 
 import { IdleService } from './core/services/idle.service'; 
-import { SupabaseService } from './core/services/supabase.service';
+// 🚀 CAMBIO 1: Importamos AuthService en lugar del servicio viejo
+import { AuthService } from './core/services/auth.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, ButtonModule, ToastModule], // <-- 2. LO AGREGAMOS AQUÍ
+  imports: [RouterOutlet, ButtonModule, ToastModule], 
   providers: [MessageService],
   templateUrl: './app.html', 
   styleUrl: './app.css'
@@ -20,15 +21,17 @@ export class App implements OnInit, OnDestroy {
 
   constructor(
     private idleService: IdleService,
-    private supabaseService: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos AuthService
+    private authService: AuthService,
     private messageService: MessageService
   ) {}
 
   ngOnInit() {
     this.checkThemePreference();
 
-    // 1. Vigilar el estado de la sesión en Supabase
-    this.supabaseService.supabase.auth.onAuthStateChange((event, session) => {
+    // 🚀 CAMBIO 3: Usamos el cliente de Supabase expuesto a través de AuthService
+    // Vigilar el estado de la sesión para activar o desactivar el contador de inactividad
+    this.authService.supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         this.idleService.iniciarMonitoreo();
       } else {

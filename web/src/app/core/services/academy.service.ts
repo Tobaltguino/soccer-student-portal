@@ -377,4 +377,15 @@ export class AcademyService {
       .in('grupo_id', grupoIds);
   }
 
+  // ==========================================
+  // ESTUDIANTES (Búsqueda por perfil)
+  // ==========================================
+
+  async getEstudianteByEmail(email: string) {
+    return await this.supabase
+      .from('estudiantes')
+      .select('id, nombre, apellido, grupo_id')
+      .eq('email', email)
+      .maybeSingle();
+  }
 }

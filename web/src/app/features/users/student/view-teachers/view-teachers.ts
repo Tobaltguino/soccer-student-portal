@@ -1,7 +1,10 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
+// 🚀 CAMBIO 1: Importamos la triada de servicios de dominio
+import { AuthService } from '../../../../core/services/auth.service';
+import { AcademyService } from '../../../../core/services/academy.service';
+import { HealthService } from '../../../../core/services/health.service';
 
 @Component({
   selector: 'app-view-teachers',
@@ -16,7 +19,10 @@ export class ViewTeachersComponent implements OnInit {
   errorMessage: string = '';
 
   constructor(
-    private supabaseService: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos los servicios especializados
+    private authService: AuthService,
+    private academyService: AcademyService,
+    private healthService: HealthService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -27,20 +33,21 @@ export class ViewTeachersComponent implements OnInit {
   async cargarCuerpoTecnico() {
     this.loading = true;
     this.errorMessage = '';
-    this.cdr.detectChanges(); // Despierta a Angular para mostrar el spinner
+    this.cdr.detectChanges(); 
 
     try {
-      const { data: { user } } = await this.supabaseService.getUser();
+      // 🚀 CAMBIO 3: Validación segura con AuthService
+      const { data: { user } } = await this.authService.getUser();
       
       if (!user) {
         this.errorMessage = 'No se pudo identificar al usuario.';
         return;
       }
 
-      // 🚀 Disparamos ambas búsquedas a la base de datos AL MISMO TIEMPO
+      // 🚀 CAMBIO 4: Usamos los servicios de dominio correspondientes
       const [profesoresResponse, kinesResponse] = await Promise.all([
-        this.supabaseService.getProfesoresDeEstudiante(user.id),
-        this.supabaseService.getKinesiologosDeEstudiante(user.id)
+        this.academyService.getProfesoresDeEstudiante(user.id as string),
+        this.healthService.getKinesiologosDeEstudiante(user.id as string)
       ]);
 
       // Si falla la búsqueda principal de profes, lanzamos error
@@ -49,32 +56,30 @@ export class ViewTeachersComponent implements OnInit {
         return;
       }
 
-      // Extraemos los datos de las respuestas (si vienen vacíos, usamos arreglos vacíos [])
       const profes = profesoresResponse.data || [];
       const kinesBrutos = kinesResponse.data || [];
 
-      // 🎭 "Disfrazamos" a los kinesiólogos para que el HTML los lea igual que a los profes
+      // 🎭 Mapeamos a los kinesiólogos para que el HTML los renderice igual que a los profes
       const kinesMapeados = kinesBrutos.map((kine: any) => ({
         id: kine.id,
         nombre: kine.nombre,
         apellido: kine.apellido,
         email: kine.email,
         foto_url: kine.foto_url, 
-        tipo_profesor: 'Kinesiólogo' // Forzamos la etiqueta para la tarjeta
+        tipo_profesor: 'Kinesiólogo' 
       }));
 
-      // 🤝 Unimos ambos arreglos en uno solo
+      // 🤝 Unimos ambos mundos
       this.profesores = [...profes, ...kinesMapeados];
       
-      // Despierta a Angular para que dibuje las tarjetas
       this.cdr.detectChanges(); 
 
     } catch (err) {
-      console.error(err);
+      console.error('Error en el directorio técnico:', err);
       this.errorMessage = 'Error de conexión con el servidor.';
     } finally {
       this.loading = false;
-      this.cdr.detectChanges(); // Último despertar para quitar el spinner
+      this.cdr.detectChanges(); 
     }
   }
 }

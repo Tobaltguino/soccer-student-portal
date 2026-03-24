@@ -9,8 +9,10 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
-
+// 🚀 CAMBIO 1: Importamos los servicios de dominio
+import { AuthService } from '../../../../core/services/auth.service';
+import { HealthService } from '../../../../core/services/health.service';
+import { AcademyService } from '../../../../core/services/academy.service';
 
 @Component({
   selector: 'app-student-nutri',
@@ -20,7 +22,7 @@ import { SupabaseService } from '../../../../core/services/supabase.service';
     DatePickerModule, SelectModule, TooltipModule
   ],
   templateUrl: './student-nutri.html',
-  styleUrls: ['./student-nutri.css'] // Utiliza el mismo CSS
+  styleUrls: ['./student-nutri.css']
 })
 export class StudentNutriComponent implements OnInit {
   
@@ -30,14 +32,16 @@ export class StudentNutriComponent implements OnInit {
   misResultados: any[] = [];
   resultadosFiltrados: any[] = [];
   
-  // Opciones para el filtro generadas dinámicamente
   tiposEvaluacionDisponibles: any[] = []; 
   
   filtroFecha: Date | null = null;
   filtroPrueba: any = null;
 
   constructor(
-    private supabase: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos la triada de servicios
+    private authService: AuthService,
+    private healthService: HealthService,
+    private academyService: AcademyService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -50,66 +54,56 @@ export class StudentNutriComponent implements OnInit {
       this.loading = true;
       this.cdr.detectChanges();
 
-      // 1. Obtener el usuario logueado y buscar su ID de estudiante
-      const { data: { user } } = await this.supabase.getUser();
-      if (user) {
-        const { data: estudiante } = await this.supabase.supabase
-          .from('estudiantes')
-          .select('id')
-          .eq('email', user.email)
-          .single();
-        this.estudianteId = estudiante?.id;
-      }
+      // 🚀 CAMBIO 3: Validación de usuario con AuthService
+      const { data: { user } } = await this.authService.getUser();
+      if (!user || !user.email) return;
+
+      // 🚀 CAMBIO 4: Obtenemos el ID de estudiante desde AcademyService
+      const { data: estudiante } = await this.academyService.getEstudianteByEmail(user.email);
+      this.estudianteId = estudiante?.id;
 
       if (!this.estudianteId) return;
 
-      // 2. Traer resultados desde BD
-      const res = await this.supabase.getResultadosNutriEstudiante(this.estudianteId);
-      
-      // ✅ Forzamos el tipo any[] para evitar errores de compilación estrictos de TS
+      // 🚀 CAMBIO 5: Traer resultados nutricionales desde HealthService
+      const res = await this.healthService.getResultadosNutriEstudiante(this.estudianteId);
       const rawData: any[] = res.data || [];
 
-      // 3. Mapear datos
+      // 3. Mapear y procesar datos
       this.misResultados = rawData
         .map(r => {
-          // ✅ Normalizamos por si Supabase lo devuelve como Array o como Objeto
+          // Normalizamos la relación (por si viene como objeto o array de un elemento)
           const ev = Array.isArray(r.evaluacion) ? r.evaluacion[0] : r.evaluacion;
           const tipoEv = ev ? (Array.isArray(ev.tipo_evaluacion) ? ev.tipo_evaluacion[0] : ev.tipo_evaluacion) : null;
           
+          // Limpiar nombre de URL para mostrar el nombre del archivo PDF
+          let nombreLimpio = 'Documento PDF';
+          if (r.archivo_url) {
+            const urlParts = r.archivo_url.split('/');
+            const rawName = decodeURIComponent(urlParts[urlParts.length - 1]);
+            const underscoreIndex = rawName.indexOf('_');
+            nombreLimpio = underscoreIndex !== -1 ? rawName.substring(underscoreIndex + 1) : rawName;
+          }
+
           return {
-            ...r,
-            eval_obj: ev,
-            tipo_nombre_obj: tipoEv?.nombre
+            fecha: ev?.fecha,
+            tipo_nombre: tipoEv?.nombre,
+            observacion: r.observaciones,
+            archivo_url: r.archivo_url,
+            nombre_archivo: nombreLimpio,
+            estado: ev?.estado
           };
         })
-        .filter(r => r.eval_obj?.estado === 'FINALIZADO') // Solo los listos
-        .map(r => {
-           // Limpiar nombre de URL
-           let nombreLimpio = 'Documento PDF';
-           if (r.archivo_url) {
-              const urlParts = r.archivo_url.split('/');
-              const rawName = decodeURIComponent(urlParts[urlParts.length - 1]);
-              const underscoreIndex = rawName.indexOf('_');
-              nombreLimpio = underscoreIndex !== -1 ? rawName.substring(underscoreIndex + 1) : rawName;
-           }
+        .filter(r => r.estado === 'FINALIZADO') // Solo mostrar lo que el nutri ya liberó
+        .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
 
-           return {
-              fecha: r.eval_obj?.fecha,
-              tipo_nombre: r.tipo_nombre_obj,
-              observacion: r.observaciones,
-              archivo_url: r.archivo_url,
-              nombre_archivo: nombreLimpio
-           };
-        })
-        .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()); // Más recientes primero
-
-      // 4. Extraer tipos de evaluación únicos para el dropdown de filtros
+      // 4. Extraer tipos únicos para filtros
       const tiposUnicos = new Set(this.misResultados.map(r => r.tipo_nombre));
       this.tiposEvaluacionDisponibles = Array.from(tiposUnicos).map(nombre => ({ nombre }));
 
       this.aplicarFiltros();
 
     } catch (error) {
+      console.error('Error al cargar resultados nutricionales:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
@@ -122,7 +116,11 @@ export class StudentNutriComponent implements OnInit {
       let cumplePrueba = true;
 
       if (this.filtroFecha) {
-        const dFiltro = this.filtroFecha.toISOString().split('T')[0];
+        // Formateo manual para evitar desfases de zona horaria en la comparación
+        const anio = this.filtroFecha.getFullYear();
+        const mes = ('0' + (this.filtroFecha.getMonth() + 1)).slice(-2);
+        const dia = ('0' + this.filtroFecha.getDate()).slice(-2);
+        const dFiltro = `${anio}-${mes}-${dia}`;
         cumpleFecha = r.fecha === dFiltro;
       }
       if (this.filtroPrueba) {

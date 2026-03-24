@@ -9,9 +9,10 @@ import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { InputTextModule } from 'primeng/inputtext'; 
 import { DatePickerModule } from 'primeng/datepicker'; 
-import { SelectModule } from 'primeng/select'; // ✅ Importante para el selector de Área
+import { SelectModule } from 'primeng/select';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
+// 🚀 CAMBIO 1: Importamos el ContentService (Adiós SupabaseService)
+import { ContentService } from '../../../../core/services/content.service';
 
 @Component({
   selector: 'app-student-view-guides',
@@ -25,7 +26,7 @@ import { SupabaseService } from '../../../../core/services/supabase.service';
     TableModule,
     InputTextModule,
     DatePickerModule,
-    SelectModule // ✅ Añadido a los imports
+    SelectModule 
   ],
   templateUrl: './student-view-guides.html',
   styleUrls: ['./student-view-guides.css']
@@ -38,7 +39,7 @@ export class StudentViewGuidesComponent implements OnInit {
   // --- FILTROS ---
   filtroTitulo: string = '';
   filtroFecha: Date | null = null;
-  filtroArea: string | null = null; // ✅ Nuevo estado para el filtro de área
+  filtroArea: string | null = null;
 
   // ✅ Opciones exactas para la base de datos
   tiposMaterial = [
@@ -48,7 +49,8 @@ export class StudentViewGuidesComponent implements OnInit {
   ];
 
   constructor(
-    private supabase: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos nuestro servicio de contenido
+    private contentService: ContentService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -61,13 +63,15 @@ export class StudentViewGuidesComponent implements OnInit {
     this.cdr.detectChanges(); 
 
     try {
-      const { data, error } = await this.supabase.getGuias();
+      // 🚀 CAMBIO 3: Usamos ContentService para traer el material educativo
+      const { data, error } = await this.contentService.getGuias();
       if (error) throw error;
       
       this.guias = data || [];
       this.guiasFiltradas = [...this.guias]; 
       
     } catch (error) {
+      console.error('Error al cargar guías para el alumno:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges(); 
@@ -78,7 +82,7 @@ export class StudentViewGuidesComponent implements OnInit {
   aplicarFiltros() {
     this.guiasFiltradas = this.guias.filter(guia => {
       // 1. Filtrar por Título
-      const coincideTitulo = guia.titulo.toLowerCase().includes(this.filtroTitulo.toLowerCase());
+      const coincideTitulo = (guia.titulo || '').toLowerCase().includes(this.filtroTitulo.toLowerCase());
       
       // 2. Filtrar por Fecha
       let coincideFecha = true;
@@ -91,7 +95,7 @@ export class StudentViewGuidesComponent implements OnInit {
                         fechaGuia.getDate() === fechaFiltro.getDate();
       }
 
-      // 3. ✅ Filtrar por Área (tipo_material)
+      // 3. Filtrar por Área (tipo_material)
       let coincideArea = true;
       if (this.filtroArea) {
         coincideArea = guia.tipo_material === this.filtroArea;
@@ -99,13 +103,15 @@ export class StudentViewGuidesComponent implements OnInit {
 
       return coincideTitulo && coincideFecha && coincideArea;
     });
+    this.cdr.detectChanges();
   }
 
   limpiarFiltros() {
     this.filtroTitulo = '';
     this.filtroFecha = null;
-    this.filtroArea = null; // ✅ Limpiamos el nuevo filtro
+    this.filtroArea = null; 
     this.guiasFiltradas = [...this.guias]; 
+    this.cdr.detectChanges();
   }
 
   // ✅ Helper visual para mostrar el nombre del área en la tabla

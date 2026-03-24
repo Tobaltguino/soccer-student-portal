@@ -2,7 +2,9 @@ import { Injectable, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { fromEvent, merge, Subscription, timer, Subject } from 'rxjs';
 import { switchMap, startWith } from 'rxjs/operators';
-import { SupabaseService } from './supabase.service';
+
+// 🚀 CAMBIO 1: Importamos AuthService
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -16,11 +18,12 @@ export class IdleService {
   // --- VARIABLES PARA EL DETECTOR DE SUSPENSIÓN ---
   private suspensionInterval: any;
   private ultimoTick: number = Date.now();
-  private margenSuspension = 10000; // 10 segundos (Si el reloj se retrasa más de 10s, asumimos suspensión)
+  private margenSuspension = 10000; // 10 segundos
 
   constructor(
     private router: Router,
-    private supabaseService: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos AuthService
+    private authService: AuthService,
     private ngZone: NgZone
   ) {}
 
@@ -44,14 +47,10 @@ export class IdleService {
         });
       });
 
-      // --- INICIAMOS EL RELOJ DETECTOR DE SUSPENSIÓN ---
       this.iniciarDetectorSuspension();
     });
   }
 
-  // ==========================================
-  // MAGIA ANTI-SUSPENSIÓN 
-  // ==========================================
   private iniciarDetectorSuspension() {
     this.ultimoTick = Date.now();
     
@@ -59,35 +58,31 @@ export class IdleService {
       const ahora = Date.now();
       const diferencia = ahora - this.ultimoTick;
 
-      // Si la diferencia es mayor a 10 segundos, el PC se durmió y acaba de despertar
       if (diferencia > this.margenSuspension) {
         this.verificarSesionAlDespertar();
       }
 
       this.ultimoTick = ahora;
-    }, 2000); // Hacemos "tic" cada 2 segundos
+    }, 2000);
   }
 
   private async verificarSesionAlDespertar() {
-    // Al pedir getSession(), Supabase intentará renovar el token si está vencido
-    const { data, error } = await this.supabaseService.supabase.auth.getSession();
+    // 🚀 CAMBIO 3: Usamos el método getUser() de AuthService 
+    // Esto disparará la renovación automática del token si el PC despertó
+    const { data, error } = await this.authService.getUser();
 
-    if (error || !data.session) {
+    if (error || !data.user) {
       this.ngZone.run(() => {
-        // Aquí podrías mostrar un alert o Toast indicando que la sesión expiró
         this.cerrarSesionPorInactividad();
       });
-    } else {
     }
   }
-  // ==========================================
 
   detenerMonitoreo() {
     if (this.idleSubscription) {
       this.idleSubscription.unsubscribe();
       this.idleSubscription = null;
     }
-    // Limpiamos el reloj si detenemos el monitoreo
     if (this.suspensionInterval) {
       clearInterval(this.suspensionInterval);
     }
@@ -98,9 +93,8 @@ export class IdleService {
     this.onIdleTimeout.next(true);
 
     try {
-      await this.supabaseService.supabase.auth.signOut();
-      localStorage.clear();
-      sessionStorage.clear();
+      // 🚀 CAMBIO 4: Usamos el logout de nuestro AuthService
+      await this.authService.logout();
       this.router.navigate(['/login']);
     } catch (error) {
       this.router.navigate(['/login']);

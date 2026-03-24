@@ -346,6 +346,4 @@ async prepararPlanillaCalificaciones(grupoId: number, sesionId: string, alumnos:
       .eq('email', email)
       .maybeSingle();
   }
-
-  
 }

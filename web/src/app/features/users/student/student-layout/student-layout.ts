@@ -2,7 +2,8 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common'; 
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
+// 🚀 CAMBIO 1: Importamos AuthService (Adiós SupabaseService)
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-student-layout',
@@ -23,7 +24,8 @@ export class StudentLayoutComponent implements OnInit {
   userPhotoUrl: string | null = null;
 
   constructor(
-    private supabase: SupabaseService, 
+    // 🚀 CAMBIO 2: Inyectamos AuthService
+    private authService: AuthService, 
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
@@ -64,7 +66,8 @@ export class StudentLayoutComponent implements OnInit {
   // --- USUARIO ---
   async cargarUsuario() {
     try {
-      const { data: { user } } = await this.supabase.getUser();
+      // 🚀 CAMBIO 3: Usamos authService para obtener el usuario autenticado
+      const { data: { user } } = await this.authService.getUser();
       
       if (!user || !user.email) {
         this.userName = 'Invitado';
@@ -72,18 +75,14 @@ export class StudentLayoutComponent implements OnInit {
         return;
       }
 
-      // ✅ Buscamos incluyendo el campo foto_url
-      const { data } = await this.supabase.supabase
-          .from('estudiantes')
-          .select('nombre, apellido, foto_url')
-          .eq('email', user.email)
-          .maybeSingle();
+      // 🚀 CAMBIO 4: Usamos la función centralizada para el perfil del estudiante
+      const { data: perfil } = await this.authService.getPerfilCompleto(user.email, 'student');
 
-      if (data) {
-          this.userName = `${data.nombre} ${data.apellido}`;
+      if (perfil) {
+          this.userName = `${perfil.nombre} ${perfil.apellido}`;
           this.userRole = 'Estudiante';
-          this.userInitial = data.nombre ? data.nombre.charAt(0).toUpperCase() : 'E';
-          this.userPhotoUrl = data.foto_url; // ✅ Guardamos la foto
+          this.userInitial = perfil.nombre ? perfil.nombre.charAt(0).toUpperCase() : 'E';
+          this.userPhotoUrl = perfil.foto_url;
       } else {
           this.userName = user.email.split('@')[0];
           this.userPhotoUrl = null;
@@ -102,7 +101,8 @@ export class StudentLayoutComponent implements OnInit {
   closeMobileMenu() { this.isMobileMenuOpen = false; }
 
   async logout() {
-    await this.supabase.logout();
+    // 🚀 CAMBIO 5: Logout centralizado
+    await this.authService.logout();
     localStorage.removeItem('userRole');
     this.router.navigate(['/login']);
   }

@@ -10,7 +10,9 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
+// 🚀 CAMBIO 1: Importamos los servicios de dominio
+import { AuthService } from '../../../../core/services/auth.service';
+import { AcademyService } from '../../../../core/services/academy.service';
 
 @Component({
   selector: 'app-student-classes',
@@ -41,7 +43,9 @@ export class StudentClassesComponent implements OnInit {
   selectedClase: any = null;
 
   constructor(
-    private supabaseService: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos los servicios especializados
+    private authService: AuthService,
+    private academyService: AcademyService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -52,16 +56,19 @@ export class StudentClassesComponent implements OnInit {
   async cargarClases() {
     this.loading = true;
     try {
-      const { data: { user } } = await this.supabaseService.getUser();
-      if (user) {
+      // 🚀 CAMBIO 3: Validación segura con AuthService
+      const { data: { user } } = await this.authService.getUser();
+      
+      if (user && user.id) {
         const seisMesesAtras = new Date();
         seisMesesAtras.setMonth(seisMesesAtras.getMonth() - 6);
         const fechaLimiteStr = seisMesesAtras.toISOString().split('T')[0];
 
-        const { data, error } = await this.supabaseService.getClasesAlumno(user.id, fechaLimiteStr);
+        // 🚀 CAMBIO 4: Usamos AcademyService para obtener el historial del alumno
+        const { data, error } = await this.academyService.getClasesAlumno(user.id, fechaLimiteStr);
         if (error) throw error;
 
-        this.clasesOriginales = (data || []).sort((a, b) => {
+        this.clasesOriginales = (data || []).sort((a: any, b: any) => {
           const tiempoA = new Date(`${a.fecha}T${a.hora}`).getTime();
           const tiempoB = new Date(`${b.fecha}T${b.hora}`).getTime();
           return tiempoB - tiempoA;
@@ -70,6 +77,7 @@ export class StudentClassesComponent implements OnInit {
         this.aplicarFiltros();
       }
     } catch (error) {
+      console.error('Error cargando clases del alumno:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
@@ -143,11 +151,9 @@ export class StudentClassesComponent implements OnInit {
   puedeVerPlanificacion(clase: any): boolean {
     if (!clase.fecha || !clase.hora) return false;
     
-    // Creamos un objeto Date con la fecha y hora exacta de la clase
     const tiempoClase = new Date(`${clase.fecha}T${clase.hora}`).getTime();
     const tiempoAhora = new Date().getTime();
     
-    // Retorna true solo si la hora actual es mayor o igual a la de la clase
     return tiempoClase <= tiempoAhora;
   }
 }

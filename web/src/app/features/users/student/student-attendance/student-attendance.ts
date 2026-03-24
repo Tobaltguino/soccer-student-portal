@@ -8,7 +8,9 @@ import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
 import { ProgressBarModule } from 'primeng/progressbar';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
+// 🚀 CAMBIO 1: Importamos los servicios de dominio (Adiós SupabaseService)
+import { AuthService } from '../../../../core/services/auth.service';
+import { AcademyService } from '../../../../core/services/academy.service';
 
 @Component({
   selector: 'app-student-attendance',
@@ -26,8 +28,8 @@ import { SupabaseService } from '../../../../core/services/supabase.service';
 })
 export class StudentAttendanceComponent implements OnInit {
   loading: boolean = false;
-  hasData: boolean = false; // Control para el gráfico circular
-  hasYearlyData: boolean = false; // Control para el gráfico de barras
+  hasData: boolean = false; 
+  hasYearlyData: boolean = false; 
 
   selectedYear: number = new Date().getFullYear();
   selectedMonth: number | null = null; 
@@ -57,7 +59,9 @@ export class StudentAttendanceComponent implements OnInit {
   porcentajeAsistencia: number = 0;
 
   constructor(
-    private supabaseService: SupabaseService,
+    // 🚀 CAMBIO 2: Inyectamos los servicios especializados
+    private authService: AuthService,
+    private academyService: AcademyService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -68,21 +72,25 @@ export class StudentAttendanceComponent implements OnInit {
 
   async cargarDatosEstadisticos() {
     this.loading = true;
-    this.cdr.detectChanges(); // Despierta a Angular para mostrar el loading
+    this.cdr.detectChanges(); 
 
     try {
-      const { data: { user } } = await this.supabaseService.getUser();
+      // 🚀 CAMBIO 3: Validación segura de usuario con AuthService
+      const { data: { user } } = await this.authService.getUser();
       if (!user) return;
 
       const inicioAnio = `${this.selectedYear}-01-01`;
-      const { data, error } = await this.supabaseService.getClasesAlumno(user.id, inicioAnio);
+      
+      // 🚀 CAMBIO 4: Usamos AcademyService (que ya tiene la lógica de cruce de asistencias)
+      const { data, error } = await this.academyService.getClasesAlumno(user.id, inicioAnio);
 
       if (error) throw error;
       this.procesarEstadisticas(data || []);
     } catch (error) {
+      console.error('Error al cargar estadísticas de asistencia:', error);
     } finally {
       this.loading = false;
-      this.cdr.detectChanges(); // Despierta a Angular al finalizar la carga
+      this.cdr.detectChanges(); 
     }
   }
 
@@ -94,6 +102,7 @@ export class StudentAttendanceComponent implements OnInit {
     );
 
     if (this.selectedMonth !== null) {
+      // Usamos getUTCMonth para evitar desfases de zona horaria al comparar meses
       filtradas = filtradas.filter(c => new Date(c.fecha).getUTCMonth() === this.selectedMonth);
     }
 
@@ -108,7 +117,7 @@ export class StudentAttendanceComponent implements OnInit {
 
     if (this.hasData) {
       this.pieData = {
-        labels: ['Asistidas (Verde)', 'Faltas (Rojo)'],
+        labels: ['Asistidas', 'Faltas'],
         datasets: [{
           data: [asistidas, faltas],
           backgroundColor: ['#22c55e', '#ef4444'],
@@ -142,7 +151,7 @@ export class StudentAttendanceComponent implements OnInit {
       }]
     };
     
-    this.cdr.detectChanges(); // Asegura que los gráficos se dibujen con los nuevos datos
+    this.cdr.detectChanges(); 
   }
 
   initOptions() {
@@ -154,13 +163,13 @@ export class StudentAttendanceComponent implements OnInit {
               position: 'bottom',
               labels: { 
                   usePointStyle: true, 
-                  padding: 8, // ✅ Reducido de 10 o 20 para ahorrar espacio en el celular
-                  font: { size: 14 } // ✅ Fuente un poco más pequeña para el móvil
+                  padding: 8, 
+                  font: { size: 14 } 
               }
           }
       },
-      cutout: '70%' // ✅ Un poco más grueso ayuda a que se vea mejor en pantallas pequeñas
-  };
+      cutout: '70%' 
+    };
 
     this.barOptions = {
         maintainAspectRatio: false,
