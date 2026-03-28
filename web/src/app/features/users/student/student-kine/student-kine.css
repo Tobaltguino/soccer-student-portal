@@ -1,103 +1,82 @@
-:host {
-    display: block;
-    height: 100%;
-    min-height: 80vh; /* Asegura que ocupe buen espacio vertical */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+/* --- CONFIGURACIÓN BASE --- */
+:host { display: block; min-height: 100vh; padding: 1.5rem; }
+.evolution-record-container { max-width: 1200px; margin: 0 auto; }
 
-.construction-container {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 2rem;
-}
+/* --- HEADER --- */
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
+.header-content h1 { margin: 0; font-size: 1.4rem; font-weight: 700; color: var(--text-main); }
+.header-content p { margin: 0.25rem 0 0; color: var(--text-secondary); font-size: 0.85rem; }
+:host ::ng-deep .btn-create { padding: 0.5rem 1rem !important; border-radius: 8px !important; font-size: 0.85rem !important; white-space: nowrap; }
 
-.construction-card {
-    background: var(--bg-card, #ffffff); /* Usa tu variable o blanco por defecto */
-    border: 1px solid var(--border-color, #e5e7eb);
-    border-radius: 24px;
-    padding: 4rem 2rem;
-    text-align: center;
-    max-width: 500px;
-    width: 100%;
-    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
-}
+/* =========================================
+   SWITCHERS
+   ========================================= */
+:host ::ng-deep .p-selectbutton { display: flex; justify-content: center; width: 100%; }
+:host ::ng-deep .p-selectbutton .p-button { flex: 1; padding: 0.6rem 1rem !important; font-size: 0.85rem !important; }
+/* Switcher superior Estudiante */
+:host ::ng-deep .student-main-switcher .p-button { padding: 0.8rem 1.5rem !important; border-radius: 8px; margin: 0 4px; flex: none; }
+:host ::ng-deep .student-main-switcher .p-button i { margin-right: 8px; font-size: 1.1rem; }
 
-/* --- ILUSTRACIÓN --- */
-.icon-stack {
-    position: relative;
-    height: 120px;
-    width: 120px;
-    margin: 0 auto 2rem auto;
-}
+/* --- TABLA PRINCIPAL DE HISTORIAL --- */
+.card-table { background-color: var(--bg-card); padding: 1rem 1.25rem; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.02); overflow-x: auto; }
+:host ::ng-deep .p-datatable .p-datatable-header { background: transparent; border: none; padding: 0.5rem 0 1rem 0; }
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th { background: var(--bg-main) !important; color: var(--text-secondary) !important; font-weight: 600; font-size: 0.75rem !important; text-transform: uppercase; padding: 0.5rem 0.4rem !important; border-bottom: 1px solid var(--border-color); text-align: center !important; white-space: nowrap; }
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td { padding: 0.5rem 0.4rem !important; font-size: 0.8rem !important; border-bottom: 1px solid var(--bg-main); color: var(--text-main); vertical-align: middle; text-align: center !important; white-space: normal !important; }
+.action-buttons { display: flex; justify-content: center; gap: 0.15rem; }
+:host ::ng-deep .action-buttons .p-button { width: 1.8rem !important; height: 1.8rem !important; padding: 0 !important; }
+:host ::ng-deep .action-buttons .p-button .p-button-icon { font-size: 0.85rem !important; }
 
-.gear-large {
-    position: absolute;
-    top: 0;
-    right: 0;
-    font-size: 4rem;
-    color: var(--primary-color, #3b82f6);
-    opacity: 0.2;
-    animation: spin 10s linear infinite;
-}
+/* =========================================
+   DISEÑO "HOJA DE PAPEL" (FORMULARIO KINE)
+   ========================================= */
+.kine-table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-card); margin-bottom: 1.5rem; }
+.kine-table { width: 100%; min-width: 700px; border-collapse: collapse; border: none; }
+.kine-table th, .kine-table td { border: 1px solid var(--border-color); vertical-align: middle; }
+.kine-header { background-color: rgba(59, 130, 246, 0.1) !important; color: var(--primary-color); font-weight: 700; padding: 0.5rem 0.8rem !important; text-transform: uppercase; font-size: 0.8rem !important; text-align: left; }
+.kine-subheader, .kine-label-cell-fixed, .kine-label-cell { background-color: var(--bg-main) !important; color: var(--text-secondary); font-weight: 600; font-size: 0.75rem !important; padding: 0.5rem 0.8rem !important; text-transform: uppercase; }
+.kine-table .kine-input, .kine-table textarea.kine-input { width: 100%; min-height: 38px; border: none !important; background: transparent !important; color: var(--text-main) !important; padding: 0.5rem 0.8rem !important; font-size: 0.8rem !important; resize: vertical; display: block; outline: none !important; }
+.kine-input-inline { border: none; border-bottom: 1px solid var(--text-secondary) !important; background: transparent !important; color: var(--text-main) !important; font-size: 0.8rem !important; font-weight: 700; width: 60px; text-align: center; }
+:host ::ng-deep .kine-table td .p-select { box-shadow: none !important; border: none !important; background: transparent !important; }
+:host ::ng-deep .kine-table td .p-select .p-select-label { font-size: 0.8rem !important; padding: 0.4rem !important; }
 
-.gear-small {
-    position: absolute;
-    bottom: 0;
-    left: 10px;
-    font-size: 2.5rem;
-    color: var(--primary-color, #3b82f6);
-    opacity: 0.4;
-    animation: spin 6s linear infinite reverse; /* Gira al revés */
-}
+/* TEXTOS Y UTILIDADES */
+.text-main { color: var(--text-main); }
+.text-secondary { color: var(--text-secondary); }
+.font-bold { font-weight: 700; }
+.text-primary { color: var(--primary-color); }
+.hidden-mobile { display: table-cell; }
+.animation-fade-in { animation: fadeIn 0.3s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-.icon-center {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 3rem;
-    color: var(--text-color, #374151);
-    background: var(--bg-card, #ffffff);
-    width: 80px;
-    height: 80px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    z-index: 2;
-}
-
-/* --- TEXTOS --- */
-.title {
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: var(--text-color, #1f2937);
-    margin: 0 0 1rem 0;
-}
-
-.subtitle {
-    font-size: 1rem;
-    line-height: 1.6;
-    color: var(--text-secondary-color, #6b7280);
-    margin: 0 0 2rem 0;
-}
-
-/* --- ANIMACIONES --- */
-@keyframes spin {
-    100% { transform: rotate(360deg); }
-}
-
-/* Responsivo */
+/* =========================================
+   MEDIA QUERIES - MÓVIL
+   ========================================= */
+.hidden-desktop { display: none; }
 @media (max-width: 768px) {
-    .construction-card {
-        padding: 2rem 1.5rem;
-    }
-    .title {
-        font-size: 1.5rem;
-    }
+    :host { padding: 1rem; }
+    .page-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; margin-bottom: 1rem; }
+    .header-content h1 { font-size: 1.25rem; }
+    .header-content, .btn-create { width: 100%; justify-content: flex-start; }
+    .btn-create { justify-content: center; }
+    .hidden-mobile { display: none !important; }
+    
+    /* Switcher superior Estudiante en móvil */
+    :host ::ng-deep .student-main-switcher { flex-direction: column; gap: 0.5rem; }
+    :host ::ng-deep .student-main-switcher .p-button { width: 100%; margin: 0; }
+
+    /* Magia tabla de historial a tarjetas móviles */
+    .hidden-desktop { display: inline-block; }
+    :host ::ng-deep .card-table .p-datatable-thead { display: none !important; }
+    :host ::ng-deep .card-table .p-datatable-tbody > tr { display: flex; flex-direction: column; background: var(--bg-card) !important; border: 1px solid var(--border-color) !important; border-radius: 12px; margin-bottom: 1rem; padding: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    :host ::ng-deep .card-table .p-datatable-tbody > tr > td { display: flex !important; align-items: center !important; justify-content: space-between !important; width: 100% !important; padding: 0.6rem 0 !important; border: none !important; border-bottom: 1px solid var(--border-color) !important; text-align: right !important; white-space: normal; font-size: 0.85rem !important; }
+    :host ::ng-deep .card-table .p-datatable-tbody > tr > td .p-column-title { display: inline-block !important; font-weight: 700; margin-bottom: 0; font-size: 0.85rem; color: var(--text-secondary); text-transform: none; }
+    :host ::ng-deep .card-table .p-datatable-tbody > tr > td:last-child { border-bottom: none !important; padding-top: 0.75rem !important; justify-content: center !important; }
+
+    /* Magia Formulario Kine Apilado en Celular */
+    .table-stack, .table-stack tbody, .table-stack th, .table-stack td, .table-stack tr { display: block !important; width: 100% !important; }
+    .table-stack thead { display: none !important; } 
+    .table-stack tr { margin-bottom: 1rem; border: 1px solid var(--border-color) !important; border-radius: 8px; overflow: hidden; background-color: var(--bg-card) !important; }
+    .table-stack td { border: none !important; }
+    .table-stack td.kine-label-cell-fixed, .table-stack td.kine-label-cell, .table-stack td.kine-subheader { background-color: var(--bg-main) !important; padding: 0.8rem 1rem !important; border-bottom: 1px solid var(--border-color) !important; text-align: left !important; font-size: 0.85rem !important; font-weight: 700; }
+    .table-stack .kine-input, .table-stack textarea.kine-input { padding: 1rem !important; min-height: 80px; font-size: 1rem !important; }
 }

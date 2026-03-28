@@ -56,9 +56,9 @@ import { KineScheduleComponent } from './features/users/kine/kine-schedule/kine-
 import { KineNutritionComponent } from './features/users/kine/kine-nutrition/kine-nutrition';
 import { KineViewGuidesComponent } from './features/users/kine/kine-view-guides/kine-view-guides';
 import { KineEvaluationsKineComponent } from './features/users/kine/kine-evaluations-kine/kine-evaluations-kine';
-import { KineInjuryTrackingComponent } from './features/users/kine/kine-injury-tracking/kine-injury-tracking';
 import { KinePatientsComponent } from './features/users/kine/kine-patients/kine-patients';
-import { KineStudentProfileComponent } from './features/users/kine/kine-student-profile/kine-student-profile';
+import { KineEvolutionRecordComponent } from './features/users/kine/kine-evolution-record/kine-evolution-record';
+import {KineInjuriesComponent} from './features/users/kine/kine-injuries/kine-injuries'
 
 // --- NUTRI IMPORTS ---
 import { NutriLayoutComponent } from './features/users/nutri/nutri-layout/nutri-layout';
@@ -159,11 +159,11 @@ export const routes: Routes = [
             { path: 'schedule', component: KineScheduleComponent },
             { path: 'nutrition', component: KineNutritionComponent },
             { path: 'guides', component: KineViewGuidesComponent },
-            { path: 'injury-tracking', component: KineInjuryTrackingComponent },
             { path: 'patients', component: KinePatientsComponent },
-            { path: 'student-profile', component: KineStudentProfileComponent },
             { path: 'evaluation-kine', component: KineEvaluationsKineComponent },
-
+            { path: 'evolution-record-kine', component: KineEvolutionRecordComponent },
+            { path: 'injuries-kine', component: KineInjuriesComponent },
+        
         ]
     },
 

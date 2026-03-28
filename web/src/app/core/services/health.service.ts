@@ -211,11 +211,94 @@ export class HealthService {
   }
 
   // ==========================================
-  // 5. HISTORIAL CLÍNICO
+  // 5. HISTORIAL CLÍNICO (Lesiones y Antecedentes)
   // ==========================================
 
+  // Obtener el historial de un estudiante
   async getHistorialClinico(estudianteId: string) {
-    return await this.supabase.from('historial_clinico').select('*').eq('estudiante_id', estudianteId).order('fecha_evento', { ascending: false });
+    return await this.supabase
+      .from('historial_clinico')
+      .select('*')
+      .eq('estudiante_id', estudianteId)
+      .order('fecha_evento', { ascending: false });
   }
 
+  // Crear un nuevo registro (lesión, cirugía, etc.)
+  async crearHistorialClinico(data: any) {
+    return await this.supabase
+      .from('historial_clinico')
+      .insert(data)
+      .select()
+      .single();
+  }
+
+  // Actualizar un registro existente
+  async updateHistorialClinico(id: string, data: any) {
+    return await this.supabase
+      .from('historial_clinico')
+      .update(data)
+      .eq('id', id)
+      .select()
+      .single();
+  }
+
+  // Eliminar un registro
+  async eliminarHistorialClinico(id: string) {
+    return await this.supabase
+      .from('historial_clinico')
+      .delete()
+      .eq('id', id);
+  }
+
+  // ==========================================
+  // FICHA EVOLUTIVA KINESIOLÓGICA
+  // ==========================================
+
+  // 1. Guardar una nueva ficha
+  async crearFichaEvolutiva(ficha: any) {
+    return await this.supabase
+      .from('ficha_evolutiva')
+      .insert(ficha)
+      .select()
+      .single();
+  }
+
+  // 2. Actualizar una ficha existente
+  async updateFichaEvolutiva(id: string, ficha: any) {
+    return await this.supabase
+      .from('ficha_evolutiva')
+      .update(ficha)
+      .eq('id', id)
+      .select()
+      .single();
+  }
+
+  // 3. Obtener todas las fichas de un alumno (para el historial)
+  async getFichasPorEstudiante(estudianteId: string) {
+    return await this.supabase
+      .from('ficha_evolutiva')
+      .select(`
+        *,
+        kinesiologos (nombre, apellido)
+      `)
+      .eq('estudiante_id', estudianteId)
+      .order('fecha_creacion', { ascending: false });
+  }
+
+  // 4. Obtener una ficha específica (para ver el detalle o editar)
+  async getFichaEvolutivaPorId(id: string) {
+    return await this.supabase
+      .from('ficha_evolutiva')
+      .select('*')
+      .eq('id', id)
+      .single();
+  }
+
+  // 5. Eliminar una ficha (por si hubo un error al crearla)
+  async eliminarFichaEvolutiva(id: string) {
+    return await this.supabase
+      .from('ficha_evolutiva')
+      .delete()
+      .eq('id', id);
+  }
 }

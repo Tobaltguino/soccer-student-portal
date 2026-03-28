@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { KineInjuryTracking } from './kine-injury-tracking';
+import { KineEvolutionRecord } from './kine-evolution-record';
 
-describe('KineInjuryTracking', () => {
-  let component: KineInjuryTracking;
-  let fixture: ComponentFixture<KineInjuryTracking>;
+describe('KineEvolutionRecord', () => {
+  let component: KineEvolutionRecord;
+  let fixture: ComponentFixture<KineEvolutionRecord>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [KineInjuryTracking]
+      imports: [KineEvolutionRecord]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(KineInjuryTracking);
+    fixture = TestBed.createComponent(KineEvolutionRecord);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
