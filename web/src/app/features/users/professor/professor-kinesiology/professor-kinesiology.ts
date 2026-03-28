@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // 🔥 CAMBIO 1: Importamos ChangeDetectorRef
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
@@ -86,12 +86,13 @@ export class ProfessorKinesiologyComponent implements OnInit {
   constructor(
     private messageService: MessageService,
     private healthService: HealthService,
-    private authService: AuthService
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef // 🔥 CAMBIO 2: Inyectamos el ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
     await this.obtenerUsuarioActual();
-    this.cargarAlumnos();
+    await this.cargarAlumnos(); // 🔥 Agregamos 'await' para esperar la carga
   }
 
   async obtenerUsuarioActual() {
@@ -139,6 +140,8 @@ export class ProfessorKinesiologyComponent implements OnInit {
     } catch (error) {
       console.error('Error al cargar alumnos:', error);
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los alumnos' });
+    } finally {
+      this.cdr.detectChanges(); // 🔥 Despertamos al terminar de cargar los alumnos
     }
   }
 
@@ -149,16 +152,18 @@ export class ProfessorKinesiologyComponent implements OnInit {
     this.volverAlHistorial();
     if (this.alumnoSeleccionado) {
       this.cargarHistorialFichas();
-      this.cargarListaLesiones(); // 🔥 Cargamos las lesiones
+      this.cargarListaLesiones(); 
     } else {
       this.historialFichas = [];
       this.listaLesiones = [];
+      this.cdr.detectChanges(); // 🔥 Actualizar si se limpia la selección
     }
   }
 
   volverAlHistorial() {
     this.modoFormulario = false;
     this.resetearFormulario();
+    this.cdr.detectChanges(); // 🔥 Forzar refresco al salir de la vista detalle
   }
 
   abrirVerFicha(fichaData: any) {
@@ -179,6 +184,7 @@ export class ProfessorKinesiologyComponent implements OnInit {
     }
     this.listaFuerzas = fichaData.fuerza_movimientos ? [...fichaData.fuerza_movimientos] : [];
     this.modoFormulario = true;
+    this.cdr.detectChanges(); // 🔥 Actualizar la vista para mostrar la ficha
   }
 
   // ==========================================
@@ -186,6 +192,8 @@ export class ProfessorKinesiologyComponent implements OnInit {
   // ==========================================
   async cargarHistorialFichas() {
     this.cargandoHistorial = true;
+    this.cdr.detectChanges(); // 🔥 Despertar antes de buscar
+
     try {
       const { data, error } = await this.healthService.getFichasPorEstudiante(this.alumnoSeleccionado.id);
       if (error) throw error;
@@ -195,11 +203,14 @@ export class ProfessorKinesiologyComponent implements OnInit {
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el historial' });
     } finally {
       this.cargandoHistorial = false;
+      this.cdr.detectChanges(); // 🔥 Despertar al terminar
     }
   }
 
   async cargarListaLesiones() {
     this.cargandoLesiones = true;
+    this.cdr.detectChanges(); // 🔥 Despertar antes de buscar
+
     try {
       const { data, error } = await this.healthService.getHistorialClinico(this.alumnoSeleccionado.id);
       if (error) throw error;
@@ -209,6 +220,7 @@ export class ProfessorKinesiologyComponent implements OnInit {
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el historial de lesiones.' });
     } finally {
       this.cargandoLesiones = false;
+      this.cdr.detectChanges(); // 🔥 Despertar al terminar
     }
   }
 

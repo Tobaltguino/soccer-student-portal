@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // 🔥 CAMBIO 1: Importamos ChangeDetectorRef
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
@@ -82,7 +82,8 @@ export class StudentKineComponent implements OnInit {
   constructor(
     private messageService: MessageService,
     private healthService: HealthService,
-    private authService: AuthService
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef // 🔥 CAMBIO 2: Inyectamos el ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
@@ -116,6 +117,8 @@ export class StudentKineComponent implements OnInit {
     if (!this.usuarioActualId) return;
 
     this.cargandoHistorial = true;
+    this.cdr.detectChanges(); // 🔥 Despertar antes de cargar
+
     try {
       const { data, error } = await this.healthService.getFichasPorEstudiante(this.usuarioActualId);
       if (error) throw error;
@@ -125,6 +128,7 @@ export class StudentKineComponent implements OnInit {
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar tu historial clínico.' });
     } finally {
       this.cargandoHistorial = false;
+      this.cdr.detectChanges(); // 🔥 Despertar después de cargar los datos
     }
   }
 
@@ -132,6 +136,8 @@ export class StudentKineComponent implements OnInit {
     if (!this.usuarioActualId) return;
 
     this.cargandoLesiones = true;
+    this.cdr.detectChanges(); // 🔥 Despertar antes de cargar
+
     try {
       const { data, error } = await this.healthService.getHistorialClinico(this.usuarioActualId);
       if (error) throw error;
@@ -141,6 +147,7 @@ export class StudentKineComponent implements OnInit {
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar tus lesiones.' });
     } finally {
       this.cargandoLesiones = false;
+      this.cdr.detectChanges(); // 🔥 Despertar después de cargar los datos
     }
   }
 
@@ -150,6 +157,7 @@ export class StudentKineComponent implements OnInit {
   volverAlHistorial() {
     this.modoFormulario = false;
     this.resetearFormulario();
+    this.cdr.detectChanges(); // 🔥 Actualizar vista
   }
 
   abrirVerFicha(fichaData: any) {
@@ -171,6 +179,7 @@ export class StudentKineComponent implements OnInit {
 
     this.listaFuerzas = fichaData.fuerza_movimientos ? [...fichaData.fuerza_movimientos] : [];
     this.modoFormulario = true;
+    this.cdr.detectChanges(); // 🔥 Actualizar vista para mostrar el formulario
   }
 
   // ==========================================

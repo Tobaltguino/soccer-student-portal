@@ -69,13 +69,16 @@
       <div class="card-content">
         <span class="card-label">Pacientes en Terapia</span>
         <div class="card-value-wrapper">
-            <h3 class="card-value" style="opacity: 0.5;">-</h3>
+            <h3 class="card-value" [ngClass]="{'opacity-50': loading}">
+                <i *ngIf="loading" class="pi pi-spin pi-spinner text-2xl"></i>
+                <span *ngIf="!loading">{{ pacientesEnTerapia }}</span>
+            </h3>
             <div class="card-icon icon-orange">
                 <i class="pi pi-heart-fill"></i>
             </div>
         </div>
         <p class="card-subtext" style="color: #f97316; font-weight: 600;">
-          <i class="pi pi-cog pi-spin mr-1"></i> Módulo en construcción
+          <i class="pi pi-check-circle mr-1"></i> Alumnos en tratamiento
         </p>
       </div>
     </div>

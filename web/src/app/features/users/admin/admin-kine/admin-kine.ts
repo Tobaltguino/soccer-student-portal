@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // 🔥 CAMBIO 1: Importamos ChangeDetectorRef
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MessageService, ConfirmationService } from 'primeng/api'; 
@@ -15,7 +15,7 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmDialogModule } from 'primeng/confirmdialog'; 
-import { DialogModule } from 'primeng/dialog'; // 🔥 NUEVO MÓDULO
+import { DialogModule } from 'primeng/dialog'; 
 import { DatePickerModule } from 'primeng/datepicker';
 
 // Servicios
@@ -40,7 +40,7 @@ import { AuthService } from '../../../../core/services/auth.service';
     TooltipModule,
     ConfirmDialogModule,
     DatePickerModule,
-    DialogModule // 🔥 Añadido aquí
+    DialogModule 
   ],
   providers: [MessageService, ConfirmationService], 
   templateUrl: './admin-kine.html',
@@ -90,7 +90,7 @@ export class AdminKineComponent implements OnInit {
   ];
   opcionesEstadoLesion: any[] = [
     { label: 'Activo', value: 'ACTIVO' },
-    { label: 'En Tratamiento', value: 'EN_TRATAMIENTO' }, // <-- Aquí está el guión bajo
+    { label: 'En Tratamiento', value: 'EN_TRATAMIENTO' }, 
     { label: 'Recuperado', value: 'RECUPERADO' }
   ];
 
@@ -98,13 +98,14 @@ export class AdminKineComponent implements OnInit {
     private messageService: MessageService,
     private confirmationService: ConfirmationService, 
     private healthService: HealthService,
-    private authService: AuthService
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef // 🔥 CAMBIO 2: Inyectamos el ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
     await this.obtenerUsuarioActual();
-    this.cargarAlumnos();
-    this.cargarKinesiologos();
+    await this.cargarAlumnos(); // 🔥 Agregamos await
+    await this.cargarKinesiologos(); // 🔥 Agregamos await
   }
 
   async obtenerUsuarioActual() {
@@ -123,7 +124,11 @@ export class AdminKineComponent implements OnInit {
           ...a, nombreCompleto: `${a.nombre} ${a.apellido} ${a.rut ? '('+a.rut+')' : ''}`
         }));
       }
-    } catch (error) { console.error(error); }
+    } catch (error) { 
+      console.error(error); 
+    } finally {
+      this.cdr.detectChanges(); // 🔥 Despertar
+    }
   }
 
   async cargarKinesiologos() {
@@ -133,7 +138,11 @@ export class AdminKineComponent implements OnInit {
       if (data) {
         this.listaKinesiologos = data.map((k: any) => ({ id: k.id, nombreCompleto: `${k.nombre} ${k.apellido}` }));
       }
-    } catch (error) { console.error(error); }
+    } catch (error) { 
+      console.error(error); 
+    } finally {
+      this.cdr.detectChanges(); // 🔥 Despertar
+    }
   }
 
   // ==========================================
@@ -143,10 +152,11 @@ export class AdminKineComponent implements OnInit {
     this.volverAlHistorial(); // Resetea formularios de Ficha
     if (this.alumnoSeleccionado) {
       this.cargarHistorialFichas();
-      this.cargarListaLesiones(); // 🔥 Cargamos también las lesiones
+      this.cargarListaLesiones(); 
     } else {
       this.historialFichas = [];
       this.listaLesiones = [];
+      this.cdr.detectChanges(); // 🔥 Despertar si se limpia
     }
   }
 
@@ -156,6 +166,8 @@ export class AdminKineComponent implements OnInit {
 
   async cargarListaLesiones() {
     this.cargandoLesiones = true;
+    this.cdr.detectChanges(); // 🔥 Despertar antes de cargar
+
     try {
       const { data, error } = await this.healthService.getHistorialClinico(this.alumnoSeleccionado.id);
       if (error) throw error;
@@ -165,33 +177,34 @@ export class AdminKineComponent implements OnInit {
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el historial de lesiones.' });
     } finally {
       this.cargandoLesiones = false;
+      this.cdr.detectChanges(); // 🔥 Despertar al terminar
     }
   }
 
   abrirNuevaLesion() {
     this.lesionActual = { 
       tipo: 'LESION', 
-      estado: 'ACTIVO', // <-- En mayúsculas
+      estado: 'ACTIVO', 
       fecha_evento: new Date() 
     };
     this.mostrarDialogoLesion = true;
+    this.cdr.detectChanges(); // 🔥 Despertar
   }
 
   abrirEditarLesion(lesion: any) {
     this.lesionActual = { ...lesion };
     
-    // 🔥 Convertimos el string YYYY-MM-DD a un Date de JavaScript evitando bugs de zona horaria
     if (this.lesionActual.fecha_evento) {
       const partes = this.lesionActual.fecha_evento.split('-');
       this.lesionActual.fecha_evento = new Date(partes[0], partes[1] - 1, partes[2]);
     }
     
     this.mostrarDialogoLesion = true;
+    this.cdr.detectChanges(); // 🔥 Despertar
   }
 
   async guardarLesion() {
     try {
-      // 🔥 CAMBIO: Validamos 'diagnostico' en lugar de 'descripcion'
       if (!this.lesionActual.tipo || !this.lesionActual.diagnostico || !this.lesionActual.fecha_evento) {
         this.messageService.add({ severity: 'warn', summary: 'Campos requeridos', detail: 'Debe completar la fecha, tipo y diagnóstico.' });
         return;
@@ -262,6 +275,7 @@ export class AdminKineComponent implements OnInit {
     this.vistaFormulario = 'antecedentes'; 
     this.modoFormulario = true;
     this.modoSoloLectura = false;
+    this.cdr.detectChanges(); // 🔥 Despertar
   }
 
   volverAlHistorial() {
@@ -269,6 +283,7 @@ export class AdminKineComponent implements OnInit {
     this.editandoId = null;
     this.modoSoloLectura = false;
     this.resetearFormulario();
+    this.cdr.detectChanges(); // 🔥 Despertar
   }
 
   abrirEditarFicha(fichaData: any) {
@@ -292,15 +307,19 @@ export class AdminKineComponent implements OnInit {
     this.listaFuerzas = fichaData.fuerza_movimientos ? [...fichaData.fuerza_movimientos] : [];
     this.modoFormulario = true;
     this.modoSoloLectura = false;
+    this.cdr.detectChanges(); // 🔥 Despertar
   }
 
   abrirVerFicha(fichaData: any) {
     this.abrirEditarFicha(fichaData); 
     this.modoSoloLectura = true;      
+    this.cdr.detectChanges(); // 🔥 Despertar
   }
 
   async cargarHistorialFichas() {
     this.cargandoHistorial = true;
+    this.cdr.detectChanges(); // 🔥 Despertar antes de cargar
+
     try {
       const { data, error } = await this.healthService.getFichasPorEstudiante(this.alumnoSeleccionado.id);
       if (error) throw error;
@@ -309,6 +328,7 @@ export class AdminKineComponent implements OnInit {
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el historial' });
     } finally {
       this.cargandoHistorial = false;
+      this.cdr.detectChanges(); // 🔥 Despertar al terminar
     }
   }
 
@@ -334,7 +354,7 @@ export class AdminKineComponent implements OnInit {
         balance_romberg: this.ficha.balance_romberg === '' ? null : this.ficha.balance_romberg
       };
 
-      if (!this.editandoId) payload.kinesiologo_id = this.usuarioActualId;
+      if (!this.editandoId) payload.kinesiologo_id = this.ficha.kinesiologo_id; // Ajuste menor aquí por lógica de Admin
       delete payload.kinesiologos; 
 
       if (this.editandoId) {
@@ -376,9 +396,19 @@ export class AdminKineComponent implements OnInit {
     });
   }
 
-  agregarFuerza() { this.listaFuerzas.push({ movimiento: '', escala: '' }); }
-  eliminarFuerza(index: number) { this.listaFuerzas.splice(index, 1); }
-  resetearFormulario() { this.ficha = this.obtenerFichaVacia(); this.listaArticulaciones = this.obtenerArticulacionesVacias(); this.listaFuerzas = []; }
+  agregarFuerza() { 
+    this.listaFuerzas.push({ movimiento: '', escala: '' }); 
+    this.cdr.detectChanges(); // 🔥 Despertar
+  }
+  eliminarFuerza(index: number) { 
+    this.listaFuerzas.splice(index, 1); 
+    this.cdr.detectChanges(); // 🔥 Despertar
+  }
+  resetearFormulario() { 
+    this.ficha = this.obtenerFichaVacia(); 
+    this.listaArticulaciones = this.obtenerArticulacionesVacias(); 
+    this.listaFuerzas = []; 
+  }
 
   obtenerFichaVacia() {
     return {

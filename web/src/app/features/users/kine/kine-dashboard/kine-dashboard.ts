@@ -21,6 +21,7 @@ export class KineDashboardComponent implements OnInit {
   clasesHoy: any[] = [];
   proximaClase: any = null;
   totalAlumnos: number = 0;
+  pacientesEnTerapia: number = 0; // 🔥 NUEVO KPI AÑADIDO
 
   // Listas
   cumpleanosList: any[] = [];
@@ -30,7 +31,6 @@ export class KineDashboardComponent implements OnInit {
   supabaseStatus: 'online' | 'offline' | 'checking' = 'checking';
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos los servicios especializados
     private authService: AuthService,
     private healthService: HealthService,
     private academyService: AcademyService,
@@ -46,7 +46,6 @@ export class KineDashboardComponent implements OnInit {
   async verificarConexion() {
     try {
       this.supabaseStatus = 'checking';
-      // 🚀 CAMBIO 3: Usamos authService
       const { data: { user } } = await this.authService.getUser();
       
       if (!user) {
@@ -63,11 +62,10 @@ export class KineDashboardComponent implements OnInit {
   async cargarDatosKine() {
     this.loading = true;
     try {
-      // 🚀 CAMBIO 4: Usamos authService
       const { data: { user } } = await this.authService.getUser();
       if (!user?.email) return;
 
-      // 1. Obtener ID del Kinesiólogo (Usando la función que creamos en el paso anterior)
+      // 1. Obtener ID del Kinesiólogo
       const { data: kine } = await this.healthService.getKineByEmail(user.email);
       if (!kine) return;
 
@@ -80,19 +78,39 @@ export class KineDashboardComponent implements OnInit {
       if (misGrupoIds.length > 0) {
         const hoyStr = new Date().toISOString().split('T')[0];
 
-        // 3. 🚀 CAMBIO 5: Clases usando academyService
+        // 3. Clases usando academyService
         const { data: clases } = await this.academyService.getClasesPorGrupos(misGrupoIds, hoyStr);
 
         const todasClases = clases || [];
         this.clasesHoy = todasClases.filter((c: any) => c.fecha === hoyStr);
         this.proximaClase = todasClases.length > 0 ? todasClases[0] : null;
 
-        // 4. 🚀 CAMBIO 6: Alumnos y Cumpleaños usando academyService
+        // 4. Alumnos usando academyService
         const { data: alumnos } = await this.academyService.getTodosEstudiantesPorGrupos(misGrupoIds, true);
 
         if (alumnos) {
           this.totalAlumnos = alumnos.length;
           this.cumpleanosList = this.filtrarProximosCumpleanos(alumnos);
+          
+          // 🔥 NUEVO: Calcular Pacientes en Terapia
+          // Extraemos los IDs de todos los alumnos de los grupos del kine
+          const alumnoIds = alumnos.map((a: any) => a.id);
+          
+          // Consultamos el historial clínico de todos esos alumnos
+          const { data: historiales } = await this.healthService['supabase']
+            .from('historial_clinico')
+            .select('id, estudiante_id, estado, tipo')
+            .in('estudiante_id', alumnoIds)
+            // Filtramos en base de datos para traer solo los que importan
+            .in('estado', ['ACTIVO', 'EN_TRATAMIENTO']) 
+            .in('tipo', ['LESION', 'PATOLOGIA']);
+
+          if (historiales) {
+             // Contamos cuántos alumnos ÚNICOS están en tratamiento
+             // (Si un alumno tiene 2 lesiones activas, cuenta como 1 paciente)
+             const pacientesUnicos = new Set(historiales.map((h: any) => h.estudiante_id));
+             this.pacientesEnTerapia = pacientesUnicos.size;
+          }
         }
       }
 
