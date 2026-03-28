@@ -61,12 +61,13 @@ export class TerminosComponent implements OnInit {
       else if (this.userRole === 'kine') tabla = 'kinesiologos';
       else if (this.userRole === 'nutri') tabla = 'nutricionistas';
 
-      // 🚀 CAMBIO 5: Usamos this.authService.registrarFirmaTerminos()
+      // Guardamos en la BD que ya aceptó los términos
       const { error } = await this.authService.registrarFirmaTerminos(tabla, this.userId);
       
       if (error) throw error;
 
-      this.redirigirPorRol(this.userRole);
+      // 🚀 CAMBIO CLAVE: Ya no va al Dashboard, ahora va a cambiar la contraseña
+      this.router.navigate(['/update-password']); // <-- Asegúrate de que esta ruta exista en tu app.routes.ts
 
     } catch (error) {
       console.error(error); 
