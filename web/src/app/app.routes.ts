@@ -76,8 +76,18 @@ export const routes: Routes = [
     // 1. RUTAS AUTH (Login y Recuperación)
     // ==========================================
     { path: 'login', component: LoginComponent },
-    { path: 'update-password', component: UpdatePasswordComponent },
-    { path: 'terminos', component: TerminosComponent },
+    { 
+      path: 'update-password', 
+      component: UpdatePasswordComponent,
+      canActivate: [authGuard],
+      data: { roles: ['all'] } // 🔥 AÑADIMOS ESTO PARA QUE EL GUARD DEJE PASAR A CUALQUIERA
+    },
+    { 
+      path: 'terminos', 
+      component: TerminosComponent,
+      canActivate: [authGuard],
+      data: { roles: ['all'] } // 🔥 AÑADIMOS ESTO TAMBIÉN AQUÍ
+    },
 
     // ==========================================
     // 2. RUTA ADMIN

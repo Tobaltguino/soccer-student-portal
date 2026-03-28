@@ -79,25 +79,39 @@
             <div class="field">
                 <label>Archivo <span class="text-red-500 font-bold">{{ nuevaGuia.id ? '(Opcional)' : '*' }}</span></label>
                 
+                <div *ngIf="nuevaGuia.id && nuevaGuia.archivo_url && !archivoSeleccionado" class="flex flex-column mb-3 border-1 border-blue-100 border-round-lg p-3 bg-blue-50">
+                    <div class="flex align-items-center justify-content-between w-full">
+                        <div class="flex align-items-center">
+                            <i class="pi pi-file-pdf text-3xl text-primary mr-3"></i>
+                            <div class="flex flex-column">
+                                <span class="font-bold text-sm text-main">Archivo Actual en el Sistema</span>
+                                <a [href]="nuevaGuia.archivo_url" target="_blank" class="text-xs text-primary font-medium mt-1 no-underline hover:underline">Ver archivo cargado <i class="pi pi-external-link" style="font-size: 0.7rem;"></i></a>
+                            </div>
+                        </div>
+                        <button pButton icon="pi pi-replay" class="p-button-rounded p-button-text p-button-sm p-button-secondary" (click)="fileInput.click()" pTooltip="Reemplazar archivo" tooltipPosition="left"></button>
+                    </div>
+                </div>
+
                 <div class="file-upload-container text-center cursor-pointer" 
                      (click)="fileInput.click()" 
                      [class.opacity-50]="subiendoArchivo"
-                     [class.pointer-events-none]="subiendoArchivo">
+                     [class.pointer-events-none]="subiendoArchivo"
+                     [ngClass]="{'mt-2': nuevaGuia.id && nuevaGuia.archivo_url}">
                     
                     <input type="file" #fileInput class="hidden" (click)="$event.stopPropagation()" (change)="onFileSelect($event)" accept=".pdf,.doc,.docx,.jpg,.png" [disabled]="subiendoArchivo">
                     
                     <div *ngIf="!archivoSeleccionado">
-                        <i class="pi" [ngClass]="nuevaGuia.id ? 'pi-file-edit text-info' : 'pi-cloud-upload text-primary'" class="text-4xl mb-2"></i>
+                        <i class="pi" [ngClass]="nuevaGuia.id ? 'pi-cloud-upload text-blue-400' : 'pi-cloud-upload text-primary'" class="text-4xl mb-2"></i>
                         <div class="text-700 font-medium">
-                            {{ nuevaGuia.id ? 'Haga clic si desea reemplazar el archivo actual' : 'Haz clic aquí para seleccionar un archivo' }}
+                            {{ nuevaGuia.id ? 'Haz clic para seleccionar un archivo nuevo y reemplazar el actual' : 'Haz clic aquí para seleccionar un archivo' }}
                         </div>
                         <div class="text-500 text-sm mt-1">PDF, Word o Imágenes (Máximo 5MB)</div>
                     </div>
 
                     <div *ngIf="archivoSeleccionado" class="flex flex-column align-items-center">
-                        <i class="pi pi-file text-4xl text-green-500 mb-2"></i>
+                        <i class="pi pi-check-circle text-4xl text-green-500 mb-2"></i>
                         <div class="text-900 font-bold text-sm w-full white-space-nowrap overflow-hidden text-overflow-ellipsis px-2">{{archivoSeleccionado.name}}</div>
-                        <div class="text-500 text-xs mt-1">{{ (archivoSeleccionado.size / 1024 / 1024) | number:'1.2-2' }} MB</div>
+                        <div class="text-500 text-xs mt-1 font-bold">{{ (archivoSeleccionado.size / 1024 / 1024) | number:'1.2-2' }} MB - Listo para subir</div>
                     </div>
                 </div>
             </div>

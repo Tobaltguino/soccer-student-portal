@@ -40,13 +40,11 @@ export class StudentDashboardComponent implements OnInit {
   async cargarDatosDashboard() {
     this.loading = true;
     try {
-      // 🚀 CAMBIO 3: Validación segura con AuthService
       const { data: { user } } = await this.authService.getUser();
       if (!user) return;
 
       const inicioAnio = `${new Date().getFullYear()}-01-01`;
 
-      // 🚀 CAMBIO 4: Carga de datos en paralelo para mejorar el performance
       const [resClases, resEvals] = await Promise.all([
         this.academyService.getClasesAlumno(user.id as string, inicioAnio),
         this.healthService.getEvaluacionesAlumno(user.id as string)
@@ -59,8 +57,18 @@ export class StudentDashboardComponent implements OnInit {
 
       // 2. Procesar Última Evaluación
       if (resEvals.data && resEvals.data.length > 0) {
-        // La consulta ya viene ordenada por created_at desc desde el servicio
-        this.ultimaEvaluacion = resEvals.data[0];
+        
+        // 🔥 FILTRO: Solo tomamos las que vengan con estado finalizado
+        const evaluacionesCompletadas = resEvals.data.filter((e: any) => {
+           const estado = e.estado_sesion || '';
+           return estado.toUpperCase() === 'FINALIZADA' || estado.toUpperCase() === 'FINALIZADO';
+        });
+
+        if (evaluacionesCompletadas.length > 0) {
+          this.ultimaEvaluacion = evaluacionesCompletadas[0];
+        } else {
+          this.ultimaEvaluacion = null;
+        }
       }
 
     } catch (error) {

@@ -53,31 +53,34 @@ export class StudentEvaluationsComponent implements OnInit {
   async cargarEvaluaciones() {
     this.loading = true;
     try {
-      // 🚀 CAMBIO 3: Validación segura con AuthService
       const { data: { user } } = await this.authService.getUser();
       
       if (user) {
-        // Prevención de colapso: 6 meses
+        // Prevención de colapso: 6 meses (Corregido el error de los signos)
         const seisMesesAtras = new Date();
-        seisMesesAtras.setMonth(seisMesesAtras.getMonth() - -6);
-        // Aunque el servicio ya filtra, pasamos la fecha para mayor control
+        seisMesesAtras.setMonth(seisMesesAtras.getMonth() - 6); 
         const fechaDesde = seisMesesAtras.toISOString().split('T')[0];
 
-        // 🚀 CAMBIO 4: Usamos HealthService para obtener los resultados del alumno
         const { data, error } = await this.healthService.getEvaluacionesAlumno(user.id as string);
         if (error) throw error;
 
-        // Mapeamos los datos para que coincidan con la estructura que espera tu HTML
-        // (Ajustando nombres de campos si el servicio devuelve relaciones anidadas)
-        this.evaluacionesOriginales = (data || []).map((e: any) => ({
+        // 🔥 FILTRO: Dejamos pasar SOLO las evaluaciones cuya sesión esté FINALIZADA
+        const evaluacionesCompletadas = (data || []).filter((e: any) => {
+           const estado = e.estado_sesion || '';
+           return estado.toUpperCase() === 'FINALIZADA' || estado.toUpperCase() === 'FINALIZADO';
+        });
+
+        // Mapeamos los datos YA FILTRADOS
+        this.evaluacionesOriginales = evaluacionesCompletadas.map((e: any) => ({
           ...e,
-          test_nombre: e.evaluacion_sesiones?.evaluacion_tipos?.nombre || 'Test',
-          unidad_medida: e.evaluacion_sesiones?.evaluacion_tipos?.unidad_medida || '',
-          fecha: e.evaluacion_sesiones?.fecha
-        })).sort((a, b) => {
+          // Las propiedades test_nombre y unidad ya vienen formateadas desde el servicio, 
+          // pero las aseguramos por si acaso:
+          test_nombre: e.test_nombre || 'Test',
+          unidad_medida: e.unidad || ''
+        })).sort((a: any, b: any) => {
           const tA = new Date(a.created_at).getTime();
           const tB = new Date(b.created_at).getTime();
-          return tB - tA;
+          return tB - tA; // Más recientes primero
         });
 
         // Extraer nombres únicos de los tests para el selector de filtros

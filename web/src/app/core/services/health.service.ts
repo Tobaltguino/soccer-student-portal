@@ -122,7 +122,8 @@ export class HealthService {
       const fechaNac = estudiante?.fecha_nacimiento;
 
       let query = this.supabase.from('evaluaciones_resultados')
-        .select(`*, evaluaciones_sesiones!inner ( fecha, tipo_evaluacion!inner ( id, nombre, unidad_medida, descripcion, evaluacion_rangos (*) ) )`)
+        // 🔥 CAMBIO AQUÍ: Agregamos 'estado,' al select de evaluaciones_sesiones
+        .select(`*, evaluaciones_sesiones!inner ( fecha, estado, tipo_evaluacion!inner ( id, nombre, unidad_medida, descripcion, evaluacion_rangos (*) ) )`)
         .eq('estudiante_id', uid);
 
       if (fechaDesde) query = query.gte('evaluaciones_sesiones.fecha', fechaDesde);
@@ -158,6 +159,8 @@ export class HealthService {
 
         return {
           id: res.id, resultado: valor, observacion: res.observacion, fecha: fechaPrueba, created_at: res.created_at,
+          // 🔥 CAMBIO AQUÍ: Agregamos el estado
+          estado_sesion: res.evaluaciones_sesiones?.estado,
           test_nombre: res.evaluaciones_sesiones?.tipo_evaluacion?.nombre,
           test_descripcion: res.evaluaciones_sesiones?.tipo_evaluacion?.descripcion,
           unidad: res.evaluaciones_sesiones?.tipo_evaluacion?.unidad_medida,

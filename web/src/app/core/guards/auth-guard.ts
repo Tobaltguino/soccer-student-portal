@@ -22,6 +22,12 @@ export const authGuard: CanActivateFn = async (route, state) => {
   
   if (rolesPermitidos && rolesPermitidos.length > 0) {
     
+    // 🔥 NUEVA LÓGICA: Si la ruta permite 'all', lo dejamos pasar de inmediato
+    // (Esto ahorra una consulta a la BD y permite entrar a terminos o update-password)
+    if (rolesPermitidos.includes('all')) {
+      return true;
+    }
+
     // 🚀 MAGIA DE SEGURIDAD: Le preguntamos al AuthService el rol real
     const rolReal = await authService.getRolSeguro(user.email); 
 

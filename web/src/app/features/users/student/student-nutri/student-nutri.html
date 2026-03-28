@@ -65,15 +65,10 @@
                     </td>
                     <td class="text-center">
                         <span class="p-column-title hidden-desktop">Documento</span>
-                        <div class="action-buttons">
+                        <div class="action-buttons justify-content-center flex">
                             <div *ngIf="resultado.archivo_url; else noFile" class="w-full">
                                 <a [href]="resultado.archivo_url" target="_blank" class="no-underline w-full">
-                                    <button pButton class="p-button-outlined p-button-danger w-full justify-content-center text-sm gap-2">
-                                        <i class="pi pi-file-pdf"></i>
-                                        <span class="text-truncate" [title]="resultado.nombre_archivo">
-                                            {{ resultado.nombre_archivo }}
-                                        </span>
-                                    </button>
+                                    <button pButton label="Descargar" icon="pi pi-download" class="p-button-outlined p-button-danger p-button-sm"></button>
                                 </a>
                             </div>
                             <ng-template #noFile>

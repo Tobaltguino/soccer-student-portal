@@ -243,18 +243,30 @@ export class AdminUsersComponent implements OnInit {
   async guardar() {
     if (this.isEditing && this.userForm.rut === '1-1') return;
     
+    // 1. Validación de campos generales (para todos)
     if (!this.userForm.nombre || !this.userForm.apellido || !this.userForm.email || !this.userForm.rut) {
-        this.messageService.add({ severity: 'warn', summary: 'Incompleto', detail: 'Completa todos los campos (*).' }); return;
+        this.messageService.add({ severity: 'warn', summary: 'Incompleto', detail: 'Completa todos los campos obligatorios (*).' }); 
+        return;
     }
 
+    // 🔥 2. NUEVA VALIDACIÓN: Fecha de nacimiento obligatoria para Estudiantes
+    if (this.vistaActual === 'estudiantes' && !this.userForm.fecha_nacimiento) {
+        this.messageService.add({ severity: 'warn', summary: 'Falta la Fecha', detail: 'La fecha de nacimiento es obligatoria para los estudiantes.' }); 
+        return;
+    }
+
+    // 3. Validación de formato de Email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(this.userForm.email)) {
-        this.messageService.add({ severity: 'error', summary: 'Email Inválido', detail: 'Formato incorrecto.' }); return;
+        this.messageService.add({ severity: 'error', summary: 'Email Inválido', detail: 'Formato de correo incorrecto.' }); 
+        return;
     }
 
+    // 4. Validación de RUT
     const rutLimpio = this.userForm.rut.replace(/\./g, '').trim();
     if (!RutValidator.esValido(rutLimpio)) {
-        this.messageService.add({ severity: 'error', summary: 'RUT Inválido', detail: 'Formato incorrecto.' }); return;
+        this.messageService.add({ severity: 'error', summary: 'RUT Inválido', detail: 'El RUT ingresado no es válido.' }); 
+        return;
     }
 
     this.loading = true;
@@ -314,12 +326,29 @@ export class AdminUsersComponent implements OnInit {
             }
         }
 
-        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario guardado.' });
+        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario guardado correctamente.' });
         this.displayDialog = false;
         setTimeout(() => this.cargarDatos(), 100);
 
     } catch (error: any) {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: error.message || 'Error al guardar.' });
+        console.error('Error capturado al guardar:', error);
+        
+        // 🔥 AQUÍ "TRADUCIMOS" LOS ERRORES PARA EL USUARIO
+        let mensajeError = 'Ocurrió un problema al guardar el usuario.';
+        const errStr = String(error.message || error).toLowerCase();
+
+        if (errStr.includes('email') || errStr.includes('already registered') || errStr.includes('already exists')) {
+            mensajeError = 'Este correo electrónico ya está registrado en el sistema. Intenta con otro.';
+        } else if (errStr.includes('rut') && (errStr.includes('duplicate') || errStr.includes('unique'))) {
+            mensajeError = 'Este RUT ya se encuentra registrado en la base de datos.';
+        } else if (errStr.includes('duplicate key')) {
+            mensajeError = 'Ya existe un usuario con estos datos únicos (RUT o Email).';
+        } else if (error.message) {
+            mensajeError = error.message; // Si no es ninguno de los anteriores, mostramos el mensaje original
+        }
+
+        this.messageService.add({ severity: 'error', summary: 'No se pudo crear', detail: mensajeError });
+        
     } finally {
         this.loading = false;
         this.uploadingFoto = false;

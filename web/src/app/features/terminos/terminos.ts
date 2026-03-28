@@ -37,14 +37,16 @@ export class TerminosComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
-    // 🚀 CAMBIO 3: Usamos this.authService.getUser()
     const { data: { user } } = await this.authService.getUser();
     if (user && user.email) {
       this.userId = user.id;
       this.userEmail = user.email;
       
-      // 🚀 CAMBIO 4: Usamos this.authService.getRolSeguro()
-      this.userRole = await this.authService.getRolSeguro(user.id);
+      // 🔥 CAMBIO 1: Le pasamos user.email (igual que en tu authGuard)
+      this.userRole = await this.authService.getRolSeguro(user.email); 
+      
+      // Para que veas en tu consola exactamente qué palabra está detectando
+      console.log('Rol detectado en Términos:', this.userRole); 
     } else {
       this.router.navigate(['/login']);
     }
@@ -55,19 +57,31 @@ export class TerminosComponent implements OnInit {
 
     this.guardando = true;
     try {
-      let tabla = 'estudiantes';
-      if (this.userRole === 'admin') tabla = 'admins';
-      else if (this.userRole === 'professor') tabla = 'profesores';
-      else if (this.userRole === 'kine') tabla = 'kinesiologos';
-      else if (this.userRole === 'nutri') tabla = 'nutricionistas';
+      let tabla = 'estudiantes'; // Valor por defecto
+      
+      // Convertimos a minúsculas por si acaso viene como 'Admin' o 'ADMIN'
+      const rolNormalizado = this.userRole.toLowerCase();
+
+      // 🔥 CAMBIO 2: Atrapamos todas las variantes posibles de tu BD
+      if (rolNormalizado === 'admin' || rolNormalizado === 'administrador') {
+          tabla = 'admins';
+      } else if (rolNormalizado === 'professor' || rolNormalizado === 'profesor') {
+          tabla = 'profesores';
+      } else if (rolNormalizado === 'kine' || rolNormalizado === 'kinesiologo') {
+          tabla = 'kinesiologos';
+      } else if (rolNormalizado === 'nutri' || rolNormalizado === 'nutricionista') {
+          tabla = 'nutricionistas';
+      }
+
+      console.log(`Intentando guardar aceptación en la tabla: ${tabla}`);
 
       // Guardamos en la BD que ya aceptó los términos
       const { error } = await this.authService.registrarFirmaTerminos(tabla, this.userId);
       
       if (error) throw error;
 
-      // 🚀 CAMBIO CLAVE: Ya no va al Dashboard, ahora va a cambiar la contraseña
-      this.router.navigate(['/update-password']); // <-- Asegúrate de que esta ruta exista en tu app.routes.ts
+      // Redirige de forma absoluta a la ruta protegida
+      this.router.navigate(['/update-password']); 
 
     } catch (error) {
       console.error(error); 
