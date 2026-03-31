@@ -46,7 +46,6 @@ export class TerminosComponent implements OnInit {
       this.userRole = await this.authService.getRolSeguro(user.email); 
       
       // Para que veas en tu consola exactamente qué palabra está detectando
-      console.log('Rol detectado en Términos:', this.userRole); 
     } else {
       this.router.navigate(['/login']);
     }
@@ -73,7 +72,6 @@ export class TerminosComponent implements OnInit {
           tabla = 'nutricionistas';
       }
 
-      console.log(`Intentando guardar aceptación en la tabla: ${tabla}`);
 
       // Guardamos en la BD que ya aceptó los términos
       const { error } = await this.authService.registrarFirmaTerminos(tabla, this.userId);

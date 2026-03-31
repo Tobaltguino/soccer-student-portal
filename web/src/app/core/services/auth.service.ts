@@ -41,40 +41,40 @@ export class AuthService {
   }
 
   // ==========================================
-  // 2. AUTENTICACIÓN POR RUT
+  // 2. AUTENTICACIÓN POR RUT (OPTIMIZADO Y SEGURO)
   // ==========================================
 
   async loginConRut(rutInput: string, password: string) {
-    for (const tabla of this.TABLAS_USUARIOS) {
-      const { data: userData } = await this.supabase
-        .from(tabla)
-        .select('email, activo, acepto_terminos')
-        .eq('rut', rutInput.trim())
-        .maybeSingle();
+    // 1. Llamamos a nuestra nueva función segura en Supabase (RPC)
+    const { data: userData, error: rpcError } = await this.supabase.rpc('get_user_by_rut', { 
+      rut_input: rutInput.trim() 
+    });
 
-      if (userData?.email) {
-        if (!userData.activo) {
-          return { data: null, error: { message: 'Tu cuenta se encuentra desactivada. Contacta al administrador.' }, role: null, aceptoTerminos: false };
-        }
-
-        const authResponse = await this.supabase.auth.signInWithPassword({ 
-          email: userData.email, 
-          password 
-        });
-
-        if (authResponse.error) {
-          const mensajeError = authResponse.error.message === 'Invalid login credentials' 
-            ? 'Contraseña incorrecta.' 
-            : authResponse.error.message;
-          return { data: null, error: { message: mensajeError }, role: null, aceptoTerminos: false };
-        }
-
-        return { data: authResponse.data, error: null, role: tabla, aceptoTerminos: userData.acepto_terminos };
-      }
+    if (rpcError || !userData) {
+      return { data: null, error: { message: `El RUT ${rutInput} no está registrado en ProFutbol.` }, role: null, aceptoTerminos: false };
     }
-    
-    return { data: null, error: { message: `El RUT ${rutInput} no está registrado en ProFutbol.` }, role: null, aceptoTerminos: false };
+
+    // 2. Verificamos si está activo
+    if (!userData.activo) {
+      return { data: null, error: { message: 'Tu cuenta se encuentra desactivada. Contacta al administrador.' }, role: null, aceptoTerminos: false };
+    }
+
+    // 3. Hacemos el login real con el correo que nos devolvió el guardia
+    const authResponse = await this.supabase.auth.signInWithPassword({ 
+      email: userData.email, 
+      password 
+    });
+
+    if (authResponse.error) {
+      const mensajeError = authResponse.error.message === 'Invalid login credentials' 
+        ? 'Contraseña incorrecta.' 
+        : authResponse.error.message;
+      return { data: null, error: { message: mensajeError }, role: null, aceptoTerminos: false };
+    }
+
+    return { data: authResponse.data, error: null, role: userData.tabla, aceptoTerminos: userData.acepto_terminos };
   }
+
 
   // ==========================================
   // 3. GESTIÓN DE ROLES Y SEGURIDAD
@@ -116,17 +116,17 @@ export class AuthService {
   }
 
   async resetPasswordPorRut(rutInput: string) {
-    for (const tabla of this.TABLAS_USUARIOS) {
-      const { data } = await this.supabase.from(tabla).select('email, activo').eq('rut', rutInput.trim()).maybeSingle();
+    // Llamamos al mismo guardia para la recuperación
+    const { data: userData } = await this.supabase.rpc('get_user_by_rut', { rut_input: rutInput.trim() });
 
-      if (data?.email) {
-        if (!data.activo) return { error: { message: 'Tu cuenta se encuentra desactivada. Contacta al administrador.' } };
-        
-        return await this.supabase.auth.resetPasswordForEmail(data.email, {
-          redirectTo: window.location.origin + '/update-password' 
-        });
-      }
+    if (userData?.email) {
+      if (!userData.activo) return { error: { message: 'Tu cuenta se encuentra desactivada. Contacta al administrador.' } };
+      
+      return await this.supabase.auth.resetPasswordForEmail(userData.email, {
+        redirectTo: window.location.origin + '/update-password' 
+      });
     }
+    
     return { error: { message: `El RUT ${rutInput} no está registrado en ProFutbol.` } };
   }
 
