@@ -41,31 +41,65 @@
             </div>
         </div>
         <p class="card-subtext" *ngIf="proximaClase">
-          <span class="font-bold text-900">Próx:</span> {{ proximaClase.grupos?.nombre }} 
-          <span class="ml-1 text-primary">({{ proximaClase.hora | slice:0:5 }})</span>
+          <span class="font-bold text-900">Próx:</span> {{ proximaClase.hora | slice:0:5 }}
         </p>
-        <p class="card-subtext text-muted" *ngIf="!proximaClase">
-          Sin entrenamientos pendientes
-        </p>
+        <p class="card-subtext text-muted" *ngIf="!proximaClase">Sin entrenamientos</p>
+      </div>
+    </div>
+
+    <div class="card card-indigo">
+      <div class="card-content">
+        <span class="card-label">Evaluaciones</span>
+        <div class="card-value-wrapper">
+            <h3 class="card-value">{{ ultimaEvaluacion ? '1' : '0' }}</h3>
+            <div class="card-icon icon-indigo">
+                <i class="pi pi-chart-bar"></i>
+            </div>
+        </div>
+        <p class="card-subtext" *ngIf="ultimaEvaluacion">Últ: {{ ultimaEvaluacion.fecha | date:'dd/MM' }}</p>
+        <p class="card-subtext" *ngIf="!ultimaEvaluacion">No hay registros</p>
+      </div>
+    </div>
+
+    <div class="card card-red">
+      <div class="card-content">
+        <span class="card-label">En Tratamiento</span>
+        <div class="card-value-wrapper">
+            <h3 class="card-value">{{ pacientesEnTratamiento }}</h3>
+            <div class="card-icon icon-red">
+                <i class="pi pi-exclamation-triangle"></i>
+            </div>
+        </div>
+        <p class="card-subtext" style="color: #ef4444; font-weight: 600;">Lesiones activas</p>
+      </div>
+    </div>
+
+    <div class="card card-orange">
+      <div class="card-content">
+        <span class="card-label">En Observación</span>
+        <div class="card-value-wrapper">
+            <h3 class="card-value">{{ pacientesEnObservacion }}</h3>
+            <div class="card-icon icon-orange">
+                <i class="pi pi-eye"></i>
+            </div>
+        </div>
+        <p class="card-subtext" style="color: #f97316; font-weight: 600;">Cuidado preventivo</p>
       </div>
     </div>
 
     <div class="card card-purple">
       <div class="card-content">
-        <span class="card-label">Evaluaciones</span>
+        <span class="card-label">En Reintegro</span>
         <div class="card-value-wrapper">
-            <h3 class="card-value">{{ ultimaEvaluacion ? '1' : '0' }}</h3>
+            <h3 class="card-value">{{ pacientesEnReintegro }}</h3>
             <div class="card-icon icon-purple">
-                <i class="pi pi-chart-bar"></i>
+                <i class="pi pi-directions"></i>
             </div>
         </div>
-        <p class="card-subtext" *ngIf="ultimaEvaluacion">
-          <span class="font-bold">Última:</span> {{ ultimaEvaluacion.tipo_evaluacion?.nombre }}
-          <small class="block text-500">{{ ultimaEvaluacion.fecha | date:'dd/MM/yy' }}</small>
-        </p>
-        <p class="card-subtext" *ngIf="!ultimaEvaluacion">No hay tests registrados</p>
+        <p class="card-subtext" style="color: #8b5cf6; font-weight: 600;">Vuelta al campo</p>
       </div>
     </div>
+
   </div>
 
   <section class="recent-activity-card shadow-1">
@@ -83,23 +117,20 @@
         <div class="item-icon-wrapper" [ngClass]="est.diasRestantes === 0 ? 'icon-orange' : 'icon-blue'">
           <i class="pi pi-user"></i>
         </div>
-        
         <div class="item-info">
           <p class="item-title text-900 font-bold">{{ est.nombre }} {{ est.apellido }}</p>
           <span class="item-meta">{{ est.grupos?.nombre }} • {{ est.proximoCumple | date:'d \'de\' MMMM' }}</span>
         </div>
-
         <div class="flex flex-column align-items-end">
             <span class="badge" [ngClass]="{'badge-success': est.diasRestantes === 0, 'badge-score': est.diasRestantes > 0}">
-                {{ est.diasRestantes === 0 ? '¡ES HOY!' : est.diasRestantes === 1 ? 'Mañana' : 'En ' + est.diasRestantes + ' días' }}
+                {{ est.diasRestantes === 0 ? '¡ES HOY!' : 'En ' + est.diasRestantes + ' días' }}
             </span>
             <small class="text-secondary text-xs mt-1">Cumplirá {{ est.nuevaEdad }} años</small>
         </div>
       </div>
-
       <div class="empty-state" *ngIf="cumpleanosList.length === 0 && !loading">
         <i class="pi pi-calendar-times" style="font-size: 2rem; color: var(--text-secondary); margin-bottom: 1rem;"></i>
-        <p class="text-secondary m-0">No hay cumpleaños esta semana en tus grupos.</p>
+        <p class="text-secondary m-0">No hay cumpleaños cercanos.</p>
       </div>
     </div>
   </section>

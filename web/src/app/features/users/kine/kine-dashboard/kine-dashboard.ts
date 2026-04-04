@@ -2,7 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 
-// 🚀 CAMBIO 1: Importamos los servicios de dominio
+// Servicios de dominio
 import { AuthService } from '../../../../core/services/auth.service';
 import { HealthService } from '../../../../core/services/health.service';
 import { AcademyService } from '../../../../core/services/academy.service';
@@ -16,12 +16,16 @@ import { AcademyService } from '../../../../core/services/academy.service';
 })
 export class KineDashboardComponent implements OnInit {
   
-  // Datos KPIs
+  // Datos KPIs Generales
   misGrupos: any[] = [];
   clasesHoy: any[] = [];
   proximaClase: any = null;
   totalAlumnos: number = 0;
-  pacientesEnTerapia: number = 0; // 🔥 NUEVO KPI AÑADIDO
+
+  // 🔥 NUEVOS KPIs DETALLADOS DE SALUD
+  pacientesEnTratamiento: number = 0;    // Rojo (Urgente)
+  pacientesEnObservacion: number = 0;     // Amarillo (Cuidado)
+  pacientesEnReintegro: number = 0;       // Azul (Casi listos)
 
   // Listas
   cumpleanosList: any[] = [];
@@ -61,15 +65,18 @@ export class KineDashboardComponent implements OnInit {
 
   async cargarDatosKine() {
     this.loading = true;
+    // Reiniciamos contadores
+    this.pacientesEnTratamiento = 0;
+    this.pacientesEnObservacion = 0;
+    this.pacientesEnReintegro = 0;
+    
     try {
       const { data: { user } } = await this.authService.getUser();
       if (!user?.email) return;
 
-      // 1. Obtener ID del Kinesiólogo
       const { data: kine } = await this.healthService.getKineByEmail(user.email);
       if (!kine) return;
 
-      // 2. Obtener sus Grupos Asignados
       const { data: gruposData } = await this.healthService.getGruposDeKine(kine.id);
       
       this.misGrupos = gruposData ? gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null) : [];
@@ -78,38 +85,46 @@ export class KineDashboardComponent implements OnInit {
       if (misGrupoIds.length > 0) {
         const hoyStr = new Date().toISOString().split('T')[0];
 
-        // 3. Clases usando academyService
         const { data: clases } = await this.academyService.getClasesPorGrupos(misGrupoIds, hoyStr);
-
         const todasClases = clases || [];
         this.clasesHoy = todasClases.filter((c: any) => c.fecha === hoyStr);
         this.proximaClase = todasClases.length > 0 ? todasClases[0] : null;
 
-        // 4. Alumnos usando academyService
         const { data: alumnos } = await this.academyService.getTodosEstudiantesPorGrupos(misGrupoIds, true);
 
         if (alumnos) {
           this.totalAlumnos = alumnos.length;
           this.cumpleanosList = this.filtrarProximosCumpleanos(alumnos);
           
-          // 🔥 NUEVO: Calcular Pacientes en Terapia
-          // Extraemos los IDs de todos los alumnos de los grupos del kine
           const alumnoIds = alumnos.map((a: any) => a.id);
           
-          // Consultamos el historial clínico de todos esos alumnos
+          // 🔥 LÓGICA OPTIMIZADA: Una sola consulta para traer todos los estados de salud
           const { data: historiales } = await this.healthService['supabase']
             .from('historial_clinico')
-            .select('id, estudiante_id, estado, tipo')
+            .select('estudiante_id, estado')
             .in('estudiante_id', alumnoIds)
-            // Filtramos en base de datos para traer solo los que importan
-            .in('estado', ['ACTIVO', 'EN_TRATAMIENTO']) 
-            .in('tipo', ['LESION', 'PATOLOGIA']);
+            // Traemos solo los estados que nos interesan para los KPIs
+            .in('estado', ['EN_TRATAMIENTO', 'EN_OBSERVACION', 'EN_REINTEGRO_DEPORTIVO']);
 
           if (historiales) {
-             // Contamos cuántos alumnos ÚNICOS están en tratamiento
-             // (Si un alumno tiene 2 lesiones activas, cuenta como 1 paciente)
-             const pacientesUnicos = new Set(historiales.map((h: any) => h.estudiante_id));
-             this.pacientesEnTerapia = pacientesUnicos.size;
+              // Usamos Sets para contar alumnos ÚNICOS por estado
+              // (Si un alumno tiene 2 lesiones 'En Tratamiento', cuenta como 1 paciente)
+              const setTratamiento = new Set<string>();
+              const setObservacion = new Set<string>();
+              const setReintegro = new Set<string>();
+
+              historiales.forEach((h: any) => {
+                  switch (h.estado) {
+                      case 'EN_TRATAMIENTO': setTratamiento.add(h.estudiante_id); break;
+                      case 'EN_OBSERVACION': setObservacion.add(h.estudiante_id); break;
+                      case 'EN_REINTEGRO_DEPORTIVO': setReintegro.add(h.estudiante_id); break;
+                  }
+              });
+
+              // Asignamos los tamaños de los Sets a las variables del componente
+              this.pacientesEnTratamiento = setTratamiento.size;
+              this.pacientesEnObservacion = setObservacion.size;
+              this.pacientesEnReintegro = setReintegro.size;
           }
         }
       }

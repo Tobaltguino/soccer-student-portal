@@ -2,7 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 
-// 🚀 CAMBIO 1: Importamos nuestros servicios de dominio
+// 🚀 Servicios de dominio
 import { AuthService } from '../../../../core/services/auth.service';
 import { AcademyService } from '../../../../core/services/academy.service';
 import { HealthService } from '../../../../core/services/health.service';
@@ -23,6 +23,11 @@ export class ProfessorDashboardComponent implements OnInit {
   ultimaEvaluacion: any = null;
   totalAlumnos: number = 0;
 
+  // 🔥 NUEVOS KPIs DE SALUD (Para los grupos del profe)
+  pacientesEnTratamiento: number = 0;
+  pacientesEnObservacion: number = 0;
+  pacientesEnReintegro: number = 0;
+
   // Listas
   cumpleanosList: any[] = [];
   
@@ -31,7 +36,6 @@ export class ProfessorDashboardComponent implements OnInit {
   supabaseStatus: 'online' | 'offline' | 'checking' = 'checking';
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos los servicios específicos
     private authService: AuthService,
     private academyService: AcademyService,
     private healthService: HealthService,
@@ -47,7 +51,6 @@ export class ProfessorDashboardComponent implements OnInit {
   async verificarConexion() {
     try {
       this.supabaseStatus = 'checking';
-      // 🚀 CAMBIO 3: Usamos AuthService
       const { data: { user } } = await this.authService.getUser();
       if (!user) {
         this.supabaseStatus = 'offline';
@@ -62,16 +65,18 @@ export class ProfessorDashboardComponent implements OnInit {
 
   async cargarDatosProfe() {
     this.loading = true;
+    // Reiniciar contadores
+    this.pacientesEnTratamiento = 0;
+    this.pacientesEnObservacion = 0;
+    this.pacientesEnReintegro = 0;
+
     try {
-      // 🚀 CAMBIO 4: Usamos AuthService
       const { data: { user } } = await this.authService.getUser();
       if (!user?.email) return;
 
-      // 1. Obtener Perfil e ID del Profesor (Usando AcademyService)
       const { data: prof } = await this.academyService.getProfesorByEmail(user.email);
       if (!prof) return;
 
-      // 2. Obtener sus Grupos
       const { data: gruposData } = await this.academyService.getGruposDeProfesor(prof.id);
       this.misGrupos = gruposData ? gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null) : [];
       const misGrupoIds = this.misGrupos.map(g => g.id);
@@ -79,28 +84,51 @@ export class ProfessorDashboardComponent implements OnInit {
       if (misGrupoIds.length > 0) {
         const hoyStr = new Date().toISOString().split('T')[0];
 
-        // 3. Clases de Hoy y Próxima Clase (¡Reutilizamos la función que hicimos para el Kine!)
+        // 3. Clases
         const { data: clases } = await this.academyService.getClasesPorGrupos(misGrupoIds, hoyStr);
-
         const todasClases = clases || [];
         this.clasesHoy = todasClases.filter((c: any) => c.fecha === hoyStr);
         this.proximaClase = todasClases.length > 0 ? todasClases[0] : null;
 
-        // 4. Última Evaluación Subida (¡Reutilizamos función del HealthService!)
+        // 4. Evaluaciones
         const { data: evals } = await this.healthService.getSesionesEvaluacionPorGrupos(misGrupoIds);
         if (evals && evals.length > 0) {
           this.ultimaEvaluacion = evals[0];
         }
 
-        // 5. Alumnos y Cumpleaños (¡Reutilizamos función del AcademyService!)
+        // 5. Alumnos y Salud
         const { data: alumnos } = await this.academyService.getTodosEstudiantesPorGrupos(misGrupoIds, true);
 
         if (alumnos) {
           this.totalAlumnos = alumnos.length;
           this.cumpleanosList = this.filtrarProximosCumpleanos(alumnos);
+
+          const alumnoIds = alumnos.map((a: any) => a.id);
+
+          // 🔥 LÓGICA DE SALUD: Consultamos estados para los alumnos de ESTE profesor
+          const { data: historiales } = await this.healthService['supabase']
+            .from('historial_clinico')
+            .select('estudiante_id, estado')
+            .in('estudiante_id', alumnoIds)
+            .in('estado', ['EN_TRATAMIENTO', 'EN_OBSERVACION', 'EN_REINTEGRO_DEPORTIVO']);
+
+          if (historiales) {
+              const setTratamiento = new Set();
+              const setObservacion = new Set();
+              const setReintegro = new Set();
+
+              historiales.forEach((h: any) => {
+                  if (h.estado === 'EN_TRATAMIENTO') setTratamiento.add(h.estudiante_id);
+                  if (h.estado === 'EN_OBSERVACION') setObservacion.add(h.estudiante_id);
+                  if (h.estado === 'EN_REINTEGRO_DEPORTIVO') setReintegro.add(h.estudiante_id);
+              });
+
+              this.pacientesEnTratamiento = setTratamiento.size;
+              this.pacientesEnObservacion = setObservacion.size;
+              this.pacientesEnReintegro = setReintegro.size;
+          }
         }
       }
-
     } catch (error) {
       console.error('Error cargando dashboard del profesor:', error);
     } finally {
@@ -112,21 +140,13 @@ export class ProfessorDashboardComponent implements OnInit {
   filtrarProximosCumpleanos(estudiantes: any[]): any[] {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
-
     return estudiantes
       .map(est => {
         if (!est.fecha_nacimiento) return null;
         const nacimiento = new Date(est.fecha_nacimiento + 'T00:00:00');
         const cumpleEsteAno = new Date(hoy.getFullYear(), nacimiento.getMonth(), nacimiento.getDate());
-        let proximoCumple = cumpleEsteAno;
-        
-        if (proximoCumple < hoy) {
-            proximoCumple = new Date(hoy.getFullYear() + 1, nacimiento.getMonth(), nacimiento.getDate());
-        }
-        
-        const diffTime = proximoCumple.getTime() - hoy.getTime();
-        const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
+        let proximoCumple = cumpleEsteAno < hoy ? new Date(hoy.getFullYear() + 1, nacimiento.getMonth(), nacimiento.getDate()) : cumpleEsteAno;
+        const diasRestantes = Math.ceil((proximoCumple.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
         return { ...est, proximoCumple, diasRestantes, nuevaEdad: proximoCumple.getFullYear() - nacimiento.getFullYear() };
       })
       .filter(item => item !== null && item.diasRestantes >= 0 && item.diasRestantes <= 7)

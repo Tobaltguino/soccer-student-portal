@@ -178,7 +178,6 @@
                                         <th colspan="5" class="kine-header border-none border-bottom-1 surface-border">
                                             <div class="flex justify-content-between align-items-center">
                                                 <span>2. Rango de movimiento</span>
-                                                <div class="flex align-items-center"><p-checkbox [(ngModel)]="ficha.rom_no_evaluable" [binary]="true"></p-checkbox><span class="ml-3 text-sm font-bold text-main">No Evaluable</span></div>
                                             </div>
                                         </th>
                                     </tr>
@@ -204,7 +203,6 @@
                                             <div class="flex justify-content-between align-items-center">
                                                 <span>3. Fuerza (Daniels)</span>
                                                 <div class="flex align-items-center gap-4">
-                                                    <div class="flex align-items-center"><p-checkbox [(ngModel)]="ficha.fuerza_no_evaluable" [binary]="true"></p-checkbox><span class="ml-3 text-sm font-bold text-main">No Evaluable</span></div>
                                                     <button *ngIf="!modoSoloLectura" pButton icon="pi pi-plus" label="Añadir" class="p-button-sm p-button-success h-2rem px-3 py-0" (click)="agregarFuerza()"></button>
                                                 </div>
                                             </div>
@@ -256,9 +254,6 @@
                         </div>
                         <div class="kine-table-wrapper mb-5">
                             <table class="kine-table">
-                                <thead>
-                                    <tr><th colspan="4" class="kine-header"><div class="flex justify-content-between align-items-center"><span>7. Balance y Coordinación</span><div class="flex align-items-center"><p-checkbox [(ngModel)]="ficha.balance_no_evaluable" [binary]="true"></p-checkbox><span class="ml-3 text-sm font-bold text-main">No Evaluable</span></div></div></th></tr>
-                                </thead>
                                 <tbody>
                                     <tr>
                                         <td class="kine-label-cell-fixed w-3">Coordinación</td>

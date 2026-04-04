@@ -2,7 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 
-// 🚀 CAMBIO 1: Importamos los 3 servicios específicos
+// 🚀 Servicios de dominio
 import { AuthService } from '../../../../core/services/auth.service';
 import { AcademyService } from '../../../../core/services/academy.service';
 import { HealthService } from '../../../../core/services/health.service';
@@ -15,21 +15,22 @@ import { HealthService } from '../../../../core/services/health.service';
   styleUrls: ['./admin-dashboard.css']
 })
 export class AdminDashboardComponent implements OnInit {
-  // Datos dinámicos
   userEmail: string | undefined;
   totalEstudiantes: number = 0;
   clasesHoy: any[] = [];
   
-  // Listas de datos
-  actividadReciente: any[] = []; // Para la tarjeta de arriba (Evaluaciones)
-  cumpleanosList: any[] = [];    // Para la lista de abajo (Cumpleaños)
+  // 🔥 NUEVOS KPIs DE SALUD GLOBAL
+  pacientesEnTratamiento: number = 0;
+  pacientesEnObservacion: number = 0;
+  pacientesEnReintegro: number = 0;
+
+  actividadReciente: any[] = []; 
+  cumpleanosList: any[] = [];    
   
-  // Estados
   loading: boolean = true;
   supabaseStatus: 'online' | 'offline' | 'checking' = 'checking';
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos los 3 servicios
     private authService: AuthService,
     private academyService: AcademyService,
     private healthService: HealthService,
@@ -45,11 +46,8 @@ export class AdminDashboardComponent implements OnInit {
   async verificarConexion() {
     try {
       this.supabaseStatus = 'checking';
-      
-      // 🚀 CAMBIO 3: Usamos authService para validar la sesión
-      const { data: { user }, error } = await this.authService.getUser();
-      
-      if (error || !user) {
+      const { data: { user } } = await this.authService.getUser();
+      if (!user) {
         this.supabaseStatus = 'offline';
         this.router.navigate(['/login']);
       } else {
@@ -59,71 +57,75 @@ export class AdminDashboardComponent implements OnInit {
     } catch {
       this.supabaseStatus = 'offline';
     }
-    this.cdr.detectChanges();
   }
 
   async cargarDatos() {
     this.loading = true;
     try {
-      // 🚀 CAMBIO 4: Usamos academyService para traer alumnos
-      const { data: estudiantes, error } = await this.academyService.getEstudiantes();
-      
+      // 1. Estudiantes
+      const { data: estudiantes } = await this.academyService.getEstudiantes();
       if (estudiantes) {
-        const estudiantesActivos = estudiantes.filter((est: any) => est.activo === true);
-        this.totalEstudiantes = estudiantesActivos.length;
-        this.cumpleanosList = this.filtrarProximosCumpleanos(estudiantesActivos);
-      } else {
-        this.totalEstudiantes = 0;
+        const activos = estudiantes.filter((est: any) => est.activo === true);
+        this.totalEstudiantes = activos.length;
+        this.cumpleanosList = this.filtrarProximosCumpleanos(activos);
+
+        // 2. 🔥 Lógica de Salud Global para el Admin
+        const alumnoIds = activos.map((a: any) => a.id);
+        if (alumnoIds.length > 0) {
+          const { data: historiales } = await this.healthService['supabase']
+            .from('historial_clinico')
+            .select('estudiante_id, estado')
+            .in('estudiante_id', alumnoIds)
+            .in('estado', ['EN_TRATAMIENTO', 'EN_OBSERVACION', 'EN_REINTEGRO_DEPORTIVO']);
+
+          if (historiales) {
+            const setTratamiento = new Set();
+            const setObservacion = new Set();
+            const setReintegro = new Set();
+
+            historiales.forEach((h: any) => {
+              if (h.estado === 'EN_TRATAMIENTO') setTratamiento.add(h.estudiante_id);
+              if (h.estado === 'EN_OBSERVACION') setObservacion.add(h.estudiante_id);
+              if (h.estado === 'EN_REINTEGRO_DEPORTIVO') setReintegro.add(h.estudiante_id);
+            });
+
+            this.pacientesEnTratamiento = setTratamiento.size;
+            this.pacientesEnObservacion = setObservacion.size;
+            this.pacientesEnReintegro = setReintegro.size;
+          }
+        }
       }
 
-      // 🚀 CAMBIO 5: Usamos academyService para traer clases
+      // 3. Clases
       const { data: clases } = await this.academyService.getClasesHoy();
       this.clasesHoy = clases || [];
 
-      // 🚀 CAMBIO 6: Usamos healthService para traer evaluaciones médicas/físicas
+      // 4. Actividad (Evaluaciones)
       const { data: actividad } = await this.healthService.getActividadReciente();
       this.actividadReciente = actividad || [];
 
     } catch (error) {
-      // Si falla la carga, simplemente dejamos los valores iniciales
+      console.error('Error Admin Dashboard:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
     }
   }
 
-  // Lógica para filtrar cumpleaños próximos (0 a 7 días)
   filtrarProximosCumpleanos(estudiantes: any[]): any[] {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
-
-    const listaProcesada = estudiantes
+    return estudiantes
       .map(est => {
         if (!est.fecha_nacimiento) return null;
-
         const nacimiento = new Date(est.fecha_nacimiento + 'T00:00:00');
         const cumpleEsteAno = new Date(hoy.getFullYear(), nacimiento.getMonth(), nacimiento.getDate());
-        
-        let proximoCumple = cumpleEsteAno;
-        if (proximoCumple < hoy) {
-            proximoCumple = new Date(hoy.getFullYear() + 1, nacimiento.getMonth(), nacimiento.getDate());
-        }
-
-        const diffTime = proximoCumple.getTime() - hoy.getTime();
-        const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        const nuevaEdad = proximoCumple.getFullYear() - nacimiento.getFullYear();
-
-        return {
-          ...est,
-          proximoCumple: proximoCumple,
-          diasRestantes: diasRestantes,
-          nuevaEdad: nuevaEdad
-        };
+        let proximoCumple = cumpleEsteAno < hoy ? new Date(hoy.getFullYear() + 1, nacimiento.getMonth(), nacimiento.getDate()) : cumpleEsteAno;
+        const diasRestantes = Math.ceil((proximoCumple.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+        return { ...est, proximoCumple, diasRestantes, nuevaEdad: proximoCumple.getFullYear() - nacimiento.getFullYear() };
       })
       .filter(item => item !== null && item.diasRestantes >= 0 && item.diasRestantes <= 7)
       .sort((a, b) => a.diasRestantes - b.diasRestantes);
-
-    return listaProcesada;
   }
 
   async refrescar() {

@@ -14,7 +14,7 @@
     </div>
   </header>
 
-  <div class="stats-grid">
+  <div class="stats-grid kine-grid">
     
     <div class="card card-blue">
       <div class="card-content">
@@ -50,35 +50,56 @@
       </div>
     </div>
 
-    <div class="card card-purple">
+    <div class="card card-red">
       <div class="card-content">
-        <span class="card-label">Evaluaciones Kine.</span>
+        <span class="card-label">En Tratamiento</span>
         <div class="card-value-wrapper">
-            <h3 class="card-value" style="opacity: 0.5;">-</h3>
-            <div class="card-icon icon-purple">
-                <i class="pi pi-file-edit"></i>
+            <h3 class="card-value" [ngClass]="{'opacity-50': loading}">
+                <i *ngIf="loading" class="pi pi-spin pi-spinner text-2xl"></i>
+                <span *ngIf="!loading">{{ pacientesEnTratamiento }}</span>
+            </h3>
+            <div class="card-icon icon-red">
+                <i class="pi pi-exclamation-triangle"></i>
             </div>
         </div>
-        <p class="card-subtext" style="color: #8b5cf6; font-weight: 600;">
-          <i class="pi pi-cog pi-spin mr-1"></i> Módulo en construcción
+        <p class="card-subtext" style="color: #ef4444; font-weight: 600;">
+          <i class="pi pi-heart-fill mr-1"></i> Lesiones activas
         </p>
       </div>
     </div>
 
     <div class="card card-orange">
       <div class="card-content">
-        <span class="card-label">Pacientes en Terapia</span>
+        <span class="card-label">En Observación</span>
         <div class="card-value-wrapper">
             <h3 class="card-value" [ngClass]="{'opacity-50': loading}">
                 <i *ngIf="loading" class="pi pi-spin pi-spinner text-2xl"></i>
-                <span *ngIf="!loading">{{ pacientesEnTerapia }}</span>
+                <span *ngIf="!loading">{{ pacientesEnObservacion }}</span>
             </h3>
             <div class="card-icon icon-orange">
-                <i class="pi pi-heart-fill"></i>
+                <i class="pi pi-eye"></i>
             </div>
         </div>
         <p class="card-subtext" style="color: #f97316; font-weight: 600;">
-          <i class="pi pi-check-circle mr-1"></i> Alumnos en tratamiento
+          <i class="pi pi-info-circle mr-1"></i> Seguimiento médico
+        </p>
+      </div>
+    </div>
+
+    <div class="card card-purple">
+      <div class="card-content">
+        <span class="card-label">Reintegro Deportivo</span>
+        <div class="card-value-wrapper">
+            <h3 class="card-value" [ngClass]="{'opacity-50': loading}">
+                <i *ngIf="loading" class="pi pi-spin pi-spinner text-2xl"></i>
+                <span *ngIf="!loading">{{ pacientesEnReintegro }}</span>
+            </h3>
+            <div class="card-icon icon-purple">
+                <i class="pi pi-directions"></i>
+            </div>
+        </div>
+        <p class="card-subtext" style="color: #8b5cf6; font-weight: 600;">
+          <i class="pi pi-check-circle mr-1"></i> Fase final de terapia
         </p>
       </div>
     </div>
