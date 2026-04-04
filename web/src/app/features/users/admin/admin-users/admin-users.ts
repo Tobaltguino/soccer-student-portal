@@ -21,7 +21,6 @@ import { FileUploadModule } from 'primeng/fileupload';
 // Services & Directives
 import { FilterService, ConfirmationService, MessageService } from 'primeng/api';
 
-// 🚀 SERVICIOS DE DOMINIO (Adiós SupabaseCoreService)
 import { AuthService } from '../../../../core/services/auth.service';
 import { AcademyService } from '../../../../core/services/academy.service';
 import { HealthService } from '../../../../core/services/health.service';
@@ -146,7 +145,6 @@ export class AdminUsersComponent implements OnInit {
     this.dataList = [];
     try {
       let res: any;
-      // 🚀 CAMBIO CLAVE: Todo delegado a sus respectivos servicios de dominio
       switch(this.vistaActual) {
         case 'estudiantes': res = await this.academyService.getEstudiantes(); break;
         case 'profesores': res = await this.academyService.getProfesores(); break;
@@ -154,7 +152,40 @@ export class AdminUsersComponent implements OnInit {
         case 'kinesiologos': res = await this.healthService.getKinesiologos(); break;
         case 'nutricionistas': res = await this.healthService.getNutricionistasCompletos(); break;
       }
-      if (res?.data) this.dataList = res.data;
+      
+      if (res?.data) {
+          // Si estamos viendo estudiantes, procesamos su salud médica
+          if (this.vistaActual === 'estudiantes') {
+              const now = new Date().getTime();
+              
+              const promesasConSalud = res.data.map(async (estudiante: any) => {
+                  try {
+                      const historialRes = await this.healthService.getHistorialClinico(estudiante.id);
+                      const historial = historialRes.data || [];
+                      
+                      if (historial.length > 0) {
+                          // Ordenar para dejar de primero el que tenga la fecha más cercana a HOY
+                          historial.sort((a: any, b: any) => {
+                              const diffA = Math.abs(now - new Date(a.fecha_evento).getTime());
+                              const diffB = Math.abs(now - new Date(b.fecha_evento).getTime());
+                              return diffA - diffB;
+                          });
+                          
+                          estudiante.estado_salud = historial[0].estado;
+                      } else {
+                          estudiante.estado_salud = 'SANO';
+                      }
+                  } catch (e) {
+                      estudiante.estado_salud = 'SANO'; // Fallback por seguridad
+                  }
+                  return estudiante;
+              });
+              
+              this.dataList = await Promise.all(promesasConSalud);
+          } else {
+              this.dataList = res.data;
+          }
+      }
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
@@ -243,26 +274,22 @@ export class AdminUsersComponent implements OnInit {
   async guardar() {
     if (this.isEditing && this.userForm.rut === '1-1') return;
     
-    // 1. Validación de campos generales (para todos)
     if (!this.userForm.nombre || !this.userForm.apellido || !this.userForm.email || !this.userForm.rut) {
         this.messageService.add({ severity: 'warn', summary: 'Incompleto', detail: 'Completa todos los campos obligatorios (*).' }); 
         return;
     }
 
-    // 🔥 2. NUEVA VALIDACIÓN: Fecha de nacimiento obligatoria para Estudiantes
     if (this.vistaActual === 'estudiantes' && !this.userForm.fecha_nacimiento) {
         this.messageService.add({ severity: 'warn', summary: 'Falta la Fecha', detail: 'La fecha de nacimiento es obligatoria para los estudiantes.' }); 
         return;
     }
 
-    // 3. Validación de formato de Email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(this.userForm.email)) {
         this.messageService.add({ severity: 'error', summary: 'Email Inválido', detail: 'Formato de correo incorrecto.' }); 
         return;
     }
 
-    // 4. Validación de RUT
     const rutLimpio = this.userForm.rut.replace(/\./g, '').trim();
     if (!RutValidator.esValido(rutLimpio)) {
         this.messageService.add({ severity: 'error', summary: 'RUT Inválido', detail: 'El RUT ingresado no es válido.' }); 
@@ -333,7 +360,6 @@ export class AdminUsersComponent implements OnInit {
     } catch (error: any) {
         console.error('Error capturado al guardar:', error);
         
-        // 🔥 AQUÍ "TRADUCIMOS" LOS ERRORES PARA EL USUARIO
         let mensajeError = 'Ocurrió un problema al guardar el usuario.';
         const errStr = String(error.message || error).toLowerCase();
 
@@ -344,7 +370,7 @@ export class AdminUsersComponent implements OnInit {
         } else if (errStr.includes('duplicate key')) {
             mensajeError = 'Ya existe un usuario con estos datos únicos (RUT o Email).';
         } else if (error.message) {
-            mensajeError = error.message; // Si no es ninguno de los anteriores, mostramos el mensaje original
+            mensajeError = error.message; 
         }
 
         this.messageService.add({ severity: 'error', summary: 'No se pudo crear', detail: mensajeError });
@@ -427,9 +453,21 @@ export class AdminUsersComponent implements OnInit {
       return 'info'; 
   }
 
+  // --- Funciones de Salud Formateadas ---
   getSeveridadEstado(estado: any): any {
-      if (estado === 'RECUPERADO') return 'success';
-      if (estado === 'ACTIVO') return 'danger';
-      return 'warning'; 
+      // Si no tiene registro, o es SANO, o es RECUPERADO -> Verde
+      if (!estado || estado.toUpperCase() === 'SANO' || estado.toUpperCase() === 'RECUPERADO') return 'success';
+      
+      switch (estado.toUpperCase()) {
+          case 'EN_REINTEGRO_DEPORTIVO': return 'info'; // Azul
+          case 'EN_OBSERVACION': return 'warning';      // Amarillo/Naranja
+          case 'EN_TRATAMIENTO': return 'danger';       // Rojo
+          default: return 'secondary'; 
+      }
+  }
+
+  formatEstadoSalud(estado: string): string {
+      if (!estado || estado === 'SANO') return 'Sano';
+      return estado.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
   }
 }

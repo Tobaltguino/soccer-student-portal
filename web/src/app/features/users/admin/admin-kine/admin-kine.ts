@@ -89,10 +89,11 @@ export class AdminKineComponent implements OnInit {
     { label: 'Alergia', value: 'ALERGIA' }
   ];
   opcionesEstadoLesion: any[] = [
-    { label: 'Activo', value: 'ACTIVO' },
-    { label: 'En Tratamiento', value: 'EN_TRATAMIENTO' }, 
+    { label: 'En Observación', value: 'EN_OBSERVACION' },
+    { label: 'En Tratamiento', value: 'EN_TRATAMIENTO' },
+    { label: 'En Reintegro Deportivo', value: 'EN_REINTEGRO_DEPORTIVO' },
     { label: 'Recuperado', value: 'RECUPERADO' }
-  ];
+];
 
   constructor(
     private messageService: MessageService,

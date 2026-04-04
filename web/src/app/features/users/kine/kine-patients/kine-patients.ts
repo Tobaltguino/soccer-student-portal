@@ -13,7 +13,6 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { FilterService } from 'primeng/api';
 
-// 🚀 CAMBIO 1: Importamos los servicios especializados (Adiós SupabaseService)
 import { AuthService } from '../../../../core/services/auth.service';
 import { AcademyService } from '../../../../core/services/academy.service';
 import { HealthService } from '../../../../core/services/health.service';
@@ -65,7 +64,6 @@ export class KinePatientsComponent implements OnInit {
   loadingHistorial: boolean = false;
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos nuestros servicios de dominio
     private authService: AuthService,
     private academyService: AcademyService,
     private healthService: HealthService,
@@ -88,7 +86,6 @@ export class KinePatientsComponent implements OnInit {
   }
 
   async cargarMaestros() {
-    // 🚀 CAMBIO 3: academyService para listas maestras
     const resGrupos = await this.academyService.getGrupos();
     if(resGrupos.data) this.listaGrupos = resGrupos.data;
     
@@ -109,7 +106,6 @@ export class KinePatientsComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      // 🚀 CAMBIO 4: Lógica secuencial limpia
       const { data: { user } } = await this.authService.getUser();
       if (!user || !user.email) return;
 
@@ -121,11 +117,35 @@ export class KinePatientsComponent implements OnInit {
 
       const grupoIds = gruposData.map((g: any) => g.grupo_id);
 
-      // Usamos la nueva función para traer todos los estudiantes de esos grupos
       const res = await this.academyService.getTodosEstudiantesPorGrupos(grupoIds); 
       
       if (res?.data) {
-        this.dataList = res.data;
+          const now = new Date().getTime();
+          
+          // Mapeamos los estudiantes para ir a buscar su salud
+          const promesasConSalud = res.data.map(async (estudiante: any) => {
+              try {
+                  const historialRes = await this.healthService.getHistorialClinico(estudiante.id);
+                  const historial = historialRes.data || [];
+                  
+                  if (historial.length > 0) {
+                      historial.sort((a: any, b: any) => {
+                          const diffA = Math.abs(now - new Date(a.fecha_evento).getTime());
+                          const diffB = Math.abs(now - new Date(b.fecha_evento).getTime());
+                          return diffA - diffB;
+                      });
+                      
+                      estudiante.estado_salud = historial[0].estado;
+                  } else {
+                      estudiante.estado_salud = 'SANO';
+                  }
+              } catch (e) {
+                  estudiante.estado_salud = 'SANO';
+              }
+              return estudiante;
+          });
+          
+          this.dataList = await Promise.all(promesasConSalud);
       }
     } catch (error) {
       console.error('Error al cargar pacientes del kine:', error);
@@ -153,7 +173,6 @@ export class KinePatientsComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-        // 🚀 CAMBIO 5: healthService para la historia clínica
         const res = await this.healthService.getHistorialClinico(estudiante.id);
         this.historialClinico = res.data || [];
     } catch (error) {
@@ -167,12 +186,23 @@ export class KinePatientsComponent implements OnInit {
   getSeveridadHistorial(tipo: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
       if (tipo === 'LESION') return 'danger';
       if (tipo === 'ALERGIA') return 'warn';
-      return 'info'; // PATOLOGIA
+      return 'info'; 
   }
 
-  getSeveridadEstado(estado: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
-      if (estado === 'RECUPERADO') return 'success';
-      if (estado === 'ACTIVO') return 'danger';
-      return 'warn'; // EN_TRATAMIENTO
+  // --- Funciones de Salud actualizadas ---
+  getSeveridadEstado(estado: any): any {
+      if (!estado || estado.toUpperCase() === 'SANO' || estado.toUpperCase() === 'RECUPERADO') return 'success';
+      
+      switch (estado.toUpperCase()) {
+          case 'EN_REINTEGRO_DEPORTIVO': return 'info';
+          case 'EN_OBSERVACION': return 'warning';
+          case 'EN_TRATAMIENTO': return 'danger';
+          default: return 'secondary'; 
+      }
+  }
+
+  formatEstadoSalud(estado: string): string {
+      if (!estado || estado === 'SANO') return 'Sano';
+      return estado.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
   }
 }

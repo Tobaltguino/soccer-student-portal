@@ -95,8 +95,11 @@
                     <th *ngIf="vistaActual === 'estudiantes'">Posiciones</th>
                     <th *ngIf="vistaActual === 'profesores'">Especialidad / Grupos</th>
                     <th *ngIf="vistaActual === 'kinesiologos'">Grupos Asignados</th>
-                    <th class="hidden-mobile">Email</th>
-                    <th class="text-center">Estado</th>
+                    
+                    <th class="text-center" *ngIf="vistaActual === 'estudiantes'">Salud</th>
+                    <th class="hidden-mobile" *ngIf="vistaActual !== 'estudiantes'">Email</th>
+                    
+                    <th class="text-center">Sistema</th>
                     <th class="text-center">Acciones</th>
                 </tr>
             </ng-template>
@@ -160,13 +163,20 @@
                         </div>
                     </td>
 
-                    <td class="text-sm">
+                    <td class="text-center" *ngIf="vistaActual === 'estudiantes'">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Salud:</span>
+                        <p-tag [value]="formatEstadoSalud(item.estado_salud)" 
+                            [severity]="getSeveridadEstado(item.estado_salud)">
+                        </p-tag>
+                    </td>
+
+                    <td class="text-sm" *ngIf="vistaActual !== 'estudiantes'">
                         <span class="p-column-title font-bold text-secondary hidden-desktop">Email:</span>
                         <span class="break-email">{{ item.email }}</span>
                     </td>
 
                     <td class="text-center">
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Estado:</span>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Sistema:</span>
                         <p-tag [severity]="item.activo ? 'success' : 'danger'" [value]="item.activo ? 'ACTIVO' : 'INACTIVO'" [rounded]="true"></p-tag>
                     </td>
 
@@ -371,7 +381,7 @@
                             <td><p-tag [value]="evento.tipo" [severity]="getSeveridadHistorial(evento.tipo)"></p-tag></td>
                             <td class="font-bold text-main">{{ evento.diagnostico }}</td>
                             <td class="text-center">
-                                <p-tag [value]="evento.estado" [severity]="getSeveridadEstado(evento.estado)"></p-tag>
+                                <p-tag [value]="formatEstadoSalud(evento.estado)" [severity]="getSeveridadEstado(evento.estado)"></p-tag>
                             </td>
                         </tr>
                     </ng-template>

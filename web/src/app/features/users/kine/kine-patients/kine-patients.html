@@ -18,7 +18,7 @@
                 <label>Buscador Global</label>
                 <input pInputText type="text" [(ngModel)]="filtros.global" 
                        (input)="dt.filterGlobal(filtros.global, 'contains')" 
-                       placeholder="Buscar por Nombre, RUT o Email..." class="w-full"/>
+                       placeholder="Buscar por Nombre o RUT..." class="w-full"/>
             </div>
 
             <div class="filter-item flex-grow-1">
@@ -61,7 +61,7 @@
     <div class="main-card">
         <p-table #dt [value]="dataList" [loading]="loading" [rows]="10" [paginator]="true" 
                  styleClass="p-datatable-sm" [rowHover]="true" responsiveLayout="stack"
-                 [globalFilterFields]="['nombre', 'apellido', 'rut', 'email']">
+                 [globalFilterFields]="['nombre', 'apellido', 'rut']">
             
             <ng-template pTemplate="header">
                 <tr>
@@ -70,8 +70,8 @@
                     <th class="text-center">F. Nac</th>
                     <th>Grupo</th>
                     <th>Posiciones</th>
-                    <th class="hidden-mobile">Email</th>
-                    <th class="text-center">Estado</th>
+                    <th class="text-center">Salud</th>
+                    <th class="text-center">Sistema</th>
                     <th class="text-center">Ficha</th>
                 </tr>
             </ng-template>
@@ -116,13 +116,15 @@
                         </div>
                     </td>
 
-                    <td class="text-sm">
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Email:</span>
-                        <span class="break-email">{{ item.email || 'No registrado' }}</span>
+                    <td class="text-center">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Salud:</span>
+                        <p-tag [value]="formatEstadoSalud(item.estado_salud)" 
+                               [severity]="getSeveridadEstado(item.estado_salud)">
+                        </p-tag>
                     </td>
 
                     <td class="text-center">
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Estado:</span>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Sistema:</span>
                         <p-tag [severity]="item.activo ? 'success' : 'danger'" [value]="item.activo ? 'ACTIVO' : 'INACTIVO'" [rounded]="true"></p-tag>
                     </td>
 
@@ -209,7 +211,7 @@
                             <td><p-tag [value]="evento.tipo" [severity]="getSeveridadHistorial(evento.tipo)"></p-tag></td>
                             <td class="font-bold text-main">{{ evento.diagnostico }}</td>
                             <td class="text-center">
-                                <p-tag [value]="evento.estado" [severity]="getSeveridadEstado(evento.estado)"></p-tag>
+                                <p-tag [value]="formatEstadoSalud(evento.estado)" [severity]="getSeveridadEstado(evento.estado)"></p-tag>
                             </td>
                         </tr>
                     </ng-template>
