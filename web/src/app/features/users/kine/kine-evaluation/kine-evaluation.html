@@ -89,66 +89,64 @@
         </p-table>
     </div>
 
-    <p-dialog [(visible)]="displayGradesDialog" header="Informe de Resultados Físicos" 
-              [modal]="true" [style]="{width: '90vw', maxWidth: '900px'}" [maximizable]="true" styleClass="p-fluid">
+    <p-dialog [(visible)]="displayViewDialog" header="Informe de Resultados Físicos" 
+              [modal]="true" [style]="{width: '90vw', maxWidth: '850px'}" [maximizable]="true" styleClass="p-fluid">
         <ng-template pTemplate="content">
             
-            <div class="modal-content-box mb-4 flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3 mt-2">
+            <div class="surface-100 p-3 border-round mb-3 flex justify-content-between align-items-center" *ngIf="sesionVista">
                 <div class="flex flex-column">
-                    <span class="text-xs text-secondary text-uppercase font-bold tracking-wider">Evaluación Seleccionada</span>
-                    <span class="text-xl font-bold text-main mt-1">{{evalLogistica.tipo_evaluacion?.nombre}}</span>
+                    <span class="text-sm text-600">Evaluación Seleccionada</span>
+                    <span class="text-xl font-bold text-900">{{sesionVista.tipo_evaluacion?.nombre}}</span>
                 </div>
-                <div class="flex flex-column sm:align-items-end">
-                    <span class="text-xs text-secondary text-uppercase font-bold tracking-wider mb-1">Grupo</span>
-                    <p-tag [value]="evalLogistica.grupos?.nombre" severity="info"></p-tag>
+                <div class="text-right">
+                    <span class="text-sm text-600 block">Grupo</span>
+                    <p-tag [value]="sesionVista.grupos?.nombre" severity="info" styleClass="text-base"></p-tag>
                 </div>
             </div>
 
-            <p-table [value]="estudiantesGrupo" [scrollable]="true" scrollHeight="500px" 
-                     styleClass="p-datatable-gridlines p-datatable-sm" responsiveLayout="stack" [breakpoint]="'768px'">
+            <p-table [value]="resultadosVista" [scrollable]="true" scrollHeight="450px" 
+                     styleClass="p-datatable-gridlines p-datatable-sm p-datatable-striped" responsiveLayout="scroll">
                 
                 <ng-template pTemplate="header">
                     <tr>
                         <th style="width: 35%">Paciente / Estudiante</th>
-                        <th style="width: 25%" class="text-center">Resultado Obtenido</th>
-                        <th style="width: 40%">Observación Técnica</th>
+                        <th style="width: 20%" class="text-center">Resultado</th>
+                        <th style="width: 20%" class="text-center">Nivel Evaluado</th>
+                        <th style="width: 25%">Observación Técnica</th>
                     </tr>
                 </ng-template>
                 
-                <ng-template pTemplate="body" let-estudiante>
+                <ng-template pTemplate="body" let-res>
                     <tr>
                         <td>
-                            <span class="p-column-title hidden-desktop">Paciente / Estudiante</span>
-                            <span class="font-bold text-main">{{estudiante.apellido}}</span>, {{estudiante.nombre}}
+                            <span class="font-bold text-900">{{res.apellido}}</span>, {{res.nombre}}
                         </td>
                         <td class="text-center">
-                            <span class="p-column-title hidden-desktop">Resultado Obtenido</span>
-                            <span *ngIf="estudiante.valor_numerico !== null" class="font-bold text-lg text-primary">
-                                {{estudiante.valor_numerico}} <span class="text-sm text-secondary">{{evalLogistica.tipo_evaluacion?.unidad_medida}}</span>
-                            </span>
-                            <span *ngIf="estudiante.valor_numerico === null" class="text-500 italic text-sm">Ausente / S.D.</span>
+                            <span class="font-bold text-lg text-primary" *ngIf="res.valor_numerico !== null">{{res.valor_numerico}}</span>
+                            <span class="text-500 text-sm italic" *ngIf="res.valor_numerico === null">Ausente / S.D.</span>
+                            <small class="text-600 ml-1 font-bold" *ngIf="res.valor_numerico !== null">{{sesionVista?.tipo_evaluacion?.unidad_medida}}</small>
+                        </td>
+                        <td class="text-center">
+                            <p-tag *ngIf="res.valor_numerico !== null" 
+                                   [value]="res.etiqueta" 
+                                   [style]="{'background-color': res.color, 'color': '#ffffff', 'padding': '0.3rem 0.8rem', 'font-size': '0.8rem', 'font-weight': 'bold', 'border-radius': '6px'}">
+                            </p-tag>
+                            <span *ngIf="res.valor_numerico === null" class="text-400">-</span>
                         </td>
                         <td>
-                            <span class="p-column-title hidden-desktop">Observación Técnica</span>
-                            <span *ngIf="estudiante.observacion" class="text-secondary text-sm line-height-2">{{ estudiante.observacion }}</span>
-                            <span *ngIf="!estudiante.observacion" class="text-400 italic text-sm">-</span>
+                            <span class="text-sm text-700">{{res.observacion || '-'}}</span>
                         </td>
                     </tr>
                 </ng-template>
-
+                
                 <ng-template pTemplate="emptymessage">
-                    <tr>
-                        <td colspan="3" class="text-center p-4 text-secondary">No hay pacientes en este grupo.</td>
-                    </tr>
+                    <tr><td colspan="4" class="text-center p-4 text-500">No hay pacientes evaluados en esta sesión.</td></tr>
                 </ng-template>
             </p-table>
 
         </ng-template>
-
         <ng-template pTemplate="footer">
-            <div class="flex justify-content-end w-full">
-                <button pButton label="Cerrar Informe" icon="pi pi-times" class="p-button-secondary w-full sm:w-auto" (click)="displayGradesDialog = false"></button>
-            </div>
+            <button pButton label="Cerrar Informe" icon="pi pi-times" class="p-button-secondary w-full sm:w-auto" (click)="displayViewDialog = false"></button>
         </ng-template>
     </p-dialog>
 </div>

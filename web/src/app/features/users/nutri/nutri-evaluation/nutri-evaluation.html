@@ -171,15 +171,16 @@
                         
                         <td class="text-center">
                             <span class="p-column-title hidden-desktop">Archivo Adjunto</span>
-                            <div class="action-buttons w-full">
+                            
+                            <div class="flex flex-column align-items-center justify-content-center w-full px-2">
                                 <input type="file" #fileInput hidden accept="application/pdf, .pdf" (change)="onFileSelected($event, estudiante)">
                                 
                                 <div *ngIf="estudiante.archivoSeleccionado || estudiante.archivo_url_previo; else noFile" class="flex flex-column gap-2 w-full">
                                     
-                                    <div class="flex align-items-center gap-2 border-1 border-color p-2 border-round bg-main overflow-hidden w-full">
+                                    <div class="flex align-items-center gap-2 border-1 border-300 p-2 border-round overflow-hidden w-full" style="background: rgba(0,0,0,0.02);">
                                         <i class="pi pi-file-pdf text-red-500 text-xl flex-shrink-0"></i>
-                                        <span class="text-sm text-main font-medium text-truncate" 
-                                              [title]="estudiante.archivoSeleccionado?.name || estudiante.nombre_archivo_previo">
+                                        <span class="text-sm text-main font-medium text-truncate text-left flex-grow-1" 
+                                            [title]="estudiante.archivoSeleccionado?.name || estudiante.nombre_archivo_previo">
                                             {{ estudiante.archivoSeleccionado?.name || estudiante.nombre_archivo_previo }}
                                         </span>
                                     </div>
@@ -187,20 +188,22 @@
                                     <div class="flex gap-2 w-full">
                                         <button pButton type="button" label="Cambiar" icon="pi pi-sync" 
                                                 class="p-button-outlined p-button-secondary p-button-sm flex-grow-1" 
+                                                style="padding: 0.4rem !important;"
                                                 (click)="fileInput.click()"></button>
                                         
                                         <a *ngIf="estudiante.archivo_url_previo && !estudiante.archivoSeleccionado" 
-                                           [href]="estudiante.archivo_url_previo" target="_blank" 
-                                           class="p-button p-component p-button-text p-button-sm p-button-info flex align-items-center justify-content-center p-0 flex-shrink-0" 
-                                           style="width: 40px" pTooltip="Ver PDF guardado">
+                                        [href]="estudiante.archivo_url_previo" target="_blank" 
+                                        class="p-button p-component p-button-outlined p-button-info flex align-items-center justify-content-center p-0 flex-shrink-0" 
+                                        style="width: 32px; height: 32px;" pTooltip="Ver PDF guardado">
                                             <i class="pi pi-external-link"></i>
                                         </a>
                                     </div>
                                 </div>
 
                                 <ng-template #noFile>
-                                    <button pButton type="button" label="Seleccionar PDF" icon="pi pi-upload" 
-                                            class="p-button-outlined p-button-secondary p-button-sm w-full border-dashed" 
+                                    <button pButton type="button" label="Adjuntar PDF" icon="pi pi-upload" 
+                                            class="p-button-outlined p-button-secondary p-button-sm w-full" 
+                                            style="border-style: dashed !important; padding: 0.5rem !important; background: transparent;"
                                             (click)="fileInput.click()"></button>
                                 </ng-template>
                             </div>

@@ -86,6 +86,7 @@
                     </td>
                     <td class="text-center">
                         <div class="action-buttons">
+                            <button pButton icon="pi pi-eye" class="p-button-rounded p-button-info p-button-text p-button-sm" (click)="verResultados(sesion)" pTooltip="Ver Resultados"></button>
                             <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-secondary p-button-sm" (click)="editarSesion(sesion)" pTooltip="Editar Logística"></button>
                             <button pButton icon="pi pi-user-edit" class="p-button-rounded p-button-success p-button-sm" (click)="abrirCalificador(sesion)" pTooltip="Calificar Alumnos"></button>
                             <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger p-button-sm" (click)="eliminarSesion(sesion.id)" pTooltip="Eliminar"></button>
@@ -346,6 +347,57 @@
                     <button pButton label="Guardar Resultados" icon="pi pi-save" (click)="guardarNotasFinales()" [loading]="loading"></button>
                 </div>
             </div>
+        </ng-template>
+    </p-dialog>
+
+    <p-dialog [(visible)]="displayViewDialog" header="Resultados de la Sesión" [modal]="true" [style]="{width: '90vw', maxWidth: '850px'}" [maximizable]="true" styleClass="p-fluid">
+        <ng-template pTemplate="content">
+            <div class="surface-100 p-3 border-round mb-3 flex justify-content-between align-items-center" *ngIf="sesionVista">
+                <div class="flex flex-column">
+                    <span class="text-sm text-600">Evaluación</span>
+                    <span class="text-xl font-bold text-900">{{sesionVista.tipo_evaluacion?.nombre}}</span>
+                </div>
+                <div class="text-right">
+                    <span class="text-sm text-600 block">Grupo</span>
+                    <p-tag [value]="sesionVista.grupos?.nombre" severity="info" styleClass="text-base"></p-tag>
+                </div>
+            </div>
+
+            <p-table [value]="resultadosVista" [scrollable]="true" scrollHeight="450px" styleClass="p-datatable-gridlines p-datatable-sm p-datatable-striped" responsiveLayout="scroll">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 35%">Estudiante</th>
+                        <th style="width: 20%" class="text-center">Resultado</th>
+                        <th style="width: 20%" class="text-center">Nivel Evaluado</th>
+                        <th style="width: 25%">Observación</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-res>
+                    <tr>
+                        <td>
+                            <span class="font-bold text-900">{{res.apellido}}</span>, {{res.nombre}}
+                        </td>
+                        <td class="text-center">
+                            <span class="font-bold text-lg text-primary" *ngIf="res.valor_numerico !== null">{{res.valor_numerico}}</span>
+                            <span class="text-500 text-sm italic" *ngIf="res.valor_numerico === null">N/A</span>
+                            <small class="text-600 ml-1 font-bold" *ngIf="res.valor_numerico !== null">{{sesionVista?.tipo_evaluacion?.unidad_medida}}</small>
+                        </td>
+                        <td class="text-center">
+                            <p-tag *ngIf="res.valor_numerico !== null" [value]="res.etiqueta" [style]="{'background-color': res.color, 'color': '#ffffff'}"></p-tag>
+                            <span *ngIf="res.valor_numerico === null" class="text-400">-</span>
+                        </td>
+                        <td>
+                            <span class="text-sm text-700">{{res.observacion || '-'}}</span>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr><td colspan="4" class="text-center p-4 text-500">No hay alumnos evaluados en esta sesión.</td></tr>
+                </ng-template>
+            </p-table>
+        </ng-template>
+        <ng-template pTemplate="footer">
+            <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="displayViewDialog = false"></button>
         </ng-template>
     </p-dialog>
 </div>

@@ -73,7 +73,11 @@ export class AdminEvaluationsComponent implements OnInit {
   displayMainDialog: boolean = false;   
   displayTipoDialog: boolean = false;   
   displayGradesDialog: boolean = false; 
+  displayViewDialog: boolean = false; 
   usarRangos: boolean = false;
+
+  resultadosVista: any[] = []; 
+  sesionVista: any = null;     
 
   // --- FORMULARIOS ---
   tipoForm: any = { id: null, nombre: '', unidad_medida: '', descripcion: '' }; 
@@ -114,7 +118,7 @@ export class AdminEvaluationsComponent implements OnInit {
         this.academyService.getGrupos(),
         this.healthService.getTiposEvaluacion(),
         this.healthService.getSesionesEvaluacion(),
-        this.healthService.getAllRangos() // Centralizado en el servicio
+        this.healthService.getAllRangos() 
       ]);
 
       this.grupos = g.data || [];
@@ -341,7 +345,6 @@ export class AdminEvaluationsComponent implements OnInit {
     try {
       const { data: alumnos } = await this.academyService.getAlumnosPorGrupo(sesion.grupo_id);
       
-      // 🚀 Lógica centralizada en el servicio: cruza alumnos con resultados existentes
       this.estudiantesGrupo = await this.healthService.prepararPlanillaCalificaciones(
         sesion.grupo_id, 
         sesion.id, 
@@ -386,5 +389,75 @@ export class AdminEvaluationsComponent implements OnInit {
   limpiarFila(estudiante: any) {
     estudiante.valor_numerico = null;
     estudiante.observacion = '';
+  }
+
+  // ==========================================
+  // 6. VISTA DE RESULTADOS (OJO)
+  // ==========================================
+  async verResultados(sesion: any) {
+      this.sesionVista = { ...sesion };
+      this.loading = true;
+      this.cdr.detectChanges();
+
+      try {
+          // 1. Traemos la lista completa de alumnos (AQUÍ VIENE LA FECHA DE NACIMIENTO GRACIAS AL SERVICIO ACTUALIZADO)
+          const { data: alumnos } = await this.academyService.getAlumnosPorGrupo(sesion.grupo_id);
+          
+          // 2. Traemos las notas
+          const resultadosBrutos = await this.healthService.prepararPlanillaCalificaciones(
+              sesion.grupo_id, 
+              sesion.id, 
+              alumnos || []
+          );
+
+          // 3. Cruzamos los datos
+          this.resultadosVista = resultadosBrutos
+              .filter((e: any) => e.valor_numerico !== null || (e.observacion && e.observacion.trim() !== ''))
+              .map((e: any) => {
+                  // Buscamos al alumno original en la lista descargada para sacar su fecha de nacimiento real (Tipado a any para evitar error)
+                  const alumnoData: any = (alumnos || []).find((a: any) => a.id === e.estudiante_id);
+                  const fechaNac = alumnoData ? alumnoData.fecha_nacimiento : null;
+
+                  // Calculamos con la fecha segura
+                  const edad = this.calcularEdadParaTest(fechaNac, sesion.fecha);
+                  const rango = this.obtenerRangoParaNota(e.valor_numerico, edad, sesion.tipo_evaluacion_id);
+
+                  return {
+                      ...e,
+                      etiqueta: rango ? rango.nombre_etiqueta : 'Registrado',
+                      color: rango ? rango.color_sugerido : '#6b7280'
+                  };
+              });
+
+          this.displayViewDialog = true;
+      } catch (e: any) {
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los resultados.' });
+      } finally {
+          this.loading = false;
+          this.cdr.detectChanges();
+      }
+  }
+
+  calcularEdadParaTest(fechaNacimiento: string, fechaTest: string): number {
+      if (!fechaNacimiento) return 0;
+      const nac = new Date(fechaNacimiento);
+      const test = new Date(fechaTest);
+      let edad = test.getFullYear() - nac.getFullYear();
+      const m = test.getMonth() - nac.getMonth();
+      if (m < 0 || (m === 0 && test.getDate() < nac.getDate())) {
+          edad--;
+      }
+      return Math.max(0, edad);
+  }
+
+  obtenerRangoParaNota(valor: number, edad: number, tipo_evaluacion_id: number): any {
+      if (valor === null || valor === undefined) return null;
+      
+      const rangosPosibles = this.todosLosRangos.filter(r => 
+          r.tipo_evaluacion_id === tipo_evaluacion_id &&
+          edad >= r.edad_min && edad <= r.edad_max
+      );
+
+      return rangosPosibles.find(r => valor >= r.valor_min && valor <= r.valor_max) || null;
   }
 }

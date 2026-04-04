@@ -143,9 +143,13 @@ export class AcademyService {
     return await this.getTodosEstudiantesPorGrupos(gruposIds, true); // 💡 Reutilizamos la función de abajo
   }
 
-  async getAlumnosPorGrupo(grupoId: number | string) {
-    return await this.supabase.from('estudiantes').select('id, nombre, apellido, grupo_id, rut, foto_url').eq('grupo_id', grupoId).eq('activo', true).order('apellido', { ascending: true });
-  }
+  async getAlumnosPorGrupo(grupoId: number) {
+  return await this.supabase
+    .from('estudiantes')
+    // 👉 Agrega fecha_nacimiento aquí adentro:
+    .select('id, nombre, apellido, grupo_id, rut, foto_url, fecha_nacimiento') 
+    .eq('grupo_id', grupoId);
+}
 
   // Obtiene estudiantes de una lista de grupos (Opcional: filtrar solo activos)
   async getTodosEstudiantesPorGrupos(grupoIds: number[], soloActivos: boolean = false) {

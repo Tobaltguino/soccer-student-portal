@@ -18,7 +18,6 @@ import { RadioButtonModule } from 'primeng/radiobutton';
 
 import { MessageService, ConfirmationService } from 'primeng/api';
 
-// 🚀 CAMBIO 1: Importamos nuestros servicios de dominio
 import { AuthService } from '../../../../core/services/auth.service';
 import { AcademyService } from '../../../../core/services/academy.service';
 import { HealthService } from '../../../../core/services/health.service';
@@ -43,6 +42,7 @@ export class ProfessorEvaluationsComponent implements OnInit {
   grupos: any[] = [];
   tiposEvaluacion: any[] = [];
   estudiantesGrupo: any[] = [];    
+  todosLosRangos: any[] = []; // <-- Rangos para la vista de resultados
 
   // --- FILTROS ---
   filtroFecha: Date | null = null;
@@ -59,6 +59,10 @@ export class ProfessorEvaluationsComponent implements OnInit {
   loading: boolean = true;
   displayMainDialog: boolean = false;   
   displayGradesDialog: boolean = false; 
+  displayViewDialog: boolean = false; // <-- Modal del Ojo
+
+  resultadosVista: any[] = []; 
+  sesionVista: any = null; 
 
   evalLogistica: any = {
     id: null,
@@ -69,7 +73,6 @@ export class ProfessorEvaluationsComponent implements OnInit {
   };
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos los servicios especializados
     private authService: AuthService,
     private academyService: AcademyService,
     private healthService: HealthService,
@@ -87,30 +90,34 @@ export class ProfessorEvaluationsComponent implements OnInit {
   async cargarDatosIniciales() {
     this.loading = true;
     try {
-      // 🚀 CAMBIO 3: Validación segura con TypeScript para el correo
       const { data: { user } } = await this.authService.getUser();
       if (!user || !user.email) return;
 
-      // 🚀 CAMBIO 4: Buscamos al profe
       const { data: prof } = await this.academyService.getProfesorByEmail(user.email);
 
       if (prof) {
-        // 🚀 CAMBIO 5: Buscamos sus grupos
         const { data: gruposData } = await this.academyService.getGruposDeProfesor(prof.id);
         
         this.grupos = gruposData ? gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null) : [];
         const misGrupoIds = this.grupos.map(g => g.id);
 
-        // 🚀 CAMBIO 6: Tipos de evaluación desde HealthService
         const { data: tData } = await this.healthService.getTiposEvaluacion();
         this.tiposEvaluacion = tData || [];
 
-        // 🚀 CAMBIO 7: Sesiones desde HealthService
+        // Traemos también los rangos
+        const { data: rData } = await this.healthService.getAllRangos();
+        this.todosLosRangos = rData || [];
+
         if (misGrupoIds.length > 0) {
           const { data: sData, error: errorSesiones } = await this.healthService.getSesionesEvaluacionPorGrupos(misGrupoIds);
           
           if (!errorSesiones) {
-             this.sesionesOriginales = sData || [];
+             // 🔥 SOLUCIÓN: Mapeamos manualmente para asegurar que exista tipo_evaluacion y grupos
+             this.sesionesOriginales = (sData || []).map((s: any) => ({
+                 ...s,
+                 tipo_evaluacion: s.tipo_evaluacion || this.tiposEvaluacion.find(t => t.id === s.tipo_evaluacion_id),
+                 grupos: s.grupos || this.grupos.find(g => g.id === s.grupo_id)
+             }));
           }
         } else {
           this.sesionesOriginales = [];
@@ -225,10 +232,8 @@ export class ProfessorEvaluationsComponent implements OnInit {
     try {
       let result;
       if (this.evalLogistica.id) {
-          // 🚀 CAMBIO 8: Usamos HealthService
           result = await this.healthService.updateSesionEvaluacion(this.evalLogistica.id, payload);
       } else {
-          // 🚀 CAMBIO 9: Usamos HealthService
           result = await this.healthService.crearSesionEvaluacion(payload);
       }
 
@@ -251,7 +256,6 @@ export class ProfessorEvaluationsComponent implements OnInit {
     this.cdr.detectChanges(); 
 
     try {
-      // 🚀 CAMBIO 10: Cruce optimizado usando los nuevos servicios
       const [resAlumnos, resResultados] = await Promise.all([
          this.academyService.getAlumnosPorGrupo(sesion.grupo_id),
          this.healthService.getResultadosPorSesion(sesion.id)
@@ -303,7 +307,6 @@ export class ProfessorEvaluationsComponent implements OnInit {
 
     this.loading = true;
     try {
-      // 🚀 CAMBIO 11: Usamos HealthService para guardar el bloque de notas
       const { error } = await this.healthService.guardarResultadosMasivos(notasAGuardar);
       if (error) throw error; 
 
@@ -316,5 +319,71 @@ export class ProfessorEvaluationsComponent implements OnInit {
       this.loading = false;
       this.cdr.detectChanges();
     }
+  }
+
+  // ==========================================
+  // 5. VISTA DE RESULTADOS (OJO)
+  // ==========================================
+  async verResultados(sesion: any) {
+      this.sesionVista = { ...sesion };
+      this.loading = true;
+      this.cdr.detectChanges();
+
+      try {
+          const { data: alumnos } = await this.academyService.getAlumnosPorGrupo(sesion.grupo_id);
+          const resultadosBrutos = await this.healthService.prepararPlanillaCalificaciones(
+              sesion.grupo_id, 
+              sesion.id, 
+              alumnos || []
+          );
+
+          this.resultadosVista = resultadosBrutos
+              .filter((e: any) => e.valor_numerico !== null || (e.observacion && e.observacion.trim() !== ''))
+              .map((e: any) => {
+                  const alumnoData: any = (alumnos || []).find((a: any) => a.id === e.estudiante_id);
+                  const fechaNac = alumnoData ? alumnoData.fecha_nacimiento : null;
+
+                  const edad = this.calcularEdadParaTest(fechaNac, sesion.fecha);
+                  const rango = this.obtenerRangoParaNota(e.valor_numerico, edad, sesion.tipo_evaluacion_id);
+
+                  return {
+                      ...e,
+                      etiqueta: rango ? rango.nombre_etiqueta : 'Registrado',
+                      color: rango ? rango.color_sugerido : '#6b7280'
+                  };
+              });
+
+          this.displayViewDialog = true;
+      } catch (e: any) {
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los resultados.' });
+      } finally {
+          this.loading = false;
+          this.cdr.detectChanges();
+      }
+  }
+
+  calcularEdadParaTest(fechaNacimiento: string, fechaTest: string): number {
+      if (!fechaNacimiento) return 0;
+      const nac = new Date(fechaNacimiento);
+      const test = new Date(fechaTest);
+      let edad = test.getFullYear() - nac.getFullYear();
+      const m = test.getMonth() - nac.getMonth();
+      if (m < 0 || (m === 0 && test.getDate() < nac.getDate())) {
+          edad--;
+      }
+      return Math.max(0, edad);
+  }
+
+  obtenerRangoParaNota(valor: number, edad: number, tipo_evaluacion_id: number): any {
+      if (valor === null || valor === undefined) return null;
+      
+      const idPrueba = Number(tipo_evaluacion_id);
+      
+      const rangosPosibles = this.todosLosRangos.filter(r => 
+          Number(r.tipo_evaluacion_id) === idPrueba &&
+          edad >= Number(r.edad_min) && edad <= Number(r.edad_max)
+      );
+
+      return rangosPosibles.find(r => valor >= Number(r.valor_min) && valor <= Number(r.valor_max)) || null;
   }
 }

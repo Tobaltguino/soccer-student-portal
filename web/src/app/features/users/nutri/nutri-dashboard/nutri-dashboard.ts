@@ -20,6 +20,9 @@ export class NutriDashboardComponent implements OnInit {
   totalEstudiantes: number = 0;
   ultimaEvaluacionGlobal: any = null;
   proximosCumpleanos: any[] = [];
+  
+  // 👉 Aquí declaramos la variable para poder iterarla en el HTML con un *ngFor o @for
+  estudiantes: any[] = [];
 
   constructor(
     // 🚀 CAMBIO 2: Inyectamos los servicios específicos en lugar del genérico
@@ -44,6 +47,9 @@ export class NutriDashboardComponent implements OnInit {
       const estudiantes = resEstudiantes.data;
       
       if (estudiantes) {
+        // 👉 Guardamos la lista en la variable global de la clase
+        this.estudiantes = estudiantes; 
+        
         this.totalEstudiantes = estudiantes.length;
         this.procesarCumpleanos(estudiantes);
       }
@@ -58,6 +64,7 @@ export class NutriDashboardComponent implements OnInit {
       this.supabaseStatus = 'online';
 
     } catch (error) {
+      console.error('Error al cargar los datos del dashboard:', error);
       this.supabaseStatus = 'offline';
     } finally {
       this.loading = false;
@@ -72,9 +79,11 @@ export class NutriDashboardComponent implements OnInit {
     const cumplesCalculados = estudiantes
       .filter(e => e.fecha_nacimiento)
       .map(e => {
-        const [year, month, day] = e.fecha_nacimiento.split('-');
-        const fechaNac = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        // Limpiamos la fecha por si Supabase la envía con Timezone (ej: "2000-10-15T00:00:00Z")
+        const fechaLimpia = e.fecha_nacimiento.split('T')[0];
+        const [year, month, day] = fechaLimpia.split('-');
         
+        const fechaNac = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
         let proximoCumple = new Date(hoy.getFullYear(), fechaNac.getMonth(), fechaNac.getDate());
         
         if (proximoCumple < hoy) {
@@ -91,7 +100,7 @@ export class NutriDashboardComponent implements OnInit {
           edadACumplir
         };
       })
-      .filter(e => e.diasFaltantes <= 7) // <-- Filtro de 7 días
+      .filter(e => e.diasFaltantes <= 7) // <-- Filtro de 7 días (ajusta si quieres ver más a futuro)
       .sort((a, b) => a.diasFaltantes - b.diasFaltantes)
       .slice(0, 10);
 
