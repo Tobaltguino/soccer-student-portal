@@ -7,7 +7,6 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Manejo de CORS para llamadas desde Angular
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -19,13 +18,13 @@ serve(async (req) => {
 
     const { email, password, datosPersonales, tabla, role } = await req.json()
 
-    // 1. Crear el usuario en el sistema de autenticación
+    // 1. CREAR EL USUARIO EN AUTH
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: email,
       password: password,
-      email_confirm: false, // Se deja en false para permitir la verificación posterior
+      email_confirm: true, // Lo marcamos true para que no requiera validación por correo
       user_metadata: {
-        role: role,
+        role: role || 'USER',
         nombre: datosPersonales.nombre,
         apellido: datosPersonales.apellido,
         rut: datosPersonales.rut,
@@ -33,23 +32,20 @@ serve(async (req) => {
       }
     })
 
-    if (authError) throw authError
+    if (authError) {
+      throw new Error(`Error Auth: ${authError.message}`)
+    }
 
     const userId = authData.user.id
 
-    // 2. FORZAR EL ENVÍO DEL CORREO (Método de Invitación)
-    // Esto disparará el correo usando la plantilla "Invite User" de tu panel
-    const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email)
-    
-    if (inviteError) {
-      console.error("Error al enviar invitación:", inviteError.message)
-      // No lanzamos error aquí para que al menos el usuario quede creado en la DB
-    }
-
-    // Limpieza de datos específicos de estudiantes para otras tablas
+    // Limpieza de datos (Evitar inyectar campos que no existen en otras tablas)
     if (tabla !== 'estudiantes') {
       delete datosPersonales.fecha_nacimiento;
       delete datosPersonales.grupo_id;
+      delete datosPersonales.direccion;
+      delete datosPersonales.prevision;
+      delete datosPersonales.peso;
+      delete datosPersonales.altura;
     }
 
     const datosParaGuardar = {
@@ -57,21 +53,31 @@ serve(async (req) => {
       ...datosPersonales
     }
 
-    // 3. Guardar información adicional en la tabla correspondiente (estudiantes, profesores, etc.)
+    // 2. GUARDAR EN LA TABLA CORRESPONDIENTE
     const { data: dbData, error: dbError } = await supabase
       .from(tabla)
       .upsert(datosParaGuardar)
       .select()
       .maybeSingle()
 
-    if (dbError) throw dbError
+    // 🚀 EL ROLLBACK: Si la tabla falla, borramos al usuario de Auth
+    if (dbError) {
+      console.error("Error al guardar en tabla, iniciando rollback...", dbError);
+      
+      // Borramos al usuario fantasma
+      await supabase.auth.admin.deleteUser(userId);
+      
+      throw new Error(`Error en BD: ${dbError.message}. Se canceló la creación del usuario.`);
+    }
 
+    // Todo salió perfecto
     return new Response(
       JSON.stringify({ data: { user: authData.user, perfil: dbData }, error: null }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
 
   } catch (error: any) {
+    console.error("Function Error:", error.message);
     return new Response(
       JSON.stringify({ data: null, error: { message: error.message } }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
