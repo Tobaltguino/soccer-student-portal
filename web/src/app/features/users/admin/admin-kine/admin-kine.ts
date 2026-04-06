@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // 🔥 CAMBIO 1: Importamos ChangeDetectorRef
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MessageService, ConfirmationService } from 'primeng/api'; 
@@ -17,10 +17,13 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmDialogModule } from 'primeng/confirmdialog'; 
 import { DialogModule } from 'primeng/dialog'; 
 import { DatePickerModule } from 'primeng/datepicker';
+import { TagModule } from 'primeng/tag'; // 🔥 AGREGADO PARA LAS ETIQUETAS DE COLOR
+import { RadioButtonModule } from 'primeng/radiobutton'; // 🔥 AGREGADO PARA ESTADO DE SESIÓN
 
 // Servicios
 import { HealthService } from '../../../../core/services/health.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { AcademyService } from '../../../../core/services/academy.service'; // 🔥 AGREGADO PARA ALUMNOS DE GRUPO
 
 @Component({
   selector: 'app-admin-kine',
@@ -40,7 +43,9 @@ import { AuthService } from '../../../../core/services/auth.service';
     TooltipModule,
     ConfirmDialogModule,
     DatePickerModule,
-    DialogModule 
+    DialogModule,
+    TagModule,
+    RadioButtonModule
   ],
   providers: [MessageService, ConfirmationService], 
   templateUrl: './admin-kine.html',
@@ -77,12 +82,11 @@ export class AdminKineComponent implements OnInit {
   listaArticulaciones: any[] = this.obtenerArticulacionesVacias();
   listaFuerzas: any[] = [];
 
-  // 🔥 NUEVOS ESTADOS PARA LESIONES Y ANTECEDENTES
+  // ESTADOS LESIONES Y ANTECEDENTES
   listaLesiones: any[] = [];
   cargandoLesiones: boolean = false;
   mostrarDialogoLesion: boolean = false;
   lesionActual: any = {};
-  // Opciones exactas que acepta la Base de Datos
   opcionesTipoLesion: any[] = [
     { label: 'Lesión', value: 'LESION' },
     { label: 'Patología', value: 'PATOLOGIA' },
@@ -93,20 +97,52 @@ export class AdminKineComponent implements OnInit {
     { label: 'En Tratamiento', value: 'EN_TRATAMIENTO' },
     { label: 'En Reintegro Deportivo', value: 'EN_REINTEGRO_DEPORTIVO' },
     { label: 'Recuperado', value: 'RECUPERADO' }
-];
+  ];
+
+  // 🔥 NUEVOS ESTADOS: EVALUACIONES FÍSICAS (KINE) 🔥
+  sesionesEval: any[] = [];
+  sesionesFiltradas: any[] = [];
+  grupos: any[] = [];
+  tiposEvaluacion: any[] = [];
+  cargandoEvaluaciones: boolean = false;
+  rangos: any[] = [];
+  
+  filtroFechaEval: Date | null = null;
+  filtroPruebaEval: any = null;
+  filtroEstadoEval: string | null = null;
+  opcionesEstadoFiltro = [
+    { label: 'Pendiente', value: 'PENDIENTE' },
+    { label: 'Finalizado', value: 'FINALIZADO' }
+  ];
+
+  displayMainDialogEval: boolean = false;
+  evalLogistica: any = {};
+
+  displayGradesDialogEval: boolean = false;
+  estudiantesGrupoEval: any[] = [];
+  estudianteSeleccionadoEval: any = null;
+
+  displayViewDialogEval: boolean = false;
+  sesionVistaEval: any = null;
+  resultadosVistaEval: any[] = [];
+  estudianteVistaSeleccionadoEval: any = null;
 
   constructor(
     private messageService: MessageService,
     private confirmationService: ConfirmationService, 
     private healthService: HealthService,
     private authService: AuthService,
-    private cdr: ChangeDetectorRef // 🔥 CAMBIO 2: Inyectamos el ChangeDetectorRef
+    private academyService: AcademyService, // Inyectado
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
     await this.obtenerUsuarioActual();
-    await this.cargarAlumnos(); // 🔥 Agregamos await
-    await this.cargarKinesiologos(); // 🔥 Agregamos await
+    await this.cargarAlumnos(); 
+    await this.cargarKinesiologos(); 
+    
+    // Cargar catálogos base para evaluaciones
+    await this.cargarCatalogosEvaluaciones();
   }
 
   async obtenerUsuarioActual() {
@@ -128,7 +164,7 @@ export class AdminKineComponent implements OnInit {
     } catch (error) { 
       console.error(error); 
     } finally {
-      this.cdr.detectChanges(); // 🔥 Despertar
+      this.cdr.detectChanges(); 
     }
   }
 
@@ -142,7 +178,7 @@ export class AdminKineComponent implements OnInit {
     } catch (error) { 
       console.error(error); 
     } finally {
-      this.cdr.detectChanges(); // 🔥 Despertar
+      this.cdr.detectChanges(); 
     }
   }
 
@@ -150,14 +186,17 @@ export class AdminKineComponent implements OnInit {
   // DISPARADOR PRINCIPAL AL CAMBIAR DE ALUMNO
   // ==========================================
   onAlumnoChange() {
-    this.volverAlHistorial(); // Resetea formularios de Ficha
+    this.volverAlHistorial(); 
     if (this.alumnoSeleccionado) {
       this.cargarHistorialFichas();
       this.cargarListaLesiones(); 
+      this.cargarSesionesEvaluacion(); // Cargar evaluaciones del alumno seleccionado
     } else {
       this.historialFichas = [];
       this.listaLesiones = [];
-      this.cdr.detectChanges(); // 🔥 Despertar si se limpia
+      this.sesionesEval = [];
+      this.sesionesFiltradas = [];
+      this.cdr.detectChanges(); 
     }
   }
 
@@ -167,7 +206,7 @@ export class AdminKineComponent implements OnInit {
 
   async cargarListaLesiones() {
     this.cargandoLesiones = true;
-    this.cdr.detectChanges(); // 🔥 Despertar antes de cargar
+    this.cdr.detectChanges(); 
 
     try {
       const { data, error } = await this.healthService.getHistorialClinico(this.alumnoSeleccionado.id);
@@ -178,7 +217,7 @@ export class AdminKineComponent implements OnInit {
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el historial de lesiones.' });
     } finally {
       this.cargandoLesiones = false;
-      this.cdr.detectChanges(); // 🔥 Despertar al terminar
+      this.cdr.detectChanges(); 
     }
   }
 
@@ -189,7 +228,7 @@ export class AdminKineComponent implements OnInit {
       fecha_evento: new Date() 
     };
     this.mostrarDialogoLesion = true;
-    this.cdr.detectChanges(); // 🔥 Despertar
+    this.cdr.detectChanges(); 
   }
 
   abrirEditarLesion(lesion: any) {
@@ -201,7 +240,7 @@ export class AdminKineComponent implements OnInit {
     }
     
     this.mostrarDialogoLesion = true;
-    this.cdr.detectChanges(); // 🔥 Despertar
+    this.cdr.detectChanges(); 
   }
 
   async guardarLesion() {
@@ -276,7 +315,7 @@ export class AdminKineComponent implements OnInit {
     this.vistaFormulario = 'antecedentes'; 
     this.modoFormulario = true;
     this.modoSoloLectura = false;
-    this.cdr.detectChanges(); // 🔥 Despertar
+    this.cdr.detectChanges(); 
   }
 
   volverAlHistorial() {
@@ -284,7 +323,7 @@ export class AdminKineComponent implements OnInit {
     this.editandoId = null;
     this.modoSoloLectura = false;
     this.resetearFormulario();
-    this.cdr.detectChanges(); // 🔥 Despertar
+    this.cdr.detectChanges(); 
   }
 
   abrirEditarFicha(fichaData: any) {
@@ -308,18 +347,18 @@ export class AdminKineComponent implements OnInit {
     this.listaFuerzas = fichaData.fuerza_movimientos ? [...fichaData.fuerza_movimientos] : [];
     this.modoFormulario = true;
     this.modoSoloLectura = false;
-    this.cdr.detectChanges(); // 🔥 Despertar
+    this.cdr.detectChanges(); 
   }
 
   abrirVerFicha(fichaData: any) {
     this.abrirEditarFicha(fichaData); 
     this.modoSoloLectura = true;      
-    this.cdr.detectChanges(); // 🔥 Despertar
+    this.cdr.detectChanges(); 
   }
 
   async cargarHistorialFichas() {
     this.cargandoHistorial = true;
-    this.cdr.detectChanges(); // 🔥 Despertar antes de cargar
+    this.cdr.detectChanges(); 
 
     try {
       const { data, error } = await this.healthService.getFichasPorEstudiante(this.alumnoSeleccionado.id);
@@ -329,7 +368,7 @@ export class AdminKineComponent implements OnInit {
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el historial' });
     } finally {
       this.cargandoHistorial = false;
-      this.cdr.detectChanges(); // 🔥 Despertar al terminar
+      this.cdr.detectChanges(); 
     }
   }
 
@@ -355,7 +394,7 @@ export class AdminKineComponent implements OnInit {
         balance_romberg: this.ficha.balance_romberg === '' ? null : this.ficha.balance_romberg
       };
 
-      if (!this.editandoId) payload.kinesiologo_id = this.ficha.kinesiologo_id; // Ajuste menor aquí por lógica de Admin
+      if (!this.editandoId) payload.kinesiologo_id = this.ficha.kinesiologo_id; 
       delete payload.kinesiologos; 
 
       if (this.editandoId) {
@@ -399,11 +438,11 @@ export class AdminKineComponent implements OnInit {
 
   agregarFuerza() { 
     this.listaFuerzas.push({ movimiento: '', escala: '' }); 
-    this.cdr.detectChanges(); // 🔥 Despertar
+    this.cdr.detectChanges(); 
   }
   eliminarFuerza(index: number) { 
     this.listaFuerzas.splice(index, 1); 
-    this.cdr.detectChanges(); // 🔥 Despertar
+    this.cdr.detectChanges(); 
   }
   resetearFormulario() { 
     this.ficha = this.obtenerFichaVacia(); 
@@ -431,4 +470,396 @@ export class AdminKineComponent implements OnInit {
       { nombre: 'Ortejo', der_activo: null, der_pasivo: null, izq_activo: null, izq_pasivo: null }
     ];
   }
+
+  // =========================================================================
+  // MÓDULO: EVALUACIONES FÍSICAS (KINE) 🔥🔥🔥
+  // =========================================================================
+
+  async cargarCatalogosEvaluaciones() {
+    try {
+      const resTipos = await this.healthService.getTiposEvaluacionKine();
+      if (resTipos.data) this.tiposEvaluacion = resTipos.data;
+
+      const resRangos = await this.healthService.getRangosEvaluacion();
+      if (resRangos.data) this.rangos = resRangos.data;
+
+      const resGrupos = await this.academyService.getGrupos();
+      if (resGrupos.data) this.grupos = resGrupos.data;
+      
+    } catch (error) {
+      console.error('Error catálogos evaluaciones:', error);
+    }
+  }
+
+  getSeverityPuntaje(puntaje: number | string | null, subevaluacionId: number): "success" | "secondary" | "info" | "warn" | "danger" | "contrast" | undefined {
+    if (puntaje === null || puntaje === undefined || puntaje === '') return 'secondary';
+    const puntajeNum = Number(puntaje);
+    const rango = this.rangos.find(r => r.puntaje === puntajeNum && r.subevaluacion_id === subevaluacionId);
+    
+    switch (rango?.color) {
+      case 'rojo': return 'danger';
+      case 'amarillo': return 'warn';
+      case 'verde': return 'success';
+      default: return 'info';
+    }
+  }
+
+  async cargarSesionesEvaluacion() {
+    if (!this.alumnoSeleccionado) return;
+    this.cargandoEvaluaciones = true;
+    this.cdr.detectChanges();
+
+    try {
+      // Como administrador, cargamos las sesiones correspondientes al grupo del alumno
+      const grupoId = this.alumnoSeleccionado.grupo_id;
+      if (!grupoId) {
+        this.sesionesEval = [];
+        this.aplicarFiltrosEval();
+        return;
+      }
+
+      const { data, error } = await this.healthService['supabase']
+        .from('evaluaciones_sesiones_kine')
+        .select('*, tipo_evaluacion:tipo_evaluacion_id(nombre)')
+        .eq('grupo_id', grupoId)
+        .order('fecha', { ascending: false });
+      
+      if (error) throw error;
+
+      if (data) {
+        this.sesionesEval = data.map((s: any) => ({
+            ...s,
+            grupos: this.grupos.find(g => g.id === s.grupo_id) || { nombre: 'Desconocido' },
+            tipo_evaluacion: s.tipo_evaluacion || this.tiposEvaluacion.find(t => t.id === s.tipo_evaluacion_id) || { nombre: 'Desconocido' }
+        }));
+        this.aplicarFiltrosEval();
+      }
+    } catch (error) {
+      this.mostrarError('Error al cargar las sesiones de evaluación.');
+    } finally {
+      this.cargandoEvaluaciones = false;
+      this.cdr.detectChanges(); 
+    }
+  }
+
+  aplicarFiltrosEval() {
+    this.sesionesFiltradas = this.sesionesEval.filter(sesion => {
+      let cumpleFecha = true;
+      let cumplePrueba = true;
+      let cumpleEstado = true;
+
+      if (this.filtroFechaEval) {
+        const fechaFiltroStr = this.formatearFechaIso(this.filtroFechaEval);
+        cumpleFecha = sesion.fecha === fechaFiltroStr;
+      }
+      if (this.filtroPruebaEval) {
+        cumplePrueba = sesion.tipo_evaluacion_id === this.filtroPruebaEval.id;
+      }
+      if (this.filtroEstadoEval) {
+        cumpleEstado = sesion.estado === this.filtroEstadoEval;
+      }
+
+      return cumpleFecha && cumplePrueba && cumpleEstado;
+    });
+  }
+
+  limpiarFiltrosEval() {
+    this.filtroFechaEval = null;
+    this.filtroPruebaEval = null;
+    this.filtroEstadoEval = null;
+    this.aplicarFiltrosEval();
+  }
+
+  abrirNuevaSesionEval() {
+    this.evalLogistica = { 
+      estado: 'PENDIENTE',
+      grupo_id: this.alumnoSeleccionado.grupo_id // Preseleccionamos el grupo del alumno actual
+    };
+    this.displayMainDialogEval = true;
+  }
+
+  editarSesionEval(sesion: any) {
+    this.evalLogistica = { 
+      ...sesion,
+      fecha: this.convertirStringADate(sesion.fecha)
+    };
+    this.displayMainDialogEval = true;
+  }
+
+  async guardarSesionLogisticaEval() {
+    if (!this.evalLogistica.fecha) return this.mostrarAdvertencia('Selecciona una fecha.');
+    if (!this.evalLogistica.grupo_id) return this.mostrarAdvertencia('Selecciona un grupo.');
+    if (!this.evalLogistica.tipo_evaluacion_id) return this.mostrarAdvertencia('Selecciona el tipo de prueba.');
+
+    const payload = {
+      fecha: this.formatearFechaIso(this.evalLogistica.fecha),
+      grupo_id: this.evalLogistica.grupo_id,
+      tipo_evaluacion_id: this.evalLogistica.tipo_evaluacion_id, 
+      estado: this.evalLogistica.estado || 'PENDIENTE'
+    };
+
+    try {
+      if (this.evalLogistica.id) {
+        const { error } = await this.healthService.actualizarEvaluacionKine(this.evalLogistica.id, payload);
+        if (error) throw error;
+        this.mostrarExito('Sesión actualizada correctamente.');
+      } else {
+        const { error } = await this.healthService.crearEvaluacionKine(payload);
+        if (error) throw error;
+        this.mostrarExito('Sesión creada correctamente.');
+      }
+      
+      this.displayMainDialogEval = false;
+      await this.cargarSesionesEvaluacion();
+    } catch (error: any) {
+      this.mostrarError(error.message || 'Ocurrió un error al guardar la sesión.');
+    }
+  }
+
+  confirmarEliminarSesionEval(sesion: any) {
+    this.confirmationService.confirm({
+      message: `¿Estás seguro de que deseas eliminar permanentemente la sesión de evaluación del ${new Date(sesion.fecha).toLocaleDateString('es-CL')}? Esto borrará todas las notas de todos los alumnos de ese grupo.`,
+      header: 'Confirmar Eliminación',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí, Eliminar',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: async () => {
+        try {
+          // Nota: Asegúrate de que en Supabase 'evaluaciones_resultados_kine' tenga ON DELETE CASCADE 
+          // asociado a 'sesion_id', para que al borrar la sesión se borren las notas.
+          const { error } = await this.healthService.eliminarEvaluacionKine(sesion.id);
+          if (error) throw error;
+          this.messageService.add({ severity: 'success', summary: 'Eliminada', detail: 'La sesión fue eliminada exitosamente.' });
+          this.cargarSesionesEvaluacion(); 
+        } catch (error) {
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar la sesión. Puede que tenga resultados asociados.' });
+        }
+      }
+    });
+  }
+
+  // --- CALIFICADOR ---
+  verificarSiEstaEvaluado(evaluaciones: any[]): boolean {
+    if (!evaluaciones || evaluaciones.length === 0) return false;
+    return evaluaciones.every(sub => {
+      const evaluaLados = sub.evalua_lados === true || sub.evalua_lados === 'true';
+      if (evaluaLados) {
+        return sub.resultado_izquierdo !== null && sub.resultado_izquierdo !== undefined && sub.resultado_izquierdo !== '' &&
+               sub.resultado_derecho !== null && sub.resultado_derecho !== undefined && sub.resultado_derecho !== '';
+      } else {
+        return sub.resultado_unico !== null && sub.resultado_unico !== undefined && sub.resultado_unico !== '';
+      }
+    });
+  }
+
+  actualizarEstadoEstudianteEval() {
+    setTimeout(() => {
+      if (this.estudianteSeleccionadoEval) {
+        this.estudianteSeleccionadoEval.evaluado = this.verificarSiEstaEvaluado(this.estudianteSeleccionadoEval.evaluaciones);
+      }
+    }, 50);
+  }
+
+  limpiarFilaEval(sub: any) {
+    sub.resultado_unico = null;
+    sub.resultado_izquierdo = null;
+    sub.resultado_derecho = null;
+    sub.observacion = '';
+    this.actualizarEstadoEstudianteEval();
+  }
+
+  async abrirCalificadorEval(sesion: any) {
+    this.evalLogistica = { ...sesion };
+    this.cargandoEvaluaciones = true;
+    this.cdr.detectChanges();
+
+    try {
+      const { data: alumnos, error: errAlumnos } = await this.academyService.getAlumnosPorGrupo(sesion.grupo_id);
+      if (errAlumnos) throw errAlumnos;
+
+      const { data: subevaluaciones, error: errSub } = await this.healthService.getSubEvaluacionesPorTipo(sesion.tipo_evaluacion_id);
+      if (errSub) throw errSub;
+
+      const { data: resultadosPrevios, error: errRes } = await this.healthService.getResultadosPorSesionKine(sesion.id);
+      if (errRes) throw errRes;
+      
+      this.estudiantesGrupoEval = (alumnos || []).map(alumno => {
+        const evaluacionesDelAlumno = (subevaluaciones || []).map((sub: any) => {
+          const resGuardado = resultadosPrevios?.find((r: any) => 
+            r.estudiante_id === alumno.id && r.subevaluacion_id === sub.id
+          );
+
+          return {
+            subevaluacion_id: sub.id,
+            nombre_parametro: sub.nombre,
+            evalua_lados: sub.evalua_lados,
+            resultado_unico: (resGuardado && resGuardado.resultado_unico != null) ? Number(resGuardado.resultado_unico) : null,
+            resultado_izquierdo: (resGuardado && resGuardado.resultado_izquierdo != null) ? Number(resGuardado.resultado_izquierdo) : null,
+            resultado_derecho: (resGuardado && resGuardado.resultado_derecho != null) ? Number(resGuardado.resultado_derecho) : null,
+            observacion: resGuardado ? resGuardado.observacion : ''
+          };
+        });
+
+        const tieneEvaluacion = this.verificarSiEstaEvaluado(evaluacionesDelAlumno);
+
+        return {
+          id: alumno.id,
+          nombre: alumno.nombre,
+          apellido: alumno.apellido,
+          evaluado: tieneEvaluacion,
+          evaluaciones: evaluacionesDelAlumno
+        };
+      });
+
+      // Seleccionar al alumno activo en el buscador si está en este grupo
+      if (this.estudiantesGrupoEval.length > 0) {
+        const indexActual = this.estudiantesGrupoEval.findIndex(e => e.id === this.alumnoSeleccionado.id);
+        this.estudianteSeleccionadoEval = indexActual !== -1 ? this.estudiantesGrupoEval[indexActual] : this.estudiantesGrupoEval[0];
+      } else {
+        this.estudianteSeleccionadoEval = null;
+      }
+
+      this.displayGradesDialogEval = true;
+    } catch (error: any) {
+      this.mostrarError(error.message || 'Error al cargar la planilla.');
+    } finally {
+      this.cargandoEvaluaciones = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  async guardarNotasFinalesEval() {
+    const registrosAGuardar: any[] = [];
+
+    this.estudiantesGrupoEval.forEach(estudiante => {
+      estudiante.evaluaciones.forEach((sub: any) => {
+        if (
+          sub.resultado_unico !== null || 
+          sub.resultado_izquierdo !== null || 
+          sub.resultado_derecho !== null || 
+          (sub.observacion && sub.observacion.trim() !== '')
+        ) {
+          registrosAGuardar.push({
+            sesion_id: this.evalLogistica.id,
+            estudiante_id: estudiante.id,
+            subevaluacion_id: sub.subevaluacion_id,
+            resultado_unico: sub.resultado_unico !== null ? String(sub.resultado_unico) : null,
+            resultado_izquierdo: sub.resultado_izquierdo !== null ? String(sub.resultado_izquierdo) : null,
+            resultado_derecho: sub.resultado_derecho !== null ? String(sub.resultado_derecho) : null,
+            observacion: sub.observacion
+          });
+        }
+      });
+    });
+
+    if (registrosAGuardar.length === 0) {
+      this.mostrarAdvertencia('No has ingresado ningún dato para guardar.');
+      return;
+    }
+
+    try {
+      const { error } = await this.healthService.guardarResultadoKine(registrosAGuardar);
+      if (error) throw error; 
+      
+      if (this.evalLogistica.estado === 'PENDIENTE') {
+        this.confirmationService.confirm({
+          message: '¿Deseas marcar esta sesión como FINALIZADA?',
+          header: 'Sesión Completada',
+          icon: 'pi pi-check-circle',
+          acceptLabel: 'Sí, finalizar',
+          rejectLabel: 'No, dejar pendiente',
+          accept: async () => {
+              const { error: errUpdate } = await this.healthService.actualizarEvaluacionKine(this.evalLogistica.id, { estado: 'FINALIZADO' });
+              if (errUpdate) throw errUpdate;
+
+              this.mostrarExito('Resultados guardados y sesión finalizada.');
+              this.displayGradesDialogEval = false;
+              this.cargarSesionesEvaluacion();
+          },
+          reject: () => {
+              this.mostrarExito('Resultados guardados correctamente.');
+              this.displayGradesDialogEval = false;
+          }
+        });
+      } else {
+        this.mostrarExito('Resultados guardados correctamente.');
+        this.displayGradesDialogEval = false;
+      }
+    } catch (error: any) {
+      console.error("Error al guardar evaluación:", error);
+      this.mostrarError(error.message || 'Error al guardar los resultados. Verifica la regla UNIQUE en BD.');
+    }
+  }
+
+  async verResultadosEval(sesion: any) {
+    this.sesionVistaEval = { ...sesion };
+    this.cargandoEvaluaciones = true;
+    this.cdr.detectChanges();
+
+    try {
+      const { data: alumnos, error: errAlumnos } = await this.academyService.getAlumnosPorGrupo(sesion.grupo_id);
+      if (errAlumnos) throw errAlumnos;
+
+      const { data: subevaluaciones } = await this.healthService.getSubEvaluacionesPorTipo(sesion.tipo_evaluacion_id);
+      const subevaluacionesDefinidas = subevaluaciones || [];
+      
+      const { data: resultadosPrevios } = await this.healthService.getResultadosPorSesionKine(sesion.id);
+
+      this.resultadosVistaEval = (alumnos || []).map(alumno => {
+        const evaluacionesDelAlumno = subevaluacionesDefinidas.map((sub: any) => {
+          const resGuardado = resultadosPrevios?.find((r: any) => 
+            r.estudiante_id === alumno.id && r.subevaluacion_id === sub.id
+          );
+          return {
+            subevaluacion_id: sub.id, 
+            nombre_parametro: sub.nombre,
+            resultado_unico: resGuardado?.resultado_unico != null ? Number(resGuardado.resultado_unico) : null,
+            resultado_izquierdo: resGuardado?.resultado_izquierdo != null ? Number(resGuardado.resultado_izquierdo) : null,
+            resultado_derecho: resGuardado?.resultado_derecho != null ? Number(resGuardado.resultado_derecho) : null,
+            observacion: resGuardado ? resGuardado.observacion : '',
+            tiene_datos: !!resGuardado 
+          };
+        }).filter(e => e.tiene_datos); 
+
+        return {
+          id: alumno.id, 
+          nombre: alumno.nombre,
+          apellido: alumno.apellido,
+          evaluaciones: evaluacionesDelAlumno
+        };
+      }).filter(a => a.evaluaciones.length > 0); 
+
+      if (this.resultadosVistaEval.length > 0) {
+        const indexActual = this.resultadosVistaEval.findIndex(e => e.id === this.alumnoSeleccionado.id);
+        this.estudianteVistaSeleccionadoEval = indexActual !== -1 ? this.resultadosVistaEval[indexActual] : this.resultadosVistaEval[0];
+      } else {
+        this.estudianteVistaSeleccionadoEval = null;
+      }
+
+      this.displayViewDialogEval = true;
+    } catch (error: any) {
+      this.mostrarError(error.message || 'Error al cargar los resultados.');
+    } finally {
+      this.cargandoEvaluaciones = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  // --- UTILIDADES ---
+  private formatearFechaIso(fecha: any): string {
+    if (!fecha) return '';
+    const d = new Date(fecha);
+    const tzOffset = d.getTimezoneOffset() * 60000;
+    const localISOTime = (new Date(d.getTime() - tzOffset)).toISOString().split('T')[0];
+    return localISOTime;
+  }
+  private convertirStringADate(fechaStr: string): Date | null {
+    if (!fechaStr) return null;
+    const [year, month, day] = fechaStr.split('-');
+    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  }
+  private mostrarExito(mensaje: string) { this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje }); }
+  private mostrarError(mensaje: string) { this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje }); }
+  private mostrarAdvertencia(mensaje: string) { this.messageService.add({ severity: 'warn', summary: 'Atención', detail: mensaje }); }
 }

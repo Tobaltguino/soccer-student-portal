@@ -341,10 +341,244 @@
             </div>
         </div>
 
-        <div *ngIf="seccionActiva === 'evaluaciones' && !modoFormulario" class="card-table mt-4 text-center p-6 animation-fade-in">
-            <i class="pi pi-chart-line text-7xl text-300 mb-4"></i>
-            <h2 class="text-secondary m-0 mt-3">Evaluaciones Físicas</h2>
-            <p class="text-500 mt-3 text-lg">Módulo en construcción para el Administrador.</p>
+        <div *ngIf="seccionActiva === 'evaluaciones' && !modoFormulario" class="animation-fade-in">
+            
+            <div class="card-table mt-4 fadein">
+                <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-5 border-bottom-1 surface-border pb-4 gap-4">
+                    <div>
+                        <h2 class="m-0 text-main mb-2" style="font-size: 1.25rem; font-weight: 700;">Evaluaciones del Grupo</h2>
+                        <p class="text-secondary m-0">Alumno Seleccionado: <span class="font-bold text-main">{{alumnoSeleccionado.nombreCompleto}}</span></p>
+                    </div>
+                    <button pButton label="Nueva Sesión" icon="pi pi-plus" class="btn-create p-button-primary w-full md:w-auto" (click)="abrirNuevaSesionEval()"></button>
+                </div>
+
+                <div class="filter-bar mb-4 p-3 border-round bg-black-alpha-10 border-none">
+                    <div class="flex flex-wrap gap-3">
+                        <div class="flex-grow-1 min-w-min">
+                            <p-datepicker [(ngModel)]="filtroFechaEval" dateFormat="dd/mm/yy" [showIcon]="false" 
+                                          placeholder="Filtrar por Fecha" (onSelect)="aplicarFiltrosEval()" [showClear]="true" (onClear)="aplicarFiltrosEval()" 
+                                          styleClass="w-full" appendTo="body"></p-datepicker>
+                        </div>
+                        <div class="flex-grow-1 min-w-min">
+                            <p-select [options]="tiposEvaluacion" [(ngModel)]="filtroPruebaEval" optionLabel="nombre" optionValue="id"
+                                      placeholder="Filtrar por Prueba" (onChange)="aplicarFiltrosEval()" [showClear]="true" 
+                                      styleClass="w-full" appendTo="body"></p-select>
+                        </div>
+                        <div class="flex-grow-1 min-w-min">
+                            <p-select [options]="opcionesEstadoFiltro" [(ngModel)]="filtroEstadoEval" optionLabel="label" optionValue="value" 
+                                      placeholder="Filtrar por Estado" (onChange)="aplicarFiltrosEval()" [showClear]="true" 
+                                      styleClass="w-full" appendTo="body">
+                            </p-select>
+                        </div>
+                        <div>
+                            <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary w-full" (click)="limpiarFiltrosEval()" pTooltip="Limpiar"></button>
+                        </div>
+                    </div>
+                </div>
+
+                <p-table [value]="sesionesFiltradas" [paginator]="true" [rows]="10" styleClass="p-datatable-sm p-datatable-striped" [loading]="cargandoEvaluaciones" [responsiveLayout]="'stack'" [breakpoint]="'960px'">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th class="py-3">Fecha</th>
+                            <th class="py-3">Grupo</th>
+                            <th class="py-3">Prueba</th>
+                            <th class="text-center py-3">Estado</th>
+                            <th class="text-center py-3" style="width: 140px">Acciones</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-sesion>
+                        <tr>
+                            <td class="py-3"><span class="p-column-title font-bold text-secondary hidden-desktop">Fecha: </span><span>{{ sesion.fecha | date:'dd/MM/yyyy' }}</span></td>
+                            <td class="py-3"><span class="p-column-title font-bold text-secondary hidden-desktop">Grupo: </span><p-tag [value]="sesion.grupos?.nombre" severity="info" styleClass="text-xs"></p-tag></td>
+                            <td class="py-3 font-bold"><span class="p-column-title font-bold text-secondary hidden-desktop">Prueba: </span><span class="text-main">{{ sesion.tipo_evaluacion?.nombre }}</span></td>
+                            <td class="text-center py-3">
+                                <span class="p-column-title font-bold text-secondary hidden-desktop">Estado: </span>
+                                <p-tag [value]="sesion.estado" [severity]="sesion.estado === 'PENDIENTE' ? 'warn' : 'success'" styleClass="text-xs"></p-tag>
+                            </td>
+                            <td class="text-center py-3">
+                                <div class="action-buttons">
+                                    <button pButton icon="pi pi-eye" class="p-button-text p-button-rounded p-button-info" (click)="verResultadosEval(sesion)" pTooltip="Ver Notas"></button>
+                                    <button pButton icon="pi pi-user-edit" class="p-button-text p-button-rounded p-button-success" (click)="abrirCalificadorEval(sesion)" pTooltip="Calificar"></button>
+                                    <button pButton icon="pi pi-cog" class="p-button-text p-button-rounded p-button-secondary" (click)="editarSesionEval(sesion)" pTooltip="Ajustes"></button>
+                                    <button pButton icon="pi pi-trash" class="p-button-text p-button-rounded p-button-danger" (click)="confirmarEliminarSesionEval(sesion)" pTooltip="Eliminar Sesión"></button>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr><td colspan="5" class="text-center p-6 text-500"><i class="pi pi-chart-line text-5xl mb-3 text-300"></i><br>El grupo del alumno no tiene evaluaciones registradas.</td></tr>
+                    </ng-template>
+                </p-table>
+            </div>
+            
+            <p-dialog [(visible)]="displayMainDialogEval" [header]="evalLogistica.id ? 'Ajustes de Sesión' : 'Nueva Sesión de Evaluación'" 
+                      [modal]="true" [style]="{width: '90vw', maxWidth: '450px'}" styleClass="p-fluid">
+                <ng-template pTemplate="content">
+                    <div class="field mt-3">
+                        <label>Fecha <span class="text-red-500">*</span></label>
+                        <p-datepicker [(ngModel)]="evalLogistica.fecha" appendTo="body" dateFormat="dd/mm/yy" [showIcon]="true"></p-datepicker>
+                    </div>
+                    <div class="field mt-3">
+                        <label>Grupo <span class="text-red-500">*</span></label>
+                        <p-select [options]="grupos" [(ngModel)]="evalLogistica.grupo_id" optionLabel="nombre" optionValue="id" placeholder="Seleccionar grupo" appendTo="body"></p-select>
+                    </div>
+                    <div class="field mt-3">
+                        <label>Prueba Físca <span class="text-red-500">*</span></label>
+                        <p-select [options]="tiposEvaluacion" [(ngModel)]="evalLogistica.tipo_evaluacion_id" optionLabel="nombre" optionValue="id" placeholder="Seleccionar evaluación" appendTo="body"></p-select>
+                    </div>
+                    <div class="field mt-3">
+                        <label class="mb-2 block">Estado de la Sesión</label>
+                        <div class="flex gap-4">
+                            <div class="flex align-items-center"><p-radioButton name="estado" value="PENDIENTE" [(ngModel)]="evalLogistica.estado" inputId="st1"></p-radioButton><label for="st1" class="ml-2 mb-0">Pendiente</label></div>
+                            <div class="flex align-items-center"><p-radioButton name="estado" value="FINALIZADO" [(ngModel)]="evalLogistica.estado" inputId="st2"></p-radioButton><label for="st2" class="ml-2 mb-0">Finalizado</label></div>
+                        </div>
+                    </div>
+                </ng-template>
+                <ng-template pTemplate="footer">
+                    <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="displayMainDialogEval = false"></button>
+                    <button pButton label="Guardar" icon="pi pi-save" class="p-button-primary" (click)="guardarSesionLogisticaEval()"></button>
+                </ng-template>
+            </p-dialog>
+
+            <p-dialog [(visible)]="displayGradesDialogEval" header="Registro de Resultados Físicos" 
+                      [modal]="true" [style]="{width: '95vw', maxWidth: '1200px'}" [maximizable]="true" styleClass="p-fluid">
+                <ng-template pTemplate="content">
+                    <div class="modal-content-box mb-4" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; flex-direction: column;">
+                            <span class="text-xs text-secondary text-uppercase font-bold tracking-wider">Prueba</span>
+                            <span class="text-xl font-bold text-main mt-1">{{evalLogistica.tipo_evaluacion?.nombre}}</span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                            <span class="text-xs text-secondary text-uppercase font-bold tracking-wider mb-1">Grupo</span>
+                            <p-tag [value]="evalLogistica.grupos?.nombre" severity="info"></p-tag>
+                        </div>
+                    </div>
+                    <div class="split-layout">
+                        <div class="split-sidebar">
+                            <div class="sidebar-header">Estudiantes ({{estudiantesGrupoEval.length}})</div>
+                            <div *ngFor="let estudiante of estudiantesGrupoEval" (click)="estudianteSeleccionadoEval = estudiante" class="student-item" [ngClass]="{'active': estudianteSeleccionadoEval?.id === estudiante.id}">
+                                <div class="student-info">
+                                    <span class="student-name">{{estudiante.apellido}}</span>
+                                    <span class="student-sub">{{estudiante.nombre}}</span>
+                                </div>
+                                <div class="student-status">
+                                    <i class="pi pi-check-circle text-xl" style="color: #22c55e;" *ngIf="estudiante.evaluado" pTooltip="Completado"></i>
+                                    <i class="pi pi-circle text-xl" style="color: #64748b;" *ngIf="!estudiante.evaluado" pTooltip="Pendiente"></i>
+                                    <i class="pi pi-angle-right" style="opacity: 0.6;"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="split-content">
+                            <div *ngIf="estudianteSeleccionadoEval">
+                                <div class="content-header">
+                                    <h3 class="m-0 text-main">Evaluando a: <span style="color: var(--primary-color);">{{estudianteSeleccionadoEval.nombre}} {{estudianteSeleccionadoEval.apellido}}</span></h3>
+                                </div>
+                                <div class="content-body">
+                                    <p-table [value]="estudianteSeleccionadoEval.evaluaciones" styleClass="p-datatable-sm p-datatable-gridlines p-datatable-striped">
+                                        <ng-template pTemplate="header">
+                                            <tr>
+                                                <th style="width: 25%">Parámetro</th>
+                                                <th style="width: 15%" class="text-center">Único</th>
+                                                <th style="width: 15%" class="text-center">Izquierdo</th>
+                                                <th style="width: 15%" class="text-center">Derecho</th>
+                                                <th style="width: 25%">Observación</th>
+                                                <th style="width: 5%" class="text-center"></th>
+                                            </tr>
+                                        </ng-template>
+                                        <ng-template pTemplate="body" let-sub>
+                                            <tr>
+                                                <td class="font-medium text-sm"><div style="display: flex; align-items: center; gap: 0.5rem;">{{sub.nombre_parametro}} <p-tag *ngIf="sub.evalua_lados" value="L/R" severity="secondary" styleClass="text-xs font-normal" [rounded]="true"></p-tag></div></td>
+                                                <td class="text-center">
+                                                    <div *ngIf="!sub.evalua_lados" style="display: flex; flex-direction: column; align-items: center; gap: 0.3rem;">
+                                                        <p-inputNumber [(ngModel)]="sub.resultado_unico" (ngModelChange)="actualizarEstadoEstudianteEval()" [min]="0" [max]="3" placeholder="0-3" styleClass="w-full text-center"></p-inputNumber>
+                                                        <p-tag *ngIf="sub.resultado_unico !== null" [severity]="getSeverityPuntaje(sub.resultado_unico, sub.subevaluacion_id)" value="●"></p-tag>
+                                                    </div>
+                                                    <span *ngIf="sub.evalua_lados" class="text-400">-</span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <div *ngIf="sub.evalua_lados" style="display: flex; flex-direction: column; align-items: center; gap: 0.3rem;">
+                                                        <p-inputNumber [(ngModel)]="sub.resultado_izquierdo" (ngModelChange)="actualizarEstadoEstudianteEval()" [min]="0" [max]="3" placeholder="0-3" styleClass="w-full text-center"></p-inputNumber>
+                                                        <p-tag *ngIf="sub.resultado_izquierdo !== null" [severity]="getSeverityPuntaje(sub.resultado_izquierdo, sub.subevaluacion_id)" value="●"></p-tag>
+                                                    </div>
+                                                    <span *ngIf="!sub.evalua_lados" class="text-400">-</span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <div *ngIf="sub.evalua_lados" style="display: flex; flex-direction: column; align-items: center; gap: 0.3rem;">
+                                                        <p-inputNumber [(ngModel)]="sub.resultado_derecho" (ngModelChange)="actualizarEstadoEstudianteEval()" [min]="0" [max]="3" placeholder="0-3" styleClass="w-full text-center"></p-inputNumber>
+                                                        <p-tag *ngIf="sub.resultado_derecho !== null" [severity]="getSeverityPuntaje(sub.resultado_derecho, sub.subevaluacion_id)" value="●"></p-tag>
+                                                    </div>
+                                                    <span *ngIf="!sub.evalua_lados" class="text-400">-</span>
+                                                </td>
+                                                <td><input pInputText [(ngModel)]="sub.observacion" style="width: 100%;" placeholder="Opcional..."></td>
+                                                <td class="text-center"><button pButton icon="pi pi-eraser" class="p-button-rounded p-button-text p-button-secondary p-0" style="width: 2rem; height: 2rem;" (click)="limpiarFilaEval(sub)" pTooltip="Limpiar"></button></td>
+                                            </tr>
+                                        </ng-template>
+                                    </p-table>
+                                </div>
+                            </div>
+                            <div *ngIf="!estudianteSeleccionadoEval" class="empty-state">
+                                <i class="pi pi-user-edit" style="font-size: 3.5rem;"></i>
+                                <h2 class="m-0 text-center">Selecciona un estudiante</h2>
+                            </div>
+                        </div>
+                    </div>
+                </ng-template>
+                <ng-template pTemplate="footer">
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding-top: 1rem;">
+                        <small class="text-secondary italic"><i class="pi pi-info-circle mr-2" style="color: var(--primary-color);"></i> Solo se guardarán los alumnos modificados.</small>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="displayGradesDialogEval = false"></button>
+                            <button pButton label="Guardar Todo" icon="pi pi-save" class="p-button-primary" (click)="guardarNotasFinalesEval()"></button>
+                        </div>
+                    </div>
+                </ng-template>
+            </p-dialog>
+
+            <p-dialog [(visible)]="displayViewDialogEval" header="Resultados Físicos" [modal]="true" [style]="{width: '90vw', maxWidth: '1200px'}" [maximizable]="true" styleClass="p-fluid">
+                <ng-template pTemplate="content">
+                    <div class="modal-content-box mb-4" style="display: flex; justify-content: space-between; align-items: center;" *ngIf="sesionVistaEval">
+                        <div style="display: flex; flex-direction: column;"><span class="text-xs text-secondary text-uppercase font-bold tracking-wider">Prueba</span><span class="text-xl font-bold text-main mt-1">{{sesionVistaEval.tipo_evaluacion?.nombre}}</span></div>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end;"><span class="text-xs text-secondary text-uppercase font-bold tracking-wider mb-1">Grupo</span><p-tag [value]="sesionVistaEval.grupos?.nombre" severity="info"></p-tag></div>
+                    </div>
+                    <div class="split-layout">
+                        <div class="split-sidebar">
+                            <div class="sidebar-header">Evaluados ({{resultadosVistaEval.length}})</div>
+                            <div *ngFor="let alumno of resultadosVistaEval" (click)="estudianteVistaSeleccionadoEval = alumno" class="student-item" [ngClass]="{'active': estudianteVistaSeleccionadoEval?.id === alumno.id}">
+                                <div class="student-info"><span class="student-name">{{alumno.apellido}}</span><span class="student-sub">{{alumno.nombre}}</span></div><i class="pi pi-angle-right" style="opacity: 0.6;"></i>
+                            </div>
+                        </div>
+                        <div class="split-content">
+                            <div *ngIf="estudianteVistaSeleccionadoEval">
+                                <div class="content-header"><h3 class="m-0 text-main">Resultados de: <span style="color: var(--primary-color);">{{estudianteVistaSeleccionadoEval.nombre}} {{estudianteVistaSeleccionadoEval.apellido}}</span></h3></div>
+                                <div class="content-body">
+                                    <p-table [value]="estudianteVistaSeleccionadoEval.evaluaciones" styleClass="p-datatable-sm p-datatable-gridlines p-datatable-striped">
+                                        <ng-template pTemplate="header">
+                                            <tr>
+                                                <th style="width: 25%">Parámetro</th>
+                                                <th style="width: 15%" class="text-center">Único</th>
+                                                <th style="width: 15%" class="text-center">Izquierdo</th>
+                                                <th style="width: 15%" class="text-center">Derecho</th>
+                                                <th style="width: 30%">Observación</th>
+                                            </tr>
+                                        </ng-template>
+                                        <ng-template pTemplate="body" let-sub>
+                                            <tr>
+                                                <td class="font-medium text-sm">{{sub.nombre_parametro}}</td>
+                                                <td class="text-center"><p-tag *ngIf="sub.resultado_unico !== null" [value]="sub.resultado_unico" [severity]="getSeverityPuntaje(sub.resultado_unico, sub.subevaluacion_id)"></p-tag><span *ngIf="sub.resultado_unico === null" class="text-400">-</span></td>
+                                                <td class="text-center"><p-tag *ngIf="sub.resultado_izquierdo !== null" [value]="sub.resultado_izquierdo" [severity]="getSeverityPuntaje(sub.resultado_izquierdo, sub.subevaluacion_id)"></p-tag><span *ngIf="sub.resultado_izquierdo === null" class="text-400">-</span></td>
+                                                <td class="text-center"><p-tag *ngIf="sub.resultado_derecho !== null" [value]="sub.resultado_derecho" [severity]="getSeverityPuntaje(sub.resultado_derecho, sub.subevaluacion_id)"></p-tag><span *ngIf="sub.resultado_derecho === null" class="text-400">-</span></td>
+                                                <td class="text-sm text-700 italic">{{sub.observacion || '-'}}</td>
+                                            </tr>
+                                        </ng-template>
+                                    </p-table>
+                                </div>
+                            </div>
+                            <div *ngIf="!estudianteVistaSeleccionadoEval" class="empty-state"><i class="pi pi-list" style="font-size: 3.5rem;"></i><h2 class="m-0 text-center">Selecciona un estudiante</h2></div>
+                        </div>
+                    </div>
+                </ng-template>
+                <ng-template pTemplate="footer"><div style="padding-top: 1rem;"><button pButton label="Cerrar" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="displayViewDialogEval = false"></button></div></ng-template>
+            </p-dialog>
         </div>
 
     </div>

@@ -304,4 +304,75 @@ export class HealthService {
       .delete()
       .eq('id', id);
   }
+
+  // ==========================================
+  // 6. EVALUACIONES KINESIOLÓGICAS
+  // ==========================================
+
+  // --- Tipos de Evaluación Kine ---
+  async getTiposEvaluacionKine() { 
+    return await this.supabase.from('tipos_evaluacion_kine').select('*').order('nombre'); 
+  }
+  async crearTipoEvaluacionKine(tipo: any) { 
+    return await this.supabase.from('tipos_evaluacion_kine').insert(tipo).select().single(); 
+  }
+  async eliminarTipoEvaluacionKine(id: string) { 
+    return await this.supabase.from('tipos_evaluacion_kine').delete().eq('id', id); 
+  }
+
+  // --- Sesiones de Evaluación Kine ---
+  async getEvaluacionesKine() { 
+    // Usamos el nombre real de la tabla y hacemos el join con tipos_evaluacion_kine
+    return await this.supabase.from('evaluaciones_sesiones_kine')
+      // FÍJATE AQUÍ: El join debe usar el foreign key correcto
+      .select('*, tipo_evaluacion:tipo_evaluacion_id(nombre)') 
+      .order('fecha', { ascending: false }); 
+  }
+  async crearEvaluacionKine(evaluacion: any) { 
+    return await this.supabase.from('evaluaciones_sesiones_kine').insert(evaluacion).select().single(); 
+  }
+  async actualizarEvaluacionKine(id: string, evaluacion: any) { 
+    return await this.supabase.from('evaluaciones_sesiones_kine').update(evaluacion).eq('id', id).select().single(); 
+  }
+  async eliminarEvaluacionKine(id: string) { 
+    return await this.supabase.from('evaluaciones_sesiones_kine').delete().eq('id', id); 
+  }
+
+  // --- Resultados Evaluaciones Kine ---
+  async getResultadosKineEstudiante(estudianteId: string) {
+    return await this.supabase.from('evaluaciones_resultados_kine')
+      // Ajustado a los nombres reales de las tablas y foreign keys
+      .select('observaciones, evaluacion:evaluaciones_sesiones_kine ( id, fecha, estado, tipo_evaluacion:tipo_evaluacion_id (nombre) )')
+      .eq('estudiante_id', estudianteId);
+  }
+
+  // --- Subevaluaciones Kine ---
+  // TIP: Mejora tu getSubEvaluacionesPorTipo para incluir si evalua_lados
+  async getSubEvaluacionesPorTipo(tipoId: number) {
+    return await this.supabase
+      .from('tipo_subevaluaciones_kine')
+      .select('*') // Aquí ya viene 'evalua_lados' (boolean)
+      .eq('tipo_evaluacion_id', tipoId)
+      .order('id', { ascending: true });
+  }
+
+  // --- Resultados Evaluaciones Kine ---
+  async getResultadosPorSesionKine(sesionId: string) { 
+    return await this.supabase.from('evaluaciones_resultados_kine').select('*').eq('sesion_id', sesionId); 
+  }
+
+  async guardarResultadoKine(resultados: any[]) {
+    // 💡 IMPORTANTE: En Supabase debes ir a la tabla evaluaciones_resultados_kine 
+    // y crear una restricción UNIQUE para (sesion_id, estudiante_id, subevaluacion_id) 
+    // para que este upsert funcione correctamente.
+    return await this.supabase.from('evaluaciones_resultados_kine')
+      .upsert(resultados, { onConflict: 'sesion_id,estudiante_id,subevaluacion_id' }); 
+  }
+
+  // --- Rangos de Evaluación ---
+  async getRangosEvaluacion() {
+    return await this.supabase
+      .from('evaluacion_rangos_kine')
+      .select('*');
+  }
 }
