@@ -22,7 +22,7 @@ serve(async (req) => {
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: email,
       password: password,
-      email_confirm: true, // Lo marcamos true para que no requiera validación por correo
+      email_confirm: false, // Lo marcamos true para que no requiera validación por correo
       user_metadata: {
         role: role || 'USER',
         nombre: datosPersonales.nombre,
