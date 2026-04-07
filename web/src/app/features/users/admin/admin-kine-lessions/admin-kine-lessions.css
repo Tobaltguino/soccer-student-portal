@@ -1,0 +1,107 @@
+/* --- CONFIGURACIÓN BASE --- */
+:host {
+    display: block;
+    min-height: 100vh;
+    padding: 2rem; 
+}
+
+.evolution-record-container { 
+    max-width: 1200px; 
+    margin: 0 auto; 
+}
+
+/* --- HEADER --- */
+.page-header {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    flex-wrap: wrap; 
+    gap: 1rem;
+}
+
+.header-content h1 { 
+    margin: 0; 
+    font-size: 1.6rem; 
+    font-weight: 800; 
+    color: var(--text-main); 
+}
+
+.header-content p { 
+    margin: 0.4rem 0 0; 
+    color: var(--text-secondary); 
+    font-size: 0.95rem; 
+}
+
+/* --- BOTÓN NUEVO --- */
+:host ::ng-deep .btn-create {
+    padding: 0.6rem 1.2rem !important;
+    border-radius: 8px !important;
+    font-size: 0.9rem !important;
+    font-weight: 600;
+    white-space: nowrap;
+}
+:host ::ng-deep .btn-create .p-button-icon {
+    font-size: 0.9rem !important;
+    margin-right: 8px !important;
+}
+
+/* =========================================
+   BARRA DE FILTROS
+   ========================================= */
+.filter-bar {
+    background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px;
+    padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+}
+.filter-row { display: flex; align-items: flex-end; gap: 1rem; width: 100%; }
+.filter-item { display: flex; flex-direction: column; gap: 0.4rem; }
+.filter-item label { color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin: 0; }
+.flex-grow-1 { flex: 1; min-width: 150px; }
+
+:host ::ng-deep .filter-bar .p-select { width: 100%; }
+:host ::ng-deep .filter-bar .p-select .p-select-label { padding: 0.6rem 0.8rem !important; font-size: 0.9rem !important; }
+
+
+/* --- TABLA PRINCIPAL DE LESIONES --- */
+.card-table { background-color: var(--bg-card); padding: 1.5rem 2rem; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 16px rgba(0,0,0,0.03); overflow-x: auto; }
+:host ::ng-deep .p-datatable .p-datatable-header { background: transparent; border: none; padding: 0.5rem 0 1.5rem 0; }
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th { background: var(--bg-main) !important; color: var(--text-secondary) !important; font-weight: 700; font-size: 0.8rem !important; text-transform: uppercase; padding: 1rem 0.8rem !important; border-bottom: 1px solid var(--border-color); text-align: left; white-space: nowrap; letter-spacing: 0.5px; }
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td { padding: 1rem 0.8rem !important; font-size: 0.9rem !important; border-bottom: 1px solid var(--bg-main); color: var(--text-main); vertical-align: middle; text-align: left; white-space: normal !important; }
+.action-buttons { display: flex; justify-content: center; gap: 0.4rem; }
+:host ::ng-deep .action-buttons .p-button { width: 2.2rem !important; height: 2.2rem !important; padding: 0 !important; }
+:host ::ng-deep .action-buttons .p-button .p-button-icon { font-size: 1rem !important; }
+
+
+/* TEXTOS Y UTILIDADES */
+.text-main { color: var(--text-main); }
+.text-secondary { color: var(--text-secondary); }
+.font-bold { font-weight: 700; }
+.text-primary { color: var(--primary-color); }
+.hidden-mobile { display: table-cell; }
+.animation-fade-in { animation: fadeIn 0.3s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+
+/* =========================================
+   MEDIA QUERIES - MÓVIL
+   ========================================= */
+.hidden-desktop { display: none; }
+@media (max-width: 768px) {
+    :host { padding: 1rem; }
+    .card-table { padding: 1.2rem; }
+    
+    .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem; }
+    .header-content h1 { font-size: 1.35rem; }
+    .header-content, .btn-create { width: 100%; justify-content: flex-start; }
+    .btn-create { justify-content: center; padding: 0.8rem !important; }
+    .filter-row { flex-direction: column; align-items: stretch; gap: 1rem; }
+    .filter-item { width: 100% !important; min-width: 100% !important; flex: none; }
+    .hidden-mobile { display: none !important; }
+    
+    /* Magia tabla de lesiones a tarjetas móviles */
+    .hidden-desktop { display: inline-block; }
+    :host ::ng-deep .card-table .p-datatable-thead { display: none !important; }
+    :host ::ng-deep .card-table .p-datatable-tbody > tr { display: flex; flex-direction: column; background: var(--bg-card) !important; border: 1px solid var(--border-color) !important; border-radius: 12px; margin-bottom: 1.2rem; padding: 1.2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    :host ::ng-deep .card-table .p-datatable-tbody > tr > td { display: flex !important; align-items: center !important; justify-content: space-between !important; width: 100% !important; padding: 0.8rem 0 !important; border: none !important; border-bottom: 1px solid var(--border-color) !important; text-align: right !important; white-space: normal; font-size: 0.9rem !important; }
+    :host ::ng-deep .card-table .p-datatable-tbody > tr > td .p-column-title { display: inline-block !important; font-weight: 700; margin-bottom: 0; font-size: 0.9rem; color: var(--text-secondary); text-transform: none; }
+    :host ::ng-deep .card-table .p-datatable-tbody > tr > td:last-child { border-bottom: none !important; padding-top: 1rem !important; justify-content: center !important; }
+}

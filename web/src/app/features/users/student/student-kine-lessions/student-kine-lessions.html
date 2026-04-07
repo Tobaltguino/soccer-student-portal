@@ -1,0 +1,58 @@
+<div class="animation-fade-in">
+    <p-toast position="top-right"></p-toast>
+    
+    <div class="card-table mt-4 fadein">
+        <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-5 border-bottom-1 surface-border pb-4 gap-4">
+            <div>
+                <h2 class="m-0 text-main mb-2" style="font-size: 1.25rem; font-weight: 700;">Mi Historial de Lesiones y Antecedentes</h2>
+                <p class="text-secondary m-0">Consulta el registro de tus eventos médicos, patologías y su estado de recuperación.</p>
+            </div>
+        </div>
+
+        <p-table [value]="listaLesiones" [paginator]="true" [rows]="10" styleClass="p-datatable-sm p-datatable-striped" [loading]="cargandoLesiones" [responsiveLayout]="'stack'" [breakpoint]="'960px'">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th class="py-3" style="width: 20%;">Fecha</th>
+                    <th class="py-3" style="width: 20%;">Tipo</th>
+                    <th class="py-3" style="width: 40%;">Diagnóstico</th>
+                    <th class="py-3 text-center" style="width: 20%;">Estado</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-l>
+                <tr>
+                    <td class="py-3">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Fecha: </span>
+                        <span>{{ l.fecha_evento | date:'dd/MM/yyyy' }}</span>
+                    </td>
+                    <td class="py-3 font-bold">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Tipo: </span>
+                        <span class="text-primary">{{ l.tipo }}</span>
+                    </td>
+                    <td class="py-3 text-sm">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Diagnóstico: </span>
+                        <span>{{ l.diagnostico }}</span>
+                    </td>
+                    <td class="text-center py-3">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Estado: </span>
+                        <span class="px-2 py-1 border-round text-xs font-bold" 
+                              [ngClass]="{
+                                  'bg-green-100 text-green-700': l.estado === 'RECUPERADO', 
+                                  'bg-red-100 text-red-700': l.estado === 'ACTIVO', 
+                                  'bg-orange-100 text-orange-700': l.estado === 'EN_TRATAMIENTO'
+                              }">
+                            {{ l.estado === 'EN_TRATAMIENTO' ? 'En Tratamiento' : (l.estado | titlecase) }}
+                        </span>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="4" class="text-center p-6 text-500">
+                        <i class="pi pi-heart text-5xl mb-3 text-300"></i><br>
+                        No registras lesiones ni antecedentes médicos en tu historial.
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+</div>

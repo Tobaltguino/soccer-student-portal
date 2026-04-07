@@ -22,6 +22,10 @@ import { AdminPaymentsComponent } from './features/users/admin/admin-payments/ad
 import { AdminGuidesManagementComponent } from './features/users/admin/admin-guides-management/admin-guides-management';
 import { AdminAttendanceComponent } from './features/users/admin/admin-attendance/admin-attendance';
 import { AdminHomeConfigComponent } from './features/users/admin/admin-home-config/admin-home-config';
+import { AdminKineEvolutionComponent } from './features/users/admin/admin-kine-evolution/admin-kine-evolution';
+import { AdminKineEvaluationComponent } from './features/users/admin/admin-kine-evaluation/admin-kine-evaluation';
+import { AdminKineLessionsComponent } from './features/users/admin/admin-kine-lessions/admin-kine-lessions';
+
 
 // --- STUDENT IMPORTS (Portal Alumno) ---
 import { StudentLayoutComponent } from './features/users/student/student-layout/student-layout';
@@ -34,6 +38,11 @@ import { StudentKineComponent } from './features/users/student/student-kine/stud
 import { StudentNutriComponent } from './features/users/student/student-nutri/student-nutri';
 import { StudentViewGuidesComponent } from './features/users/student/student-view-guides/student-view-guides';
 import { ViewTeachersComponent } from './features/users/student/view-teachers/view-teachers';
+import { StudentKineEvolutionComponent } from './features/users/student/student-kine-evolution/student-kine-evolution';
+import { StudentKineLessionsComponent } from './features/users/student/student-kine-lessions/student-kine-lessions';
+import { StudentKineEvaluationComponent } from './features/users/student/student-kine-evaluation/student-kine-evaluation';
+
+
 
 // --- PROFESSOR IMPORTS (Portal Profesor) ---
 import { ProfessorLayoutComponent } from './features/users/professor/professor-layout/professor-layout';
@@ -46,6 +55,10 @@ import { ProfessorNutritionComponent } from './features/users/professor/professo
 import { ProfessorScheduleComponent } from './features/users/professor/professor-schedule/professor-schedule';
 import { ProfessorViewGuidesComponent } from './features/users/professor/professor-view-guides/professor-view-guides';
 import { ProfessorViewStudentsComponent } from './features/users/professor/professor-view-students/professor-view-students';
+import { ProfessorKineEvolutionComponent } from './features/users/professor/professor-kine-evolution/professor-kine-evolution';
+import { ProfessorKineLessionsComponent } from './features/users/professor/professor-kine-lessions/professor-kine-lessions';
+import { ProfessorKineEvaluationComponent } from './features/users/professor/professor-kine-evaluation/professor-kine-evaluation';
+
 
 // --- KINE IMPORTS ---
 import { KineLayoutComponent } from './features/users/kine/kine-layout/kine-layout';
@@ -109,6 +122,10 @@ export const routes: Routes = [
             { path: 'guides', component: AdminGuidesManagementComponent },
             { path: 'attendance', component: AdminAttendanceComponent },
             { path: 'home-config', component: AdminHomeConfigComponent },
+            { path: 'kine-evaluation', component: AdminKineEvaluationComponent },
+            { path: 'kine-evolution', component: AdminKineEvolutionComponent },
+            { path: 'kine-lessions', component: AdminKineLessionsComponent },
+
         ]
     },
 
@@ -130,6 +147,9 @@ export const routes: Routes = [
             { path: 'nutri', component: StudentNutriComponent },
             { path: 'view-professor', component: ViewTeachersComponent },
             { path: 'guides', component: StudentViewGuidesComponent },
+            { path: 'kine-evaluation', component: StudentKineEvaluationComponent },
+            { path: 'kine-evolution', component: StudentKineEvolutionComponent },
+            { path: 'kine-lessions', component: StudentKineLessionsComponent },
         ]
     },
 
@@ -151,6 +171,9 @@ export const routes: Routes = [
             { path: 'schedule', component: ProfessorScheduleComponent },
             { path: 'guides', component: ProfessorViewGuidesComponent },
             { path: 'students', component: ProfessorViewStudentsComponent },
+            { path: 'kine-evaluation', component: ProfessorKineEvaluationComponent },
+            { path: 'kine-evolution', component: ProfessorKineEvolutionComponent },
+            { path: 'kine-lessions', component: ProfessorKineLessionsComponent },
         ]
     },
 
