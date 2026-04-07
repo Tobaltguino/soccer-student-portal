@@ -1,21 +1,29 @@
 /* =========================================
    1. CONFIGURACIÓN BASE Y LAYOUT
    ========================================= */
-   :host { 
-    display: block; 
+:host {
+    display: block;
     min-height: 100vh;
     padding: 1.5rem; 
 }
 
 .eval-container { 
-    max-width: 1200px; /* Estándar global */
+    max-width: 1200px; 
     margin: 0 auto; 
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: flex; justify-content: center; align-items: center;
 }
 
 /* =========================================
    2. HEADER PRINCIPAL
    ========================================= */
-.page-header { 
+.page-header {
     display: flex; 
     justify-content: space-between; 
     align-items: center;
@@ -42,13 +50,18 @@
     gap: 0.5rem; 
 }
 
-/* Botones de cabecera compactos */
+/* --- BOTONES DE ACCIÓN (NUEVO/COMPACTO) --- */
 :host ::ng-deep .btn-create,
 :host ::ng-deep .header-actions .p-button {
     padding: 0.5rem 1rem !important;
     border-radius: 8px !important;
     font-size: 0.85rem !important;
     white-space: nowrap;
+}
+:host ::ng-deep .btn-create .p-button-icon,
+:host ::ng-deep .header-actions .p-button .p-button-icon {
+    font-size: 0.8rem !important;
+    margin-right: 6px !important;
 }
 
 /* =========================================
@@ -85,12 +98,23 @@
     margin: 0; 
 }
 
+.filter-item-btn {
+    flex: none;
+    padding-bottom: 1px; 
+}
+
 .flex-grow-1 {
     flex: 1;
     min-width: 130px;
 }
 
-/* Forzar ancho y altura de los inputs */
+.w-10rem {
+    width: 9rem;
+    min-width: 110px;
+    flex: none; 
+}
+
+/* Forzar ancho completo de los componentes de PrimeNG */
 :host ::ng-deep .filter-bar .p-select,
 :host ::ng-deep .filter-bar .p-datepicker,
 :host ::ng-deep .filter-bar .p-inputtext,
@@ -121,7 +145,7 @@
 /* =========================================
    4. TABLAS Y CENTRADO COMPACTO
    ========================================= */
-.main-card {
+.card-table, .surface-card {
     background-color: var(--bg-card); 
     border-radius: 12px;
     border: 1px solid var(--border-color); 
@@ -131,6 +155,7 @@
 }
 
 .hidden-desktop { display: none !important; }
+.hidden-mobile { display: table-cell !important; }
 
 /* Limpiar y compactar encabezados */
 :host ::ng-deep .p-datatable .p-datatable-header {
@@ -144,6 +169,10 @@
     text-transform: uppercase; padding: 0.5rem 0.4rem !important;
     border-bottom: 1px solid var(--border-color);
     text-align: center !important; white-space: nowrap;
+}
+
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th .p-column-header-content {
+    display: flex; justify-content: center !important; align-items: center; width: 100%;
 }
 
 /* Estilo de las celdas (TD) */
@@ -160,13 +189,15 @@
 /* Alinear PC a la izquierda donde corresponda */
 :host ::ng-deep .p-datatable .p-datatable-tbody > tr > td:nth-child(1),
 :host ::ng-deep .p-datatable .p-datatable-tbody > tr > td:nth-child(2),
-:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td:nth-child(3) {
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td:nth-child(3),
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td:nth-child(4) {
     text-align: left !important;
 }
 
 :host ::ng-deep .p-datatable .p-datatable-thead > tr > th:nth-child(1) .p-column-header-content,
 :host ::ng-deep .p-datatable .p-datatable-thead > tr > th:nth-child(2) .p-column-header-content,
-:host ::ng-deep .p-datatable .p-datatable-thead > tr > th:nth-child(3) .p-column-header-content {
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th:nth-child(3) .p-column-header-content,
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th:nth-child(4) .p-column-header-content {
     justify-content: flex-start !important;
 }
 
@@ -182,6 +213,8 @@
 :host ::ng-deep .p-datatable-tbody > tr > td p-tag {
     display: inline-flex !important;
     align-items: center;
+    font-size: 0.65rem !important;
+    padding: 0.2rem 0.4rem !important;
 }
 
 /* ACCIONES DE LA TABLA */
@@ -191,43 +224,44 @@
 }
 
 :host ::ng-deep .action-buttons .p-button {
-    width: 2rem !important; height: 2rem !important; padding: 0 !important;
+    width: 1.8rem !important; height: 1.8rem !important; padding: 0 !important;
 }
 
 :host ::ng-deep .action-buttons .p-button .p-button-icon {
-    font-size: 0.9rem !important; 
+    font-size: 0.85rem !important; 
 }
 
 /* =========================================
-   5. ESTILOS DE LOS MODALES (FORMULARIOS)
+   5. FORMULARIOS (MODALES)
    ========================================= */
-.field { 
-    display: flex !important; 
-    flex-direction: column !important; 
-    gap: 4px !important; 
-    margin-bottom: 1.25rem !important; 
-    width: 100% !important; 
+.field {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    margin-bottom: 1.25rem !important;
+    width: 100% !important;
 }
 
-.field label { 
+.field label {
     font-weight: 600 !important; 
-    color: var(--text-main); 
+    color: var(--text-main);
     font-size: 0.85rem; 
-    margin: 0 !important; 
+    margin: 0 !important;
     display: block;
+}
+
+:host ::ng-deep .field input, 
+:host ::ng-deep .field textarea,
+:host ::ng-deep .field p-select,
+:host ::ng-deep .field p-datepicker {
+    width: 100% !important;
+    display: flex;
 }
 
 :host ::ng-deep .p-dialog-content {
     padding-top: 1rem !important;
     overflow-y: auto !important;
-    max-height: 75vh !important;
-}
-
-.modal-content-box {
-    background-color: var(--bg-main);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 1rem;
+    max-height: 70vh !important;
 }
 
 /* Fix Inputs numéricos dentro de tabla de notas */
@@ -244,11 +278,128 @@
 }
 
 /* =========================================
-   6. UTILIDADES Y FIXES DE PRIMENG
+   6. DISEÑO MAESTRO-DETALLE (PANTALLA DIVIDIDA)
    ========================================= */
-.text-main { color: var(--text-main); }
-.text-secondary { color: var(--text-secondary); }
-.tracking-wider { letter-spacing: 0.05em; }
+.split-layout {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-card);
+    overflow: hidden;
+    min-height: 550px;
+    max-height: 65vh;
+}
+
+.split-sidebar {
+    width: 300px;
+    min-width: 300px;
+    border-right: 1px solid var(--border-color);
+    overflow-y: auto;
+    background: var(--bg-main);
+}
+
+.sidebar-header {
+    padding: 1rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    background: var(--bg-main);
+    z-index: 10;
+}
+
+.student-item {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.student-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.student-item.active {
+    background-color: var(--primary-color);
+    border-left: 4px solid #fff;
+}
+
+.student-item.active .student-name,
+.student-item.active .student-sub,
+.student-item.active i {
+    color: #ffffff !important;
+}
+
+.student-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.student-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-main);
+}
+
+.student-sub {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.student-status {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.split-content {
+    flex-grow: 1;
+    padding: 0;
+    overflow-y: auto;
+    background: var(--bg-card);
+}
+
+.content-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    background: var(--bg-card);
+    z-index: 10;
+}
+
+.content-body {
+    padding: 1.5rem;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-secondary);
+    gap: 1rem;
+}
+
+/* =========================================
+   7. OVERRIDES GLOBALES DE PRIMENG Y SELECTS
+   ========================================= */
+:host ::ng-deep .p-togglebutton.p-highlight {
+    background: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: #ffffff !important;
+}
 
 /* FIX: TAMAÑO DE LAS OPCIONES DEL SELECT FLOTANTE */
 ::ng-deep .p-select-panel .p-select-item,
@@ -269,8 +420,20 @@
     overflow-y: auto !important; 
 }
 
+:host ::ng-deep .filter-bar .p-select,
+:host ::ng-deep .filter-bar .p-dropdown {
+    box-sizing: border-box !important;
+}
+
+/* FIX: EVITAR QUE LOS BOTONES DE ACCIÓN SE APLASTEN */
+:host ::ng-deep .p-datatable-tbody > tr > td button span {
+    white-space: nowrap !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+}
+
 /* =========================================
-   7. RESPONSIVE (MÓVIL Y TARJETAS)
+   8. RESPONSIVE (MÓVIL) Y TARJETAS
    ========================================= */
 @media (max-width: 768px) {
     :host { padding: 1rem; }
@@ -282,27 +445,22 @@
     .header-actions button { width: 100%; justify-content: center; }
 
     /* --- FILTROS APILADOS --- */
-    .filter-row { 
-        flex-direction: column !important; 
-        align-items: stretch !important; 
+    .filter-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
         gap: 0.75rem;
     }
-    .filter-item { 
-        width: 100% !important; 
-        min-width: 100% !important;
+    .filter-item, .filter-item-btn, .w-10rem {
+        width: 100% !important; min-width: 100% !important; flex: none;
     }
-    .filter-btn, .filter-btn button { 
-        width: 100% !important; 
-    }
-
+    
     /* --- MAGIA: TABLA A TARJETAS MÓVILES --- */
     .hidden-desktop { display: inline-block !important; }
+    .hidden-mobile { display: none !important; } 
     
-    :host ::ng-deep .main-card .p-datatable-thead,
-    :host ::ng-deep .p-dialog .p-datatable-thead { display: none !important; }
+    :host ::ng-deep .card-table .p-datatable-thead { display: none !important; }
 
-    :host ::ng-deep .main-card .p-datatable-tbody > tr:not(.p-datatable-row-expansion),
-    :host ::ng-deep .p-dialog .p-datatable-tbody > tr:not(.p-datatable-row-expansion) {
+    :host ::ng-deep .card-table .p-datatable-tbody > tr {
         display: flex; flex-direction: column;
         background: var(--bg-card) !important;
         border: 1px solid var(--border-color) !important;
@@ -310,22 +468,19 @@
         padding: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
 
-    :host ::ng-deep .main-card .p-datatable-tbody > tr > td,
-    :host ::ng-deep .p-dialog .p-datatable-tbody > tr > td {
-        display: flex !important; flex-direction: column !important; align-items: flex-start !important; 
+    :host ::ng-deep .card-table .p-datatable-tbody > tr > td {
+        display: flex !important; align-items: center !important; justify-content: space-between !important; 
         width: 100% !important; padding: 0.6rem 0 !important;
         border: none !important; border-bottom: 1px solid var(--border-color) !important;
-        text-align: left !important; white-space: normal; font-size: 0.85rem !important;
+        text-align: right !important; white-space: normal; font-size: 0.85rem !important;
     }
 
-    :host ::ng-deep .main-card .p-datatable-tbody > tr > td .p-column-title,
-    :host ::ng-deep .p-dialog .p-datatable-tbody > tr > td .p-column-title {
+    :host ::ng-deep .card-table .p-datatable-tbody > tr > td .p-column-title {
         display: inline-block !important; font-weight: 700; margin-bottom: 0.5rem;
         font-size: 0.85rem; color: var(--text-secondary); text-transform: none;
     }
 
-    :host ::ng-deep .main-card .p-datatable-tbody > tr > td:last-child,
-    :host ::ng-deep .p-dialog .p-datatable-tbody > tr > td:last-child {
+    :host ::ng-deep .card-table .p-datatable-tbody > tr > td:last-child {
         border-bottom: none !important; padding-top: 1.25rem !important; align-items: center !important;
     }
 
@@ -334,125 +489,8 @@
         width: 100%; background-color: rgba(0,0,0,0.02); 
         border-radius: 8px; padding: 0.4rem; flex-wrap: nowrap !important; margin: 0 auto;
     }
-}
 
-/* =========================================
-   8. DISEÑO MAESTRO-DETALLE (PANTALLA DIVIDIDA)
-   ========================================= */
-.split-layout {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-    border: 1px solid var(--border-color, #4b5563);
-    border-radius: 8px;
-    background: var(--bg-main, #1e293b);
-    overflow: hidden;
-    min-height: 550px;
-    max-height: 65vh;
-}
-
-.split-sidebar {
-    width: 320px;
-    min-width: 320px;
-    border-right: 1px solid var(--border-color, #4b5563);
-    overflow-y: auto;
-    background: var(--bg-card, #0f172a);
-}
-
-.sidebar-header {
-    padding: 1rem;
-    font-weight: 700;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--text-secondary, #94a3b8);
-    border-bottom: 1px solid var(--border-color, #4b5563);
-    position: sticky;
-    top: 0;
-    background: var(--bg-card, #0f172a);
-    z-index: 10;
-}
-
-.student-item {
-    padding: 1rem;
-    border-bottom: 1px solid var(--border-color, #4b5563);
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: all 0.2s;
-}
-
-.student-item:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
-.student-item.active {
-    background-color: var(--primary-color, #3b82f6);
-    border-left: 4px solid #fff;
-}
-
-.student-item.active .student-name,
-.student-item.active .student-sub,
-.student-item.active i {
-    color: #ffffff !important;
-}
-
-.student-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-}
-
-.student-name {
-    font-weight: 700;
-    font-size: 1rem;
-    color: var(--text-main, #f8fafc);
-}
-
-.student-sub {
-    font-size: 0.8rem;
-    color: var(--text-secondary, #94a3b8);
-}
-
-.student-status {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.split-content {
-    flex-grow: 1;
-    padding: 0;
-    overflow-y: auto;
-    background: var(--bg-main, #1e293b);
-}
-
-.content-header {
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--border-color, #4b5563);
-    position: sticky;
-    top: 0;
-    background: var(--bg-main, #1e293b);
-    z-index: 10;
-}
-
-.content-body {
-    padding: 1.5rem;
-}
-
-.empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: var(--text-secondary, #94a3b8);
-    gap: 1rem;
-}
-
-/* En móviles, la pantalla se divide en columna (arriba la lista, abajo el formulario) */
-@media (max-width: 768px) {
+    /* PANTALLA DIVIDIDA MÓVIL */
     .split-layout {
         flex-direction: column;
     }
@@ -461,6 +499,6 @@
         min-width: 100%;
         max-height: 250px;
         border-right: none;
-        border-bottom: 2px solid var(--primary-color, #3b82f6);
+        border-bottom: 2px solid var(--primary-color);
     }
 }

@@ -16,7 +16,6 @@ import { AdminUsersComponent } from './features/users/admin/admin-users/admin-us
 import { AdminGroupsComponent } from './features/users/admin/admin-groups/admin-groups';
 import { AdminClassesComponent } from './features/users/admin/admin-classes/admin-classes';
 import { AdminEvaluationsComponent } from './features/users/admin/admin-evaluations/admin-evaluations';
-import { AdminKineComponent } from './features/users/admin/admin-kine/admin-kine'; 
 import { AdminNutriComponent } from './features/users/admin/admin-nutri/admin-nutri'; 
 import { AdminPaymentsComponent } from './features/users/admin/admin-payments/admin-payments';
 import { AdminGuidesManagementComponent } from './features/users/admin/admin-guides-management/admin-guides-management';
@@ -34,7 +33,6 @@ import { StudentScheduleComponent } from './features/users/student/student-sched
 import { StudentClassesComponent } from './features/users/student/student-classes/student-classes';
 import { StudentAttendanceComponent } from './features/users/student/student-attendance/student-attendance';
 import { StudentEvaluationsComponent } from './features/users/student/student-evaluations/student-evaluations';
-import { StudentKineComponent } from './features/users/student/student-kine/student-kine';
 import { StudentNutriComponent } from './features/users/student/student-nutri/student-nutri';
 import { StudentViewGuidesComponent } from './features/users/student/student-view-guides/student-view-guides';
 import { ViewTeachersComponent } from './features/users/student/view-teachers/view-teachers';
@@ -50,7 +48,6 @@ import { ProfessorDashboardComponent } from './features/users/professor/professo
 import { ProfessorAttendanceComponent } from './features/users/professor/professor-attendance/professor-attendance';
 import { ProfessorClassesComponent } from './features/users/professor/professor-classes/professor-classes';
 import { ProfessorEvaluationsComponent } from './features/users/professor/professor-evaluations/professor-evaluations';
-import { ProfessorKinesiologyComponent } from './features/users/professor/professor-kinesiology/professor-kinesiology';
 import { ProfessorNutritionComponent } from './features/users/professor/professor-nutrition/professor-nutrition';
 import { ProfessorScheduleComponent } from './features/users/professor/professor-schedule/professor-schedule';
 import { ProfessorViewGuidesComponent } from './features/users/professor/professor-view-guides/professor-view-guides';
@@ -116,7 +113,6 @@ export const routes: Routes = [
             { path: 'groups', component: AdminGroupsComponent },
             { path: 'classes', component: AdminClassesComponent },
             { path: 'evaluations', component: AdminEvaluationsComponent },
-            { path: 'kinesiology', component: AdminKineComponent },
             { path: 'nutrition', component: AdminNutriComponent },
             { path: 'payments', component: AdminPaymentsComponent },
             { path: 'guides', component: AdminGuidesManagementComponent },
@@ -143,7 +139,6 @@ export const routes: Routes = [
             { path: 'classes', component: StudentClassesComponent },
             { path: 'attendance', component: StudentAttendanceComponent },
             { path: 'evaluations', component: StudentEvaluationsComponent },
-            { path: 'kine', component: StudentKineComponent },
             { path: 'nutri', component: StudentNutriComponent },
             { path: 'view-professor', component: ViewTeachersComponent },
             { path: 'guides', component: StudentViewGuidesComponent },
@@ -166,7 +161,6 @@ export const routes: Routes = [
             { path: 'attendance', component: ProfessorAttendanceComponent },
             { path: 'classes', component: ProfessorClassesComponent },
             { path: 'evaluations', component: ProfessorEvaluationsComponent },
-            { path: 'kinesiology', component: ProfessorKinesiologyComponent },
             { path: 'nutrition', component: ProfessorNutritionComponent },
             { path: 'schedule', component: ProfessorScheduleComponent },
             { path: 'guides', component: ProfessorViewGuidesComponent },
