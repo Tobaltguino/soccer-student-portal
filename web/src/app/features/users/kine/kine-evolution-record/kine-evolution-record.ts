@@ -14,6 +14,7 @@ import { SelectModule } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
+import { DatePickerModule } from 'primeng/datepicker'; // <-- Importante: Añadido
 
 // Servicios
 import { HealthService } from '../../../../core/services/health.service';
@@ -34,7 +35,8 @@ import { AuthService } from '../../../../core/services/auth.service';
     SelectModule,
     SelectButtonModule,
     ToastModule,
-    TooltipModule
+    TooltipModule,
+    DatePickerModule // <-- Añadido a los imports
   ],
   providers: [MessageService],
   templateUrl: './kine-evolution-record.html',
@@ -133,6 +135,14 @@ export class KineEvolutionRecordComponent implements OnInit {
     // 1. Cargamos datos básicos
     this.ficha = { ...fichaData };
 
+    // Procesamos la fecha para que el DatePicker la entienda
+    if (this.ficha.fecha_registro) {
+      const partes = this.ficha.fecha_registro.split('-');
+      if (partes.length === 3) {
+        this.ficha.fecha_registro = new Date(partes[0], partes[1] - 1, partes[2]);
+      }
+    }
+
     // 2. Reconstruimos el Rango de Movimiento (ROM)
     if (fichaData.rango_movimiento) {
       this.listaArticulaciones.forEach(art => {
@@ -216,6 +226,22 @@ export class KineEvolutionRecordComponent implements OnInit {
 
   async guardarFicha() {
     try {
+      // Validamos que haya una fecha
+      if (!this.ficha.fecha_registro) {
+        this.messageService.add({ severity: 'warn', summary: 'Requerido', detail: 'Debe seleccionar una fecha para la evaluación.' });
+        return;
+      }
+
+      // Formateamos la fecha a YYYY-MM-DD
+      let fechaFormateada = this.ficha.fecha_registro;
+      if (this.ficha.fecha_registro instanceof Date) {
+        const d = this.ficha.fecha_registro;
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        fechaFormateada = `${year}-${month}-${day}`;
+      }
+
       const romObject: any = {};
       this.listaArticulaciones.forEach(art => {
         const clave = art.nombre.toLowerCase().replace('ñ', 'n'); 
@@ -229,6 +255,7 @@ export class KineEvolutionRecordComponent implements OnInit {
 
       const payload = {
         ...this.ficha,
+        fecha_registro: fechaFormateada, // <-- Se envía la fecha elegida
         estudiante_id: this.alumnoSeleccionado.id,
         kinesiologo_id: this.usuarioActualId, 
         rango_movimiento: romObject,
@@ -277,6 +304,7 @@ export class KineEvolutionRecordComponent implements OnInit {
 
   obtenerFichaVacia() {
     return {
+      fecha_registro: new Date(), // <-- Se inicia con la fecha actual por comodidad, pero se puede cambiar
       rom_no_evaluable: false,
       fuerza_no_evaluable: false,
       balance_no_evaluable: false,

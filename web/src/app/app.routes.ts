@@ -113,7 +113,7 @@ export const routes: Routes = [
             { path: 'groups', component: AdminGroupsComponent },
             { path: 'classes', component: AdminClassesComponent },
             { path: 'evaluations', component: AdminEvaluationsComponent },
-            { path: 'nutrition', component: AdminNutriComponent },
+            { path: 'nutri', component: AdminNutriComponent },
             { path: 'payments', component: AdminPaymentsComponent },
             { path: 'guides', component: AdminGuidesManagementComponent },
             { path: 'attendance', component: AdminAttendanceComponent },
