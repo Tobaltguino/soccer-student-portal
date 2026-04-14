@@ -245,7 +245,14 @@ export class AdminEvaluationsComponent implements OnInit {
       }
 
       if (this.usarRangos && this.rangosForm.length > 0) {
-        const rangosParaDB = this.rangosForm.map(r => ({ ...r, tipo_evaluacion_id: testId }));
+        const rangosParaDB = this.rangosForm.map(r => {
+          // Aquí le quitamos el id y el created_at
+          const { id, created_at, ...rangoLimpio } = r; 
+          
+          // Y enviamos solo la información "limpia"
+          return { ...rangoLimpio, tipo_evaluacion_id: testId };
+        });
+        
         await this.healthService.createRango(rangosParaDB);
       }
 
