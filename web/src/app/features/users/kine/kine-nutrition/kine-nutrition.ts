@@ -13,9 +13,8 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
-// 🚀 CAMBIO 1: Importamos los servicios de dominio
-import { HealthService } from '../../../../shared/services/health.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
+import { NutricionService } from '../../../../core/services/modulos/salud/nutri.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
 
 @Component({
   selector: 'app-kine-nutrition',
@@ -47,9 +46,8 @@ export class KineNutritionComponent implements OnInit {
   evalLogistica: any = {};
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos los servicios
-    private healthService: HealthService,
-    private academyService: AcademyService,
+    private nutricionService: NutricionService,
+    private usuariosService: UsuariosService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -63,10 +61,9 @@ export class KineNutritionComponent implements OnInit {
       this.loading = true;
       this.cdr.detectChanges();
 
-      // 🚀 CAMBIO 3: Llamadas en paralelo para mayor velocidad en la UI
       const [resTipos, resEst] = await Promise.all([
-        this.healthService.getTiposEvaluacionNutri(),
-        this.academyService.getEstudiantesBasico()
+        this.nutricionService.getTiposEvaluacionNutri(),
+        this.usuariosService.getEstudiantesBasico()
       ]);
 
       this.tiposEvaluacion = resTipos.data || [];
@@ -89,8 +86,7 @@ export class KineNutritionComponent implements OnInit {
   }
 
   async cargarSesiones() {
-    // 🚀 CAMBIO 4: Usamos healthService
-    const res = await this.healthService.getEvaluacionesNutri();
+    const res = await this.nutricionService.getEvaluacionesNutri();
     // ✅ Regla estricta: Solo guardamos en memoria las que están FINALIZADAS
     this.sesiones = (res.data || []).filter((s: any) => s.estado === 'FINALIZADO');
     this.aplicarFiltros();
@@ -130,8 +126,7 @@ export class KineNutritionComponent implements OnInit {
       this.loading = true;
       this.cdr.detectChanges();
 
-      // 🚀 CAMBIO 5: Usamos healthService
-      const resResultados = await this.healthService.getResultadosPorSesionNutri(sesion.id);
+      const resResultados = await this.nutricionService.getResultadosPorSesionNutri(sesion.id);
       const resultadosPrevios = resResultados.data || [];
 
       this.estudiantes.forEach(est => {

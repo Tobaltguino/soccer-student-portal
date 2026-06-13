@@ -2,8 +2,7 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms'; 
 
-// Servicios
-import { ContentService } from '../../../../shared/services/content.service';
+import { MaterialCompService } from '../../../../core/services/modulos/academico/material-compl.service';
 import { StorageService } from '../../../../core/services/storage.service';
 import { MessageService } from 'primeng/api';
 
@@ -62,7 +61,8 @@ export class KineViewGuidesComponent implements OnInit {
   subiendoArchivo: boolean = false;
 
   constructor(
-    private contentService: ContentService,
+    // 🚀 CAMBIO 2: Inyectamos el materialCompService
+    private materialCompService: MaterialCompService,
     private storageService: StorageService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef
@@ -77,7 +77,7 @@ export class KineViewGuidesComponent implements OnInit {
     this.cdr.detectChanges(); 
 
     try {
-      const { data, error } = await this.contentService.getGuias();
+      const { data, error } = await this.materialCompService.getGuias();
       if (error) throw error;
       
       this.guiasOriginales = data || [];
@@ -170,7 +170,7 @@ export class KineViewGuidesComponent implements OnInit {
         tipo_material: 'KINESIOLOGIA' // 🔒 Se guarda automáticamente como Kinesiología
       };
 
-      const { error } = await this.contentService.createGuia(guiaParaBD);
+      const { error } = await this.materialCompService.createGuia(guiaParaBD);
       if (error) throw error;
       
       this.messageService.add({ severity: 'success', summary: 'Publicado', detail: 'El material se subió correctamente.' });

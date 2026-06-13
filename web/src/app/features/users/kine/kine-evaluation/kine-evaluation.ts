@@ -16,8 +16,9 @@ import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 
 import { AuthService } from '../../../../core/services/auth.service';
-import { HealthService } from '../../../../shared/services/health.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
+import { KinesiologiaService } from '../../../../core/services/modulos/salud/kine.service';
+import { EvaluacionFisicaService } from '../../../../core/services/modulos/academico/evaluacion-fisica.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
 
 @Component({
   selector: 'app-kine-evaluation',
@@ -47,15 +48,16 @@ export class KineEvaluationComponent implements OnInit {
 
   // --- ESTADOS UI ---
   loading: boolean = true; 
-  displayViewDialog: boolean = false; // <-- Renombrado para que coincida con el modal del Ojo
+  displayViewDialog: boolean = false; 
 
   sesionVista: any = null;
   resultadosVista: any[] = []; 
 
   constructor(
     private authService: AuthService,
-    private healthService: HealthService,
-    private academyService: AcademyService,
+    private kinesiologiaService: KinesiologiaService,
+    private evaluacionFisicaService: EvaluacionFisicaService,
+    private usuariosService: UsuariosService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -73,25 +75,23 @@ export class KineEvaluationComponent implements OnInit {
       const { data: { user } } = await this.authService.getUser();
       if (!user?.email) return;
 
-      const { data: kine } = await this.healthService.getKineByEmail(user.email);
+      const { data: kine } = await this.kinesiologiaService.getKineByEmail(user.email);
 
       if (kine) {
-        const { data: gruposData } = await this.healthService.getGruposDeKine(kine.id);
+        const { data: gruposData } = await this.kinesiologiaService.getGruposDeKine(kine.id);
         
         this.grupos = gruposData ? gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null) : [];
         const misGrupoIds = this.grupos.map(g => g.id);
 
-        const { data: tData } = await this.healthService.getTiposEvaluacion();
+        const { data: tData } = await this.evaluacionFisicaService.getTiposEvaluacion();
         this.tiposEvaluacion = tData || [];
 
-        // Traemos también los rangos
-        const { data: rData } = await this.healthService.getAllRangos();
+        const { data: rData } = await this.evaluacionFisicaService.getAllRangos();
         this.todosLosRangos = rData || [];
 
         if (misGrupoIds.length > 0) {
-          const { data: sData } = await this.healthService.getSesionesEvaluacionPorGrupos(misGrupoIds);
+          const { data: sData } = await this.evaluacionFisicaService.getSesionesEvaluacionPorGrupos(misGrupoIds);
           
-          // 🔥 SOLUCION: Filtramos por FINALIZADO y mapeamos los nombres que faltan
           this.sesionesOriginales = (sData || [])
             .filter((s: any) => s.estado === 'FINALIZADO')
             .map((s: any) => ({
@@ -165,8 +165,9 @@ export class KineEvaluationComponent implements OnInit {
     this.cdr.detectChanges(); 
 
     try {
-        const { data: alumnos } = await this.academyService.getAlumnosPorGrupo(sesion.grupo_id);
-        const resultadosBrutos = await this.healthService.prepararPlanillaCalificaciones(
+        const { data: alumnos } = await this.usuariosService.getAlumnosPorGrupo(sesion.grupo_id);
+        
+        const resultadosBrutos = await this.evaluacionFisicaService.prepararPlanillaCalificaciones(
             sesion.grupo_id, 
             sesion.id, 
             alumnos || []

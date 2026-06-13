@@ -14,8 +14,9 @@ import { TooltipModule } from 'primeng/tooltip';
 import { FilterService } from 'primeng/api';
 
 import { AuthService } from '../../../../core/services/auth.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
-import { HealthService } from '../../../../shared/services/health.service';
+import { KinesiologiaService } from '../../../../core/services/modulos/salud/kine.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
+import { GruposService } from '../../../../core/services/modulos/academico/grupos.service';
 
 @Component({
   selector: 'app-kine-patients',
@@ -65,8 +66,9 @@ export class KinePatientsComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private academyService: AcademyService,
-    private healthService: HealthService,
+    private kinesiologiaService: KinesiologiaService,
+    private usuariosService: UsuariosService,
+    private gruposService: GruposService,
     private cdr: ChangeDetectorRef,
     private filterService: FilterService
   ) {}
@@ -86,10 +88,10 @@ export class KinePatientsComponent implements OnInit {
   }
 
   async cargarMaestros() {
-    const resGrupos = await this.academyService.getGrupos();
+    const resGrupos = await this.gruposService.getGrupos();
     if(resGrupos.data) this.listaGrupos = resGrupos.data;
     
-    const resPos = await this.academyService.getPosiciones();
+    const resPos = await this.usuariosService.getPosiciones();
     if(resPos.data) this.listaPosiciones = resPos.data;
 
     this.cdr.detectChanges();
@@ -109,43 +111,36 @@ export class KinePatientsComponent implements OnInit {
       const { data: { user } } = await this.authService.getUser();
       if (!user || !user.email) return;
 
-      const { data: kine } = await this.healthService.getKineByEmail(user.email);
+      const { data: kine } = await this.kinesiologiaService.getKineByEmail(user.email);
       if (!kine) return;
 
-      const { data: gruposData } = await this.healthService.getGruposDeKine(kine.id);
+      const { data: gruposData } = await this.kinesiologiaService.getGruposDeKine(kine.id);
       if (!gruposData || gruposData.length === 0) return;
 
       const grupoIds = gruposData.map((g: any) => g.grupo_id);
 
-      const res = await this.academyService.getTodosEstudiantesPorGrupos(grupoIds); 
+      const res = await this.usuariosService.getTodosEstudiantesPorGrupos(grupoIds); 
       
       if (res?.data) {
-          const now = new Date().getTime();
+          const estudiantes = res.data;
+          const alumnoIds = estudiantes.map((e: any) => e.id);
+
+          const { data: historiales } = await this.kinesiologiaService.getEstadosClinicosAlumnos(alumnoIds);
           
-          // Mapeamos los estudiantes para ir a buscar su salud
-          const promesasConSalud = res.data.map(async (estudiante: any) => {
-              try {
-                  const historialRes = await this.healthService.getHistorialClinico(estudiante.id);
-                  const historial = historialRes.data || [];
-                  
-                  if (historial.length > 0) {
-                      historial.sort((a: any, b: any) => {
-                          const diffA = Math.abs(now - new Date(a.fecha_evento).getTime());
-                          const diffB = Math.abs(now - new Date(b.fecha_evento).getTime());
-                          return diffA - diffB;
-                      });
-                      
-                      estudiante.estado_salud = historial[0].estado;
-                  } else {
-                      estudiante.estado_salud = 'SANO';
-                  }
-              } catch (e) {
-                  estudiante.estado_salud = 'SANO';
+          this.dataList = estudiantes.map((est: any) => {
+              const miHistorial = historiales?.filter((h: any) => h.estudiante_id === est.id) || [];
+              
+              if (miHistorial.length > 0) {
+                 // Si la persona tiene más de un estado clínico activo, le damos prioridad al peor estado para la alerta visual en tabla
+                 if (miHistorial.some((h: any) => h.estado === 'EN_TRATAMIENTO')) est.estado_salud = 'EN_TRATAMIENTO';
+                 else if (miHistorial.some((h: any) => h.estado === 'EN_OBSERVACION')) est.estado_salud = 'EN_OBSERVACION';
+                 else if (miHistorial.some((h: any) => h.estado === 'EN_REINTEGRO_DEPORTIVO')) est.estado_salud = 'EN_REINTEGRO_DEPORTIVO';
+                 else est.estado_salud = 'SANO';
+              } else {
+                 est.estado_salud = 'SANO';
               }
-              return estudiante;
+              return est;
           });
-          
-          this.dataList = await Promise.all(promesasConSalud);
       }
     } catch (error) {
       console.error('Error al cargar pacientes del kine:', error);
@@ -173,7 +168,7 @@ export class KinePatientsComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-        const res = await this.healthService.getHistorialClinico(estudiante.id);
+        const res = await this.kinesiologiaService.getHistorialClinico(estudiante.id);
         this.historialClinico = res.data || [];
     } catch (error) {
         console.error("Error cargando historial", error);

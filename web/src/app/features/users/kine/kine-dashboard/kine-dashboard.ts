@@ -2,10 +2,10 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 
-// Servicios de dominio
 import { AuthService } from '../../../../core/services/auth.service';
-import { HealthService } from '../../../../shared/services/health.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
+import { KinesiologiaService } from '../../../../core/services/modulos/salud/kine.service';
+import { ClasesService } from '../../../../core/services/modulos/academico/clases.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
 
 @Component({
   selector: 'app-kine-dashboard',
@@ -22,7 +22,7 @@ export class KineDashboardComponent implements OnInit {
   proximaClase: any = null;
   totalAlumnos: number = 0;
 
-  // 🔥 NUEVOS KPIs DETALLADOS DE SALUD
+  // NUEVOS KPIs DETALLADOS DE SALUD
   pacientesEnTratamiento: number = 0;    // Rojo (Urgente)
   pacientesEnObservacion: number = 0;     // Amarillo (Cuidado)
   pacientesEnReintegro: number = 0;       // Azul (Casi listos)
@@ -36,8 +36,9 @@ export class KineDashboardComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private healthService: HealthService,
-    private academyService: AcademyService,
+    private kinesiologiaService: KinesiologiaService,
+    private clasesService: ClasesService,
+    private usuariosService: UsuariosService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
@@ -74,10 +75,10 @@ export class KineDashboardComponent implements OnInit {
       const { data: { user } } = await this.authService.getUser();
       if (!user?.email) return;
 
-      const { data: kine } = await this.healthService.getKineByEmail(user.email);
+      const { data: kine } = await this.kinesiologiaService.getKineByEmail(user.email);
       if (!kine) return;
 
-      const { data: gruposData } = await this.healthService.getGruposDeKine(kine.id);
+      const { data: gruposData } = await this.kinesiologiaService.getGruposDeKine(kine.id);
       
       this.misGrupos = gruposData ? gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null) : [];
       const misGrupoIds = this.misGrupos.map(g => g.id);
@@ -85,12 +86,12 @@ export class KineDashboardComponent implements OnInit {
       if (misGrupoIds.length > 0) {
         const hoyStr = new Date().toISOString().split('T')[0];
 
-        const { data: clases } = await this.academyService.getClasesPorGrupos(misGrupoIds, hoyStr);
+        const { data: clases } = await this.clasesService.getClasesPorGrupos(misGrupoIds, hoyStr);
         const todasClases = clases || [];
         this.clasesHoy = todasClases.filter((c: any) => c.fecha === hoyStr);
         this.proximaClase = todasClases.length > 0 ? todasClases[0] : null;
 
-        const { data: alumnos } = await this.academyService.getTodosEstudiantesPorGrupos(misGrupoIds, true);
+        const { data: alumnos } = await this.usuariosService.getTodosEstudiantesPorGrupos(misGrupoIds, true);
 
         if (alumnos) {
           this.totalAlumnos = alumnos.length;
@@ -98,17 +99,9 @@ export class KineDashboardComponent implements OnInit {
           
           const alumnoIds = alumnos.map((a: any) => a.id);
           
-          // 🔥 LÓGICA OPTIMIZADA: Una sola consulta para traer todos los estados de salud
-          const { data: historiales } = await this.healthService['supabase']
-            .from('historial_clinico')
-            .select('estudiante_id, estado')
-            .in('estudiante_id', alumnoIds)
-            // Traemos solo los estados que nos interesan para los KPIs
-            .in('estado', ['EN_TRATAMIENTO', 'EN_OBSERVACION', 'EN_REINTEGRO_DEPORTIVO']);
+          const { data: historiales } = await this.kinesiologiaService.getEstadosClinicosAlumnos(alumnoIds);
 
           if (historiales) {
-              // Usamos Sets para contar alumnos ÚNICOS por estado
-              // (Si un alumno tiene 2 lesiones 'En Tratamiento', cuenta como 1 paciente)
               const setTratamiento = new Set<string>();
               const setObservacion = new Set<string>();
               const setReintegro = new Set<string>();
@@ -121,7 +114,6 @@ export class KineDashboardComponent implements OnInit {
                   }
               });
 
-              // Asignamos los tamaños de los Sets a las variables del componente
               this.pacientesEnTratamiento = setTratamiento.size;
               this.pacientesEnObservacion = setObservacion.size;
               this.pacientesEnReintegro = setReintegro.size;

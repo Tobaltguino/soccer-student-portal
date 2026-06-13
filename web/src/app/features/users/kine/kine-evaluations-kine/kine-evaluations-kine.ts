@@ -5,8 +5,8 @@ import { FormsModule } from '@angular/forms';
 // Servicios
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { AuthService } from '../../../../core/services/auth.service';
-import { HealthService } from '../../../../shared/services/health.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
+import { KinesiologiaService } from '../../../../core/services/modulos/salud/kine.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
 
 // Módulos de PrimeNG
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -86,9 +86,9 @@ export class KineEvaluationsKineComponent implements OnInit {
   estudianteVistaSeleccionado: any = null;
 
   constructor(
-    private healthService: HealthService,
+    private kinesiologiaService: KinesiologiaService,
     private authService: AuthService,
-    private academyService: AcademyService,
+    private usuariosService: UsuariosService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private cdr: ChangeDetectorRef
@@ -107,20 +107,20 @@ export class KineEvaluationsKineComponent implements OnInit {
   // ==========================================
   async cargarCatalogos() {
     try {
-      const resTipos = await this.healthService.getTiposEvaluacionKine();
+      const resTipos = await this.kinesiologiaService.getTiposEvaluacionKine();
       if (resTipos.data) {
         this.tiposEvaluacion = resTipos.data;
       }
 
-      const resRangos = await this.healthService.getRangosEvaluacion();
+      const resRangos = await this.kinesiologiaService.getRangosEvaluacion();
       if (resRangos.data) this.rangos = resRangos.data;
 
       if (this.usuarioActual?.email) {
-        const kineInfo = await this.healthService.getKineByEmail(this.usuarioActual.email);
+        const kineInfo = await this.kinesiologiaService.getKineByEmail(this.usuarioActual.email);
         if (kineInfo.data) {
            this.usuarioActual.db_id = kineInfo.data.id; 
            
-           const resGrupos = await this.healthService.getGruposDeKine(kineInfo.data.id);
+           const resGrupos = await this.kinesiologiaService.getGruposDeKine(kineInfo.data.id);
            if (resGrupos.data) {
               this.grupos = resGrupos.data.map((g: any) => g.grupos);
            }
@@ -148,7 +148,7 @@ export class KineEvaluationsKineComponent implements OnInit {
   async cargarSesiones() {
     this.loading = true;
     try {
-      const { data, error } = await this.healthService.getEvaluacionesKine();
+      const { data, error } = await this.kinesiologiaService.getEvaluacionesKine();
       
       if (error) throw error;
 
@@ -238,11 +238,11 @@ export class KineEvaluationsKineComponent implements OnInit {
 
     try {
       if (this.evalLogistica.id) {
-        const { error } = await this.healthService.actualizarEvaluacionKine(this.evalLogistica.id, payload);
+        const { error } = await this.kinesiologiaService.actualizarEvaluacionKine(this.evalLogistica.id, payload);
         if (error) throw error;
         this.mostrarExito('Sesión actualizada correctamente.');
       } else {
-        const { error } = await this.healthService.crearEvaluacionKine(payload);
+        const { error } = await this.kinesiologiaService.crearEvaluacionKine(payload);
         if (error) throw error;
         this.mostrarExito('Sesión creada correctamente.');
       }
@@ -260,9 +260,7 @@ export class KineEvaluationsKineComponent implements OnInit {
   verificarSiEstaEvaluado(evaluaciones: any[]): boolean {
     if (!evaluaciones || evaluaciones.length === 0) return false;
     
-    // Verifica que CADA parámetro tenga su respectivo valor numérico (incluyendo el cero)
     return evaluaciones.every(sub => {
-      // Nos aseguramos de interpretar bien el booleano
       const evaluaLados = sub.evalua_lados === true || sub.evalua_lados === 'true';
 
       if (evaluaLados) {
@@ -277,8 +275,6 @@ export class KineEvaluationsKineComponent implements OnInit {
   }
 
   actualizarEstadoEstudiante() {
-    // El setTimeout le da tiempo a Angular de guardar el número exacto que escribiste 
-    // antes de hacer la comprobación matemática.
     setTimeout(() => {
       if (this.estudianteSeleccionado) {
         this.estudianteSeleccionado.evaluado = this.verificarSiEstaEvaluado(this.estudianteSeleccionado.evaluaciones);
@@ -291,7 +287,6 @@ export class KineEvaluationsKineComponent implements OnInit {
     sub.resultado_izquierdo = null;
     sub.resultado_derecho = null;
     sub.observacion = '';
-    // Ejecutamos la actualización también al borrar
     this.actualizarEstadoEstudiante();
   }
 
@@ -304,13 +299,13 @@ export class KineEvaluationsKineComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      const { data: alumnos, error: errAlumnos } = await this.academyService.getAlumnosPorGrupo(sesion.grupo_id);
+      const { data: alumnos, error: errAlumnos } = await this.usuariosService.getAlumnosPorGrupo(sesion.grupo_id);
       if (errAlumnos) throw errAlumnos;
 
-      const { data: subevaluaciones, error: errSub } = await this.healthService.getSubEvaluacionesPorTipo(sesion.tipo_evaluacion_id);
+      const { data: subevaluaciones, error: errSub } = await this.kinesiologiaService.getSubEvaluacionesPorTipo(sesion.tipo_evaluacion_id);
       if (errSub) throw errSub;
 
-      const { data: resultadosPrevios, error: errRes } = await this.healthService.getResultadosPorSesionKine(sesion.id);
+      const { data: resultadosPrevios, error: errRes } = await this.kinesiologiaService.getResultadosPorSesionKine(sesion.id);
       if (errRes) throw errRes;
       
       this.estudiantesGrupo = (alumnos || []).map(alumno => {
@@ -387,7 +382,7 @@ export class KineEvaluationsKineComponent implements OnInit {
     }
 
     try {
-      const { error } = await this.healthService.guardarResultadoKine(registrosAGuardar);
+      const { error } = await this.kinesiologiaService.guardarResultadoKine(registrosAGuardar);
       if (error) throw error; 
       
       if (this.evalLogistica.estado === 'PENDIENTE') {
@@ -398,7 +393,7 @@ export class KineEvaluationsKineComponent implements OnInit {
           acceptLabel: 'Sí, finalizar',
           rejectLabel: 'No, dejar pendiente',
           accept: async () => {
-              const { error: errUpdate } = await this.healthService.actualizarEvaluacionKine(this.evalLogistica.id, { estado: 'FINALIZADO' });
+              const { error: errUpdate } = await this.kinesiologiaService.actualizarEvaluacionKine(this.evalLogistica.id, { estado: 'FINALIZADO' });
               if (errUpdate) throw errUpdate;
 
               this.mostrarExito('Resultados guardados y sesión finalizada.');
@@ -429,13 +424,13 @@ export class KineEvaluationsKineComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      const { data: alumnos, error: errAlumnos } = await this.academyService.getAlumnosPorGrupo(sesion.grupo_id);
+      const { data: alumnos, error: errAlumnos } = await this.usuariosService.getAlumnosPorGrupo(sesion.grupo_id);
       if (errAlumnos) throw errAlumnos;
 
-      const { data: subevaluaciones } = await this.healthService.getSubEvaluacionesPorTipo(sesion.tipo_evaluacion_id);
+      const { data: subevaluaciones } = await this.kinesiologiaService.getSubEvaluacionesPorTipo(sesion.tipo_evaluacion_id);
       const subevaluacionesDefinidas = subevaluaciones || [];
       
-      const { data: resultadosPrevios } = await this.healthService.getResultadosPorSesionKine(sesion.id);
+      const { data: resultadosPrevios } = await this.kinesiologiaService.getResultadosPorSesionKine(sesion.id);
 
       this.resultadosVista = (alumnos || []).map(alumno => {
         const evaluacionesDelAlumno = subevaluacionesDefinidas.map((sub: any) => {

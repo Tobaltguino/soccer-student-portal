@@ -12,10 +12,9 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
 
-// 🚀 CAMBIO 1: Importamos nuestros servicios especializados
 import { AuthService } from '../../../../core/services/auth.service';
-import { HealthService } from '../../../../shared/services/health.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
+import { KinesiologiaService } from '../../../../core/services/modulos/salud/kine.service';
+import { ClasesService } from '../../../../core/services/modulos/academico/clases.service';
 
 @Component({
   selector: 'app-kine-classes',
@@ -47,10 +46,9 @@ export class KineClassesComponent implements OnInit {
   selectedClase: any = null;
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos los 3 servicios correspondientes
     private authService: AuthService,
-    private healthService: HealthService,
-    private academyService: AcademyService,
+    private kinesiologiaService: KinesiologiaService,
+    private clasesService: ClasesService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -62,16 +60,13 @@ export class KineClassesComponent implements OnInit {
   async cargarGrupos() {
     this.loading = true;
     try {
-      // 🚀 CAMBIO 3: Usamos authService
       const { data: { user } } = await this.authService.getUser();
       if (!user || !user.email) return;
 
-      // 🚀 CAMBIO 4: Usamos la nueva función del healthService
-      const { data: kine } = await this.healthService.getKineByEmail(user.email);
+      const { data: kine } = await this.kinesiologiaService.getKineByEmail(user.email);
 
       if (kine) {
-        // 🚀 CAMBIO 5: Usamos healthService
-        const { data: gruposData } = await this.healthService.getGruposDeKine(kine.id);
+        const { data: gruposData } = await this.kinesiologiaService.getGruposDeKine(kine.id);
 
         if (gruposData && gruposData.length > 0) {
           this.grupos = gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null);
@@ -95,8 +90,7 @@ export class KineClassesComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      // 🚀 CAMBIO 6: Usamos academyService en lugar de consulta directa
-      const { data, error } = await this.academyService.getClasesPorGrupo(this.selectedGrupoId);
+      const { data, error } = await this.clasesService.getClasesPorGrupo(this.selectedGrupoId);
 
       if (error) throw error;
 

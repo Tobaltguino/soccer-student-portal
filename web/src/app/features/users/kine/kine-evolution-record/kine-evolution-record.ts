@@ -14,10 +14,10 @@ import { SelectModule } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
-import { DatePickerModule } from 'primeng/datepicker'; // <-- Importante: Añadido
+import { DatePickerModule } from 'primeng/datepicker'; 
 
-// Servicios
-import { HealthService } from '../../../../shared/services/health.service';
+import { KinesiologiaService } from '../../../../core/services/modulos/salud/kine.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
 import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
@@ -36,7 +36,7 @@ import { AuthService } from '../../../../core/services/auth.service';
     SelectButtonModule,
     ToastModule,
     TooltipModule,
-    DatePickerModule // <-- Añadido a los imports
+    DatePickerModule 
   ],
   providers: [MessageService],
   templateUrl: './kine-evolution-record.html',
@@ -56,7 +56,7 @@ export class KineEvolutionRecordComponent implements OnInit {
 
   modoFormulario: boolean = false;
   editandoId: string | null = null;
-  modoSoloLectura: boolean = false; // <-- Control del modo Ver
+  modoSoloLectura: boolean = false; 
 
   // ==========================================
   // CONTROL DEL SWITCHER (Antecedentes / Evaluación)
@@ -77,13 +77,14 @@ export class KineEvolutionRecordComponent implements OnInit {
 
   constructor(
     private messageService: MessageService,
-    private healthService: HealthService,
+    private kinesiologiaService: KinesiologiaService,
+    private usuariosService: UsuariosService,
     private authService: AuthService
   ) {}
 
   async ngOnInit() {
-    await this.obtenerUsuarioActual(); // Primero sabemos quién está logueado
-    this.cargarAlumnos();              // Luego cargamos sus alumnos
+    await this.obtenerUsuarioActual(); 
+    this.cargarAlumnos();              
   }
 
   // ==========================================
@@ -166,8 +167,8 @@ export class KineEvolutionRecordComponent implements OnInit {
   }
 
   abrirVerFicha(fichaData: any) {
-    this.abrirEditarFicha(fichaData); // Carga los datos igual que editar
-    this.modoSoloLectura = true;      // Pero bloquea el formulario
+    this.abrirEditarFicha(fichaData); 
+    this.modoSoloLectura = true;      
   }
 
   // ==========================================
@@ -176,23 +177,19 @@ export class KineEvolutionRecordComponent implements OnInit {
 
   async cargarAlumnos() {
     try {
-      // 1. Preparamos la consulta base
-      let query = this.healthService['supabase']
+      let query = this.usuariosService['supabase']
         .from('estudiantes')
         .select('id, nombre, apellido, rut, grupo_id');
 
-      // 2. Si hay un usuario logueado, buscamos si tiene grupos asignados como Kine
       if (this.usuarioActualId) {
-        const { data: kineGrupos } = await this.healthService.getGruposDeKine(this.usuarioActualId);
+        const { data: kineGrupos } = await this.kinesiologiaService.getGruposDeKine(this.usuarioActualId);
         
-        // Si encontramos grupos para este usuario, filtramos los estudiantes
         if (kineGrupos && kineGrupos.length > 0) {
           const grupoIds = kineGrupos.map((g: any) => g.grupo_id);
           query = query.in('grupo_id', grupoIds);
         }
       }
 
-      // 3. Ejecutamos la consulta final
       const { data, error }: any = await query;
 
       if (error) throw error;
@@ -212,7 +209,7 @@ export class KineEvolutionRecordComponent implements OnInit {
   async cargarHistorial() {
     this.cargandoHistorial = true;
     try {
-      const { data, error } = await this.healthService.getFichasPorEstudiante(this.alumnoSeleccionado.id);
+      const { data, error } = await this.kinesiologiaService.getFichasPorEstudiante(this.alumnoSeleccionado.id);
       if (error) throw error;
       
       this.historialFichas = data || [];
@@ -226,13 +223,11 @@ export class KineEvolutionRecordComponent implements OnInit {
 
   async guardarFicha() {
     try {
-      // Validamos que haya una fecha
       if (!this.ficha.fecha_registro) {
         this.messageService.add({ severity: 'warn', summary: 'Requerido', detail: 'Debe seleccionar una fecha para la evaluación.' });
         return;
       }
 
-      // Formateamos la fecha a YYYY-MM-DD
       let fechaFormateada = this.ficha.fecha_registro;
       if (this.ficha.fecha_registro instanceof Date) {
         const d = this.ficha.fecha_registro;
@@ -255,7 +250,7 @@ export class KineEvolutionRecordComponent implements OnInit {
 
       const payload = {
         ...this.ficha,
-        fecha_registro: fechaFormateada, // <-- Se envía la fecha elegida
+        fecha_registro: fechaFormateada, 
         estudiante_id: this.alumnoSeleccionado.id,
         kinesiologo_id: this.usuarioActualId, 
         rango_movimiento: romObject,
@@ -266,11 +261,11 @@ export class KineEvolutionRecordComponent implements OnInit {
       delete payload.kinesiologos;
 
       if (this.editandoId) {
-        const { error } = await this.healthService.updateFichaEvolutiva(this.editandoId, payload);
+        const { error } = await this.kinesiologiaService.updateFichaEvolutiva(this.editandoId, payload);
         if (error) throw error;
         this.messageService.add({ severity: 'success', summary: 'Actualizado', detail: 'Ficha actualizada correctamente.' });
       } else {
-        const { error } = await this.healthService.crearFichaEvolutiva(payload);
+        const { error } = await this.kinesiologiaService.crearFichaEvolutiva(payload);
         if (error) throw error;
         this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Nueva ficha registrada.' });
       }
@@ -304,7 +299,7 @@ export class KineEvolutionRecordComponent implements OnInit {
 
   obtenerFichaVacia() {
     return {
-      fecha_registro: new Date(), // <-- Se inicia con la fecha actual por comodidad, pero se puede cambiar
+      fecha_registro: new Date(), 
       rom_no_evaluable: false,
       fuerza_no_evaluable: false,
       balance_no_evaluable: false,

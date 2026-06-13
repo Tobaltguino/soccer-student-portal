@@ -14,9 +14,9 @@ import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog'; 
 import { DatePickerModule } from 'primeng/datepicker'; 
 
-// Servicios
-import { HealthService } from '../../../../shared/services/health.service'; 
 import { AuthService } from '../../../../core/services/auth.service';     
+import { KinesiologiaService } from '../../../../core/services/modulos/salud/kine.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
 
 @Component({
   selector: 'app-kine-injuries',
@@ -34,7 +34,7 @@ import { AuthService } from '../../../../core/services/auth.service';
     DialogModule,
     DatePickerModule
   ],
-  providers: [MessageService], // Ya no necesitamos ConfirmationService
+  providers: [MessageService], 
   templateUrl: './kine-injuries.html',
   styleUrls: ['./kine-injuries.css']
 })
@@ -64,7 +64,8 @@ export class KineInjuriesComponent implements OnInit {
 
   constructor(
     private messageService: MessageService,
-    private healthService: HealthService,
+    private kinesiologiaService: KinesiologiaService,
+    private usuariosService: UsuariosService,
     private authService: AuthService
   ) {}
 
@@ -86,7 +87,7 @@ export class KineInjuriesComponent implements OnInit {
     try {
       if (!this.usuarioActualId) return;
 
-      const { data: kineGrupos } = await this.healthService.getGruposDeKine(this.usuarioActualId);
+      const { data: kineGrupos } = await this.kinesiologiaService.getGruposDeKine(this.usuarioActualId);
       
       if (!kineGrupos || kineGrupos.length === 0) {
         this.listaAlumnos = [];
@@ -95,7 +96,7 @@ export class KineInjuriesComponent implements OnInit {
 
       const grupoIds = kineGrupos.map((g: any) => g.grupo_id);
 
-      const { data, error }: any = await this.healthService['supabase']
+      const { data, error }: any = await this.usuariosService['supabase']
         .from('estudiantes')
         .select('id, nombre, apellido, rut, grupo_id')
         .in('grupo_id', grupoIds);
@@ -125,7 +126,7 @@ export class KineInjuriesComponent implements OnInit {
   async cargarListaLesiones() {
     this.cargandoLesiones = true;
     try {
-      const { data, error } = await this.healthService.getHistorialClinico(this.alumnoSeleccionado.id);
+      const { data, error } = await this.kinesiologiaService.getHistorialClinico(this.alumnoSeleccionado.id);
       if (error) throw error;
       this.listaLesiones = data || [];
     } catch (error) {
@@ -179,11 +180,11 @@ export class KineInjuriesComponent implements OnInit {
       };
 
       if (payload.id) {
-        const { error } = await this.healthService.updateHistorialClinico(payload.id, payload);
+        const { error } = await this.kinesiologiaService.updateHistorialClinico(payload.id, payload);
         if (error) throw error;
         this.messageService.add({ severity: 'success', summary: 'Actualizado', detail: 'Registro actualizado.' });
       } else {
-        const { error } = await this.healthService.crearHistorialClinico(payload);
+        const { error } = await this.kinesiologiaService.crearHistorialClinico(payload);
         if (error) throw error;
         this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Nuevo registro añadido.' });
       }
