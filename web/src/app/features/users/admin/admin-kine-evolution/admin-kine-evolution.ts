@@ -15,9 +15,8 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 
-// Servicios
-import { HealthService } from '../../../../shared/services/health.service';
-import { AuthService } from '../../../../core/services/auth.service';
+import { KinesiologiaService } from '../../../../core/services/modulos/salud/kine.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
 
 @Component({
   selector: 'app-admin-kine-evolution',
@@ -47,7 +46,7 @@ export class AdminKineEvolutionComponent implements OnInit {
   // ==========================================
   listaAlumnos: any[] = [];
   alumnoSeleccionado: any = null;
-  listaKinesiologos: any[] = []; // <-- Exclusivo de Admin
+  listaKinesiologos: any[] = []; 
   
   cargandoHistorial: boolean = false;
   historialFichas: any[] = [];
@@ -75,8 +74,8 @@ export class AdminKineEvolutionComponent implements OnInit {
 
   constructor(
     private messageService: MessageService,
-    private healthService: HealthService,
-    private authService: AuthService
+    private kinesiologiaService: KinesiologiaService,
+    private usuariosService: UsuariosService
   ) {}
 
   ngOnInit() {
@@ -147,10 +146,7 @@ export class AdminKineEvolutionComponent implements OnInit {
 
   async cargarAlumnos() {
     try {
-      // Admin ve a todos los estudiantes sin importar el grupo
-      const { data, error }: any = await this.healthService['supabase']
-        .from('estudiantes')
-        .select('id, nombre, apellido, rut, grupo_id');
+      const { data, error } = await this.usuariosService.getAlumnosBasicoConRut();
 
       if (error) throw error;
 
@@ -168,10 +164,7 @@ export class AdminKineEvolutionComponent implements OnInit {
 
   async cargarKinesiologos() {
     try {
-      const { data, error }: any = await this.healthService['supabase']
-        .from('kinesiologos')
-        .select('id, nombre, apellido')
-        .order('nombre', { ascending: true });
+      const { data, error }: any = await this.kinesiologiaService.getKinesiologos();
       
       if (error) throw error;
       if (data) {
@@ -188,7 +181,7 @@ export class AdminKineEvolutionComponent implements OnInit {
   async cargarHistorial() {
     this.cargandoHistorial = true;
     try {
-      const { data, error } = await this.healthService.getFichasPorEstudiante(this.alumnoSeleccionado.id);
+      const { data, error } = await this.kinesiologiaService.getFichasPorEstudiante(this.alumnoSeleccionado.id);
       if (error) throw error;
       
       this.historialFichas = data || [];
@@ -202,7 +195,6 @@ export class AdminKineEvolutionComponent implements OnInit {
 
   async guardarFicha() {
     try {
-      // Validación exclusiva de Admin
       if (!this.ficha.kinesiologo_id) {
         this.messageService.add({ severity: 'warn', summary: 'Falta Kinesiólogo', detail: 'Debe asignar a un Profesional Tratante a la ficha.' });
         return;
@@ -229,11 +221,12 @@ export class AdminKineEvolutionComponent implements OnInit {
       delete payload.kinesiologos;
 
       if (this.editandoId) {
-        const { error } = await this.healthService.updateFichaEvolutiva(this.editandoId, payload);
+        const { error } = await this.kinesiologiaService.updateFichaEvolutiva(this.editandoId, payload);
         if (error) throw error;
         this.messageService.add({ severity: 'success', summary: 'Actualizado', detail: 'Ficha actualizada correctamente.' });
       } else {
-        const { error } = await this.healthService.crearFichaEvolutiva(payload);
+        // 🚀 CAMBIO 7: Usamos kinesiologiaService
+        const { error } = await this.kinesiologiaService.crearFichaEvolutiva(payload);
         if (error) throw error;
         this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Nueva ficha registrada.' });
       }

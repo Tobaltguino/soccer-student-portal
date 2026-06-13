@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MessageService, ConfirmationService } from 'primeng/api'; // <-- Añadido ConfirmationService
+import { MessageService, ConfirmationService } from 'primeng/api'; 
 
 // Módulos de PrimeNG
 import { ButtonModule } from 'primeng/button';
@@ -13,11 +13,10 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog'; 
 import { DatePickerModule } from 'primeng/datepicker'; 
-import { ConfirmDialogModule } from 'primeng/confirmdialog'; // <-- Añadido para el modal de borrado
+import { ConfirmDialogModule } from 'primeng/confirmdialog'; 
 
-// Servicios
-import { HealthService } from '../../../../shared/services/health.service'; 
-import { AuthService } from '../../../../core/services/auth.service';     
+import { KinesiologiaService } from '../../../../core/services/modulos/salud/kine.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
 
 @Component({
   selector: 'app-admin-injuries-kine',
@@ -34,9 +33,9 @@ import { AuthService } from '../../../../core/services/auth.service';
     TooltipModule,
     DialogModule,
     DatePickerModule,
-    ConfirmDialogModule // <-- Registrado aquí
+    ConfirmDialogModule
   ],
-  providers: [MessageService, ConfirmationService], // <-- Proveedor añadido
+  providers: [MessageService, ConfirmationService], 
   templateUrl: './admin-kine-lessions.html',
   styleUrls: ['./admin-kine-lessions.css']
 })
@@ -66,23 +65,13 @@ export class AdminKineLessionsComponent implements OnInit {
 
   constructor(
     private messageService: MessageService,
-    private confirmationService: ConfirmationService, // <-- Inyectado
-    private healthService: HealthService,
-    private authService: AuthService
+    private confirmationService: ConfirmationService, 
+    private kinesiologiaService: KinesiologiaService,
+    private usuariosService: UsuariosService
   ) {}
 
   async ngOnInit() {
-    await this.obtenerUsuarioActual();
-    this.cargarTodosLosAlumnos(); // <-- Cambio a carga global
-  }
-
-  async obtenerUsuarioActual() {
-    try {
-      const { data: { user } } = await this.authService.getUser();
-      if (user) this.usuarioActualId = user.id; 
-    } catch (error) {
-      console.error("Error obteniendo usuario", error);
-    }
+    this.cargarTodosLosAlumnos(); 
   }
 
   // ==========================================
@@ -90,10 +79,7 @@ export class AdminKineLessionsComponent implements OnInit {
   // ==========================================
   async cargarTodosLosAlumnos() {
     try {
-      // El Admin trae a todos, sin filtrar por grupo asignado
-      const { data, error }: any = await this.healthService['supabase']
-        .from('estudiantes')
-        .select('id, nombre, apellido, rut, grupo_id');
+      const { data, error } = await this.usuariosService.getAlumnosBasicoConRut();
 
       if (error) throw error;
 
@@ -120,7 +106,7 @@ export class AdminKineLessionsComponent implements OnInit {
   async cargarListaLesiones() {
     this.cargandoLesiones = true;
     try {
-      const { data, error } = await this.healthService.getHistorialClinico(this.alumnoSeleccionado.id);
+      const { data, error } = await this.kinesiologiaService.getHistorialClinico(this.alumnoSeleccionado.id);
       if (error) throw error;
       this.listaLesiones = data || [];
     } catch (error) {
@@ -174,11 +160,11 @@ export class AdminKineLessionsComponent implements OnInit {
       };
 
       if (payload.id) {
-        const { error } = await this.healthService.updateHistorialClinico(payload.id, payload);
+        const { error } = await this.kinesiologiaService.updateHistorialClinico(payload.id, payload);
         if (error) throw error;
         this.messageService.add({ severity: 'success', summary: 'Actualizado', detail: 'Registro actualizado.' });
       } else {
-        const { error } = await this.healthService.crearHistorialClinico(payload);
+        const { error } = await this.kinesiologiaService.crearHistorialClinico(payload);
         if (error) throw error;
         this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Nuevo registro añadido.' });
       }
@@ -205,7 +191,7 @@ export class AdminKineLessionsComponent implements OnInit {
       acceptButtonStyleClass: 'p-button-danger',
       accept: async () => {
         try {
-          const { error } = await this.healthService.eliminarHistorialClinico(lesion.id);
+          const { error } = await this.kinesiologiaService.eliminarHistorialClinico(lesion.id);
           if (error) throw error;
           this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Registro eliminado exitosamente.' });
           this.cargarListaLesiones(); 

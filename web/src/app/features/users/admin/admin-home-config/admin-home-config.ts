@@ -15,9 +15,9 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SelectModule } from 'primeng/select'; 
 import { FileUploadModule } from 'primeng/fileupload';
-import { InputNumberModule } from 'primeng/inputnumber'; // 🚀 Importante para el orden
+import { InputNumberModule } from 'primeng/inputnumber'; 
 
-import { ContentService } from '../../../../shared/services/content.service';
+import { InicioService } from '../../../../core/services/modulos/administracion/inicio.service';
 import { StorageService } from '../../../../core/services/storage.service';
 
 @Component({
@@ -76,7 +76,7 @@ export class AdminHomeConfigComponent implements OnInit {
   ];
 
   constructor(
-    private contentService: ContentService,
+    private inicioService: InicioService,
     private storageService: StorageService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
@@ -93,11 +93,11 @@ export class AdminHomeConfigComponent implements OnInit {
 
     try {
       const [conf, met, prog, ali, aus] = await Promise.all([
-        this.contentService.getConfiguracionWeb(),
-        this.contentService.getWebMetodologias(),
-        this.contentService.getWebProgramas(),
-        this.contentService.getWebAlianzas(),
-        this.contentService.getWebAuspiciadores()
+        this.inicioService.getConfiguracionWeb(),
+        this.inicioService.getWebMetodologias(),
+        this.inicioService.getWebProgramas(),
+        this.inicioService.getWebAlianzas(),
+        this.inicioService.getWebAuspiciadores()
       ]);
 
       this.config = conf.data || {};
@@ -118,7 +118,7 @@ export class AdminHomeConfigComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      await this.contentService.updateConfiguracionWeb(this.config);
+      await this.inicioService.updateConfiguracionWeb(this.config);
       this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Configuración actualizada' });
     } catch (e) {
       this.mostrarError('No se pudo actualizar la configuración');
@@ -209,23 +209,23 @@ export class AdminHomeConfigComponent implements OnInit {
 
     try {
       if (tipo === 'metodologia') {
-        if (this.isEditing) await this.contentService.updateWebMetodologia(this.itemForm.id, this.itemForm);
-        else await this.contentService.createWebMetodologia(this.itemForm);
+        if (this.isEditing) await this.inicioService.updateWebMetodologia(this.itemForm.id, this.itemForm);
+        else await this.inicioService.createWebMetodologia(this.itemForm);
         this.displayDialogMetodologia = false;
       }
       else if (tipo === 'programa') {
-        if (this.isEditing) await this.contentService.updateWebPrograma(this.itemForm.id, this.itemForm);
-        else await this.contentService.createWebPrograma(this.itemForm);
+        if (this.isEditing) await this.inicioService.updateWebPrograma(this.itemForm.id, this.itemForm);
+        else await this.inicioService.createWebPrograma(this.itemForm);
         this.displayDialogPrograma = false;
       }
       else if (tipo === 'alianza') {
-        if (this.isEditing) await this.contentService.updateWebAlianza(this.itemForm.id, this.itemForm);
-        else await this.contentService.createWebAlianza(this.itemForm);
+        if (this.isEditing) await this.inicioService.updateWebAlianza(this.itemForm.id, this.itemForm);
+        else await this.inicioService.createWebAlianza(this.itemForm);
         this.cerrarModalAlianza();
       }
       else if (tipo === 'auspiciador') {
-        if (this.isEditing) await this.contentService.updateWebAuspiciador(this.itemForm.id, this.itemForm);
-        else await this.contentService.createWebAuspiciador(this.itemForm);
+        if (this.isEditing) await this.inicioService.updateWebAuspiciador(this.itemForm.id, this.itemForm);
+        else await this.inicioService.createWebAuspiciador(this.itemForm);
         this.cerrarModalAuspiciador();
       }
 
@@ -249,10 +249,10 @@ export class AdminHomeConfigComponent implements OnInit {
       acceptButtonStyleClass: 'p-button-danger',
       accept: async () => {
         try {
-          if (tipo === 'metodologia') await this.contentService.deleteWebMetodologia(id);
-          if (tipo === 'programa') await this.contentService.deleteWebPrograma(id);
-          if (tipo === 'alianza') await this.contentService.deleteWebAlianza(id);
-          if (tipo === 'auspiciador') await this.contentService.deleteWebAuspiciador(id); 
+          if (tipo === 'metodologia') await this.inicioService.deleteWebMetodologia(id);
+          if (tipo === 'programa') await this.inicioService.deleteWebPrograma(id);
+          if (tipo === 'alianza') await this.inicioService.deleteWebAlianza(id);
+          if (tipo === 'auspiciador') await this.inicioService.deleteWebAuspiciador(id); 
           
           this.cargarTodo();
           this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Elemento eliminado correctamente' });

@@ -21,9 +21,9 @@ import { TextareaModule } from 'primeng/textarea';
 
 import { MessageService, ConfirmationService } from 'primeng/api';
 
-// Servicios
-import { AcademyService } from '../../../../shared/services/academy.service';
-import { HealthService } from '../../../../shared/services/health.service';
+import { GruposService } from '../../../../core/services/modulos/academico/grupos.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
+import { EvaluacionFisicaService } from '../../../../core/services/modulos/academico/evaluacion-fisica.service';
 
 @Component({
   selector: 'app-admin-evaluations',
@@ -97,8 +97,9 @@ export class AdminEvaluationsComponent implements OnInit {
   };
 
   constructor(
-    private academyService: AcademyService,
-    private healthService: HealthService,
+    private gruposService: GruposService,
+    private usuariosService: UsuariosService,
+    private evaluacionFisicaService: EvaluacionFisicaService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private cdr: ChangeDetectorRef
@@ -115,10 +116,10 @@ export class AdminEvaluationsComponent implements OnInit {
     this.loading = true;
     try {
       const [g, t, s, r] = await Promise.all([
-        this.academyService.getGrupos(),
-        this.healthService.getTiposEvaluacion(),
-        this.healthService.getSesionesEvaluacion(),
-        this.healthService.getAllRangos() 
+        this.gruposService.getGrupos(),
+        this.evaluacionFisicaService.getTiposEvaluacion(),
+        this.evaluacionFisicaService.getSesionesEvaluacion(),
+        this.evaluacionFisicaService.getAllRangos() 
       ]);
 
       this.grupos = g.data || [];
@@ -237,23 +238,20 @@ export class AdminEvaluationsComponent implements OnInit {
       const payload = { nombre: this.tipoForm.nombre, unidad_medida: this.tipoForm.unidad_medida, descripcion: this.tipoForm.descripcion };
 
       if (testId) {
-        await this.healthService.updateTipoEvaluacion(testId, payload);
-        await this.healthService.eliminarRangosPorTipo(testId); 
+        await this.evaluacionFisicaService.updateTipoEvaluacion(testId, payload);
+        await this.evaluacionFisicaService.eliminarRangosPorTipo(testId); 
       } else {
-        const { data } = await this.healthService.createTipoEvaluacion(payload);
+        const { data } = await this.evaluacionFisicaService.createTipoEvaluacion(payload);
         testId = (data as any[])[0].id;
       }
 
       if (this.usarRangos && this.rangosForm.length > 0) {
         const rangosParaDB = this.rangosForm.map(r => {
-          // Aquí le quitamos el id y el created_at
           const { id, created_at, ...rangoLimpio } = r; 
-          
-          // Y enviamos solo la información "limpia"
           return { ...rangoLimpio, tipo_evaluacion_id: testId };
         });
         
-        await this.healthService.createRango(rangosParaDB);
+        await this.evaluacionFisicaService.createRango(rangosParaDB);
       }
 
       this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Test guardado.' });
@@ -277,8 +275,8 @@ export class AdminEvaluationsComponent implements OnInit {
       acceptButtonStyleClass: 'p-button-danger', 
       accept: async () => {
         try {
-          await this.healthService.eliminarRangosPorTipo(id);
-          await this.healthService.eliminarTipoEvaluacion(id);
+          await this.evaluacionFisicaService.eliminarRangosPorTipo(id);
+          await this.evaluacionFisicaService.eliminarTipoEvaluacion(id);
           this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Datos eliminados.' });
           this.cargarDatosIniciales();
         } catch (err: any) {
@@ -316,8 +314,8 @@ export class AdminEvaluationsComponent implements OnInit {
     };
 
     try {
-      if (this.evalLogistica.id) await this.healthService.updateSesionEvaluacion(this.evalLogistica.id, payload);
-      else await this.healthService.crearSesionEvaluacion(payload);
+      if (this.evalLogistica.id) await this.evaluacionFisicaService.updateSesionEvaluacion(this.evalLogistica.id, payload);
+      else await this.evaluacionFisicaService.crearSesionEvaluacion(payload);
 
       this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Sesión guardada' });
       this.displayMainDialog = false;
@@ -334,7 +332,8 @@ export class AdminEvaluationsComponent implements OnInit {
           icon: 'pi pi-trash',
           acceptButtonStyleClass: 'p-button-danger p-button-text',
           accept: async () => {
-              await this.healthService.eliminarSesionEvaluacion(id);
+              // 🚀 CAMBIO 7: Usamos EvaluacionFisicaService
+              await this.evaluacionFisicaService.eliminarSesionEvaluacion(id);
               this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Sesión borrada' });
               this.cargarDatosIniciales();
           }
@@ -350,9 +349,9 @@ export class AdminEvaluationsComponent implements OnInit {
     this.cdr.detectChanges(); 
 
     try {
-      const { data: alumnos } = await this.academyService.getAlumnosPorGrupo(sesion.grupo_id);
+      const { data: alumnos } = await this.usuariosService.getAlumnosPorGrupo(sesion.grupo_id);
       
-      this.estudiantesGrupo = await this.healthService.prepararPlanillaCalificaciones(
+      this.estudiantesGrupo = await this.evaluacionFisicaService.prepararPlanillaCalificaciones(
         sesion.grupo_id, 
         sesion.id, 
         alumnos || []
@@ -381,7 +380,7 @@ export class AdminEvaluationsComponent implements OnInit {
 
     this.loading = true;
     try {
-      await this.healthService.guardarResultadosMasivos(notasAGuardar);
+      await this.evaluacionFisicaService.guardarResultadosMasivos(notasAGuardar);
       this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Resultados guardados.' });
       this.displayGradesDialog = false;
       this.cargarDatosIniciales(); 
@@ -407,11 +406,9 @@ export class AdminEvaluationsComponent implements OnInit {
       this.cdr.detectChanges();
 
       try {
-          // 1. Traemos la lista completa de alumnos (AQUÍ VIENE LA FECHA DE NACIMIENTO GRACIAS AL SERVICIO ACTUALIZADO)
-          const { data: alumnos } = await this.academyService.getAlumnosPorGrupo(sesion.grupo_id);
+          const { data: alumnos } = await this.usuariosService.getAlumnosPorGrupo(sesion.grupo_id);
           
-          // 2. Traemos las notas
-          const resultadosBrutos = await this.healthService.prepararPlanillaCalificaciones(
+          const resultadosBrutos = await this.evaluacionFisicaService.prepararPlanillaCalificaciones(
               sesion.grupo_id, 
               sesion.id, 
               alumnos || []
@@ -421,11 +418,9 @@ export class AdminEvaluationsComponent implements OnInit {
           this.resultadosVista = resultadosBrutos
               .filter((e: any) => e.valor_numerico !== null || (e.observacion && e.observacion.trim() !== ''))
               .map((e: any) => {
-                  // Buscamos al alumno original en la lista descargada para sacar su fecha de nacimiento real (Tipado a any para evitar error)
                   const alumnoData: any = (alumnos || []).find((a: any) => a.id === e.estudiante_id);
                   const fechaNac = alumnoData ? alumnoData.fecha_nacimiento : null;
 
-                  // Calculamos con la fecha segura
                   const edad = this.calcularEdadParaTest(fechaNac, sesion.fecha);
                   const rango = this.obtenerRangoParaNota(e.valor_numerico, edad, sesion.tipo_evaluacion_id);
 

@@ -13,7 +13,8 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
-import { AcademyService } from '../../../../shared/services/academy.service';
+import { GruposService } from '../../../../core/services/modulos/academico/grupos.service';
+import { AsistenciaService } from '../../../../core/services/modulos/academico/asistencia.service';
 
 @Component({
   selector: 'app-admin-attendance',
@@ -50,7 +51,8 @@ export class AdminAttendanceComponent implements OnInit {
   filtroAnio: number = new Date().getFullYear();
 
   constructor(
-    private academyService: AcademyService,
+    private gruposService: GruposService,
+    private asistenciaService: AsistenciaService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -61,7 +63,7 @@ export class AdminAttendanceComponent implements OnInit {
 
   async cargarTodosLosGrupos() {
     this.loading = true;
-    const { data } = await this.academyService.getGrupos();
+    const { data } = await this.gruposService.getGrupos();
     this.grupos = data || [];
     this.loading = false;
     this.cdr.detectChanges();
@@ -76,8 +78,8 @@ export class AdminAttendanceComponent implements OnInit {
     this.loading = true;
     const { inicio, fin } = this.getFechasRango();
 
-    // 🚀 TODA la lógica pesada ahora vive en una sola línea del servicio
-    const { data, error } = await this.academyService.getEstudiantesConEstadisticas(
+    // 🚀 CAMBIO 4: Usamos asistenciaService
+    const { data, error } = await this.asistenciaService.getEstudiantesConEstadisticas(
       this.grupoSeleccionado, inicio, fin
     );
 
@@ -97,7 +99,7 @@ export class AdminAttendanceComponent implements OnInit {
     this.loadingHistorial = true;
     
     const { inicio, fin } = this.getFechasRango();
-    const { data } = await this.academyService.getHistorialAsistenciaAlumno(alumno.id, inicio, fin);
+    const { data } = await this.asistenciaService.getHistorialAsistenciaAlumno(alumno.id, inicio, fin);
     
     this.historialAlumno = data || [];
     this.loadingHistorial = false;

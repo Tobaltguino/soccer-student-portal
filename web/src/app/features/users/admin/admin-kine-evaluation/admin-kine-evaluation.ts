@@ -4,8 +4,10 @@ import { FormsModule } from '@angular/forms';
 
 // Servicios
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { HealthService } from '../../../../shared/services/health.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
+
+import { KinesiologiaService } from '../../../../core/services/modulos/salud/kine.service';
+import { GruposService } from '../../../../core/services/modulos/academico/grupos.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
 
 // Módulos de PrimeNG
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -55,7 +57,7 @@ export class AdminKineEvaluationComponent implements OnInit {
   sesionesFiltradas: any[] = [];
   grupos: any[] = [];
   tiposEvaluacion: any[] = [];
-  kinesiologos: any[] = []; // <-- Agregado exclusivo para Admin
+  kinesiologos: any[] = []; 
   loading: boolean = false;
   rangos: any[] = [];
 
@@ -85,8 +87,9 @@ export class AdminKineEvaluationComponent implements OnInit {
   estudianteVistaSeleccionado: any = null;
 
   constructor(
-    private healthService: HealthService,
-    private academyService: AcademyService,
+    private kinesiologiaService: KinesiologiaService,
+    private gruposService: GruposService,
+    private usuariosService: UsuariosService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private cdr: ChangeDetectorRef
@@ -102,18 +105,16 @@ export class AdminKineEvaluationComponent implements OnInit {
   // ==========================================
   async cargarCatalogos() {
     try {
-      const resTipos = await this.healthService.getTiposEvaluacionKine();
+      const resTipos = await this.kinesiologiaService.getTiposEvaluacionKine();
       if (resTipos.data) this.tiposEvaluacion = resTipos.data;
 
-      const resRangos = await this.healthService.getRangosEvaluacion();
+      const resRangos = await this.kinesiologiaService.getRangosEvaluacion();
       if (resRangos.data) this.rangos = resRangos.data;
 
-      // 1. Admin: Cargar TODOS los grupos
-      const resGrupos = await this.academyService.getGrupos();
+      const resGrupos = await this.gruposService.getGrupos();
       if (resGrupos.data) this.grupos = resGrupos.data;
 
-      // 2. Admin: Cargar TODOS los kinesiólogos
-      const resKines = await this.healthService['supabase'].from('kinesiologos').select('id, nombre, apellido').order('nombre', { ascending: true });
+      const resKines = await this.kinesiologiaService.getKinesiologos();
       if (resKines.data) {
         this.kinesiologos = resKines.data.map((k: any) => ({ ...k, nombreCompleto: `${k.nombre} ${k.apellido}` }));
       }
@@ -140,8 +141,7 @@ export class AdminKineEvaluationComponent implements OnInit {
   async cargarSesiones() {
     this.loading = true;
     try {
-      // Usamos el servicio pero adaptado para traer todas las sesiones
-      const { data, error } = await this.healthService.getEvaluacionesKine();
+      const { data, error } = await this.kinesiologiaService.getEvaluacionesKine();
       if (error) throw error;
 
       if (data) {
@@ -149,7 +149,7 @@ export class AdminKineEvaluationComponent implements OnInit {
             ...s,
             grupos: s.grupos || this.grupos.find(g => g.id === s.grupo_id) || { nombre: 'Desconocido' },
             tipo_evaluacion: s.tipo_evaluacion || this.tiposEvaluacion.find(t => t.id === s.tipo_evaluacion_id) || { nombre: 'Desconocido' },
-            kinesiologoAsignado: this.kinesiologos.find(k => k.id === s.kinesiologo_id) // Mapeo del profesional
+            kinesiologoAsignado: this.kinesiologos.find(k => k.id === s.kinesiologo_id) 
         }));
         this.aplicarFiltros();
       }
@@ -211,23 +211,23 @@ export class AdminKineEvaluationComponent implements OnInit {
     if (!this.evalLogistica.fecha) return this.mostrarAdvertencia('Selecciona una fecha.');
     if (!this.evalLogistica.grupo_id) return this.mostrarAdvertencia('Selecciona un grupo.');
     if (!this.evalLogistica.tipo_evaluacion_id) return this.mostrarAdvertencia('Selecciona el tipo de prueba.');
-    if (!this.evalLogistica.kinesiologo_id) return this.mostrarAdvertencia('Asigna un Kinesiólogo.'); // <-- Validación Admin
+    if (!this.evalLogistica.kinesiologo_id) return this.mostrarAdvertencia('Asigna un Kinesiólogo.');
 
     const payload = {
       fecha: this.formatearFechaIso(this.evalLogistica.fecha),
       grupo_id: this.evalLogistica.grupo_id,
       tipo_evaluacion_id: this.evalLogistica.tipo_evaluacion_id, 
       estado: this.evalLogistica.estado || 'PENDIENTE',
-      kinesiologo_id: this.evalLogistica.kinesiologo_id // <-- Guarda el seleccionado
+      kinesiologo_id: this.evalLogistica.kinesiologo_id 
     };
 
     try {
       if (this.evalLogistica.id) {
-        const { error } = await this.healthService.actualizarEvaluacionKine(this.evalLogistica.id, payload);
+        const { error } = await this.kinesiologiaService.actualizarEvaluacionKine(this.evalLogistica.id, payload);
         if (error) throw error;
         this.mostrarExito('Sesión actualizada correctamente.');
       } else {
-        const { error } = await this.healthService.crearEvaluacionKine(payload);
+        const { error } = await this.kinesiologiaService.crearEvaluacionKine(payload);
         if (error) throw error;
         this.mostrarExito('Sesión creada correctamente.');
       }
@@ -249,7 +249,7 @@ export class AdminKineEvaluationComponent implements OnInit {
       acceptButtonStyleClass: 'p-button-danger',
       accept: async () => {
         try {
-          const { error } = await this.healthService.eliminarEvaluacionKine(sesion.id);
+          const { error } = await this.kinesiologiaService.eliminarEvaluacionKine(sesion.id);
           if (error) throw error;
           this.mostrarExito('La sesión fue eliminada exitosamente.');
           this.cargarSesiones(); 
@@ -305,13 +305,13 @@ export class AdminKineEvaluationComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      const { data: alumnos, error: errAlumnos } = await this.academyService.getAlumnosPorGrupo(sesion.grupo_id);
+      const { data: alumnos, error: errAlumnos } = await this.usuariosService.getAlumnosPorGrupo(sesion.grupo_id);
       if (errAlumnos) throw errAlumnos;
 
-      const { data: subevaluaciones, error: errSub } = await this.healthService.getSubEvaluacionesPorTipo(sesion.tipo_evaluacion_id);
+      const { data: subevaluaciones, error: errSub } = await this.kinesiologiaService.getSubEvaluacionesPorTipo(sesion.tipo_evaluacion_id);
       if (errSub) throw errSub;
 
-      const { data: resultadosPrevios, error: errRes } = await this.healthService.getResultadosPorSesionKine(sesion.id);
+      const { data: resultadosPrevios, error: errRes } = await this.kinesiologiaService.getResultadosPorSesionKine(sesion.id);
       if (errRes) throw errRes;
       
       this.estudiantesGrupo = (alumnos || []).map(alumno => {
@@ -387,7 +387,7 @@ export class AdminKineEvaluationComponent implements OnInit {
     }
 
     try {
-      const { error } = await this.healthService.guardarResultadoKine(registrosAGuardar);
+      const { error } = await this.kinesiologiaService.guardarResultadoKine(registrosAGuardar);
       if (error) throw error; 
       
       if (this.evalLogistica.estado === 'PENDIENTE') {
@@ -398,7 +398,7 @@ export class AdminKineEvaluationComponent implements OnInit {
           acceptLabel: 'Sí, finalizar',
           rejectLabel: 'No, dejar pendiente',
           accept: async () => {
-              const { error: errUpdate } = await this.healthService.actualizarEvaluacionKine(this.evalLogistica.id, { estado: 'FINALIZADO' });
+              const { error: errUpdate } = await this.kinesiologiaService.actualizarEvaluacionKine(this.evalLogistica.id, { estado: 'FINALIZADO' });
               if (errUpdate) throw errUpdate;
 
               this.mostrarExito('Resultados guardados y sesión finalizada.');
@@ -428,13 +428,13 @@ export class AdminKineEvaluationComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      const { data: alumnos, error: errAlumnos } = await this.academyService.getAlumnosPorGrupo(sesion.grupo_id);
+      const { data: alumnos, error: errAlumnos } = await this.usuariosService.getAlumnosPorGrupo(sesion.grupo_id);
       if (errAlumnos) throw errAlumnos;
 
-      const { data: subevaluaciones } = await this.healthService.getSubEvaluacionesPorTipo(sesion.tipo_evaluacion_id);
+      const { data: subevaluaciones } = await this.kinesiologiaService.getSubEvaluacionesPorTipo(sesion.tipo_evaluacion_id);
       const subevaluacionesDefinidas = subevaluaciones || [];
       
-      const { data: resultadosPrevios } = await this.healthService.getResultadosPorSesionKine(sesion.id);
+      const { data: resultadosPrevios } = await this.kinesiologiaService.getResultadosPorSesionKine(sesion.id);
 
       this.resultadosVista = (alumnos || []).map(alumno => {
         const evaluacionesDelAlumno = subevaluacionesDefinidas.map((sub: any) => {

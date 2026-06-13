@@ -22,9 +22,12 @@ import { FileUploadModule } from 'primeng/fileupload';
 import { FilterService, ConfirmationService, MessageService } from 'primeng/api';
 
 import { AuthService } from '../../../../core/services/auth.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
-import { HealthService } from '../../../../shared/services/health.service';
 import { StorageService } from '../../../../core/services/storage.service';
+
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
+import { GruposService } from '../../../../core/services/modulos/academico/grupos.service';
+import { KinesiologiaService } from '../../../../core/services/modulos/salud/kine.service';
+import { NutricionService } from '../../../../core/services/modulos/salud/nutri.service';
 
 import { RutFormatDirective } from '../../../../shared/directives/rut-format.directive';
 import { RutValidator } from '../../../../shared/directives/rut-validator.directive';
@@ -97,9 +100,11 @@ export class AdminUsersComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private academyService: AcademyService,
-    private healthService: HealthService,
     private storageService: StorageService,
+    private usuariosService: UsuariosService,
+    private gruposService: GruposService,
+    private kinesiologiaService: KinesiologiaService,
+    private nutricionService: NutricionService,
     private cdr: ChangeDetectorRef,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
@@ -121,10 +126,10 @@ export class AdminUsersComponent implements OnInit {
   }
 
   async cargarMaestros() {
-    const resGrupos = await this.academyService.getGrupos();
+    const resGrupos = await this.gruposService.getGrupos();
     if(resGrupos.data) this.listaGrupos = resGrupos.data;
     
-    const resPos = await this.academyService.getPosiciones();
+    const resPos = await this.usuariosService.getPosiciones();
     if(resPos.data) this.listaPosiciones = resPos.data;
 
     this.cdr.detectChanges();
@@ -146,25 +151,23 @@ export class AdminUsersComponent implements OnInit {
     try {
       let res: any;
       switch(this.vistaActual) {
-        case 'estudiantes': res = await this.academyService.getEstudiantes(); break;
-        case 'profesores': res = await this.academyService.getProfesores(); break;
+        case 'estudiantes': res = await this.usuariosService.getEstudiantes(); break;
+        case 'profesores': res = await this.usuariosService.getProfesores(); break;
         case 'admins': res = await this.authService.getAdmins(); break;
-        case 'kinesiologos': res = await this.healthService.getKinesiologos(); break;
-        case 'nutricionistas': res = await this.healthService.getNutricionistasCompletos(); break;
+        case 'kinesiologos': res = await this.kinesiologiaService.getKinesiologos(); break;
+        case 'nutricionistas': res = await this.nutricionService.getNutricionistasCompletos(); break;
       }
       
       if (res?.data) {
-          // Si estamos viendo estudiantes, procesamos su salud médica
           if (this.vistaActual === 'estudiantes') {
               const now = new Date().getTime();
               
               const promesasConSalud = res.data.map(async (estudiante: any) => {
                   try {
-                      const historialRes = await this.healthService.getHistorialClinico(estudiante.id);
+                      const historialRes = await this.kinesiologiaService.getHistorialClinico(estudiante.id);
                       const historial = historialRes.data || [];
                       
                       if (historial.length > 0) {
-                          // Ordenar para dejar de primero el que tenga la fecha más cercana a HOY
                           historial.sort((a: any, b: any) => {
                               const diffA = Math.abs(now - new Date(a.fecha_evento).getTime());
                               const diffB = Math.abs(now - new Date(b.fecha_evento).getTime());
@@ -176,7 +179,7 @@ export class AdminUsersComponent implements OnInit {
                           estudiante.estado_salud = 'SANO';
                       }
                   } catch (e) {
-                      estudiante.estado_salud = 'SANO'; // Fallback por seguridad
+                      estudiante.estado_salud = 'SANO'; 
                   }
                   return estudiante;
               });
@@ -343,13 +346,13 @@ export class AdminUsersComponent implements OnInit {
         }
 
         if (userId) {
-            if (this.vistaActual === 'estudiantes') await this.academyService.actualizarPosicionesEstudiante(userId, this.userForm.posicionesIds);
-            if (this.vistaActual === 'profesores') await this.academyService.actualizarGruposProfesor(userId, this.userForm.gruposIds);
+            if (this.vistaActual === 'estudiantes') await this.usuariosService.actualizarPosicionesEstudiante(userId, this.userForm.posicionesIds);
+            if (this.vistaActual === 'profesores') await this.usuariosService.actualizarGruposProfesor(userId, this.userForm.gruposIds);
             if (this.vistaActual === 'kinesiologos') {
-                const res = await this.healthService.getGruposDeKine(userId);
+                const res = await this.kinesiologiaService.getGruposDeKine(userId);
                 const gruposViejos = res.data || [];
-                for (let viejo of gruposViejos) await this.healthService.removerGrupoDeKine(userId, viejo.grupo_id);
-                for (let nuevoGrupoId of this.userForm.gruposIds) await this.healthService.asignarGrupoAKine(userId, nuevoGrupoId);
+                for (let viejo of gruposViejos) await this.kinesiologiaService.removerGrupoDeKine(userId, viejo.grupo_id);
+                for (let nuevoGrupoId of this.userForm.gruposIds) await this.kinesiologiaService.asignarGrupoAKine(userId, nuevoGrupoId);
             }
         }
 
@@ -438,7 +441,7 @@ export class AdminUsersComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-        const res = await this.healthService.getHistorialClinico(estudiante.id);
+        const res = await this.kinesiologiaService.getHistorialClinico(estudiante.id);
         this.historialClinico = res.data || [];
     } catch (error) {
     } finally {
@@ -455,13 +458,12 @@ export class AdminUsersComponent implements OnInit {
 
   // --- Funciones de Salud Formateadas ---
   getSeveridadEstado(estado: any): any {
-      // Si no tiene registro, o es SANO, o es RECUPERADO -> Verde
       if (!estado || estado.toUpperCase() === 'SANO' || estado.toUpperCase() === 'RECUPERADO') return 'success';
       
       switch (estado.toUpperCase()) {
-          case 'EN_REINTEGRO_DEPORTIVO': return 'info'; // Azul
-          case 'EN_OBSERVACION': return 'warning';      // Amarillo/Naranja
-          case 'EN_TRATAMIENTO': return 'danger';       // Rojo
+          case 'EN_REINTEGRO_DEPORTIVO': return 'info'; 
+          case 'EN_OBSERVACION': return 'warning';      
+          case 'EN_TRATAMIENTO': return 'danger';       
           default: return 'secondary'; 
       }
   }

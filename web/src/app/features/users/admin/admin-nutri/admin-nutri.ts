@@ -16,9 +16,8 @@ import { RadioButtonModule } from 'primeng/radiobutton';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
-// 🚀 SERVICIOS DE DOMINIO
-import { HealthService } from '../../../../shared/services/health.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
+import { NutricionService } from '../../../../core/services/modulos/salud/nutri.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
 import { StorageService } from '../../../../core/services/storage.service';
 
 @Component({
@@ -59,8 +58,8 @@ export class AdminNutriComponent implements OnInit {
   nuevoTipo = { nombre: '', descripcion: '' };
 
   constructor(
-    private healthService: HealthService,
-    private academyService: AcademyService,
+    private nutricionService: NutricionService,
+    private usuariosService: UsuariosService,
     private storageService: StorageService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService, 
@@ -79,11 +78,10 @@ export class AdminNutriComponent implements OnInit {
       this.loading = true;
       this.cdr.detectChanges();
 
-      // 🚀 Promesas en paralelo para mayor velocidad en la UI
       const [resTipos, resNutris, resEst] = await Promise.all([
-        this.healthService.getTiposEvaluacionNutri(),
-        this.healthService.getNutricionistas(),
-        this.academyService.getEstudiantesBasico()
+        this.nutricionService.getTiposEvaluacionNutri(),
+        this.nutricionService.getNutricionistas(),
+        this.usuariosService.getEstudiantesBasico()
       ]);
 
       this.tiposEvaluacion = resTipos.data || [];
@@ -112,7 +110,7 @@ export class AdminNutriComponent implements OnInit {
   }
 
   async cargarSesiones() {
-    const res = await this.healthService.getEvaluacionesNutri();
+    const res = await this.nutricionService.getEvaluacionesNutri();
     this.sesiones = res.data || [];
     this.aplicarFiltros();
     this.cdr.detectChanges();
@@ -131,11 +129,11 @@ export class AdminNutriComponent implements OnInit {
     if (!this.nuevoTipo.nombre) return;
     try {
       this.loading = true;
-      await this.healthService.crearTipoEvaluacionNutri(this.nuevoTipo);
+      await this.nutricionService.crearTipoEvaluacionNutri(this.nuevoTipo);
       this.mostrarExito('Test agregado correctamente');
       this.nuevoTipo = { nombre: '', descripcion: '' };
       
-      const res = await this.healthService.getTiposEvaluacionNutri();
+      const res = await this.nutricionService.getTiposEvaluacionNutri();
       this.tiposEvaluacion = res.data || [];
     } catch (error) {
       this.mostrarError('Error al guardar el tipo de test');
@@ -157,10 +155,10 @@ export class AdminNutriComponent implements OnInit {
         try {
           this.loading = true;
           this.cdr.detectChanges();
-          await this.healthService.eliminarTipoEvaluacionNutri(tipo.id);
+          await this.nutricionService.eliminarTipoEvaluacionNutri(tipo.id);
           this.mostrarExito('Test eliminado correctamente');
           
-          const res = await this.healthService.getTiposEvaluacionNutri();
+          const res = await this.nutricionService.getTiposEvaluacionNutri();
           this.tiposEvaluacion = res.data || [];
         } catch (error: any) {
           if (error.code === '23503') {
@@ -213,10 +211,10 @@ export class AdminNutriComponent implements OnInit {
       };
 
       if (this.evalLogistica.id) {
-        await this.healthService.actualizarEvaluacionNutri(this.evalLogistica.id, payload);
+        await this.nutricionService.actualizarEvaluacionNutri(this.evalLogistica.id, payload);
         this.mostrarExito('Sesión actualizada correctamente');
       } else {
-        await this.healthService.crearEvaluacionNutri(payload);
+        await this.nutricionService.crearEvaluacionNutri(payload);
         this.mostrarExito('Sesión creada correctamente');
       }
 
@@ -242,7 +240,7 @@ export class AdminNutriComponent implements OnInit {
         try {
           this.loading = true;
           this.cdr.detectChanges();
-          await this.healthService.eliminarEvaluacionNutri(sesion.id);
+          await this.nutricionService.eliminarEvaluacionNutri(sesion.id);
           this.mostrarExito('Sesión eliminada correctamente');
           await this.cargarSesiones();
         } catch (error) {
@@ -264,7 +262,7 @@ export class AdminNutriComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      const { data: resultadosPrevios } = await this.healthService.getResultadosPorSesionNutri(sesion.id);
+      const { data: resultadosPrevios } = await this.nutricionService.getResultadosPorSesionNutri(sesion.id);
 
       this.estudiantes.forEach(est => {
         const resultadoGuardado = resultadosPrevios?.find((r: any) => r.estudiante_id === est.id);
@@ -329,7 +327,7 @@ export class AdminNutriComponent implements OnInit {
       for (const est of porGuardar) {
         const archivoUrl = await this.storageService.subirArchivoNutricion(est.archivoSeleccionado, est.archivoSeleccionado.name);
         
-        await this.healthService.guardarResultadoNutri({
+        await this.nutricionService.guardarResultadoNutri({
           evaluacion_id: this.evalLogistica.id,
           estudiante_id: est.id,
           archivo_url: archivoUrl,
@@ -379,6 +377,5 @@ export class AdminNutriComponent implements OnInit {
 
   mostrarExito(m: string) { this.messageService.add({ severity: 'success', summary: 'Éxito', detail: m }); }
   mostrarError(m: string) { this.messageService.add({ severity: 'error', summary: 'Error', detail: m }); }
-
 
 }

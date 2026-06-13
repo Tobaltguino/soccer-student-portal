@@ -5,7 +5,6 @@ import { SupabaseCoreService } from '../../../../core/services/supabase-core.ser
   providedIn: 'root'
 })
 export class KinesiologiaService {
-
   constructor(private supabaseCore: SupabaseCoreService) {}
 
   private get supabase() {
@@ -38,6 +37,13 @@ export class KinesiologiaService {
   async crearHistorialClinico(data: any) { return await this.supabase.from('historial_clinico').insert(data).select().single(); }
   async updateHistorialClinico(id: string, data: any) { return await this.supabase.from('historial_clinico').update(data).eq('id', id).select().single(); }
   async eliminarHistorialClinico(id: string) { return await this.supabase.from('historial_clinico').delete().eq('id', id); }
+  async getEstadosClinicosAlumnos(alumnoIds: string[]) {
+    return await this.supabase
+      .from('historial_clinico')
+      .select('estudiante_id, estado')
+      .in('estudiante_id', alumnoIds)
+      .in('estado', ['EN_TRATAMIENTO', 'EN_OBSERVACION', 'EN_REINTEGRO_DEPORTIVO']);
+  }
 
   // ==========================================
   // FICHA EVOLUTIVA KINESIOLÓGICA

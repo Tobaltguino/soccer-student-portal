@@ -11,8 +11,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { SelectModule } from 'primeng/select'; 
 import { MessageService, ConfirmationService } from 'primeng/api';
 
-// 🚀 CAMBIO 1: Importamos los servicios especializados
-import { ContentService } from '../../../../shared/services/content.service';
+import { MaterialCompService } from '../../../../core/services/modulos/academico/material-compl.service';
 import { StorageService } from '../../../../core/services/storage.service';
 
 @Component({
@@ -43,8 +42,7 @@ export class AdminGuidesManagementComponent implements OnInit {
   ];
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos Content y Storage
-    private contentService: ContentService,
+    private materialCompService: MaterialCompService,
     private storageService: StorageService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
@@ -58,8 +56,7 @@ export class AdminGuidesManagementComponent implements OnInit {
   async cargarDatos() {
     this.loading = true;
     try {
-      // 🚀 CAMBIO 3: Usamos contentService
-      const guiasRes = await this.contentService.getGuias();
+      const guiasRes = await this.materialCompService.getGuias();
       this.guias = guiasRes.data || [];
     } catch (error) {
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar las guías.' });
@@ -110,7 +107,7 @@ export class AdminGuidesManagementComponent implements OnInit {
         if (this.nuevaGuia.id && this.nuevaGuia.archivo_url) {
           archivoViejoParaBorrar = this.nuevaGuia.archivo_url;
         }
-        // 🚀 CAMBIO 4: El archivo se sube vía storageService
+        
         urlFinal = await this.storageService.uploadGuiaFile(this.archivoSeleccionado, this.nuevaGuia.titulo);
       }
       
@@ -122,19 +119,16 @@ export class AdminGuidesManagementComponent implements OnInit {
       };
 
       if (this.nuevaGuia.id) {
-        // 🚀 CAMBIO 5: Actualización vía contentService
-        const { error } = await this.contentService.updateGuia(this.nuevaGuia.id, guiaParaBD);
+        const { error } = await this.materialCompService.updateGuia(this.nuevaGuia.id, guiaParaBD);
         if (error) throw error;
         
         if (archivoViejoParaBorrar) {
-          // 🚀 CAMBIO 6: Borrado físico vía storageService
           await this.storageService.deleteGuiaFile(archivoViejoParaBorrar);
         }
 
         this.messageService.add({ severity: 'success', summary: 'Actualizada', detail: 'La guía se modificó correctamente.' });
       } else {
-        // 🚀 CAMBIO 7: Creación vía contentService
-        const { error } = await this.contentService.createGuia(guiaParaBD);
+        const { error } = await this.materialCompService.createGuia(guiaParaBD);
         if (error) throw error;
         this.messageService.add({ severity: 'success', summary: 'Publicada', detail: 'La guía se subió correctamente.' });
       }
@@ -160,8 +154,7 @@ export class AdminGuidesManagementComponent implements OnInit {
       acceptButtonStyleClass: 'p-button-danger',
       accept: async () => {
         try {
-          // 🚀 CAMBIO 8: Eliminación vía contentService
-          const { error } = await this.contentService.deleteGuia(id);
+          const { error } = await this.materialCompService.deleteGuia(id);
           if (error) throw error;
           this.messageService.add({ severity: 'success', summary: 'Eliminada', detail: 'Guía borrada exitosamente.' });
           this.cargarDatos();

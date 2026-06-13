@@ -29,24 +29,6 @@ export class UsuariosService {
   async getEstudianteByEmail(email: string) { return await this.supabase.from('estudiantes').select('id, nombre, apellido, grupo_id').eq('email', email).maybeSingle(); }
   async getProfesorByEmail(email: string) { return await this.supabase.from('profesores').select('id, nombre, apellido').eq('email', email).maybeSingle(); }
 
-  async actualizarPosicionesEstudiante(estudianteId: string, posicionesIds: number[]) {
-    await this.supabase.from('estudiantes_posiciones').delete().eq('estudiante_id', estudianteId);
-    if (posicionesIds && posicionesIds.length > 0) {
-      const inserts = posicionesIds.map(pid => ({ estudiante_id: estudianteId, posicion_id: pid }));
-      return await this.supabase.from('estudiantes_posiciones').insert(inserts);
-    }
-    return { error: null };
-  }
-
-  async actualizarGruposProfesor(profesorId: string, gruposIds: number[]) {
-    await this.supabase.from('grupos_profesores').delete().eq('profesor_id', profesorId);
-    if (gruposIds && gruposIds.length > 0) {
-      const inserts = gruposIds.map(gid => ({ profesor_id: profesorId, grupo_id: gid }));
-      return await this.supabase.from('grupos_profesores').insert(inserts);
-    }
-    return { error: null };
-  }
-
   async getGruposDeProfesor(profesorId: string) { return await this.supabase.from('grupos_profesores').select('grupo_id, grupos(id, nombre)').eq('profesor_id', profesorId); }
 
   async getProfesoresDeEstudiante(uid: string) {
@@ -91,5 +73,48 @@ export class UsuariosService {
       
     if (soloActivos) query = query.eq('activo', true);
     return await query;
+  }
+
+  // Agrega esto en tu UsuariosService
+  async getAlumnosBasicoConRut() {
+    return await this.supabase
+      .from('estudiantes')
+      .select('id, nombre, apellido, rut, grupo_id')
+      .order('apellido', { ascending: true });
+  }
+
+  // ==========================================
+  // POSICIONES Y ASIGNACIONES
+  // ==========================================
+  
+  async getPosiciones() {
+    return await this.supabase
+      .from('posiciones')
+      .select('*')
+      .order('id', { ascending: true });
+  }
+
+  async actualizarPosicionesEstudiante(estudianteId: string, posicionesIds: number[]) {
+    // Primero limpiamos las posiciones anteriores
+    await this.supabase.from('estudiantes_posiciones').delete().eq('estudiante_id', estudianteId);
+    
+    // Luego insertamos las nuevas si existen
+    if (posicionesIds && posicionesIds.length > 0) {
+      const inserts = posicionesIds.map(pId => ({ estudiante_id: estudianteId, posicion_id: pId }));
+      return await this.supabase.from('estudiantes_posiciones').insert(inserts);
+    }
+    return { error: null };
+  }
+
+  async actualizarGruposProfesor(profesorId: string, gruposIds: number[]) {
+    // Primero limpiamos los grupos anteriores
+    await this.supabase.from('grupos_profesores').delete().eq('profesor_id', profesorId);
+    
+    // Luego insertamos los nuevos si existen
+    if (gruposIds && gruposIds.length > 0) {
+      const inserts = gruposIds.map(gId => ({ profesor_id: profesorId, grupo_id: gId }));
+      return await this.supabase.from('grupos_profesores').insert(inserts);
+    }
+    return { error: null };
   }
 }

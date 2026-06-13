@@ -6,8 +6,7 @@ import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip'; 
 
-// 🚀 CAMBIO 1: Importamos ContentService
-import { ContentService } from '../../../shared/services/content.service';
+import { InicioService } from '../../../shared/services/modulos/administracion/inicio.service';
 
 @Component({
   selector: 'app-home',
@@ -63,8 +62,8 @@ export class HomeComponent implements OnInit {
 
   constructor(
     private router: Router,
-    // 🚀 CAMBIO 2: Inyectamos ContentService
-    private contentService: ContentService,
+    // 🚀 CAMBIO 2: Inyectamos InicioService en lugar de ContentService
+    private inicioService: InicioService,
     private cdr: ChangeDetectorRef 
   ) {}
 
@@ -76,13 +75,13 @@ export class HomeComponent implements OnInit {
   // --- OBTENER DATOS DE SUPABASE ---
   async cargarDatosDinamicos() {
     try {
-      // 🚀 CAMBIO 3: Usamos this.contentService para todo
+      // 🚀 CAMBIO 3: Actualizamos las llamadas usando this.inicioService
       const [config, met, prog, ali, aus] = await Promise.all([
-        this.contentService.getConfiguracionWeb(),
-        this.contentService.getWebMetodologias(),
-        this.contentService.getWebProgramas(),
-        this.contentService.getWebAlianzas(),
-        this.contentService.getWebAuspiciadores() 
+        this.inicioService.getConfiguracionWeb(),
+        this.inicioService.getWebMetodologias(),
+        this.inicioService.getWebProgramas(),
+        this.inicioService.getWebAlianzas(),
+        this.inicioService.getWebAuspiciadores() 
       ]);
 
       if (config.data && !config.error) {

@@ -13,8 +13,7 @@ import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast'; 
 import { ConfirmationService, MessageService } from 'primeng/api'; 
 
-// 🚀 CAMBIO 1: Importamos el AcademyService en lugar del SupabaseService
-import { AcademyService } from '../../../../shared/services/academy.service';
+import { GruposService } from '../../../../core/services/modulos/academico/grupos.service';
 
 @Component({
   selector: 'app-admin-groups',
@@ -46,8 +45,7 @@ export class AdminGroupsComponent implements OnInit {
   grupoForm: any = { id: null, nombre: '', descripcion: '' };
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos el AcademyService
-    private academyService: AcademyService,
+    private gruposService: GruposService,
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef
@@ -60,8 +58,7 @@ export class AdminGroupsComponent implements OnInit {
   async cargarGrupos() {
     this.loading = true;
     
-    // 🚀 CAMBIO 3: Usamos academyService
-    const { data, error } = await this.academyService.getGrupos();
+    const { data, error } = await this.gruposService.getGrupos();
     
     if (data) {
       this.grupos = data.map((g: any) => ({
@@ -103,11 +100,9 @@ export class AdminGroupsComponent implements OnInit {
 
     let result;
     if (this.grupoForm.id) {
-      // 🚀 CAMBIO 4: Usamos academyService
-      result = await this.academyService.updateGrupo(this.grupoForm.id, datos);
+      result = await this.gruposService.updateGrupo(this.grupoForm.id, datos);
     } else {
-      // 🚀 CAMBIO 5: Usamos academyService
-      result = await this.academyService.createGrupo(datos);
+      result = await this.gruposService.createGrupo(datos);
     }
 
     if (result.error) {
@@ -129,8 +124,7 @@ export class AdminGroupsComponent implements OnInit {
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-danger p-button-text',
       accept: async () => {
-        // 🚀 CAMBIO 6: Usamos academyService
-        const { error } = await this.academyService.deleteGrupo(id);
+        const { error } = await this.gruposService.deleteGrupo(id);
         if (!error) {
             this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Grupo eliminado correctamente.' });
             this.cargarGrupos();

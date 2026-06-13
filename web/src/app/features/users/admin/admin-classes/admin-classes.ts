@@ -17,8 +17,10 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { DatePickerModule } from 'primeng/datepicker';
 import { CheckboxModule } from 'primeng/checkbox';
 
-// 🚀 CAMBIO 1: Importamos el AcademyService
-import { AcademyService } from '../../../../shared/services/academy.service';
+import { ClasesService } from '../../../../core/services/modulos/academico/clases.service';
+import { GruposService } from '../../../../core/services/modulos/academico/grupos.service';
+import { AsistenciaService } from '../../../../core/services/modulos/academico/asistencia.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
 
 @Component({
   selector: 'app-admin-classes',
@@ -34,7 +36,7 @@ import { AcademyService } from '../../../../shared/services/academy.service';
 })
 export class AdminClassesComponent implements OnInit {
 
-  clases: any[] = [];           
+  clases: any[] = [];          
   clasesOriginales: any[] = []; 
   grupos: any[] = [];
   
@@ -68,8 +70,10 @@ export class AdminClassesComponent implements OnInit {
   };
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos el AcademyService
-    private academyService: AcademyService,
+    private clasesService: ClasesService,
+    private gruposService: GruposService,
+    private asistenciaService: AsistenciaService,
+    private usuariosService: UsuariosService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private cdr: ChangeDetectorRef
@@ -82,13 +86,11 @@ export class AdminClassesComponent implements OnInit {
   async cargarDatos() {
     this.loading = true;
     
-    // 🚀 CAMBIO 3: Usamos academyService
-    const { data: dataClases } = await this.academyService.getClases();
+    const { data: dataClases } = await this.clasesService.getClases();
     this.clasesOriginales = dataClases || [];
     this.aplicarFiltros(); 
     
-    // 🚀 CAMBIO 4: Usamos academyService
-    const { data: dataGrupos } = await this.academyService.getGrupos();
+    const { data: dataGrupos } = await this.gruposService.getGrupos();
     this.grupos = dataGrupos || [];
     
     this.loading = false;
@@ -128,11 +130,9 @@ export class AdminClassesComponent implements OnInit {
     this.displayAttendanceDialog = true;
     this.loadingAsistencia = true;
 
-    // 🚀 CAMBIO 5: Usamos academyService
-    const { data: alumnosGrupo } = await this.academyService.getAlumnosPorGrupo(clase.grupo_id);
+    const { data: alumnosGrupo } = await this.usuariosService.getAlumnosPorGrupo(clase.grupo_id);
     
-    // 🚀 CAMBIO 6: Usamos academyService
-    const { data: asistenciaGuardada } = await this.academyService.getAsistenciaPorClase(clase.id);
+    const { data: asistenciaGuardada } = await this.asistenciaService.getAsistenciaPorClase(clase.id);
 
     if (alumnosGrupo) {
        this.alumnosAsistencia = alumnosGrupo.map(alumno => {
@@ -155,8 +155,7 @@ export class AdminClassesComponent implements OnInit {
       presente: a.presente
     }));
 
-    // 🚀 CAMBIO 7: Usamos academyService
-    const { error } = await this.academyService.guardarAsistenciaMasiva(registros);
+    const { error } = await this.asistenciaService.guardarAsistenciaMasiva(registros);
     
     if (!error) {
       this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Asistencia actualizada correctamente' });
@@ -214,11 +213,9 @@ export class AdminClassesComponent implements OnInit {
 
     let result;
     if (this.isEditing) {
-      // 🚀 CAMBIO 8: Usamos academyService
-      result = await this.academyService.actualizarClase(this.claseForm.id, datosParaEnviar);
+      result = await this.clasesService.actualizarClase(this.claseForm.id, datosParaEnviar);
     } else {
-      // 🚀 CAMBIO 9: Usamos academyService
-      result = await this.academyService.crearClase(datosParaEnviar);
+      result = await this.clasesService.crearClase(datosParaEnviar);
     }
 
     if (result.error) {
@@ -237,8 +234,7 @@ export class AdminClassesComponent implements OnInit {
         icon: 'pi pi-exclamation-triangle',
         acceptButtonStyleClass: 'p-button-danger p-button-text',
         accept: async () => { 
-            // 🚀 CAMBIO 10: Usamos academyService
-            await this.academyService.deleteClase(id); 
+            await this.clasesService.deleteClase(id); 
             this.cargarDatos(); 
         } 
     });

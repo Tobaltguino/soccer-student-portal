@@ -2,10 +2,12 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 
-// 🚀 Servicios de dominio
+// 🚀 CAMBIO 1: Importamos los servicios modulares correctos
 import { AuthService } from '../../../../core/services/auth.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
-import { HealthService } from '../../../../shared/services/health.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
+import { ClasesService } from '../../../../core/services/modulos/academico/clases.service';
+import { KinesiologiaService } from '../../../../core/services/modulos/salud/kine.service';
+import { EvaluacionFisicaService } from '../../../../core/services/modulos/academico/evaluacion-fisica.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -32,8 +34,10 @@ export class AdminDashboardComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private academyService: AcademyService,
-    private healthService: HealthService,
+    private usuariosService: UsuariosService,
+    private clasesService: ClasesService,
+    private kinesiologiaService: KinesiologiaService,
+    private evaluacionFisicaService: EvaluacionFisicaService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
@@ -62,8 +66,9 @@ export class AdminDashboardComponent implements OnInit {
   async cargarDatos() {
     this.loading = true;
     try {
-      // 1. Estudiantes
-      const { data: estudiantes } = await this.academyService.getEstudiantes();
+      // 🚀 CAMBIO 3: Usamos UsuariosService
+      const { data: estudiantes } = await this.usuariosService.getEstudiantes();
+      
       if (estudiantes) {
         const activos = estudiantes.filter((est: any) => est.activo === true);
         this.totalEstudiantes = activos.length;
@@ -72,11 +77,7 @@ export class AdminDashboardComponent implements OnInit {
         // 2. 🔥 Lógica de Salud Global para el Admin
         const alumnoIds = activos.map((a: any) => a.id);
         if (alumnoIds.length > 0) {
-          const { data: historiales } = await this.healthService['supabase']
-            .from('historial_clinico')
-            .select('estudiante_id, estado')
-            .in('estudiante_id', alumnoIds)
-            .in('estado', ['EN_TRATAMIENTO', 'EN_OBSERVACION', 'EN_REINTEGRO_DEPORTIVO']);
+          const { data: historiales } = await this.kinesiologiaService.getEstadosClinicosAlumnos(alumnoIds);
 
           if (historiales) {
             const setTratamiento = new Set();
@@ -96,12 +97,12 @@ export class AdminDashboardComponent implements OnInit {
         }
       }
 
-      // 3. Clases
-      const { data: clases } = await this.academyService.getClasesHoy();
+      // 🚀 CAMBIO 5: Usamos ClasesService
+      const { data: clases } = await this.clasesService.getClasesHoy();
       this.clasesHoy = clases || [];
 
-      // 4. Actividad (Evaluaciones)
-      const { data: actividad } = await this.healthService.getActividadReciente();
+      // 🚀 CAMBIO 6: Usamos EvaluacionFisicaService
+      const { data: actividad } = await this.evaluacionFisicaService.getActividadReciente();
       this.actividadReciente = actividad || [];
 
     } catch (error) {
