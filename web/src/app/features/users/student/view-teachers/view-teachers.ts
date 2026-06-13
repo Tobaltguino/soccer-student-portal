@@ -1,10 +1,9 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-// 🚀 CAMBIO 1: Importamos la triada de servicios de dominio
 import { AuthService } from '../../../../core/services/auth.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
-import { HealthService } from '../../../../shared/services/health.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
+import { KinesiologiaService } from '../../../../core/services/modulos/salud/kine.service';
 
 @Component({
   selector: 'app-view-teachers',
@@ -19,10 +18,9 @@ export class ViewTeachersComponent implements OnInit {
   errorMessage: string = '';
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos los servicios especializados
     private authService: AuthService,
-    private academyService: AcademyService,
-    private healthService: HealthService,
+    private usuariosService: UsuariosService,
+    private kinesiologiaService: KinesiologiaService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -36,7 +34,6 @@ export class ViewTeachersComponent implements OnInit {
     this.cdr.detectChanges(); 
 
     try {
-      // 🚀 CAMBIO 3: Validación segura con AuthService
       const { data: { user } } = await this.authService.getUser();
       
       if (!user) {
@@ -44,10 +41,9 @@ export class ViewTeachersComponent implements OnInit {
         return;
       }
 
-      // 🚀 CAMBIO 4: Usamos los servicios de dominio correspondientes
       const [profesoresResponse, kinesResponse] = await Promise.all([
-        this.academyService.getProfesoresDeEstudiante(user.id as string),
-        this.healthService.getKinesiologosDeEstudiante(user.id as string)
+        this.usuariosService.getProfesoresDeEstudiante(user.id),
+        this.kinesiologiaService.getKinesiologosDeEstudiante(user.id)
       ]);
 
       // Si falla la búsqueda principal de profes, lanzamos error
@@ -59,7 +55,7 @@ export class ViewTeachersComponent implements OnInit {
       const profes = profesoresResponse.data || [];
       const kinesBrutos = kinesResponse.data || [];
 
-      // 🎭 Mapeamos a los kinesiólogos para que el HTML los renderice igual que a los profes
+      // Mapeamos a los kinesiólogos para que el HTML los renderice igual que a los profes
       const kinesMapeados = kinesBrutos.map((kine: any) => ({
         id: kine.id,
         nombre: kine.nombre,
@@ -69,7 +65,7 @@ export class ViewTeachersComponent implements OnInit {
         tipo_profesor: 'Kinesiólogo' 
       }));
 
-      // 🤝 Unimos ambos mundos
+      // Unimos ambos mundos
       this.profesores = [...profes, ...kinesMapeados];
       
       this.cdr.detectChanges(); 

@@ -9,10 +9,9 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
 
-// 🚀 CAMBIO 1: Importamos los servicios de dominio
 import { AuthService } from '../../../../core/services/auth.service';
-import { HealthService } from '../../../../shared/services/health.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
+import { NutricionService } from '../../../../core/services/modulos/salud/nutri.service';
 
 @Component({
   selector: 'app-student-nutri',
@@ -38,10 +37,9 @@ export class StudentNutriComponent implements OnInit {
   filtroPrueba: any = null;
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos la triada de servicios
     private authService: AuthService,
-    private healthService: HealthService,
-    private academyService: AcademyService,
+    private usuariosService: UsuariosService,
+    private nutricionService: NutricionService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -54,18 +52,16 @@ export class StudentNutriComponent implements OnInit {
       this.loading = true;
       this.cdr.detectChanges();
 
-      // 🚀 CAMBIO 3: Validación de usuario con AuthService
       const { data: { user } } = await this.authService.getUser();
       if (!user || !user.email) return;
 
-      // 🚀 CAMBIO 4: Obtenemos el ID de estudiante desde AcademyService
-      const { data: estudiante } = await this.academyService.getEstudianteByEmail(user.email);
+      // 🚀 CAMBIO 4: Obtenemos el ID del estudiante desde UsuariosService
+      const { data: estudiante } = await this.usuariosService.getEstudianteByEmail(user.email);
       this.estudianteId = estudiante?.id;
 
       if (!this.estudianteId) return;
 
-      // 🚀 CAMBIO 5: Traer resultados nutricionales desde HealthService
-      const res = await this.healthService.getResultadosNutriEstudiante(this.estudianteId);
+      const res = await this.nutricionService.getResultadosNutriEstudiante(this.estudianteId);
       const rawData: any[] = res.data || [];
 
       // 3. Mapear y procesar datos

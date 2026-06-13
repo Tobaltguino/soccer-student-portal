@@ -27,6 +27,10 @@ export class UsuariosService {
   async getEstudiantesBasico() { return await this.supabase.from('estudiantes').select('id, nombre, apellido').order('apellido', { ascending: true }); }
   async getEstudiantesActivos() { return await this.supabase.from('estudiantes').select('id, nombre, apellido, fecha_nacimiento, activo').eq('activo', true); }
   async getEstudianteByEmail(email: string) { return await this.supabase.from('estudiantes').select('id, nombre, apellido, grupo_id').eq('email', email).maybeSingle(); }
+  async getEstudianteById(id: string) {
+    return await this.supabase.from('estudiantes').select('*').eq('id', id).single();
+  }
+  
   async getProfesorByEmail(email: string) { return await this.supabase.from('profesores').select('id, nombre, apellido').eq('email', email).maybeSingle(); }
 
   async getGruposDeProfesor(profesorId: string) { return await this.supabase.from('grupos_profesores').select('grupo_id, grupos(id, nombre)').eq('profesor_id', profesorId); }

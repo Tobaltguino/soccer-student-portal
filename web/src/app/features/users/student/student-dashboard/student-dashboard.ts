@@ -2,10 +2,9 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
-// 🚀 CAMBIO 1: Importamos los servicios de dominio
 import { AuthService } from '../../../../core/services/auth.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
-import { HealthService } from '../../../../shared/services/health.service';
+import { AsistenciaService } from '../../../../core/services/modulos/academico/asistencia.service';
+import { EvaluacionFisicaService } from '../../../../core/services/modulos/academico/evaluacion-fisica.service';
 
 @Component({
   selector: 'app-student-dashboard',
@@ -26,10 +25,9 @@ export class StudentDashboardComponent implements OnInit {
   proximosEventos: any[] = []; 
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos los servicios especializados
     private authService: AuthService,
-    private academyService: AcademyService,
-    private healthService: HealthService,
+    private asistenciaService: AsistenciaService,
+    private evaluacionFisicaService: EvaluacionFisicaService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -46,8 +44,8 @@ export class StudentDashboardComponent implements OnInit {
       const inicioAnio = `${new Date().getFullYear()}-01-01`;
 
       const [resClases, resEvals] = await Promise.all([
-        this.academyService.getClasesAlumno(user.id as string, inicioAnio),
-        this.healthService.getEvaluacionesAlumno(user.id as string)
+        this.asistenciaService.getClasesAlumno(user.id, inicioAnio),
+        this.evaluacionFisicaService.getEvaluacionesAlumno(user.id)
       ]);
 
       // 1. Procesar Clases y Asistencia
@@ -55,10 +53,10 @@ export class StudentDashboardComponent implements OnInit {
         this.procesarClases(resClases.data);
       }
 
-      // 2. Procesar Última Evaluación
+      // 2. Procesar Última Evaluación Física
       if (resEvals.data && resEvals.data.length > 0) {
         
-        // 🔥 FILTRO: Solo tomamos las que vengan con estado finalizado
+        // FILTRO: Solo tomamos las que vengan con estado finalizado
         const evaluacionesCompletadas = resEvals.data.filter((e: any) => {
            const estado = e.estado_sesion || '';
            return estado.toUpperCase() === 'FINALIZADA' || estado.toUpperCase() === 'FINALIZADO';

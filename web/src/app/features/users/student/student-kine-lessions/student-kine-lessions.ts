@@ -6,9 +6,8 @@ import { MessageService } from 'primeng/api';
 import { TableModule } from 'primeng/table';
 import { ToastModule } from 'primeng/toast';
 
-// Servicios
-import { HealthService } from '../../../../shared/services/health.service'; 
 import { AuthService } from '../../../../core/services/auth.service';     
+import { KinesiologiaService } from '../../../../core/services/modulos/salud/kine.service';
 
 @Component({
   selector: 'app-student-kine-lessions',
@@ -20,7 +19,7 @@ import { AuthService } from '../../../../core/services/auth.service';
   ],
   providers: [MessageService],
   templateUrl: './student-kine-lessions.html',
-  styleUrls: ['./student-kine-lessions.css'] // Utiliza el mismo CSS
+  styleUrls: ['./student-kine-lessions.css']
 })
 export class StudentKineLessionsComponent implements OnInit {
 
@@ -30,7 +29,7 @@ export class StudentKineLessionsComponent implements OnInit {
 
   constructor(
     private messageService: MessageService,
-    private healthService: HealthService,
+    private kinesiologiaService: KinesiologiaService,
     private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -61,8 +60,7 @@ export class StudentKineLessionsComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      // Pide el historial usando el ID del estudiante logueado
-      const { data, error } = await this.healthService.getHistorialClinico(this.usuarioActualId);
+      const { data, error } = await this.kinesiologiaService.getHistorialClinico(this.usuarioActualId);
       if (error) throw error;
       
       this.listaLesiones = data || [];

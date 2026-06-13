@@ -11,9 +11,9 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
-// Servicios
-import { HealthService } from '../../../../shared/services/health.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { KinesiologiaService } from '../../../../core/services/modulos/salud/kine.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
 
 @Component({
   selector: 'app-student-kine-evaluation',
@@ -30,7 +30,7 @@ import { AuthService } from '../../../../core/services/auth.service';
   ],
   providers: [MessageService],
   templateUrl: './student-kine-evaluation.html',
-  styleUrls: ['./student-kine-evaluation.css'] // Utiliza el mismo CSS
+  styleUrls: ['./student-kine-evaluation.css']
 })
 export class StudentKineEvaluationComponent implements OnInit {
 
@@ -48,8 +48,9 @@ export class StudentKineEvaluationComponent implements OnInit {
   cargandoResultados: boolean = false;
 
   constructor(
-    private healthService: HealthService,
     private authService: AuthService,
+    private kinesiologiaService: KinesiologiaService,
+    private usuariosService: UsuariosService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -76,19 +77,14 @@ export class StudentKineEvaluationComponent implements OnInit {
 
   async cargarCatalogos() {
     try {
-      // 1. Cargamos los rangos de colores para pintar las notas
-      const resRangos = await this.healthService.getRangosEvaluacion();
+      const resRangos = await this.kinesiologiaService.getRangosEvaluacion();
       if (resRangos.data) this.rangos = resRangos.data;
 
-      // 2. Buscamos a qué grupo pertenece el estudiante actual
-      const { data: est, error } = await this.healthService['supabase']
-        .from('estudiantes')
-        .select('grupo_id')
-        .eq('id', this.usuarioActualId)
-        .single();
-      
-      if (error) throw error;
-      if (est) this.grupoId = est.grupo_id;
+      if (this.usuarioActualId) {
+          const { data: est, error } = await this.usuariosService.getEstudianteById(this.usuarioActualId);
+          if (error) throw error;
+          if (est) this.grupoId = est.grupo_id;
+      }
 
     } catch (error) {
       console.error('Error catálogos:', error);
@@ -102,13 +98,7 @@ export class StudentKineEvaluationComponent implements OnInit {
     this.cdr.detectChanges();
     
     try {
-      // Traemos solo las sesiones del grupo del estudiante que ya estén FINALIZADAS
-      const { data, error } = await this.healthService['supabase']
-        .from('evaluaciones_sesiones_kine')
-        .select('*, tipo_evaluacion:tipo_evaluacion_id(nombre)')
-        .eq('grupo_id', this.grupoId)
-        .eq('estado', 'FINALIZADO') 
-        .order('fecha', { ascending: false });
+      const { data, error } = await this.kinesiologiaService.getSesionesKineFinalizadasPorGrupo(this.grupoId);
 
       if (error) throw error;
       
@@ -144,15 +134,12 @@ export class StudentKineEvaluationComponent implements OnInit {
 
     try {
       // 1. Obtener la estructura de la prueba (los parámetros)
-      const { data: subs } = await this.healthService.getSubEvaluacionesPorTipo(sesion.tipo_evaluacion_id);
+      const { data: subs } = await this.kinesiologiaService.getSubEvaluacionesPorTipo(sesion.tipo_evaluacion_id);
       const subevaluacionesDefinidas = subs || [];
 
-      // 2. Obtener SOLAMENTE los resultados del estudiante logueado
-      const { data: res, error: errRes } = await this.healthService['supabase']
-        .from('evaluaciones_resultados_kine')
-        .select('*')
-        .eq('sesion_id', sesion.id)
-        .eq('estudiante_id', this.usuarioActualId);
+      if (!this.usuarioActualId) throw new Error("Usuario no identificado");
+      
+      const { data: res, error: errRes } = await this.kinesiologiaService.getResultadosAlumnoKine(sesion.id, this.usuarioActualId);
 
       if (errRes) throw errRes;
       const resultadosPrevios = res || [];

@@ -45,4 +45,36 @@ export class AsistenciaService {
 
     return { data: procesados, error: null };
   }
+
+  // ==========================================
+  // ESTADÍSTICAS Y VISTA DE ALUMNOS
+  // ==========================================
+
+  async getClasesAlumno(estudianteId: string, fechaInicio: string) {
+    const { data, error } = await this.supabase
+      .from('asistencia')
+      .select(`
+        presente,
+        clases!inner (
+          id,
+          fecha,
+          hora,
+          lugar,
+          grupo_id
+        )
+      `)
+      .eq('estudiante_id', estudianteId)
+      .gte('clases.fecha', fechaInicio)
+      .order('clases(fecha)', { ascending: false });
+
+    if (error) return { data: null, error };
+
+    // Aplanamos el resultado para que el componente lo lea exactamente como lo espera: { fecha, hora, presente... }
+    const clasesFormateadas = data.map((registro: any) => ({
+      ...registro.clases,
+      presente: registro.presente
+    }));
+
+    return { data: clasesFormateadas, error: null };
+  }
 }

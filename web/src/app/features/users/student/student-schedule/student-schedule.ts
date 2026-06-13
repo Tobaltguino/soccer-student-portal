@@ -12,9 +12,8 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 
-// 🚀 CAMBIO 1: Importamos los servicios de dominio correspondientes
 import { AuthService } from '../../../../core/services/auth.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
+import { AsistenciaService } from '../../../../core/services/modulos/academico/asistencia.service';
 
 @Component({
   selector: 'app-student-schedule',
@@ -86,9 +85,8 @@ export class StudentScheduleComponent implements OnInit {
   loading: boolean = true;
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos los servicios especializados
     private authService: AuthService,
-    private academyService: AcademyService,
+    private asistenciaService: AsistenciaService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -99,15 +97,13 @@ export class StudentScheduleComponent implements OnInit {
   async cargarClasesCalendario() {
     this.loading = true;
     try {
-      // 🚀 CAMBIO 3: Validación segura con AuthService
       const { data: { user } } = await this.authService.getUser();
       
-      if (user) {
+      if (user && user.id) {
         const hoy = new Date();
         const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
         
-        // 🚀 CAMBIO 4: Usamos AcademyService para obtener las clases y asistencias del alumno
-        const { data, error } = await this.academyService.getClasesAlumno(user.id as string, inicioMes);
+        const { data, error } = await this.asistenciaService.getClasesAlumno(user.id, inicioMes);
 
         if (error) throw error;
 

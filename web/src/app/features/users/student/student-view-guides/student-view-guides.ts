@@ -11,8 +11,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { DatePickerModule } from 'primeng/datepicker'; 
 import { SelectModule } from 'primeng/select';
 
-// 🚀 CAMBIO 1: Importamos el ContentService (Adiós SupabaseService)
-import { ContentService } from '../../../../shared/services/content.service';
+import { MaterialCompService } from '../../../../core/services/modulos/academico/material-compl.service';
 
 @Component({
   selector: 'app-student-view-guides',
@@ -41,7 +40,7 @@ export class StudentViewGuidesComponent implements OnInit {
   filtroFecha: Date | null = null;
   filtroArea: string | null = null;
 
-  // ✅ Opciones exactas para la base de datos
+  // Opciones exactas para la base de datos
   tiposMaterial = [
     { label: 'Técnico / Físico', value: 'TECNICO_FISICO' },
     { label: 'Nutrición', value: 'NUTRICION' },
@@ -49,8 +48,7 @@ export class StudentViewGuidesComponent implements OnInit {
   ];
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos nuestro servicio de contenido
-    private contentService: ContentService,
+    private materialCompService: MaterialCompService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -63,8 +61,7 @@ export class StudentViewGuidesComponent implements OnInit {
     this.cdr.detectChanges(); 
 
     try {
-      // 🚀 CAMBIO 3: Usamos ContentService para traer el material educativo
-      const { data, error } = await this.contentService.getGuias();
+      const { data, error } = await this.materialCompService.getGuias();
       if (error) throw error;
       
       this.guias = data || [];
@@ -114,7 +111,7 @@ export class StudentViewGuidesComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // ✅ Helper visual para mostrar el nombre del área en la tabla
+  // Helper visual para mostrar el nombre del área en la tabla
   getNombreArea(valor: string): string {
     const area = this.tiposMaterial.find(t => t.value === valor);
     return area ? area.label : 'General';

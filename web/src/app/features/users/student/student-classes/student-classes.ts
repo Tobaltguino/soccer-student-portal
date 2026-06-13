@@ -10,9 +10,8 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
 
-// 🚀 CAMBIO 1: Importamos los servicios de dominio
 import { AuthService } from '../../../../core/services/auth.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
+import { AsistenciaService } from '../../../../core/services/modulos/academico/asistencia.service';
 
 @Component({
   selector: 'app-student-classes',
@@ -43,9 +42,8 @@ export class StudentClassesComponent implements OnInit {
   selectedClase: any = null;
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos los servicios especializados
     private authService: AuthService,
-    private academyService: AcademyService,
+    private asistenciaService: AsistenciaService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -56,7 +54,6 @@ export class StudentClassesComponent implements OnInit {
   async cargarClases() {
     this.loading = true;
     try {
-      // 🚀 CAMBIO 3: Validación segura con AuthService
       const { data: { user } } = await this.authService.getUser();
       
       if (user && user.id) {
@@ -64,8 +61,7 @@ export class StudentClassesComponent implements OnInit {
         seisMesesAtras.setMonth(seisMesesAtras.getMonth() - 6);
         const fechaLimiteStr = seisMesesAtras.toISOString().split('T')[0];
 
-        // 🚀 CAMBIO 4: Usamos AcademyService para obtener el historial del alumno
-        const { data, error } = await this.academyService.getClasesAlumno(user.id, fechaLimiteStr);
+        const { data, error } = await this.asistenciaService.getClasesAlumno(user.id, fechaLimiteStr);
         if (error) throw error;
 
         this.clasesOriginales = (data || []).sort((a: any, b: any) => {

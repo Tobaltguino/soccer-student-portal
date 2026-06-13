@@ -72,5 +72,22 @@ export class KinesiologiaService {
   async getResultadosPorSesionKine(sesionId: string) { return await this.supabase.from('evaluaciones_resultados_kine').select('*').eq('sesion_id', sesionId); }
   async guardarResultadoKine(resultados: any[]) { return await this.supabase.from('evaluaciones_resultados_kine').upsert(resultados, { onConflict: 'sesion_id,estudiante_id,subevaluacion_id' }); }
   async getRangosEvaluacion() { return await this.supabase.from('evaluacion_rangos_kine').select('*'); }
+
+  async getSesionesKineFinalizadasPorGrupo(grupoId: number) {
+    return await this.supabase
+      .from('evaluaciones_sesiones_kine')
+      .select('*, tipo_evaluacion:tipo_evaluacion_id(nombre)')
+      .eq('grupo_id', grupoId)
+      .eq('estado', 'FINALIZADO')
+      .order('fecha', { ascending: false });
+  }
+
+  async getResultadosAlumnoKine(sesionId: number, estudianteId: string) {
+    return await this.supabase
+      .from('evaluaciones_resultados_kine')
+      .select('*')
+      .eq('sesion_id', sesionId)
+      .eq('estudiante_id', estudianteId);
+  }
 }
 

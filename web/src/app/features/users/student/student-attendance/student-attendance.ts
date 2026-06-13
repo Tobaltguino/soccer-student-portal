@@ -8,9 +8,8 @@ import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
 import { ProgressBarModule } from 'primeng/progressbar';
 
-// 🚀 CAMBIO 1: Importamos los servicios de dominio (Adiós SupabaseService)
 import { AuthService } from '../../../../core/services/auth.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
+import { AsistenciaService } from '../../../../core/services/modulos/academico/asistencia.service';
 
 @Component({
   selector: 'app-student-attendance',
@@ -59,9 +58,8 @@ export class StudentAttendanceComponent implements OnInit {
   porcentajeAsistencia: number = 0;
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos los servicios especializados
     private authService: AuthService,
-    private academyService: AcademyService,
+    private asistenciaService: AsistenciaService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -75,14 +73,12 @@ export class StudentAttendanceComponent implements OnInit {
     this.cdr.detectChanges(); 
 
     try {
-      // 🚀 CAMBIO 3: Validación segura de usuario con AuthService
       const { data: { user } } = await this.authService.getUser();
       if (!user) return;
 
       const inicioAnio = `${this.selectedYear}-01-01`;
       
-      // 🚀 CAMBIO 4: Usamos AcademyService (que ya tiene la lógica de cruce de asistencias)
-      const { data, error } = await this.academyService.getClasesAlumno(user.id, inicioAnio);
+      const { data, error } = await this.asistenciaService.getClasesAlumno(user.id, inicioAnio);
 
       if (error) throw error;
       this.procesarEstadisticas(data || []);

@@ -11,9 +11,8 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
 
-// 🚀 CAMBIO 1: Importamos los servicios de dominio correspondientes
 import { AuthService } from '../../../../core/services/auth.service';
-import { HealthService } from '../../../../shared/services/health.service';
+import { EvaluacionFisicaService } from '../../../../core/services/modulos/academico/evaluacion-fisica.service';
 
 @Component({
   selector: 'app-student-evaluations',
@@ -40,9 +39,8 @@ export class StudentEvaluationsComponent implements OnInit {
   selectedEval: any = null;
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos los servicios especializados
     private authService: AuthService, 
-    private healthService: HealthService,
+    private evaluacionFisicaService: EvaluacionFisicaService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -61,10 +59,10 @@ export class StudentEvaluationsComponent implements OnInit {
         seisMesesAtras.setMonth(seisMesesAtras.getMonth() - 6); 
         const fechaDesde = seisMesesAtras.toISOString().split('T')[0];
 
-        const { data, error } = await this.healthService.getEvaluacionesAlumno(user.id as string);
+        const { data, error } = await this.evaluacionFisicaService.getEvaluacionesAlumno(user.id);
         if (error) throw error;
 
-        // 🔥 FILTRO: Dejamos pasar SOLO las evaluaciones cuya sesión esté FINALIZADA
+        // FILTRO: Dejamos pasar SOLO las evaluaciones cuya sesión esté FINALIZADA
         const evaluacionesCompletadas = (data || []).filter((e: any) => {
            const estado = e.estado_sesion || '';
            return estado.toUpperCase() === 'FINALIZADA' || estado.toUpperCase() === 'FINALIZADO';

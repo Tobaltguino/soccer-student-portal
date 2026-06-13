@@ -15,9 +15,8 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 
-// Servicios
-import { HealthService } from '../../../../shared/services/health.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { KinesiologiaService } from '../../../../core/services/modulos/salud/kine.service';
 
 @Component({
   selector: 'app-student-kine-evolution',
@@ -38,7 +37,7 @@ import { AuthService } from '../../../../core/services/auth.service';
   ],
   providers: [MessageService],
   templateUrl: './student-kine-evolution.html',
-  styleUrls: ['./student-kine-evolution.css'] // Usa el mismo CSS
+  styleUrls: ['./student-kine-evolution.css']
 })
 export class StudentKineEvolutionComponent implements OnInit {
 
@@ -66,8 +65,8 @@ export class StudentKineEvolutionComponent implements OnInit {
 
   constructor(
     private messageService: MessageService,
-    private healthService: HealthService,
     private authService: AuthService,
+    private kinesiologiaService: KinesiologiaService,
     private cdr: ChangeDetectorRef 
   ) {}
 
@@ -103,7 +102,7 @@ export class StudentKineEvolutionComponent implements OnInit {
     this.cdr.detectChanges(); 
 
     try {
-      const { data, error } = await this.healthService.getFichasPorEstudiante(this.usuarioActualId);
+      const { data, error } = await this.kinesiologiaService.getFichasPorEstudiante(this.usuarioActualId);
       if (error) throw error;
       this.historialFichas = data || [];
     } catch (error) {
