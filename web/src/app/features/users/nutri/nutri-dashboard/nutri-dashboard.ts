@@ -2,9 +2,8 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
-// 🚀 CAMBIO 1: Importamos los servicios de dominio
-import { AcademyService } from '../../../../shared/services/academy.service';
-import { HealthService } from '../../../../shared/services/health.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
+import { NutricionService } from '../../../../core/services/modulos/salud/nutri.service';
 
 @Component({
   selector: 'app-nutri-dashboard',
@@ -25,9 +24,8 @@ export class NutriDashboardComponent implements OnInit {
   estudiantes: any[] = [];
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos los servicios específicos en lugar del genérico
-    private academyService: AcademyService,
-    private healthService: HealthService,
+    private usuariosService: UsuariosService,
+    private nutricionService: NutricionService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -38,10 +36,9 @@ export class NutriDashboardComponent implements OnInit {
   async cargarDatosDashboard() {
     this.loading = true;
     try {
-      // 🚀 CAMBIO 3: Ejecutamos ambas promesas en paralelo para mayor velocidad
       const [resEstudiantes, resEvaluacion] = await Promise.all([
-        this.academyService.getEstudiantesActivos(),
-        this.healthService.getUltimaEvaluacionNutriFinalizada()
+        this.usuariosService.getEstudiantesActivos(),
+        this.nutricionService.getUltimaEvaluacionNutriFinalizada()
       ]);
 
       const estudiantes = resEstudiantes.data;
@@ -54,7 +51,6 @@ export class NutriDashboardComponent implements OnInit {
         this.procesarCumpleanos(estudiantes);
       }
 
-      // 🚀 CAMBIO 4: Asignamos la evaluación directamente gracias a maybeSingle()
       if (resEvaluacion.data) {
         this.ultimaEvaluacionGlobal = resEvaluacion.data;
       } else {

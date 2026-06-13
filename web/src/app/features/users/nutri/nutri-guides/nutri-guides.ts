@@ -11,8 +11,7 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 
-// 🚀 Servicios de dominio
-import { ContentService } from '../../../../shared/services/content.service';
+import { MaterialCompService } from '../../../../core/services/modulos/academico/material-compl.service';
 import { StorageService } from '../../../../core/services/storage.service';
 
 @Component({
@@ -43,7 +42,7 @@ export class NutriGuidesComponent implements OnInit {
   subiendoArchivo: boolean = false;
 
   constructor(
-    private contentService: ContentService,
+    private materialCompService: MaterialCompService,
     private storageService: StorageService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef
@@ -58,8 +57,7 @@ export class NutriGuidesComponent implements OnInit {
     this.cdr.detectChanges();
     
     try {
-      // Usamos ContentService y filtramos estrictamente por NUTRICION
-      const { data, error } = await this.contentService.getGuias(); 
+      const { data, error } = await this.materialCompService.getGuias(); 
       if (error) throw error;
 
       this.guias = (data || []).filter((g: any) => g.tipo_material === 'NUTRICION');
@@ -100,7 +98,6 @@ export class NutriGuidesComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      // ✅ AHORA SÍ: Usamos el método correcto de tu StorageService
       const urlFinal = await this.storageService.uploadGuiaFile(this.archivoSeleccionado, this.nuevaGuia.titulo);
       
       // Armamos el objeto forzando la categoría (Sello de seguridad)
@@ -111,8 +108,7 @@ export class NutriGuidesComponent implements OnInit {
         tipo_material: 'NUTRICION' // 🔒 Esta etiqueta categoriza el material automáticamente
       };
 
-      // Usamos ContentService para crear el registro
-      const { error } = await this.contentService.createGuia(guiaParaBD);
+      const { error } = await this.materialCompService.createGuia(guiaParaBD);
       if (error) throw error;
       
       this.messageService.add({ severity: 'success', summary: 'Publicado', detail: 'El material se subió correctamente.' });
