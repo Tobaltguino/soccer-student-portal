@@ -19,8 +19,9 @@ import { RadioButtonModule } from 'primeng/radiobutton';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 import { AuthService } from '../../../../core/services/auth.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
-import { HealthService } from '../../../../shared/services/health.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
+import { GruposService } from '../../../../core/services/modulos/academico/grupos.service';
+import { EvaluacionFisicaService } from '../../../../core/services/modulos/academico/evaluacion-fisica.service';
 
 @Component({
   selector: 'app-professor-evaluations',
@@ -42,7 +43,7 @@ export class ProfessorEvaluationsComponent implements OnInit {
   grupos: any[] = [];
   tiposEvaluacion: any[] = [];
   estudiantesGrupo: any[] = [];    
-  todosLosRangos: any[] = []; // <-- Rangos para la vista de resultados
+  todosLosRangos: any[] = []; 
 
   // --- FILTROS ---
   filtroFecha: Date | null = null;
@@ -59,7 +60,7 @@ export class ProfessorEvaluationsComponent implements OnInit {
   loading: boolean = true;
   displayMainDialog: boolean = false;   
   displayGradesDialog: boolean = false; 
-  displayViewDialog: boolean = false; // <-- Modal del Ojo
+  displayViewDialog: boolean = false; 
 
   resultadosVista: any[] = []; 
   sesionVista: any = null; 
@@ -74,8 +75,9 @@ export class ProfessorEvaluationsComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private academyService: AcademyService,
-    private healthService: HealthService,
+    private usuariosService: UsuariosService,
+    private gruposService: GruposService,
+    private evaluacionFisicaService: EvaluacionFisicaService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -93,26 +95,25 @@ export class ProfessorEvaluationsComponent implements OnInit {
       const { data: { user } } = await this.authService.getUser();
       if (!user || !user.email) return;
 
-      const { data: prof } = await this.academyService.getProfesorByEmail(user.email);
+      // 🚀 CAMBIO 3: Usamos usuariosService
+      const { data: prof } = await this.usuariosService.getProfesorByEmail(user.email);
 
       if (prof) {
-        const { data: gruposData } = await this.academyService.getGruposDeProfesor(prof.id);
+        const { data: gruposData } = await this.gruposService.getGruposDeProfesor(prof.id);
         
         this.grupos = gruposData ? gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null) : [];
         const misGrupoIds = this.grupos.map(g => g.id);
 
-        const { data: tData } = await this.healthService.getTiposEvaluacion();
+        const { data: tData } = await this.evaluacionFisicaService.getTiposEvaluacion();
         this.tiposEvaluacion = tData || [];
 
-        // Traemos también los rangos
-        const { data: rData } = await this.healthService.getAllRangos();
+        const { data: rData } = await this.evaluacionFisicaService.getAllRangos();
         this.todosLosRangos = rData || [];
 
         if (misGrupoIds.length > 0) {
-          const { data: sData, error: errorSesiones } = await this.healthService.getSesionesEvaluacionPorGrupos(misGrupoIds);
+          const { data: sData, error: errorSesiones } = await this.evaluacionFisicaService.getSesionesEvaluacionPorGrupos(misGrupoIds);
           
           if (!errorSesiones) {
-             // 🔥 SOLUCIÓN: Mapeamos manualmente para asegurar que exista tipo_evaluacion y grupos
              this.sesionesOriginales = (sData || []).map((s: any) => ({
                  ...s,
                  tipo_evaluacion: s.tipo_evaluacion || this.tiposEvaluacion.find(t => t.id === s.tipo_evaluacion_id),
@@ -232,9 +233,9 @@ export class ProfessorEvaluationsComponent implements OnInit {
     try {
       let result;
       if (this.evalLogistica.id) {
-          result = await this.healthService.updateSesionEvaluacion(this.evalLogistica.id, payload);
+          result = await this.evaluacionFisicaService.updateSesionEvaluacion(this.evalLogistica.id, payload);
       } else {
-          result = await this.healthService.crearSesionEvaluacion(payload);
+          result = await this.evaluacionFisicaService.crearSesionEvaluacion(payload);
       }
 
       if (result.error) throw result.error;
@@ -257,8 +258,8 @@ export class ProfessorEvaluationsComponent implements OnInit {
 
     try {
       const [resAlumnos, resResultados] = await Promise.all([
-         this.academyService.getAlumnosPorGrupo(sesion.grupo_id),
-         this.healthService.getResultadosPorSesion(sesion.id)
+         this.usuariosService.getAlumnosPorGrupo(sesion.grupo_id),
+         this.evaluacionFisicaService.getResultadosPorSesion(sesion.id)
       ]);
 
       const alumnos = resAlumnos.data || [];
@@ -307,7 +308,7 @@ export class ProfessorEvaluationsComponent implements OnInit {
 
     this.loading = true;
     try {
-      const { error } = await this.healthService.guardarResultadosMasivos(notasAGuardar);
+      const { error } = await this.evaluacionFisicaService.guardarResultadosMasivos(notasAGuardar);
       if (error) throw error; 
 
       this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Resultados actualizados correctamente' });
@@ -330,8 +331,8 @@ export class ProfessorEvaluationsComponent implements OnInit {
       this.cdr.detectChanges();
 
       try {
-          const { data: alumnos } = await this.academyService.getAlumnosPorGrupo(sesion.grupo_id);
-          const resultadosBrutos = await this.healthService.prepararPlanillaCalificaciones(
+          const { data: alumnos } = await this.usuariosService.getAlumnosPorGrupo(sesion.grupo_id);
+          const resultadosBrutos = await this.evaluacionFisicaService.prepararPlanillaCalificaciones(
               sesion.grupo_id, 
               sesion.id, 
               alumnos || []

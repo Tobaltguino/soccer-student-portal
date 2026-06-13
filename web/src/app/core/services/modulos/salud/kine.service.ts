@@ -62,6 +62,7 @@ export class KinesiologiaService {
   async eliminarTipoEvaluacionKine(id: string) { return await this.supabase.from('tipos_evaluacion_kine').delete().eq('id', id); }
   
   async getEvaluacionesKine() { return await this.supabase.from('evaluaciones_sesiones_kine').select('*, tipo_evaluacion:tipo_evaluacion_id(nombre)').order('fecha', { ascending: false }); }
+  async getSesionesEvaluacionPorGruposKine(grupoIds: number[]) {return await this.supabase.from('evaluaciones_sesiones_kine').select('*, tipo_evaluacion:tipo_evaluacion_id(nombre)').in('grupo_id', grupoIds).order('fecha', { ascending: false });}
   async crearEvaluacionKine(evaluacion: any) { return await this.supabase.from('evaluaciones_sesiones_kine').insert(evaluacion).select().single(); }
   async actualizarEvaluacionKine(id: string, evaluacion: any) { return await this.supabase.from('evaluaciones_sesiones_kine').update(evaluacion).eq('id', id).select().single(); }
   async eliminarEvaluacionKine(id: string) { return await this.supabase.from('evaluaciones_sesiones_kine').delete().eq('id', id); }
@@ -72,3 +73,4 @@ export class KinesiologiaService {
   async guardarResultadoKine(resultados: any[]) { return await this.supabase.from('evaluaciones_resultados_kine').upsert(resultados, { onConflict: 'sesion_id,estudiante_id,subevaluacion_id' }); }
   async getRangosEvaluacion() { return await this.supabase.from('evaluacion_rangos_kine').select('*'); }
 }
+

@@ -8,9 +8,10 @@ import { TableModule } from 'primeng/table';
 import { SelectModule } from 'primeng/select';
 import { ToastModule } from 'primeng/toast';
 
-// Servicios
-import { HealthService } from '../../../../shared/services/health.service'; 
 import { AuthService } from '../../../../core/services/auth.service';     
+import { KinesiologiaService } from '../../../../core/services/modulos/salud/kine.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
+import { GruposService } from '../../../../core/services/modulos/academico/grupos.service';
 
 @Component({
   selector: 'app-professor-kine-lessions',
@@ -24,7 +25,7 @@ import { AuthService } from '../../../../core/services/auth.service';
   ],
   providers: [MessageService],
   templateUrl: './professor-kine-lessions.html',
-  styleUrls: ['./professor-kine-lessions.css'] // Utiliza el mismo CSS
+  styleUrls: ['./professor-kine-lessions.css']
 })
 export class ProfessorKineLessionsComponent implements OnInit {
 
@@ -37,8 +38,10 @@ export class ProfessorKineLessionsComponent implements OnInit {
 
   constructor(
     private messageService: MessageService,
-    private healthService: HealthService,
     private authService: AuthService,
+    private kinesiologiaService: KinesiologiaService,
+    private usuariosService: UsuariosService,
+    private gruposService: GruposService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -50,7 +53,12 @@ export class ProfessorKineLessionsComponent implements OnInit {
   async obtenerUsuarioActual() {
     try {
       const { data: { user } } = await this.authService.getUser();
-      if (user) this.usuarioActualId = user.id; 
+      if (user && user.email) {
+        const { data: prof } = await this.usuariosService.getProfesorByEmail(user.email);
+        if (prof) {
+          this.usuarioActualId = prof.id; 
+        }
+      }
     } catch (error) {
       console.error("Error obteniendo usuario", error);
     }
@@ -60,11 +68,7 @@ export class ProfessorKineLessionsComponent implements OnInit {
     try {
       if (!this.usuarioActualId) return;
 
-      // 1. Obtenemos los grupos asignados al profesor
-      const { data: gruposProfe, error: errGrupos } = await this.healthService['supabase']
-        .from('grupos_profesores') 
-        .select('grupo_id')
-        .eq('profesor_id', this.usuarioActualId);
+      const { data: gruposProfe, error: errGrupos } = await this.gruposService.getGruposDeProfesor(this.usuarioActualId);
 
       if (errGrupos) throw errGrupos;
 
@@ -75,11 +79,7 @@ export class ProfessorKineLessionsComponent implements OnInit {
 
       const grupoIds = gruposProfe.map((g: any) => g.grupo_id);
 
-      // 2. Buscamos los estudiantes que pertenecen a esos grupos
-      const { data, error }: any = await this.healthService['supabase']
-        .from('estudiantes')
-        .select('id, nombre, apellido, rut, grupo_id')
-        .in('grupo_id', grupoIds);
+      const { data, error } = await this.usuariosService.getTodosEstudiantesPorGrupos(grupoIds);
 
       if (error) throw error;
 
@@ -111,7 +111,7 @@ export class ProfessorKineLessionsComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      const { data, error } = await this.healthService.getHistorialClinico(this.alumnoSeleccionado.id);
+      const { data, error } = await this.kinesiologiaService.getHistorialClinico(this.alumnoSeleccionado.id);
       if (error) throw error;
       this.listaLesiones = data || [];
     } catch (error) {

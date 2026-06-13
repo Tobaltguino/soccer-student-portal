@@ -2,10 +2,12 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 
-// 🚀 Servicios de dominio
 import { AuthService } from '../../../../core/services/auth.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
-import { HealthService } from '../../../../shared/services/health.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
+import { GruposService } from '../../../../core/services/modulos/academico/grupos.service';
+import { ClasesService } from '../../../../core/services/modulos/academico/clases.service';
+import { EvaluacionFisicaService } from '../../../../core/services/modulos/academico/evaluacion-fisica.service';
+import { KinesiologiaService } from '../../../../core/services/modulos/salud/kine.service';
 
 @Component({
   selector: 'app-professor-dashboard',
@@ -23,7 +25,7 @@ export class ProfessorDashboardComponent implements OnInit {
   ultimaEvaluacion: any = null;
   totalAlumnos: number = 0;
 
-  // 🔥 NUEVOS KPIs DE SALUD (Para los grupos del profe)
+  // KPIs DE SALUD
   pacientesEnTratamiento: number = 0;
   pacientesEnObservacion: number = 0;
   pacientesEnReintegro: number = 0;
@@ -37,8 +39,11 @@ export class ProfessorDashboardComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private academyService: AcademyService,
-    private healthService: HealthService,
+    private usuariosService: UsuariosService,
+    private gruposService: GruposService,
+    private clasesService: ClasesService,
+    private evaluacionFisicaService: EvaluacionFisicaService,
+    private kinesiologiaService: KinesiologiaService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
@@ -74,30 +79,27 @@ export class ProfessorDashboardComponent implements OnInit {
       const { data: { user } } = await this.authService.getUser();
       if (!user?.email) return;
 
-      const { data: prof } = await this.academyService.getProfesorByEmail(user.email);
+      const { data: prof } = await this.usuariosService.getProfesorByEmail(user.email);
       if (!prof) return;
 
-      const { data: gruposData } = await this.academyService.getGruposDeProfesor(prof.id);
+      const { data: gruposData } = await this.gruposService.getGruposDeProfesor(prof.id);
       this.misGrupos = gruposData ? gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null) : [];
       const misGrupoIds = this.misGrupos.map(g => g.id);
 
       if (misGrupoIds.length > 0) {
         const hoyStr = new Date().toISOString().split('T')[0];
 
-        // 3. Clases
-        const { data: clases } = await this.academyService.getClasesPorGrupos(misGrupoIds, hoyStr);
+        const { data: clases } = await this.clasesService.getClasesPorGrupos(misGrupoIds, hoyStr);
         const todasClases = clases || [];
         this.clasesHoy = todasClases.filter((c: any) => c.fecha === hoyStr);
         this.proximaClase = todasClases.length > 0 ? todasClases[0] : null;
 
-        // 4. Evaluaciones
-        const { data: evals } = await this.healthService.getSesionesEvaluacionPorGrupos(misGrupoIds);
+        const { data: evals } = await this.evaluacionFisicaService.getSesionesEvaluacionPorGrupos(misGrupoIds);
         if (evals && evals.length > 0) {
           this.ultimaEvaluacion = evals[0];
         }
 
-        // 5. Alumnos y Salud
-        const { data: alumnos } = await this.academyService.getTodosEstudiantesPorGrupos(misGrupoIds, true);
+        const { data: alumnos } = await this.usuariosService.getTodosEstudiantesPorGrupos(misGrupoIds, true);
 
         if (alumnos) {
           this.totalAlumnos = alumnos.length;
@@ -105,12 +107,7 @@ export class ProfessorDashboardComponent implements OnInit {
 
           const alumnoIds = alumnos.map((a: any) => a.id);
 
-          // 🔥 LÓGICA DE SALUD: Consultamos estados para los alumnos de ESTE profesor
-          const { data: historiales } = await this.healthService['supabase']
-            .from('historial_clinico')
-            .select('estudiante_id, estado')
-            .in('estudiante_id', alumnoIds)
-            .in('estado', ['EN_TRATAMIENTO', 'EN_OBSERVACION', 'EN_REINTEGRO_DEPORTIVO']);
+          const { data: historiales } = await this.kinesiologiaService.getEstadosClinicosAlumnos(alumnoIds);
 
           if (historiales) {
               const setTratamiento = new Set();

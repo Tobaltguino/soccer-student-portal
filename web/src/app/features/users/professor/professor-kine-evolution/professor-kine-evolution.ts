@@ -15,9 +15,10 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 
-// Servicios
-import { HealthService } from '../../../../shared/services/health.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { KinesiologiaService } from '../../../../core/services/modulos/salud/kine.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
+import { GruposService } from '../../../../core/services/modulos/academico/grupos.service';
 
 @Component({
   selector: 'app-professor-kine-evolution',
@@ -65,8 +66,10 @@ export class ProfessorKineEvolutionComponent implements OnInit {
 
   constructor(
     private messageService: MessageService,
-    private healthService: HealthService,
     private authService: AuthService,
+    private kinesiologiaService: KinesiologiaService,
+    private usuariosService: UsuariosService,
+    private gruposService: GruposService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -78,30 +81,32 @@ export class ProfessorKineEvolutionComponent implements OnInit {
   async obtenerUsuarioActual() {
     try {
       const { data: { user } } = await this.authService.getUser();
-      if (user) this.usuarioActualId = user.id;
-    } catch (error) { console.error(error); }
+      if (user && user.email) {
+        const { data: prof } = await this.usuariosService.getProfesorByEmail(user.email);
+        if(prof) {
+            this.usuarioActualId = prof.id;
+        }
+      }
+    } catch (error) { 
+      console.error(error); 
+    }
   }
 
   async cargarAlumnos() {
     try {
       if (!this.usuarioActualId) return;
 
-      // Obtenemos los grupos del profesor
-      const { data: gruposProfe } = await this.healthService['supabase']
-        .from('grupos_profesores') 
-        .select('grupo_id')
-        .eq('profesor_id', this.usuarioActualId);
+      const { data: gruposProfe, error: errGrupos } = await this.gruposService.getGruposDeProfesor(this.usuarioActualId);
+      if (errGrupos) throw errGrupos;
 
       if (gruposProfe && gruposProfe.length > 0) {
         const grupoIds = gruposProfe.map((g: any) => g.grupo_id);
 
-        const { data, error }: any = await this.healthService['supabase']
-          .from('estudiantes')
-          .select('id, nombre, apellido, rut')
-          .in('grupo_id', grupoIds);
+        const { data, error } = await this.usuariosService.getTodosEstudiantesPorGrupos(grupoIds);
 
         if (error) throw error;
-        this.listaAlumnos = data.map((a: any) => ({
+        
+        this.listaAlumnos = (data || []).map((a: any) => ({
           ...a, nombreCompleto: `${a.nombre} ${a.apellido} ${a.rut ? '('+a.rut+')' : ''}`
         }));
       }
@@ -126,7 +131,7 @@ export class ProfessorKineEvolutionComponent implements OnInit {
     this.cargandoHistorial = true;
     this.cdr.detectChanges();
     try {
-      const { data, error } = await this.healthService.getFichasPorEstudiante(this.alumnoSeleccionado.id);
+      const { data, error } = await this.kinesiologiaService.getFichasPorEstudiante(this.alumnoSeleccionado.id);
       if (error) throw error;
       this.historialFichas = data || [];
     } catch (error) {

@@ -2,8 +2,7 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms'; 
 
-// 🚀 CAMBIO 1: Importamos el ContentService (Adiós SupabaseService)
-import { ContentService } from '../../../../shared/services/content.service';
+import { MaterialCompService } from '../../../../core/services/modulos/academico/material-compl.service';
 
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
@@ -41,7 +40,7 @@ export class ProfessorViewGuidesComponent implements OnInit {
   filtroFecha: Date | null = null;
   filtroArea: string | null = null;
 
-  // ✅ Opciones exactas para la base de datos
+  // Opciones exactas para la base de datos
   tiposMaterial = [
     { label: 'Técnico / Físico', value: 'TECNICO_FISICO' },
     { label: 'Nutrición', value: 'NUTRICION' },
@@ -49,8 +48,7 @@ export class ProfessorViewGuidesComponent implements OnInit {
   ];
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos nuestro servicio especializado
-    private contentService: ContentService,
+    private materialCompService: MaterialCompService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -63,8 +61,7 @@ export class ProfessorViewGuidesComponent implements OnInit {
     this.cdr.detectChanges(); 
 
     try {
-      // 🚀 CAMBIO 3: Usamos ContentService para traer los datos
-      const { data, error } = await this.contentService.getGuias();
+      const { data, error } = await this.materialCompService.getGuias();
       if (error) throw error;
       
       this.guiasOriginales = data || [];
@@ -114,7 +111,7 @@ export class ProfessorViewGuidesComponent implements OnInit {
     this.aplicarFiltros(); 
   }
 
-  // ✅ Helper visual para mostrar el nombre del área en la tabla
+  // Helper visual para mostrar el nombre del área en la tabla
   getNombreArea(valor: string): string {
     const area = this.tiposMaterial.find(t => t.value === valor);
     return area ? area.label : 'General';

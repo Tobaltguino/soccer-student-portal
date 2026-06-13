@@ -17,4 +17,18 @@ export class GruposService {
   async getPosiciones() {
     return await this.supabase.from('posiciones').select('*').order('orden', { ascending: true });
   }
+
+  // ==========================================
+  // ASIGNACIONES DE PROFESORES
+  // ==========================================
+  
+  async getGruposDeProfesor(profesorId: string) {
+    return await this.supabase
+      .from('grupos_profesores')
+      .select(`
+        grupo_id,
+        grupos (*)
+      `)
+      .eq('profesor_id', profesorId);
+  }
 }

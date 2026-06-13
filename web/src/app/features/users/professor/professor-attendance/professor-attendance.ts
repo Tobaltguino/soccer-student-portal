@@ -13,9 +13,10 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
-// 🚀 CAMBIO 1: Importamos los servicios de dominio (Auth y Academy)
 import { AuthService } from '../../../../core/services/auth.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
+import { AsistenciaService } from '../../../../core/services/modulos/academico/asistencia.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
+import { GruposService } from '../../../../core/services/modulos/academico/grupos.service';
 
 @Component({
   selector: 'app-professor-attendance',
@@ -55,9 +56,10 @@ export class ProfessorAttendanceComponent implements OnInit {
   filtroAnio: number = new Date().getFullYear();
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos nuestros servicios especializados
     private authService: AuthService,
-    private academyService: AcademyService,
+    private asistenciaService: AsistenciaService,
+    private usuariosService: UsuariosService,
+    private gruposService: GruposService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -66,21 +68,15 @@ export class ProfessorAttendanceComponent implements OnInit {
     await this.cargarGrupos();
   }
 
-  /**
-   * Carga los grupos asignados al profesor logueado
-   */
   async cargarGrupos() {
     this.loading = true;
     try {
-      // 🚀 CAMBIO 3: Usamos AuthService
       const { data: { user } } = await this.authService.getUser();
       if (!user?.email) return;
 
-      // 🚀 CAMBIO 4: Usamos la nueva función del AcademyService
-      const { data: prof } = await this.academyService.getProfesorByEmail(user.email);
+      const { data: prof } = await this.usuariosService.getProfesorByEmail(user.email);
       if (prof) {
-        // 🚀 CAMBIO 5: Usamos AcademyService para los grupos
-        const { data: gruposData } = await this.academyService.getGruposDeProfesor(prof.id);
+        const { data: gruposData } = await this.gruposService.getGruposDeProfesor(prof.id);
         this.grupos = gruposData ? gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null) : [];
       }
     } catch (error) {
@@ -91,9 +87,6 @@ export class ProfessorAttendanceComponent implements OnInit {
     }
   }
 
-  /**
-   * Se ejecuta al cambiar de grupo o de mes/año en la vista principal
-   */
   async onFilterChange() {
     if (!this.grupoSeleccionado) {
       this.estudiantesAsistencia = [];
@@ -102,8 +95,7 @@ export class ProfessorAttendanceComponent implements OnInit {
 
     this.loading = true;
     try {
-      // 1. Obtener alumnos activos del grupo (🚀 CAMBIO 6: AcademyService)
-      const { data: alumnos } = await this.academyService.getAlumnosPorGrupo(this.grupoSeleccionado);
+      const { data: alumnos } = await this.usuariosService.getAlumnosPorGrupo(this.grupoSeleccionado);
       
       // 2. Definir rango de fechas válido
       const mesStr = ('0' + this.filtroMes).slice(-2);
@@ -111,8 +103,8 @@ export class ProfessorAttendanceComponent implements OnInit {
       const ultimoDiaNum = new Date(this.filtroAnio, this.filtroMes, 0).getDate();
       const ultimoDia = `${this.filtroAnio}-${mesStr}-${ultimoDiaNum}`;
 
-      // 3. Obtener asistencias del grupo en ese rango (🚀 CAMBIO 7: AcademyService)
-      const { data: asistenciasMes, error } = await this.academyService.getAsistenciasPorGrupoYFechas(
+      // 3. Obtener asistencias del grupo en ese rango (🚀 CAMBIO 6: AsistenciaService)
+      const { data: asistenciasMes, error } = await this.asistenciaService.getAsistenciasPorGrupoYFechas(
         this.grupoSeleccionado, primerDia, ultimoDia
       );
 
@@ -140,18 +132,12 @@ export class ProfessorAttendanceComponent implements OnInit {
     }
   }
 
-  /**
-   * Abre el modal de historial detallado
-   */
   async verHistorialIndividual(alumno: any) {
     this.alumnoSeleccionado = alumno;
     this.displayHistorial = true;
     await this.cargarDetalleHistorial();
   }
 
-  /**
-   * Carga el detalle de asistencias día por día para el modal
-   */
   async cargarDetalleHistorial() {
     this.loadingHistorial = true;
     try {
@@ -160,8 +146,7 @@ export class ProfessorAttendanceComponent implements OnInit {
       const ultimoDiaNum = new Date(this.filtroAnio, this.filtroMes, 0).getDate();
       const ultimoDia = `${this.filtroAnio}-${mesStr}-${ultimoDiaNum}`;
 
-      // 🚀 CAMBIO 8: Usamos la nueva función del AcademyService
-      const { data, error } = await this.academyService.getHistorialAsistenciaAlumno(
+      const { data, error } = await this.asistenciaService.getHistorialAsistenciaAlumno(
         this.alumnoSeleccionado.id, primerDia, ultimoDia
       );
 

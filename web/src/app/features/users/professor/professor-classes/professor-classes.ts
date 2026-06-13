@@ -14,9 +14,11 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { ToastModule } from 'primeng/toast'; 
 import { MessageService } from 'primeng/api'; 
 
-// 🚀 CAMBIO 1: Importamos los servicios de dominio (Adiós SupabaseService)
 import { AuthService } from '../../../../core/services/auth.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
+import { GruposService } from '../../../../core/services/modulos/academico/grupos.service';
+import { ClasesService } from '../../../../core/services/modulos/academico/clases.service';
+import { AsistenciaService } from '../../../../core/services/modulos/academico/asistencia.service';
 
 @Component({
   selector: 'app-professor-classes',
@@ -68,9 +70,11 @@ export class ProfessorClassesComponent implements OnInit {
   ];
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos nuestros servicios especializados
     private authService: AuthService,
-    private academyService: AcademyService,
+    private usuariosService: UsuariosService,
+    private gruposService: GruposService,
+    private clasesService: ClasesService,
+    private asistenciaService: AsistenciaService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -83,16 +87,13 @@ export class ProfessorClassesComponent implements OnInit {
   async cargarGrupos() {
     this.loading = true;
     try {
-      // 🚀 CAMBIO 3: AuthService para obtener usuario
       const { data: { user } } = await this.authService.getUser();
-      if (!user || !user.email) return; // ✅ Ahora TypeScript sabe que el email existe
+      if (!user || !user.email) return; 
 
-      // 🚀 CAMBIO 4: AcademyService para el perfil de profesor
-      const { data: prof } = await this.academyService.getProfesorByEmail(user.email);
+      const { data: prof } = await this.usuariosService.getProfesorByEmail(user.email);
 
       if (prof) {
-        // 🚀 CAMBIO 5: AcademyService para sus grupos
-        const { data: gruposData } = await this.academyService.getGruposDeProfesor(prof.id);
+        const { data: gruposData } = await this.gruposService.getGruposDeProfesor(prof.id);
 
         if (gruposData && gruposData.length > 0) {
           this.grupos = gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null);
@@ -116,8 +117,7 @@ export class ProfessorClassesComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      // 🚀 CAMBIO 6: AcademyService para obtener las clases
-      const { data, error } = await this.academyService.getClasesPorGrupo(this.selectedGrupoId);
+      const { data, error } = await this.clasesService.getClasesPorGrupo(this.selectedGrupoId);
 
       if (error) throw error;
 
@@ -147,11 +147,9 @@ export class ProfessorClassesComponent implements OnInit {
     this.loadingAsistencia = true;
 
     try {
-      // 🚀 CAMBIO 7: AcademyService para los alumnos
-      const { data: alumnosGrupo } = await this.academyService.getAlumnosPorGrupo(clase.grupo_id);
+      const { data: alumnosGrupo } = await this.usuariosService.getAlumnosPorGrupo(clase.grupo_id);
       
-      // 🚀 CAMBIO 8: AcademyService para la asistencia previa (usando la nueva función)
-      const { data: asistenciaGuardada } = await this.academyService.getAsistenciaPorClase(clase.id);
+      const { data: asistenciaGuardada } = await this.asistenciaService.getAsistenciaPorClase(clase.id);
 
       if (alumnosGrupo) {
         this.alumnosAsistencia = alumnosGrupo.map((alumno: any) => {
@@ -179,8 +177,7 @@ export class ProfessorClassesComponent implements OnInit {
     }));
 
     try {
-      // 🚀 CAMBIO 9: AcademyService para guardar la asistencia masiva
-      const { error } = await this.academyService.guardarAsistenciaMasiva(registros);
+      const { error } = await this.asistenciaService.guardarAsistenciaMasiva(registros);
       
       if (!error) {
         this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Asistencia actualizada' });
@@ -272,13 +269,11 @@ export class ProfessorClassesComponent implements OnInit {
       };
 
       if (this.isEditing) {
-        // 🚀 CAMBIO 10: AcademyService para actualizar
-        const { error } = await this.academyService.actualizarClase(this.claseForm.id, payload);
+        const { error } = await this.clasesService.actualizarClase(this.claseForm.id, payload);
         if (error) throw error;
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Clase actualizada correctamente.' });
       } else {
-        // 🚀 CAMBIO 11: AcademyService para crear
-        const { error } = await this.academyService.crearClase(payload);
+        const { error } = await this.clasesService.crearClase(payload);
         if (error) throw error;
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Clase creada correctamente.' });
       }

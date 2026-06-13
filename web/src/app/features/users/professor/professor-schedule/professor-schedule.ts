@@ -13,9 +13,10 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
-// 🚀 CAMBIO 1: Importamos nuestros servicios de dominio
 import { AuthService } from '../../../../core/services/auth.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
+import { GruposService } from '../../../../core/services/modulos/academico/grupos.service';
+import { ClasesService } from '../../../../core/services/modulos/academico/clases.service';
 
 @Component({
   selector: 'app-professor-schedule',
@@ -91,9 +92,10 @@ export class ProfessorScheduleComponent implements OnInit {
   grupos: any[] = [];
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos los servicios especializados
     private authService: AuthService,
-    private academyService: AcademyService,
+    private usuariosService: UsuariosService,
+    private gruposService: GruposService,
+    private clasesService: ClasesService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -104,16 +106,13 @@ export class ProfessorScheduleComponent implements OnInit {
   async cargarClasesCalendario() {
     this.loading = true;
     try {
-      // 🚀 CAMBIO 3: Validación segura con AuthService
       const { data: { user } } = await this.authService.getUser();
       if (!user || !user.email) return;
 
-      // 🚀 CAMBIO 4: Obtener perfil del profesor usando AcademyService
-      const { data: prof } = await this.academyService.getProfesorByEmail(user.email);
+      const { data: prof } = await this.usuariosService.getProfesorByEmail(user.email);
       if (!prof) return;
 
-      // 🚀 CAMBIO 5: Obtener sus grupos usando AcademyService
-      const { data: gruposData } = await this.academyService.getGruposDeProfesor(prof.id);
+      const { data: gruposData } = await this.gruposService.getGruposDeProfesor(prof.id);
       this.grupos = gruposData ? gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null) : [];
       
       const misGrupoIds = this.grupos.map(g => g.id);
@@ -123,8 +122,7 @@ export class ProfessorScheduleComponent implements OnInit {
         const hoy = new Date();
         const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
 
-        // 🚀 CAMBIO 6: Llamada al método nuevo/reutilizado en AcademyService
-        const { data: clases, error } = await this.academyService.getClasesPorGrupos(misGrupoIds, inicioMes);
+        const { data: clases, error } = await this.clasesService.getClasesPorGrupos(misGrupoIds, inicioMes);
         if (error) throw error;
 
         // Mapear eventos

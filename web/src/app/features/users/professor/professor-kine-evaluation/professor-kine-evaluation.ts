@@ -14,10 +14,10 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
-// Servicios
-import { HealthService } from '../../../../shared/services/health.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { AcademyService } from '../../../../shared/services/academy.service';
+import { KinesiologiaService } from '../../../../core/services/modulos/salud/kine.service';
+import { UsuariosService } from '../../../../core/services/modulos/administracion/usuarios.service';
+import { GruposService } from '../../../../core/services/modulos/academico/grupos.service';
 
 @Component({
   selector: 'app-professor-kine-evaluation',
@@ -37,7 +37,7 @@ import { AcademyService } from '../../../../shared/services/academy.service';
   ],
   providers: [MessageService],
   templateUrl: './professor-kine-evaluation.html',
-  styleUrls: ['./professor-kine-evaluation.css'] // Utiliza el mismo CSS
+  styleUrls: ['./professor-kine-evaluation.css'] 
 })
 export class ProfessorKineEvaluationComponent implements OnInit {
 
@@ -69,9 +69,10 @@ export class ProfessorKineEvaluationComponent implements OnInit {
   cargandoResultados: boolean = false;
 
   constructor(
-    private healthService: HealthService,
     private authService: AuthService,
-    private academyService: AcademyService,
+    private kinesiologiaService: KinesiologiaService,
+    private usuariosService: UsuariosService,
+    private gruposService: GruposService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -87,8 +88,13 @@ export class ProfessorKineEvaluationComponent implements OnInit {
   async obtenerUsuarioActual() {
     try {
       const { data: { user } } = await this.authService.getUser();
-      if (user) {
-        this.usuarioActualId = user.id;
+      // 👇 Añadimos && user.email para calmar a TypeScript
+      if (user && user.email) { 
+        // Obtenemos el ID del profesor real, no el ID de Auth
+        const { data: prof } = await this.usuariosService.getProfesorByEmail(user.email);
+        if(prof) {
+            this.usuarioActualId = prof.id;
+        }
       }
     } catch (error) {
       console.error("Error obteniendo usuario", error);
@@ -98,26 +104,18 @@ export class ProfessorKineEvaluationComponent implements OnInit {
 
   async cargarCatalogos() {
     try {
-      // 1. Tipos de Evaluación
-      const resTipos = await this.healthService.getTiposEvaluacionKine();
+      const resTipos = await this.kinesiologiaService.getTiposEvaluacionKine();
       if (resTipos.data) this.tiposEvaluacion = resTipos.data;
 
-      // 2. Rangos de colores para las notas
-      const resRangos = await this.healthService.getRangosEvaluacion();
+      const resRangos = await this.kinesiologiaService.getRangosEvaluacion();
       if (resRangos.data) this.rangos = resRangos.data;
 
-      // 3. Obtener solo los grupos asignados a este profesor
-      const { data: gruposProfe, error } = await this.healthService['supabase']
-        .from('grupos_profesores')
-        .select(`
-          grupo_id,
-          grupos ( id, nombre )
-        `)
-        .eq('profesor_id', this.usuarioActualId);
-      
-      if (error) throw error;
-      if (gruposProfe) {
-        this.grupos = gruposProfe.map((g: any) => g.grupos).filter(g => g != null);
+      if (this.usuarioActualId) {
+          const { data: gruposProfe, error } = await this.gruposService.getGruposDeProfesor(this.usuarioActualId);
+          if (error) throw error;
+          if (gruposProfe) {
+            this.grupos = gruposProfe.map((g: any) => g.grupos).filter((g: any) => g != null);
+          }
       }
 
     } catch (error) {
@@ -138,19 +136,16 @@ export class ProfessorKineEvaluationComponent implements OnInit {
     try {
       const grupoIds = this.grupos.map(g => g.id);
 
-      // Traemos las sesiones que pertenezcan a los grupos del profesor
-      const { data, error } = await this.healthService['supabase']
-        .from('evaluaciones_sesiones_kine')
-        .select('*, tipo_evaluacion:tipo_evaluacion_id(nombre)')
-        .in('grupo_id', grupoIds)
-        .order('fecha', { ascending: false });
+      const { data, error } = await this.kinesiologiaService.getSesionesEvaluacionPorGruposKine(grupoIds);
 
       if (error) throw error;
       
       if (data) {
         this.sesiones = data.map((s: any) => ({
             ...s,
-            grupos: this.grupos.find(g => g.id === s.grupo_id) || { nombre: 'Desconocido' }
+            grupos: this.grupos.find(g => g.id === s.grupo_id) || { nombre: 'Desconocido' },
+            // Mapeamos el nombre del tipo por si el query no lo trae anidado
+            tipo_evaluacion: s.tipo_evaluacion || this.tiposEvaluacion.find(t => t.id === s.tipo_evaluacion_id) || { nombre: 'Desconocido' }
         }));
         this.aplicarFiltros();
       }
@@ -224,16 +219,13 @@ export class ProfessorKineEvaluationComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      // 1. Alumnos de este grupo
-      const { data: alumnos, error: errAlumnos } = await this.academyService.getAlumnosPorGrupo(sesion.grupo_id);
+      const { data: alumnos, error: errAlumnos } = await this.usuariosService.getAlumnosPorGrupo(sesion.grupo_id);
       if (errAlumnos) throw errAlumnos;
 
-      // 2. Parámetros de la evaluación
-      const { data: subs } = await this.healthService.getSubEvaluacionesPorTipo(sesion.tipo_evaluacion_id);
+      const { data: subs } = await this.kinesiologiaService.getSubEvaluacionesPorTipo(sesion.tipo_evaluacion_id);
       const subevaluacionesDefinidas = subs || [];
       
-      // 3. Resultados guardados
-      const { data: res } = await this.healthService.getResultadosPorSesionKine(sesion.id);
+      const { data: res } = await this.kinesiologiaService.getResultadosPorSesionKine(sesion.id);
       const resultadosPrevios = res || [];
 
       // 4. Mapeo de la vista (Solo mostramos alumnos que tengan al menos 1 nota en esta sesión)
