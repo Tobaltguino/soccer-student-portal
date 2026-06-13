@@ -18,8 +18,8 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 
 // 🚀 CAMBIO 1: Importamos los servicios de dominio
 import { AuthService } from '../../../../core/services/auth.service';
-import { HealthService } from '../../../../core/services/health.service';
-import { AcademyService } from '../../../../core/services/academy.service';
+import { HealthService } from '../../../../shared/services/health.service';
+import { AcademyService } from '../../../../shared/services/academy.service';
 import { StorageService } from '../../../../core/services/storage.service';
 
 @Component({

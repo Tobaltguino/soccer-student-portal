@@ -14,7 +14,7 @@ import { TagModule } from 'primeng/tag';
 
 // 🚀 CAMBIO 1: Importamos los servicios de dominio correspondientes
 import { AuthService } from '../../../../core/services/auth.service';
-import { AcademyService } from '../../../../core/services/academy.service';
+import { AcademyService } from '../../../../shared/services/academy.service';
 
 @Component({
   selector: 'app-student-schedule',

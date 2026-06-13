@@ -14,8 +14,8 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
 // 🚀 CAMBIO 1: Importamos los servicios de dominio
-import { HealthService } from '../../../../core/services/health.service';
-import { AcademyService } from '../../../../core/services/academy.service';
+import { HealthService } from '../../../../shared/services/health.service';
+import { AcademyService } from '../../../../shared/services/academy.service';
 
 @Component({
   selector: 'app-kine-nutrition',

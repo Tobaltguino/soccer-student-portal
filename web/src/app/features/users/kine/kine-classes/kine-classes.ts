@@ -14,8 +14,8 @@ import { TooltipModule } from 'primeng/tooltip';
 
 // 🚀 CAMBIO 1: Importamos nuestros servicios especializados
 import { AuthService } from '../../../../core/services/auth.service';
-import { HealthService } from '../../../../core/services/health.service';
-import { AcademyService } from '../../../../core/services/academy.service';
+import { HealthService } from '../../../../shared/services/health.service';
+import { AcademyService } from '../../../../shared/services/academy.service';
 
 @Component({
   selector: 'app-kine-classes',

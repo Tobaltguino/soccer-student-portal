@@ -17,8 +17,8 @@ import { TooltipModule } from 'primeng/tooltip';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 // 🚀 SERVICIOS DE DOMINIO
-import { HealthService } from '../../../../core/services/health.service';
-import { AcademyService } from '../../../../core/services/academy.service';
+import { HealthService } from '../../../../shared/services/health.service';
+import { AcademyService } from '../../../../shared/services/academy.service';
 import { StorageService } from '../../../../core/services/storage.service';
 
 @Component({

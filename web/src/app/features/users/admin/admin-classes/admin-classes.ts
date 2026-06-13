@@ -18,7 +18,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { CheckboxModule } from 'primeng/checkbox';
 
 // 🚀 CAMBIO 1: Importamos el AcademyService
-import { AcademyService } from '../../../../core/services/academy.service';
+import { AcademyService } from '../../../../shared/services/academy.service';
 
 @Component({
   selector: 'app-admin-classes',

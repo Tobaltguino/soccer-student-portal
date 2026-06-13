@@ -15,7 +15,7 @@ import { DialogModule } from 'primeng/dialog';
 import { DatePickerModule } from 'primeng/datepicker'; 
 
 // Servicios
-import { HealthService } from '../../../../core/services/health.service'; 
+import { HealthService } from '../../../../shared/services/health.service'; 
 import { AuthService } from '../../../../core/services/auth.service';     
 
 @Component({

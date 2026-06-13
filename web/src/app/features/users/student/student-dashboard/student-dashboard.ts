@@ -4,8 +4,8 @@ import { RouterModule } from '@angular/router';
 
 // 🚀 CAMBIO 1: Importamos los servicios de dominio
 import { AuthService } from '../../../../core/services/auth.service';
-import { AcademyService } from '../../../../core/services/academy.service';
-import { HealthService } from '../../../../core/services/health.service';
+import { AcademyService } from '../../../../shared/services/academy.service';
+import { HealthService } from '../../../../shared/services/health.service';
 
 @Component({
   selector: 'app-student-dashboard',

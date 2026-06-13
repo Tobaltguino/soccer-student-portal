@@ -14,7 +14,7 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmationService, MessageService } from 'primeng/api'; 
 
 // 🚀 CAMBIO 1: Importamos el AcademyService en lugar del SupabaseService
-import { AcademyService } from '../../../../core/services/academy.service';
+import { AcademyService } from '../../../../shared/services/academy.service';
 
 @Component({
   selector: 'app-admin-groups',

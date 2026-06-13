@@ -12,7 +12,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 
 // 🚀 Servicios de dominio
-import { ContentService } from '../../../../core/services/content.service';
+import { ContentService } from '../../../../shared/services/content.service';
 import { StorageService } from '../../../../core/services/storage.service';
 
 @Component({

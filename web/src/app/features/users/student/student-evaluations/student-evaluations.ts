@@ -13,7 +13,7 @@ import { TooltipModule } from 'primeng/tooltip';
 
 // 🚀 CAMBIO 1: Importamos los servicios de dominio correspondientes
 import { AuthService } from '../../../../core/services/auth.service';
-import { HealthService } from '../../../../core/services/health.service';
+import { HealthService } from '../../../../shared/services/health.service';
 
 @Component({
   selector: 'app-student-evaluations',

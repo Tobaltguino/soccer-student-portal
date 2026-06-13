@@ -12,7 +12,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 
 // 🚀 CAMBIO 1: Importamos el ContentService (Adiós SupabaseService)
-import { ContentService } from '../../../../core/services/content.service';
+import { ContentService } from '../../../../shared/services/content.service';
 
 @Component({
   selector: 'app-student-view-guides',

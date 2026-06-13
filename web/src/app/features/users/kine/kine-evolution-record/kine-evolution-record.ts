@@ -17,7 +17,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { DatePickerModule } from 'primeng/datepicker'; // <-- Importante: Añadido
 
 // Servicios
-import { HealthService } from '../../../../core/services/health.service';
+import { HealthService } from '../../../../shared/services/health.service';
 import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({

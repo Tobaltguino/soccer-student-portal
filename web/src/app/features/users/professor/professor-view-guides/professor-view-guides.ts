@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms'; 
 
 // 🚀 CAMBIO 1: Importamos el ContentService (Adiós SupabaseService)
-import { ContentService } from '../../../../core/services/content.service';
+import { ContentService } from '../../../../shared/services/content.service';
 
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';

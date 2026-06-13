@@ -16,7 +16,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { ConfirmDialogModule } from 'primeng/confirmdialog'; // <-- Añadido para el modal de borrado
 
 // Servicios
-import { HealthService } from '../../../../core/services/health.service'; 
+import { HealthService } from '../../../../shared/services/health.service'; 
 import { AuthService } from '../../../../core/services/auth.service';     
 
 @Component({

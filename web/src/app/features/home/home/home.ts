@@ -7,7 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip'; 
 
 // 🚀 CAMBIO 1: Importamos ContentService
-import { ContentService } from '../../../core/services/content.service';
+import { ContentService } from '../../../shared/services/content.service';
 
 @Component({
   selector: 'app-home',

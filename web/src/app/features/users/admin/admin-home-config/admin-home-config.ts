@@ -17,7 +17,7 @@ import { SelectModule } from 'primeng/select';
 import { FileUploadModule } from 'primeng/fileupload';
 import { InputNumberModule } from 'primeng/inputnumber'; // 🚀 Importante para el orden
 
-import { ContentService } from '../../../../core/services/content.service';
+import { ContentService } from '../../../../shared/services/content.service';
 import { StorageService } from '../../../../core/services/storage.service';
 
 @Component({

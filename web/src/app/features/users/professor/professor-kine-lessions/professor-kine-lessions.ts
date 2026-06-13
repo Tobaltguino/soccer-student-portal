@@ -9,7 +9,7 @@ import { SelectModule } from 'primeng/select';
 import { ToastModule } from 'primeng/toast';
 
 // Servicios
-import { HealthService } from '../../../../core/services/health.service'; 
+import { HealthService } from '../../../../shared/services/health.service'; 
 import { AuthService } from '../../../../core/services/auth.service';     
 
 @Component({

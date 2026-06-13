@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { SupabaseCoreService } from './supabase-core.service';
+import { SupabaseCoreService } from '../../core/services/supabase-core.service';
 
 @Injectable({
   providedIn: 'root'
@@ -150,6 +150,7 @@ export class AcademyService {
     .select('id, nombre, apellido, grupo_id, rut, foto_url, fecha_nacimiento') 
     .eq('grupo_id', grupoId);
 }
+
 
   // Obtiene estudiantes de una lista de grupos (Opcional: filtrar solo activos)
   async getTodosEstudiantesPorGrupos(grupoIds: number[], soloActivos: boolean = false) {

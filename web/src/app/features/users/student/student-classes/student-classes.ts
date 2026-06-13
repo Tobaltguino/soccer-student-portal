@@ -12,7 +12,7 @@ import { TooltipModule } from 'primeng/tooltip';
 
 // 🚀 CAMBIO 1: Importamos los servicios de dominio
 import { AuthService } from '../../../../core/services/auth.service';
-import { AcademyService } from '../../../../core/services/academy.service';
+import { AcademyService } from '../../../../shared/services/academy.service';
 
 @Component({
   selector: 'app-student-classes',

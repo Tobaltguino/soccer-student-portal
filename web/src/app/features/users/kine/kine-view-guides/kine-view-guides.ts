@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms'; 
 
 // Servicios
-import { ContentService } from '../../../../core/services/content.service';
+import { ContentService } from '../../../../shared/services/content.service';
 import { StorageService } from '../../../../core/services/storage.service';
 import { MessageService } from 'primeng/api';
 

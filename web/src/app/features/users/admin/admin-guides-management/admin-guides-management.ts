@@ -12,7 +12,7 @@ import { SelectModule } from 'primeng/select';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 // 🚀 CAMBIO 1: Importamos los servicios especializados
-import { ContentService } from '../../../../core/services/content.service';
+import { ContentService } from '../../../../shared/services/content.service';
 import { StorageService } from '../../../../core/services/storage.service';
 
 @Component({

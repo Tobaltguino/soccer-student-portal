@@ -4,8 +4,8 @@ import { FormsModule } from '@angular/forms';
 
 // Servicios
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { HealthService } from '../../../../core/services/health.service';
-import { AcademyService } from '../../../../core/services/academy.service';
+import { HealthService } from '../../../../shared/services/health.service';
+import { AcademyService } from '../../../../shared/services/academy.service';
 
 // Módulos de PrimeNG
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
