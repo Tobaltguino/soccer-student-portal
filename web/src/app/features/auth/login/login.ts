@@ -12,7 +12,6 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
 
-// 🚀 CAMBIO 1: Importamos el nuevo AuthService en lugar de SupabaseService
 import { AuthService } from '../../../core/services/auth.service'; 
 import { RutFormatDirective } from '../../../shared/directives/rut-format.directive';
 import { RutValidator } from '../../../shared/directives/rut-validator.directive';
@@ -51,7 +50,6 @@ export class LoginComponent implements OnInit, OnDestroy {
   private themeObserver!: MutationObserver;
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos el authService
     private authService: AuthService, 
     private router: Router,
     private messageService: MessageService
@@ -96,7 +94,6 @@ export class LoginComponent implements OnInit, OnDestroy {
     try {
       const rutBusqueda = this.rut.trim();
 
-      // 🚀 CAMBIO 3: Usamos this.authService
       const { data, error, role, aceptoTerminos } = await this.authService.loginConRut(rutBusqueda, this.password);
 
       if (error) {
@@ -156,7 +153,6 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.loadingReset = true;
 
     try {
-      // 🚀 CAMBIO 4: Usamos this.authService
       const { error } = await this.authService.resetPasswordPorRut(this.rutRecuperacion);
 
       if (error) {

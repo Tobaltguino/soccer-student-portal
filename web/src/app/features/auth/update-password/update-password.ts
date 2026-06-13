@@ -9,7 +9,6 @@ import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 
-// 🚀 CAMBIO 1: Importamos el AuthService
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -26,7 +25,6 @@ export class UpdatePasswordComponent {
   loading = false;
 
   constructor(
-    // 🚀 CAMBIO 2: Inyectamos el AuthService
     private authService: AuthService,
     private router: Router,
     private messageService: MessageService
@@ -51,7 +49,6 @@ export class UpdatePasswordComponent {
     this.loading = true;
 
     try {
-      // 🚀 CAMBIO 3: Usamos this.authService
       const { error } = await this.authService.updatePassword(this.nuevaPassword);
 
       if (error) {
@@ -59,7 +56,6 @@ export class UpdatePasswordComponent {
       } else {
         this.messageService.add({ severity: 'success', summary: '¡Éxito!', detail: 'Tu contraseña ha sido actualizada correctamente.' });
         
-        // 🚀 CAMBIO 4: Usamos this.authService para el logout
         await this.authService.logout();
         
         setTimeout(() => {
