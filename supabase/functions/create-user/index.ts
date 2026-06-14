@@ -18,11 +18,11 @@ serve(async (req) => {
 
     const { email, password, datosPersonales, tabla, role } = await req.json()
 
-    // 1. CREAR EL USUARIO EN AUTH
+    // 1. CREAR EL USUARIO EN AUTH (Sin confirmarlo automáticamente)
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: email,
       password: password,
-      email_confirm: false, // Lo marcamos true para que no requiera validación por correo
+      email_confirm: false, // false = DEBE validar su correo
       user_metadata: {
         role: role || 'USER',
         nombre: datosPersonales.nombre,
@@ -38,7 +38,7 @@ serve(async (req) => {
 
     const userId = authData.user.id
 
-    // Limpieza de datos (Evitar inyectar campos que no existen en otras tablas)
+    // Limpieza de datos
     if (tabla !== 'estudiantes') {
       delete datosPersonales.fecha_nacimiento;
       delete datosPersonales.grupo_id;
@@ -60,14 +60,23 @@ serve(async (req) => {
       .select()
       .maybeSingle()
 
-    // 🚀 EL ROLLBACK: Si la tabla falla, borramos al usuario de Auth
+    // 🚀 EL ROLLBACK
     if (dbError) {
       console.error("Error al guardar en tabla, iniciando rollback...", dbError);
-      
-      // Borramos al usuario fantasma
       await supabase.auth.admin.deleteUser(userId);
-      
       throw new Error(`Error en BD: ${dbError.message}. Se canceló la creación del usuario.`);
+    }
+
+    // 💌 3. ENVIAR EL CORREO DE CONFIRMACIÓN (Solo si todo lo anterior funcionó)
+    const { error: emailError } = await supabase.auth.resend({
+      type: 'signup',
+      email: email
+    })
+
+    if (emailError) {
+      console.warn("El usuario se creó, pero falló el envío del correo:", emailError.message);
+      // No hacemos un throw error aquí porque el usuario ya existe y está guardado, 
+      // pero dejamos el log por si necesitas reenviarlo manualmente.
     }
 
     // Todo salió perfecto
