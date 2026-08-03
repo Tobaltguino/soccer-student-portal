@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { GruposService } from './grupos.service';
@@ -30,8 +31,8 @@ export class GruposController {
 
   @Get()
   @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.NUTRICIONISTA)
-  listar() {
-    return this.gruposService.listar();
+  listar(@Query('incluirEliminados') incluirEliminados?: string) {
+    return this.gruposService.listar(incluirEliminados === 'true');
   }
 
   @Get(':id')
@@ -53,5 +54,11 @@ export class GruposController {
   @Roles(Rol.ADMINISTRADOR)
   eliminar(@Param('id', ParseIntPipe) id: number) {
     return this.gruposService.eliminar(id);
+  }
+
+  @Patch(':id/restaurar')
+  @Roles(Rol.ADMINISTRADOR)
+  restaurar(@Param('id', ParseIntPipe) id: number) {
+    return this.gruposService.restaurar(id);
   }
 }

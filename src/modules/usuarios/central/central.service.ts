@@ -1,3 +1,4 @@
+// modules/usuarios/central/central.service.ts
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../../../core/supabase/supabase.service';
 import { CrearUsuarioDto } from './dto/crear-usuario.dto';
@@ -8,7 +9,7 @@ import { ProfesoresService } from '../profesores/profesores.service';
 import { KinesiologosService } from '../kinesiologos/kinesiologos.service';
 import { NutricionistasService } from '../nutricionistas/nutricionistas.service';
 import { AdminsService } from '../admins/admins.service';
-import type { UsuarioPerfilCompleto, UsuarioPerfilRow } from '../../../shared/interfaces/usuario-perfil.interface';
+import type { UsuarioPerfilRow, UsuarioPerfilCompleto } from '../../../shared/interfaces/usuario-perfil.interface';
 import { lanzarErrorSupabase, lanzarErrorAuth } from '../../../shared/utils/supabase-error.util';
 
 @Injectable()
@@ -36,11 +37,12 @@ export class CentralService {
         },
       });
 
-    if (authError || !authData.user) {
-      lanzarErrorAuth(
-        authError ?? { message: 'No se pudo crear el usuario en Auth', name: 'AuthError' } as any,
-        'Error al crear usuario',
-      );
+    if (authError) {
+      lanzarErrorAuth(authError, 'Error al crear usuario');
+    }
+
+    if (!authData.user) {
+      throw new BadRequestException('No se pudo crear el usuario en Auth');
     }
 
     const usuarioId = authData.user.id;
@@ -48,7 +50,6 @@ export class CentralService {
     try {
       await this.crearFilaDeRol(usuarioId, dto);
     } catch (err) {
-      // Si falla la tabla de rol, revertimos el usuario creado en Auth
       await this.supabase.client.auth.admin.deleteUser(usuarioId);
       throw err;
     }
@@ -72,7 +73,6 @@ export class CentralService {
 
   async buscarPerfilCompleto(usuarioId: string): Promise<UsuarioPerfilCompleto> {
     const perfil = await this.buscarPropioPerfil(usuarioId);
-
     const datosRol = await this.obtenerDatosDeRol(usuarioId, perfil.rol);
 
     return {
@@ -81,22 +81,48 @@ export class CentralService {
     };
   }
 
-  private async obtenerDatosDeRol(
-    usuarioId: string,
-    rol: Rol,
-  ): Promise<Partial<UsuarioPerfilCompleto>> {
-    switch (rol) {
-      case Rol.ESTUDIANTE: {
-        const datosEstudiante = await this.estudiantesService.buscarPorId(usuarioId);
-        return { datosEstudiante };
-      }
-      case Rol.PROFESOR: {
-        const datosProfesor = await this.profesoresService.buscarPorId(usuarioId);
-        return { datosProfesor };
-      }
-      default:
-        return {};
+  async listarUsuarios(rolFiltro?: Rol): Promise<UsuarioPerfilCompleto[]> {
+    let query = this.supabase.client.from('usuarios_perfiles').select('*');
+
+    if (rolFiltro) {
+      query = query.eq('rol', rolFiltro);
     }
+
+    const { data: perfiles, error } = await query;
+
+    if (error) {
+      throw new InternalServerErrorException(
+        `No se pudo listar usuarios: ${error.message}`,
+      );
+    }
+
+    const listaPerfiles = (perfiles ?? []) as UsuarioPerfilRow[];
+
+    const idsEstudiantes = listaPerfiles
+      .filter((p) => p.rol === Rol.ESTUDIANTE)
+      .map((p) => p.id_usuario);
+
+    const idsProfesores = listaPerfiles
+      .filter((p) => p.rol === Rol.PROFESOR)
+      .map((p) => p.id_usuario);
+
+    const [datosEstudiantes, datosProfesores] = await Promise.all([
+      this.estudiantesService.buscarPorIds(idsEstudiantes),
+      this.profesoresService.buscarPorIds(idsProfesores),
+    ]);
+
+    const mapaEstudiantes = new Map(datosEstudiantes.map((e) => [e.usuario_id, e]));
+    const mapaProfesores = new Map(datosProfesores.map((p) => [p.usuario_id, p]));
+
+    return listaPerfiles.map((perfil) => ({
+      ...perfil,
+      ...(mapaEstudiantes.has(perfil.id_usuario) && {
+        datosEstudiante: mapaEstudiantes.get(perfil.id_usuario),
+      }),
+      ...(mapaProfesores.has(perfil.id_usuario) && {
+        datosProfesor: mapaProfesores.get(perfil.id_usuario),
+      }),
+    }));
   }
 
   async actualizarUsuario(
@@ -139,6 +165,44 @@ export class CentralService {
     return this.buscarPropioPerfil(usuarioId);
   }
 
+  async desactivarUsuario(usuarioId: string): Promise<UsuarioPerfilRow> {
+    const { data, error } = await this.supabase.client
+      .from('usuarios_perfiles')
+      .update({ activo: false })
+      .eq('id_usuario', usuarioId)
+      .select()
+      .single<UsuarioPerfilRow>();
+
+    if (error) {
+      lanzarErrorSupabase(error, 'No se pudo desactivar el usuario');
+    }
+
+    if (!data) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    return data;
+  }
+
+  async reactivarUsuario(usuarioId: string): Promise<UsuarioPerfilRow> {
+    const { data, error } = await this.supabase.client
+      .from('usuarios_perfiles')
+      .update({ activo: true })
+      .eq('id_usuario', usuarioId)
+      .select()
+      .single<UsuarioPerfilRow>();
+
+    if (error) {
+      lanzarErrorSupabase(error, 'No se pudo reactivar el usuario');
+    }
+
+    if (!data) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    return data;
+  }
+
   private async crearFilaDeRol(usuarioId: string, dto: CrearUsuarioDto) {
     switch (dto.rol) {
       case Rol.ESTUDIANTE:
@@ -171,52 +235,70 @@ export class CentralService {
     }
   }
 
-  async listarUsuarios(rolFiltro?: Rol): Promise<UsuarioPerfilCompleto[]> {
-    let query = this.supabase.client.from('usuarios_perfiles').select('*');
-
-    if (rolFiltro) {
-      query = query.eq('rol', rolFiltro);
+  private async obtenerDatosDeRol(
+    usuarioId: string,
+    rol: Rol,
+  ): Promise<Partial<UsuarioPerfilCompleto>> {
+    switch (rol) {
+      case Rol.ESTUDIANTE: {
+        const datosEstudiante = await this.estudiantesService.buscarPorId(usuarioId);
+        return { datosEstudiante };
+      }
+      case Rol.PROFESOR: {
+        const datosProfesor = await this.profesoresService.buscarPorId(usuarioId);
+        return { datosProfesor };
+      }
+      default:
+        return {};
     }
-
-    const { data: perfiles, error } = await query;
-
-    if (error) {
-      throw new InternalServerErrorException(
-        `No se pudo listar usuarios: ${error.message}`,
-      );
-    }
-
-    const listaPerfiles = (perfiles ?? []) as UsuarioPerfilRow[];
-
-    // Agrupar ids por rol, para hacer consultas batch en vez de una por usuario
-    const idsEstudiantes = listaPerfiles
-      .filter((p) => p.rol === Rol.ESTUDIANTE)
-      .map((p) => p.id_usuario);
-
-    const idsProfesores = listaPerfiles
-      .filter((p) => p.rol === Rol.PROFESOR)
-      .map((p) => p.id_usuario);
-
-    const [datosEstudiantes, datosProfesores] = await Promise.all([
-      this.estudiantesService.buscarPorIds(idsEstudiantes),
-      this.profesoresService.buscarPorIds(idsProfesores),
-    ]);
-
-    const mapaEstudiantes = new Map(
-      datosEstudiantes.map((e) => [e.usuario_id, e]),
-    );
-    const mapaProfesores = new Map(
-      datosProfesores.map((p) => [p.usuario_id, p]),
-    );
-
-    return listaPerfiles.map((perfil) => ({
-      ...perfil,
-      ...(mapaEstudiantes.has(perfil.id_usuario) && {
-        datosEstudiante: mapaEstudiantes.get(perfil.id_usuario),
-      }),
-      ...(mapaProfesores.has(perfil.id_usuario) && {
-        datosProfesor: mapaProfesores.get(perfil.id_usuario),
-      }),
-    }));
   }
+
+  async eliminarUsuario(usuarioId: string): Promise<void> {
+  // Verificar si tiene actividad relevante antes de permitir el borrado físico
+  const tieneActividad = await this.tieneActividadRelacionada(usuarioId);
+
+  if (tieneActividad) {
+    throw new BadRequestException(
+      'Este usuario ya tiene actividad registrada (asistencias, evaluaciones, etc.). ' +
+      'No se puede eliminar, pero puedes desactivarlo.',
+    );
+  }
+
+  // Sin actividad relacionada: se puede borrar físicamente sin perder historial real
+  const { error } = await this.supabase.client.auth.admin.deleteUser(usuarioId);
+
+  if (error) {
+    throw new BadRequestException(`No se pudo eliminar el usuario: ${error.message}`);
+  }
+  // El resto de las filas (usuarios_perfiles, estudiantes, etc.) se borran
+  // automáticamente por el ON DELETE CASCADE que ya tienen las FKs.
+}
+
+private async tieneActividadRelacionada(usuarioId: string): Promise<boolean> {
+  // Revisa asistencias como estudiante
+  const { count: countAsistencias } = await this.supabase.client
+    .from('asistencias')
+    .select('*', { count: 'exact', head: true })
+    .eq('estudiante_id', usuarioId);
+
+  if (countAsistencias && countAsistencias > 0) return true;
+
+  // Revisa resultados de evaluaciones como estudiante
+  const { count: countResultados } = await this.supabase.client
+    .from('evaluaciones_resultados')
+    .select('*', { count: 'exact', head: true })
+    .eq('estudiante_id', usuarioId);
+
+  if (countResultados && countResultados > 0) return true;
+
+  // Revisa clases dictadas como profesor
+  const { count: countClases } = await this.supabase.client
+    .from('clases')
+    .select('*', { count: 'exact', head: true })
+    .eq('profesor_id', usuarioId);
+
+  if (countClases && countClases > 0) return true;
+
+  return false;
+}
 }

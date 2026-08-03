@@ -27,11 +27,14 @@ export class GruposService {
     return data;
   }
 
-  async listar(): Promise<GrupoRow[]> {
-    const { data, error } = await this.supabase.client
-      .from('grupos')
-      .select('*')
-      .order('nombre');
+  async listar(incluirEliminados: boolean = false): Promise<GrupoRow[]> {
+    let query = this.supabase.client.from('grupos').select('*').order('nombre');
+
+    if (!incluirEliminados) {
+      query = query.is('eliminado_at', null);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       lanzarErrorSupabase(error, 'No se pudo listar los grupos');
@@ -45,6 +48,7 @@ export class GruposService {
       .from('grupos')
       .select('*')
       .eq('id', id)
+      .is('eliminado_at', null)
       .single<GrupoRow>();
 
     if (error || !data) {
@@ -76,14 +80,41 @@ export class GruposService {
     return data;
   }
 
-  async eliminar(id: number): Promise<void> {
-    const { error } = await this.supabase.client
+  async eliminar(id: number): Promise<GrupoRow> {
+    const { data, error } = await this.supabase.client
       .from('grupos')
-      .delete()
-      .eq('id', id);
+      .update({ eliminado_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single<GrupoRow>();
 
     if (error) {
       lanzarErrorSupabase(error, 'No se pudo eliminar el grupo');
     }
+
+    if (!data) {
+      throw new NotFoundException('Grupo no encontrado');
+    }
+
+    return data;
+  }
+
+  async restaurar(id: number): Promise<GrupoRow> {
+    const { data, error } = await this.supabase.client
+      .from('grupos')
+      .update({ eliminado_at: null })
+      .eq('id', id)
+      .select()
+      .single<GrupoRow>();
+
+    if (error) {
+      lanzarErrorSupabase(error, 'No se pudo restaurar el grupo');
+    }
+
+    if (!data) {
+      throw new NotFoundException('Grupo no encontrado');
+    }
+
+    return data;
   }
 }

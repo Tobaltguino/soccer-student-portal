@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { SupabaseService } from '../../../core/supabase/supabase.service';
 import { RegistrarAsistenciasLoteDto } from './dto/registrar-asistencias-lotes.dto';
 import type { AsistenciaRow } from './interfaces/asistencias.interface';
@@ -12,14 +12,14 @@ export class AsistenciasService {
     claseId: number,
     dto: RegistrarAsistenciasLoteDto,
   ): Promise<AsistenciaRow[]> {
+    await this.verificarClaseActiva(claseId);
+
     const filas = dto.asistencias.map((a) => ({
       clase_id: claseId,
       estudiante_id: a.estudianteId,
       presente: a.presente,
     }));
 
-    // upsert: si ya existía el registro para ese estudiante en esa clase,
-    // lo actualiza en vez de duplicarlo (útil para corregir asistencia)
     const { data, error } = await this.supabase.client
       .from('asistencias')
       .upsert(filas, { onConflict: 'clase_id,estudiante_id' })
@@ -65,5 +65,23 @@ export class AsistenciasService {
     }
 
     return data ?? [];
+  }
+
+  private async verificarClaseActiva(claseId: number): Promise<void> {
+    const { data, error } = await this.supabase.client
+      .from('clases')
+      .select('eliminado_at')
+      .eq('id', claseId)
+      .single<{ eliminado_at: string | null }>();
+
+    if (error || !data) {
+      throw new BadRequestException('La clase indicada no existe');
+    }
+
+    if (data.eliminado_at !== null) {
+      throw new BadRequestException(
+        'No se puede registrar asistencia en una clase eliminada',
+      );
+    }
   }
 }

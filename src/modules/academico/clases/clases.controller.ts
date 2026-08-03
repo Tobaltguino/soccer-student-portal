@@ -31,8 +31,14 @@ export class ClasesController {
 
   @Get()
   @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.NUTRICIONISTA)
-  listar(@Query('grupoId') grupoId?: string) {
-    return this.clasesService.listar(grupoId ? Number(grupoId) : undefined);
+  listar(
+    @Query('grupoId') grupoId?: string,
+    @Query('incluirEliminadas') incluirEliminadas?: string,
+  ) {
+    return this.clasesService.listar(
+      grupoId ? Number(grupoId) : undefined,
+      incluirEliminadas === 'true',
+    );
   }
 
   @Get(':id')
@@ -51,5 +57,11 @@ export class ClasesController {
   @Roles(Rol.ADMINISTRADOR)
   eliminar(@Param('id', ParseIntPipe) id: number) {
     return this.clasesService.eliminar(id);
+  }
+
+  @Patch(':id/restaurar')
+  @Roles(Rol.ADMINISTRADOR)
+  restaurar(@Param('id', ParseIntPipe) id: number) {
+    return this.clasesService.restaurar(id);
   }
 }

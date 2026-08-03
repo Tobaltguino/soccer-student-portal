@@ -41,11 +41,15 @@ export class ClasesService {
     return data;
   }
 
-  async listar(grupoId?: number): Promise<ClaseRow[]> {
+  async listar(grupoId?: number, incluirEliminadas: boolean = false): Promise<ClaseRow[]> {
     let query = this.supabase.client.from('clases').select('*').order('fecha', { ascending: false });
 
     if (grupoId !== undefined) {
       query = query.eq('grupo_id', grupoId);
+    }
+
+    if (!incluirEliminadas) {
+      query = query.is('eliminado_at', null);
     }
 
     const { data, error } = await query;
@@ -62,6 +66,7 @@ export class ClasesService {
       .from('clases')
       .select('*')
       .eq('id', id)
+      .is('eliminado_at', null)
       .single<ClaseRow>();
 
     if (error || !data) {
@@ -104,11 +109,41 @@ export class ClasesService {
     return data;
   }
 
-  async eliminar(id: number): Promise<void> {
-    const { error } = await this.supabase.client.from('clases').delete().eq('id', id);
+  async eliminar(id: number): Promise<ClaseRow> {
+    const { data, error } = await this.supabase.client
+      .from('clases')
+      .update({ eliminado_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single<ClaseRow>();
 
     if (error) {
-      throw new InternalServerErrorException(`No se pudo eliminar la clase: ${error.message}`);
+      lanzarErrorSupabaseConFk(error, 'No se pudo eliminar la clase', 'La clase indicada no existe');
     }
+
+    if (!data) {
+      throw new NotFoundException('Clase no encontrada');
+    }
+
+    return data;
+  }
+
+  async restaurar(id: number): Promise<ClaseRow> {
+    const { data, error } = await this.supabase.client
+      .from('clases')
+      .update({ eliminado_at: null })
+      .eq('id', id)
+      .select()
+      .single<ClaseRow>();
+
+    if (error) {
+      lanzarErrorSupabaseConFk(error, 'No se pudo restaurar la clase', 'La clase indicada no existe');
+    }
+
+    if (!data) {
+      throw new NotFoundException('Clase no encontrada');
+    }
+
+    return data;
   }
 }

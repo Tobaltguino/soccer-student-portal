@@ -9,5 +9,6 @@ export interface ClaseRow {
   calentamiento: string | null;
   parte_principal: string | null;
   vuelta_calma: string | null;
+  eliminado_at: string | null;
   created_at: string;
 }
