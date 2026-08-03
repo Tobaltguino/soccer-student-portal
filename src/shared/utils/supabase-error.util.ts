@@ -1,4 +1,4 @@
-import { ConflictException, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import type { PostgrestError, AuthError } from '@supabase/supabase-js';
 
 const MENSAJES_DUPLICADO: Record<string, string> = {
@@ -50,4 +50,17 @@ export function lanzarErrorAuth(error: AuthError, contexto: string): never {
   }
 
   throw new InternalServerErrorException(`${contexto}: ${error.message}`);
+}
+
+export function lanzarErrorSupabaseConFk(
+  error: PostgrestError,
+  contexto: string,
+  mensajeFkInvalida: string,
+): never {
+  if (error.code === '23503') {
+    // 23503 = foreign_key_violation
+    throw new BadRequestException(mensajeFkInvalida);
+  }
+
+  lanzarErrorSupabase(error, contexto);
 }
