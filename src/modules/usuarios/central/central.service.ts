@@ -148,6 +148,7 @@ export class CentralService {
     if (dto.apellido !== undefined) camposBase.apellido = dto.apellido;
     if (dto.email !== undefined) camposBase.email = dto.email;
     if (dto.telefono !== undefined) camposBase.telefono = dto.telefono;
+    if (dto.fechaNacimiento !== undefined) camposBase.fecha_nacimiento = dto.fechaNacimiento; 
 
     if (Object.keys(camposBase).length > 0) {
       const { error: perfilError } = await this.supabase.client
@@ -226,10 +227,26 @@ export class CentralService {
     dto: ActualizarUsuarioDto,
   ) {
     switch (rol) {
-      case Rol.ESTUDIANTE:
+      case Rol.ESTUDIANTE: {
+        const tieneCambiosEstudiante =
+          dto.peso !== undefined ||
+          dto.altura !== undefined ||
+          dto.posiciones !== undefined ||
+          dto.direccion !== undefined ||
+          dto.prevision !== undefined ||
+          dto.grupoId !== undefined;
+
+        if (!tieneCambiosEstudiante) return;
+
         return this.estudiantesService.actualizar(usuarioId, dto);
-      case Rol.PROFESOR:
+      }
+      case Rol.PROFESOR: {
+        const tieneCambiosProfesor = dto.tipoProfesor !== undefined;
+
+        if (!tieneCambiosProfesor) return;
+
         return this.profesoresService.actualizar(usuarioId, dto);
+      }
       default:
         return;
     }

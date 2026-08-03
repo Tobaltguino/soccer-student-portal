@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsDateString,
   IsEmail,
   IsEnum,
   IsNumber,
@@ -29,6 +30,10 @@ export class ActualizarUsuarioDto {
   @IsOptional()
   @IsString()
   telefono?: string;
+
+  @IsOptional()
+  @IsDateString()
+  fechaNacimiento?: string;
 
   // --- Específico ESTUDIANTE (si aplica) ---
   @IsOptional()
