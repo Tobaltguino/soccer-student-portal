@@ -17,40 +17,60 @@ import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../core/auth/guards/roles.guard';
 import { Roles } from '../../../core/auth/decorators/roles.decorator';
 import { Rol } from '../../../shared/enums/rol.enum';
+import { CurrentUser } from '../../../core/auth/decorators/current-user.decorator';
+import type { RequestUser } from '../../../core/auth/strategies/jwt.strategy';
+import { AlcanceGruposService } from '../../../shared/services/alcance-grupos.service';
 
 @Controller('clases')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ClasesController {
-  constructor(private readonly clasesService: ClasesService) {}
+  constructor(
+    private readonly clasesService: ClasesService,
+    private readonly alcanceService: AlcanceGruposService,
+  ) {}
 
   @Post()
   @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
-  crear(@Body() dto: CrearClaseDto) {
-    return this.clasesService.crear(dto);
+  async crear(@Body() dto: CrearClaseDto, @CurrentUser() user: RequestUser) {
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
+    return this.clasesService.crear(dto, gruposPermitidos);
   }
 
   @Get()
-  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.NUTRICIONISTA)
-  listar(
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO)
+  async listar(
+    @CurrentUser() user: RequestUser,
     @Query('grupoId') grupoId?: string,
     @Query('incluirEliminadas') incluirEliminadas?: string,
   ) {
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
+
     return this.clasesService.listar(
       grupoId ? Number(grupoId) : undefined,
       incluirEliminadas === 'true',
+      gruposPermitidos,
     );
   }
 
   @Get(':id')
-  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.NUTRICIONISTA)
-  buscarPorId(@Param('id', ParseIntPipe) id: number) {
-    return this.clasesService.buscarPorId(id);
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO)
+  async buscarPorId(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: RequestUser,
+  ) {
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
+    return this.clasesService.buscarPorId(id, gruposPermitidos);
   }
 
   @Patch(':id')
   @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
-  actualizar(@Param('id', ParseIntPipe) id: number, @Body() dto: ActualizarClaseDto) {
-    return this.clasesService.actualizar(id, dto);
+  async actualizar(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: ActualizarClaseDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
+    return this.clasesService.actualizar(id, dto, gruposPermitidos);
   }
 
   @Delete(':id')

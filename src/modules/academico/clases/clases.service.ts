@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../../../core/supabase/supabase.service';
 import { CrearClaseDto } from './dto/crear-clase.dto';
 import { ActualizarClaseDto } from './dto/actualizar-clase.dto';
@@ -6,10 +6,14 @@ import type { ClaseRow } from './interfaces/clase.interface';
 import { lanzarErrorSupabaseConFk } from '../../../shared/utils/supabase-error.util';
 
 @Injectable()
-export class ClasesService {
-  constructor(private readonly supabase: SupabaseService) {}
+  export class ClasesService {
+    constructor(private readonly supabase: SupabaseService) {}
 
-  async crear(dto: CrearClaseDto): Promise<ClaseRow> {
+    async crear(dto: CrearClaseDto, gruposPermitidos: number[] | null = null): Promise<ClaseRow> {
+    if (gruposPermitidos !== null && !gruposPermitidos.includes(dto.grupoId)) {
+      throw new ForbiddenException('No puedes crear clases en un grupo que no tienes asignado');
+    }
+
     const { data, error } = await this.supabase.client
       .from('clases')
       .insert({
@@ -41,11 +45,17 @@ export class ClasesService {
     return data;
   }
 
-  async listar(grupoId?: number, incluirEliminadas: boolean = false): Promise<ClaseRow[]> {
+  async listar(
+    grupoId?: number,
+    incluirEliminadas: boolean = false,
+    gruposPermitidos: number[] | null = null,
+  ): Promise<ClaseRow[]> {
     let query = this.supabase.client.from('clases').select('*').order('fecha', { ascending: false });
 
     if (grupoId !== undefined) {
       query = query.eq('grupo_id', grupoId);
+    } else if (gruposPermitidos !== null) {
+      query = query.in('grupo_id', gruposPermitidos);
     }
 
     if (!incluirEliminadas) {
@@ -61,7 +71,7 @@ export class ClasesService {
     return data ?? [];
   }
 
-  async buscarPorId(id: number): Promise<ClaseRow> {
+  async buscarPorId(id: number, gruposPermitidos: number[] | null = null): Promise<ClaseRow> {
     const { data, error } = await this.supabase.client
       .from('clases')
       .select('*')
@@ -73,10 +83,21 @@ export class ClasesService {
       throw new NotFoundException('Clase no encontrada');
     }
 
+    if (gruposPermitidos !== null && !gruposPermitidos.includes(data.grupo_id)) {
+      throw new NotFoundException('Clase no encontrada');
+    }
+
     return data;
   }
 
-  async actualizar(id: number, dto: ActualizarClaseDto): Promise<ClaseRow> {
+  async actualizar(
+    id: number,
+    dto: ActualizarClaseDto,
+    gruposPermitidos: number[] | null = null,
+  ): Promise<ClaseRow> {
+    // Valida que el usuario tenga acceso a esta clase antes de modificarla
+    await this.buscarPorId(id, gruposPermitidos);
+
     const { data, error } = await this.supabase.client
       .from('clases')
       .update({
