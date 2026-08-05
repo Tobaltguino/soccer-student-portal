@@ -7,6 +7,8 @@ import { AcademicoModule } from './modules/academico/academico.module';
 import { AdministracionModule } from './modules/administracion/administracion.module';
 import { SaludModule } from './modules/salud/salud.module';
 
+import { SharedModule } from './shared/shared.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -15,7 +17,8 @@ import { SaludModule } from './modules/salud/salud.module';
     UsuariosModule, 
     AcademicoModule,
     AdministracionModule,
-    SaludModule
+    SaludModule,
+    SharedModule
   ],
 })
 export class AppModule {}
