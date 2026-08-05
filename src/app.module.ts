@@ -4,14 +4,16 @@ import { SupabaseModule } from './core/supabase/supabase.module';
 import { AuthModule } from './core/auth/auth.module';
 import { UsuariosModule } from './modules/usuarios/usuarios.module';
 import { AcademicoModule } from './modules/academico/academico.module';
+import { AdministracionModule } from './modules/administracion/administracion.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     SupabaseModule,
     AuthModule,
-    UsuariosModule, // <-- NestJS cargará este, y este a su vez cargará al resto
+    UsuariosModule, 
     AcademicoModule,
+    AdministracionModule,
   ],
 })
 export class AppModule {}
