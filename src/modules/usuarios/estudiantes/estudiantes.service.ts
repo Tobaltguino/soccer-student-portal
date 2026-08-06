@@ -47,6 +47,22 @@ export class EstudiantesService {
     return data ?? [];
   }
 
+  async listarPorGrupos(gruposPermitidos: number[] | null): Promise<EstudianteRow[]> {
+    let query = this.supabase.client.from('estudiantes').select('*');
+
+    if (gruposPermitidos !== null) {
+      query = query.in('grupo_id', gruposPermitidos);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      lanzarErrorSupabase(error, 'No se pudo listar los estudiantes');
+    }
+
+    return data ?? [];
+  }
+
   async buscarPorId(usuarioId: string): Promise<EstudianteRow> {
     const { data, error } = await this.supabase.client
       .from('estudiantes')

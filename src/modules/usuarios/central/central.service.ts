@@ -317,5 +317,52 @@ private async tieneActividadRelacionada(usuarioId: string): Promise<boolean> {
   if (countClases && countClases > 0) return true;
 
   return false;
-}
+  }
+
+  async miEquipoTecnico(estudianteId: string): Promise<UsuarioPerfilRow[]> {
+    const { data: estudiante, error: errorEstudiante } = await this.supabase.client
+      .from('estudiantes')
+      .select('grupo_id')
+      .eq('usuario_id', estudianteId)
+      .single<{ grupo_id: number | null }>();
+
+    if (errorEstudiante || !estudiante || !estudiante.grupo_id) {
+      return []; // sin grupo asignado, no tiene equipo técnico aún
+    }
+
+    const [profesoresIds, kinesiologosIds] = await Promise.all([
+      this.obtenerIdsPorGrupo('grupos_profesores', 'profesor_id', estudiante.grupo_id),
+      this.obtenerIdsPorGrupo('grupos_kinesiologos', 'kinesiologo_id', estudiante.grupo_id),
+    ]);
+
+    const todosLosIds = [...profesoresIds, ...kinesiologosIds];
+
+    if (todosLosIds.length === 0) return [];
+
+    const { data: perfiles, error } = await this.supabase.client
+      .from('usuarios_perfiles')
+      .select('*')
+      .in('id_usuario', todosLosIds);
+
+    if (error) {
+      throw new InternalServerErrorException(`No se pudo obtener el equipo técnico: ${error.message}`);
+    }
+
+    return perfiles ?? [];
+  }
+
+  private async obtenerIdsPorGrupo(
+    tabla: string,
+    columna: string,
+    grupoId: number,
+  ): Promise<string[]> {
+    const { data, error } = await this.supabase.client
+      .from(tabla)
+      .select(columna)
+      .eq('grupo_id', grupoId);
+
+    if (error) return [];
+
+    return (data ?? []).map((row: any) => row[columna]);
+  }
 }

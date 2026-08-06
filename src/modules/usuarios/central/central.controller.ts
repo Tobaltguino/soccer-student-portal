@@ -1,4 +1,3 @@
-// modules/usuarios/central/central.controller.ts
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CentralService } from './central.service';
 import { CrearUsuarioDto } from './dto/crear-usuario.dto';
@@ -30,6 +29,12 @@ export class CentralController {
   @Get('me')
   miPerfil(@CurrentUser() user: RequestUser) {
     return this.centralService.buscarPerfilCompleto(user.id);
+  }
+
+  @Get('mi-equipo-tecnico')
+  @Roles(Rol.ESTUDIANTE)
+  miEquipoTecnico(@CurrentUser() user: RequestUser) {
+    return this.centralService.miEquipoTecnico(user.id);
   }
 
   @Get(':id')
