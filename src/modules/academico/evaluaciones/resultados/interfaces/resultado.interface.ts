@@ -16,3 +16,15 @@ export interface ResultadoConRango extends ResultadoRow {
     colorSugerido: string | null;
   } | null;
 }
+
+export interface ResultadoConDetalle extends ResultadoRow {
+  rango: {
+    nombreEtiqueta: string;
+    colorSugerido: string | null;
+  } | null;
+  evaluacion: {
+    nombre: string;
+    unidadMedida: string;
+    fecha: string;
+  };
+}

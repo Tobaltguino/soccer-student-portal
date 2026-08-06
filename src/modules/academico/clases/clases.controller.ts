@@ -52,6 +52,12 @@ export class ClasesController {
     );
   }
 
+  @Get('mis-clases')
+  @Roles(Rol.ESTUDIANTE)
+  misClases(@CurrentUser() user: RequestUser) {
+    return this.clasesService.listarPorGrupoDeEstudiante(user.id);
+  }
+
   @Get(':id')
   @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO)
   async buscarPorId(

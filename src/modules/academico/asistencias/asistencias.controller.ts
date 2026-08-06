@@ -1,3 +1,4 @@
+// modules/academico/asistencias/asistencias.controller.ts
 import { Body, Controller, Get, Param, ParseIntPipe, Post, UseGuards } from '@nestjs/common';
 import { AsistenciasService } from './asistencias.service';
 import { RegistrarAsistenciasLoteDto } from './dto/registrar-asistencias-lotes.dto';
@@ -5,30 +6,52 @@ import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../core/auth/guards/roles.guard';
 import { Roles } from '../../../core/auth/decorators/roles.decorator';
 import { Rol } from '../../../shared/enums/rol.enum';
+import { CurrentUser } from '../../../core/auth/decorators/current-user.decorator';
+import type { RequestUser } from '../../../core/auth/strategies/jwt.strategy';
+import { AlcanceGruposService } from '../../../shared/services/alcance-grupos.service';
 
 @Controller()
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AsistenciasController {
-  constructor(private readonly asistenciasService: AsistenciasService) {}
+  constructor(
+    private readonly asistenciasService: AsistenciasService,
+    private readonly alcanceService: AlcanceGruposService,
+  ) {}
 
   @Post('clases/:claseId/asistencias')
   @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
-  registrarLote(
+  async registrarLote(
     @Param('claseId', ParseIntPipe) claseId: number,
     @Body() dto: RegistrarAsistenciasLoteDto,
+    @CurrentUser() user: RequestUser,
   ) {
-    return this.asistenciasService.registrarLote(claseId, dto);
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
+    return this.asistenciasService.registrarLote(claseId, dto, gruposPermitidos);
   }
 
   @Get('clases/:claseId/asistencias')
-  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.NUTRICIONISTA)
-  listarPorClase(@Param('claseId', ParseIntPipe) claseId: number) {
-    return this.asistenciasService.listarPorClase(claseId);
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO)
+  async listarPorClase(
+    @Param('claseId', ParseIntPipe) claseId: number,
+    @CurrentUser() user: RequestUser,
+  ) {
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
+    return this.asistenciasService.listarPorClase(claseId, gruposPermitidos);
+  }
+
+  @Get('estudiantes/me/asistencias')
+  @Roles(Rol.ESTUDIANTE)
+  misAsistencias(@CurrentUser() user: RequestUser) {
+    return this.asistenciasService.listarPorEstudiante(user.id, null);
   }
 
   @Get('estudiantes/:estudianteId/asistencias')
-  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.NUTRICIONISTA)
-  listarPorEstudiante(@Param('estudianteId') estudianteId: string) {
-    return this.asistenciasService.listarPorEstudiante(estudianteId);
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO)
+  async listarPorEstudiante(
+    @Param('estudianteId') estudianteId: string,
+    @CurrentUser() user: RequestUser,
+  ) {
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
+    return this.asistenciasService.listarPorEstudiante(estudianteId, gruposPermitidos);
   }
 }

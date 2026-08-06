@@ -11,8 +11,9 @@ export class AsistenciasService {
   async registrarLote(
     claseId: number,
     dto: RegistrarAsistenciasLoteDto,
+    gruposPermitidos: number[] | null = null,
   ): Promise<AsistenciaRow[]> {
-    await this.verificarClaseActiva(claseId);
+    await this.verificarAccesoClase(claseId, gruposPermitidos);
 
     const filas = dto.asistencias.map((a) => ({
       clase_id: claseId,
@@ -36,7 +37,12 @@ export class AsistenciasService {
     return (data ?? []) as AsistenciaRow[];
   }
 
-  async listarPorClase(claseId: number): Promise<AsistenciaRow[]> {
+  async listarPorClase(
+    claseId: number,
+    gruposPermitidos: number[] | null = null,
+  ): Promise<AsistenciaRow[]> {
+    await this.verificarAccesoClase(claseId, gruposPermitidos);
+
     const { data, error } = await this.supabase.client
       .from('asistencias')
       .select('*')
@@ -51,12 +57,21 @@ export class AsistenciasService {
     return data ?? [];
   }
 
-  async listarPorEstudiante(estudianteId: string): Promise<AsistenciaRow[]> {
-    const { data, error } = await this.supabase.client
+  async listarPorEstudiante(
+    estudianteId: string,
+    gruposPermitidos: number[] | null = null,
+  ): Promise<AsistenciaRow[]> {
+    let query = this.supabase.client
       .from('asistencias')
-      .select('*')
+      .select('*, clases!inner(grupo_id)')
       .eq('estudiante_id', estudianteId)
       .order('clase_id', { ascending: false });
+
+    if (gruposPermitidos !== null) {
+      query = query.in('clases.grupo_id', gruposPermitidos);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       throw new InternalServerErrorException(
@@ -64,24 +79,30 @@ export class AsistenciasService {
       );
     }
 
-    return data ?? [];
+    // Quita el campo "clases" que se agregó solo para el filtro, no es parte de AsistenciaRow
+    return (data ?? []).map(({ clases, ...resto }: any) => resto);
   }
 
-  private async verificarClaseActiva(claseId: number): Promise<void> {
+  /**
+   * Verifica que la clase exista y, si hay restricción de alcance,
+   * que pertenezca a uno de los grupos permitidos del usuario.
+   */
+  private async verificarAccesoClase(
+    claseId: number,
+    gruposPermitidos: number[] | null,
+  ): Promise<void> {
     const { data, error } = await this.supabase.client
       .from('clases')
-      .select('eliminado_at')
+      .select('grupo_id')
       .eq('id', claseId)
-      .single<{ eliminado_at: string | null }>();
+      .single<{ grupo_id: number }>();
 
     if (error || !data) {
       throw new BadRequestException('La clase indicada no existe');
     }
 
-    if (data.eliminado_at !== null) {
-      throw new BadRequestException(
-        'No se puede registrar asistencia en una clase eliminada',
-      );
+    if (gruposPermitidos !== null && !gruposPermitidos.includes(data.grupo_id)) {
+      throw new BadRequestException('La clase indicada no existe');
     }
   }
 }

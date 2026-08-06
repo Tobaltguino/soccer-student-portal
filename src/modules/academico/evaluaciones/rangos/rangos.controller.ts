@@ -24,7 +24,7 @@ export class RangosController {
   constructor(private readonly rangosService: RangosService) {}
 
   @Post()
-  @Roles(Rol.ADMINISTRADOR, Rol.KINESIOLOGO)
+  @Roles(Rol.ADMINISTRADOR)
   crear(@Body() dto: CrearRangoDto) {
     return this.rangosService.crear(dto);
   }
@@ -42,7 +42,7 @@ export class RangosController {
   }
 
   @Patch(':id')
-  @Roles(Rol.ADMINISTRADOR, Rol.KINESIOLOGO)
+  @Roles(Rol.ADMINISTRADOR)
   actualizar(@Param('id', ParseIntPipe) id: number, @Body() dto: ActualizarRangoDto) {
     return this.rangosService.actualizar(id, dto);
   }

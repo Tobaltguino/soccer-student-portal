@@ -18,39 +18,59 @@ import { Roles } from '../../../../core/auth/decorators/roles.decorator';
 import { Rol } from '../../../../shared/enums/rol.enum';
 import { CurrentUser } from '../../../../core/auth/decorators/current-user.decorator';
 import type { RequestUser } from '../../../../core/auth/strategies/jwt.strategy';
+import { AlcanceGruposService } from '../../../../shared/services/alcance-grupos.service';
 
 @Controller('evaluaciones-sesiones')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class SesionesController {
-  constructor(private readonly sesionesService: SesionesService) {}
+  constructor(
+    private readonly sesionesService: SesionesService,
+    private readonly alcanceService: AlcanceGruposService,
+  ) {}
 
   @Post()
-  @Roles(Rol.ADMINISTRADOR, Rol.KINESIOLOGO)
-  crear(@Body() dto: CrearSesionDto, @CurrentUser() user: RequestUser) {
-    return this.sesionesService.crear(dto, user.id);
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
+  async crear(@Body() dto: CrearSesionDto, @CurrentUser() user: RequestUser) {
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
+    return this.sesionesService.crear(dto, user.id, gruposPermitidos);
   }
 
   @Get()
   @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO)
-  listar(@Query('grupoId') grupoId?: string) {
-    return this.sesionesService.listar(grupoId ? Number(grupoId) : undefined);
+  async listar(
+    @CurrentUser() user: RequestUser,
+    @Query('grupoId') grupoId?: string,
+  ) {
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
+    return this.sesionesService.listar(grupoId ? Number(grupoId) : undefined, gruposPermitidos);
   }
 
   @Get(':id')
   @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO)
-  buscarPorId(@Param('id') id: string) {
-    return this.sesionesService.buscarPorId(id);
+  async buscarPorId(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
+    return this.sesionesService.buscarPorId(id, gruposPermitidos);
   }
 
   @Patch(':id')
-  @Roles(Rol.ADMINISTRADOR, Rol.KINESIOLOGO)
-  actualizar(@Param('id') id: string, @Body() dto: ActualizarSesionDto) {
-    return this.sesionesService.actualizar(id, dto);
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
+  async actualizar(
+    @Param('id') id: string,
+    @Body() dto: ActualizarSesionDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
+    return this.sesionesService.actualizar(id, dto, gruposPermitidos);
   }
 
   @Patch(':id/estado')
-  @Roles(Rol.ADMINISTRADOR, Rol.KINESIOLOGO)
-  cambiarEstado(@Param('id') id: string, @Body() dto: CambiarEstadoSesionDto) {
-    return this.sesionesService.cambiarEstado(id, dto);
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
+  async cambiarEstado(
+    @Param('id') id: string,
+    @Body() dto: CambiarEstadoSesionDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
+    return this.sesionesService.cambiarEstado(id, dto, gruposPermitidos);
   }
 }

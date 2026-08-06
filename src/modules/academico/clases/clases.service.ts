@@ -71,6 +71,35 @@ import { lanzarErrorSupabaseConFk } from '../../../shared/utils/supabase-error.u
     return data ?? [];
   }
 
+  async listarPorGrupoDeEstudiante(estudianteId: string): Promise<ClaseRow[]> {
+    const { data: estudiante, error: errorEstudiante } = await this.supabase.client
+      .from('estudiantes')
+      .select('grupo_id')
+      .eq('usuario_id', estudianteId)
+      .single<{ grupo_id: number | null }>();
+
+    if (errorEstudiante || !estudiante) {
+      throw new NotFoundException('Estudiante no encontrado');
+    }
+
+    if (!estudiante.grupo_id) {
+      return []; // el estudiante no tiene grupo asignado todavía
+    }
+
+    const { data, error } = await this.supabase.client
+      .from('clases')
+      .select('*')
+      .eq('grupo_id', estudiante.grupo_id)
+      .is('eliminado_at', null)
+      .order('fecha', { ascending: false });
+
+    if (error) {
+      throw new InternalServerErrorException(`No se pudo listar las clases: ${error.message}`);
+    }
+
+    return data ?? [];
+  }
+
   async buscarPorId(id: number, gruposPermitidos: number[] | null = null): Promise<ClaseRow> {
     const { data, error } = await this.supabase.client
       .from('clases')

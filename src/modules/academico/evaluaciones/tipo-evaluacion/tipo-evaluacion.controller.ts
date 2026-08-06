@@ -24,25 +24,25 @@ export class TipoEvaluacionController {
   constructor(private readonly service: TipoEvaluacionService) {}
 
   @Post()
-  @Roles(Rol.ADMINISTRADOR, Rol.KINESIOLOGO)
+  @Roles(Rol.ADMINISTRADOR)
   crear(@Body() dto: CrearTipoEvaluacionDto) {
     return this.service.crear(dto);
   }
 
   @Get()
-  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO)
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.ESTUDIANTE)
   listar() {
     return this.service.listar();
   }
 
   @Get(':id')
-  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO)
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.ESTUDIANTE)
   buscarPorId(@Param('id', ParseIntPipe) id: number) {
     return this.service.buscarPorId(id);
   }
 
   @Patch(':id')
-  @Roles(Rol.ADMINISTRADOR, Rol.KINESIOLOGO)
+  @Roles(Rol.ADMINISTRADOR)
   actualizar(@Param('id', ParseIntPipe) id: number, @Body() dto: ActualizarTipoEvaluacionDto) {
     return this.service.actualizar(id, dto);
   }

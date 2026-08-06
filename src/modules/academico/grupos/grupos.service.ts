@@ -27,11 +27,18 @@ export class GruposService {
     return data;
   }
 
-  async listar(incluirEliminados: boolean = false): Promise<GrupoRow[]> {
+  async listar(
+    incluirEliminados: boolean = false,
+    gruposPermitidos: number[] | null = null,
+  ): Promise<GrupoRow[]> {
     let query = this.supabase.client.from('grupos').select('*').order('nombre');
 
     if (!incluirEliminados) {
       query = query.is('eliminado_at', null);
+    }
+
+    if (gruposPermitidos !== null) {
+      query = query.in('id', gruposPermitidos);
     }
 
     const { data, error } = await query;
@@ -43,7 +50,7 @@ export class GruposService {
     return data ?? [];
   }
 
-  async buscarPorId(id: number): Promise<GrupoRow> {
+  async buscarPorId(id: number, gruposPermitidos: number[] | null = null): Promise<GrupoRow> {
     const { data, error } = await this.supabase.client
       .from('grupos')
       .select('*')
@@ -52,6 +59,10 @@ export class GruposService {
       .single<GrupoRow>();
 
     if (error || !data) {
+      throw new NotFoundException('Grupo no encontrado');
+    }
+
+    if (gruposPermitidos !== null && !gruposPermitidos.includes(data.id)) {
       throw new NotFoundException('Grupo no encontrado');
     }
 

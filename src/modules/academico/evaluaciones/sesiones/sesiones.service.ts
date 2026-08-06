@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../../../../core/supabase/supabase.service';
 import { CrearSesionDto } from './dto/crear-sesion.dto';
 import { ActualizarSesionDto } from './dto/actualizar-sesion.dto';
@@ -10,7 +10,15 @@ import { lanzarErrorSupabaseConFk } from '../../../../shared/utils/supabase-erro
 export class SesionesService {
   constructor(private readonly supabase: SupabaseService) {}
 
-  async crear(dto: CrearSesionDto, creadoPor: string): Promise<SesionRow> {
+  async crear(
+    dto: CrearSesionDto,
+    creadoPor: string,
+    gruposPermitidos: number[] | null = null,
+  ): Promise<SesionRow> {
+    if (gruposPermitidos !== null && !gruposPermitidos.includes(dto.grupoId)) {
+      throw new ForbiddenException('No puedes crear sesiones en un grupo que no tienes asignado');
+    }
+
     const { data, error } = await this.supabase.client
       .from('evaluaciones_sesiones')
       .insert({
@@ -38,7 +46,10 @@ export class SesionesService {
     return data;
   }
 
-  async listar(grupoId?: number): Promise<SesionRow[]> {
+  async listar(
+    grupoId?: number,
+    gruposPermitidos: number[] | null = null,
+  ): Promise<SesionRow[]> {
     let query = this.supabase.client
       .from('evaluaciones_sesiones')
       .select('*')
@@ -46,6 +57,8 @@ export class SesionesService {
 
     if (grupoId !== undefined) {
       query = query.eq('grupo_id', grupoId);
+    } else if (gruposPermitidos !== null) {
+      query = query.in('grupo_id', gruposPermitidos);
     }
 
     const { data, error } = await query;
@@ -57,7 +70,7 @@ export class SesionesService {
     return data ?? [];
   }
 
-  async buscarPorId(id: string): Promise<SesionRow> {
+  async buscarPorId(id: string, gruposPermitidos: number[] | null = null): Promise<SesionRow> {
     const { data, error } = await this.supabase.client
       .from('evaluaciones_sesiones')
       .select('*')
@@ -68,10 +81,28 @@ export class SesionesService {
       throw new NotFoundException('Sesión de evaluación no encontrada');
     }
 
+    if (gruposPermitidos !== null && !gruposPermitidos.includes(data.grupo_id)) {
+      throw new NotFoundException('Sesión de evaluación no encontrada');
+    }
+
     return data;
   }
 
-  async actualizar(id: string, dto: ActualizarSesionDto): Promise<SesionRow> {
+  async actualizar(
+    id: string,
+    dto: ActualizarSesionDto,
+    gruposPermitidos: number[] | null = null,
+  ): Promise<SesionRow> {
+    await this.buscarPorId(id, gruposPermitidos);
+
+    if (
+      dto.grupoId !== undefined &&
+      gruposPermitidos !== null &&
+      !gruposPermitidos.includes(dto.grupoId)
+    ) {
+      throw new ForbiddenException('No puedes mover la sesión a un grupo que no tienes asignado');
+    }
+
     const { data, error } = await this.supabase.client
       .from('evaluaciones_sesiones')
       .update({
@@ -99,7 +130,13 @@ export class SesionesService {
     return data;
   }
 
-  async cambiarEstado(id: string, dto: CambiarEstadoSesionDto): Promise<SesionRow> {
+  async cambiarEstado(
+    id: string,
+    dto: CambiarEstadoSesionDto,
+    gruposPermitidos: number[] | null = null,
+  ): Promise<SesionRow> {
+    await this.buscarPorId(id, gruposPermitidos);
+
     const { data, error } = await this.supabase.client
       .from('evaluaciones_sesiones')
       .update({ estado: dto.estado })
