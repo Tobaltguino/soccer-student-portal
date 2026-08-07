@@ -28,13 +28,13 @@ export class TipoEvaluacionController {
   }
 
   @Get()
-  @Roles(Rol.ADMINISTRADOR, Rol.NUTRICIONISTA)
+  @Roles(Rol.ADMINISTRADOR, Rol.NUTRICIONISTA, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.ESTUDIANTE)
   listar() {
     return this.service.listar();
   }
 
   @Get(':id')
-  @Roles(Rol.ADMINISTRADOR, Rol.NUTRICIONISTA)
+  @Roles(Rol.ADMINISTRADOR, Rol.NUTRICIONISTA, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.ESTUDIANTE)
   buscarPorId(@Param('id') id: string) {
     return this.service.buscarPorId(id);
   }
