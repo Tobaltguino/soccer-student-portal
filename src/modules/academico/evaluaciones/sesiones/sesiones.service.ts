@@ -49,6 +49,7 @@ export class SesionesService {
   async listar(
     grupoId?: number,
     gruposPermitidos: number[] | null = null,
+    incluirEliminadas: boolean = false,
   ): Promise<SesionRow[]> {
     let query = this.supabase.client
       .from('evaluaciones_sesiones')
@@ -59,6 +60,10 @@ export class SesionesService {
       query = query.eq('grupo_id', grupoId);
     } else if (gruposPermitidos !== null) {
       query = query.in('grupo_id', gruposPermitidos);
+    }
+
+    if (!incluirEliminadas) {
+      query = query.is('eliminado_at', null);
     }
 
     const { data, error } = await query;
@@ -75,6 +80,7 @@ export class SesionesService {
       .from('evaluaciones_sesiones')
       .select('*')
       .eq('id', id)
+      .is('eliminado_at', null)
       .single<SesionRow>();
 
     if (error || !data) {
@@ -154,4 +160,42 @@ export class SesionesService {
 
     return data;
   }
+
+  async eliminar(id: string): Promise<SesionRow> {
+    const { data, error } = await this.supabase.client
+      .from('evaluaciones_sesiones')
+      .update({ eliminado_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single<SesionRow>();
+
+    if (error) {
+      throw new InternalServerErrorException(`No se pudo eliminar la sesión: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new NotFoundException('Sesión de evaluación no encontrada');
+    }
+
+    return data;
+  }
+
+  async restaurar(id: string): Promise<SesionRow> {
+    const { data, error } = await this.supabase.client
+      .from('evaluaciones_sesiones')
+      .update({ eliminado_at: null })
+      .eq('id', id)
+      .select()
+      .single<SesionRow>();
+
+    if (error) {
+      throw new InternalServerErrorException(`No se pudo restaurar la sesión: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new NotFoundException('Sesión de evaluación no encontrada');
+    }
+
+    return data;
+  }  
 }

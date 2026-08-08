@@ -8,4 +8,5 @@ export interface SesionRow {
   fecha: string;
   estado: EstadoSesion;
   created_at: string;
+  eliminado_at: string | null;
 }

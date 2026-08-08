@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -72,5 +73,17 @@ export class SesionesController {
   ) {
     const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
     return this.sesionesService.cambiarEstado(id, dto, gruposPermitidos);
+  }
+
+  @Delete(':id')
+  @Roles(Rol.ADMINISTRADOR)
+  eliminar(@Param('id') id: string) {
+    return this.sesionesService.eliminar(id);
+  }
+
+  @Patch(':id/restaurar')
+  @Roles(Rol.ADMINISTRADOR)
+  restaurar(@Param('id') id: string) {
+    return this.sesionesService.restaurar(id);
   }
 }
