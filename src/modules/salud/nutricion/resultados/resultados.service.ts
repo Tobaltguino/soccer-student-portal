@@ -151,10 +151,18 @@ export class ResultadosService {
   }
 
   async eliminar(id: string): Promise<void> {
-    const actual = await this.buscarPorId(id);
+    const { data: resultado, error: errorBusqueda } = await this.supabase.client
+      .from('nutri_evaluacion_resultados')
+      .select('archivo_url')
+      .eq('id', id)
+      .single<{ archivo_url: string | null }>();
 
-    if (actual.archivo_url) {
-      await this.borrarArchivo(actual.archivo_url);
+    if (errorBusqueda || !resultado) {
+      throw new NotFoundException('Resultado no encontrado');
+    }
+
+    if (resultado.archivo_url) {
+      await this.borrarArchivo(resultado.archivo_url);
     }
 
     const { error } = await this.supabase.client
