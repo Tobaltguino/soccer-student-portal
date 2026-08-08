@@ -70,6 +70,12 @@ export class HistorialClinicoController {
     return this.historialService.actualizar(id, dto, gruposPermitidos);
   }
 
+  @Patch('kine-historial-clinico/:id/restaurar')
+  @Roles(Rol.ADMINISTRADOR)
+  restaurar(@Param('id', ParseIntPipe) id: number) {
+    return this.historialService.restaurar(id);
+  }
+
   @Delete('kine-historial-clinico/:id')
   @Roles(Rol.ADMINISTRADOR)
   eliminar(@Param('id', ParseIntPipe) id: number) {

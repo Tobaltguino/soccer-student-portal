@@ -14,4 +14,5 @@ export interface HistorialClinicoRow {
   estado: EstadoHistorialClinico;
   observaciones: string | null;
   created_at: string;
+  eliminado_at: string | null;
 }

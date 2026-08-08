@@ -49,16 +49,23 @@ export class HistorialClinicoService {
   async listarPorEstudiante(
     estudianteId: string,
     gruposPermitidos: number[] | null,
+    incluirEliminados: boolean = false,
   ): Promise<HistorialClinicoRow[]> {
     if (gruposPermitidos !== null) {
       await this.verificarEstudianteEnAlcance(estudianteId, gruposPermitidos);
     }
 
-    const { data, error } = await this.supabase.client
+    let query = this.supabase.client
       .from('kine_historial_clinico')
       .select('*')
       .eq('estudiante_id', estudianteId)
       .order('fecha_evento', { ascending: false });
+
+    if (!incluirEliminados) {
+      query = query.is('eliminado_at', null);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       throw new InternalServerErrorException(`No se pudo listar el historial: ${error.message}`);
@@ -72,6 +79,7 @@ export class HistorialClinicoService {
       .from('kine_historial_clinico')
       .select('*')
       .eq('id', id)
+      .is('eliminado_at', null)
       .single<HistorialClinicoRow>();
 
     if (error || !data) {
@@ -116,15 +124,42 @@ export class HistorialClinicoService {
     return data;
   }
 
-  async eliminar(id: number): Promise<void> {
-    const { error } = await this.supabase.client
+  async eliminar(id: number): Promise<HistorialClinicoRow> {
+    const { data, error } = await this.supabase.client
       .from('kine_historial_clinico')
-      .delete()
-      .eq('id', id);
+      .update({ eliminado_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single<HistorialClinicoRow>();
 
     if (error) {
       throw new InternalServerErrorException(`No se pudo eliminar el registro: ${error.message}`);
     }
+
+    if (!data) {
+      throw new NotFoundException('Registro no encontrado');
+    }
+
+    return data;
+  }
+
+  async restaurar(id: number): Promise<HistorialClinicoRow> {
+    const { data, error } = await this.supabase.client
+      .from('kine_historial_clinico')
+      .update({ eliminado_at: null })
+      .eq('id', id)
+      .select()
+      .single<HistorialClinicoRow>();
+
+    if (error) {
+      throw new InternalServerErrorException(`No se pudo restaurar el registro: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new NotFoundException('Registro no encontrado');
+    }
+
+    return data;
   }
 
   private async verificarEstudianteEnAlcance(
