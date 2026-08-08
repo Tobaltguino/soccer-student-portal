@@ -7,4 +7,5 @@ export interface NutriSesionRow {
   fecha: string;
   estado: EstadoNutriSesion;
   created_at: string;
+  eliminado_at: string | null;
 }

@@ -42,7 +42,10 @@ export class SesionesService {
     return data;
   }
 
-  async listar(soloDeNutricionista: string | null): Promise<NutriSesionRow[]> {
+  async listar(
+    soloDeNutricionista: string | null,
+    incluirEliminadas: boolean = false,
+  ): Promise<NutriSesionRow[]> {
     let query = this.supabase.client
       .from('nutri_evaluacion_sesiones')
       .select('*')
@@ -50,6 +53,10 @@ export class SesionesService {
 
     if (soloDeNutricionista !== null) {
       query = query.eq('nutricionista_id', soloDeNutricionista);
+    }
+
+    if (!incluirEliminadas) {
+      query = query.is('eliminado_at', null);
     }
 
     const { data, error } = await query;
@@ -66,6 +73,7 @@ export class SesionesService {
       .from('nutri_evaluacion_sesiones')
       .select('*')
       .eq('id', id)
+      .is('eliminado_at', null)
       .single<NutriSesionRow>();
 
     if (error || !data) {
@@ -104,14 +112,41 @@ export class SesionesService {
     return data;
   }
 
-  async eliminar(id: string): Promise<void> {
-    const { error } = await this.supabase.client
+  async eliminar(id: string): Promise<NutriSesionRow> {
+    const { data, error } = await this.supabase.client
       .from('nutri_evaluacion_sesiones')
-      .delete()
-      .eq('id', id);
+      .update({ eliminado_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single<NutriSesionRow>();
 
     if (error) {
       throw new InternalServerErrorException(`No se pudo eliminar la sesión: ${error.message}`);
     }
+
+    if (!data) {
+      throw new NotFoundException('Sesión no encontrada');
+    }
+
+    return data;
+  }
+
+  async restaurar(id: string): Promise<NutriSesionRow> {
+    const { data, error } = await this.supabase.client
+      .from('nutri_evaluacion_sesiones')
+      .update({ eliminado_at: null })
+      .eq('id', id)
+      .select()
+      .single<NutriSesionRow>();
+
+    if (error) {
+      throw new InternalServerErrorException(`No se pudo restaurar la sesión: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new NotFoundException('Sesión no encontrada');
+    }
+
+    return data;
   }
 }

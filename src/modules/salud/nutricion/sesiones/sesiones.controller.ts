@@ -60,4 +60,10 @@ export class SesionesController {
   eliminar(@Param('id') id: string) {
     return this.sesionesService.eliminar(id);
   }
+
+  @Patch(':id/restaurar')
+  @Roles(Rol.ADMINISTRADOR)
+  restaurar(@Param('id') id: string) {
+    return this.sesionesService.restaurar(id);
+  }
 }
