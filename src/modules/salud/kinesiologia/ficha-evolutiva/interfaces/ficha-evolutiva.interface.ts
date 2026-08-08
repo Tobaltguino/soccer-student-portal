@@ -19,4 +19,5 @@ export interface FichaEvolutivaRow {
   no_evaluable: Record<string, any> | null;
   created_at: string;
   updated_at: string;
+  eliminado_at: string | null;
 }

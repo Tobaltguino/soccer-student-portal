@@ -69,6 +69,12 @@ export class FichasEvolutivasController {
     return this.fichasService.actualizar(id, dto, gruposPermitidos);
   }
 
+  @Patch('kine-fichas-evolutivas/:id/restaurar')
+  @Roles(Rol.ADMINISTRADOR)
+  restaurar(@Param('id') id: string) {
+    return this.fichasService.restaurar(id);
+  }
+
   @Delete('kine-fichas-evolutivas/:id')
   @Roles(Rol.ADMINISTRADOR)
   eliminar(@Param('id') id: string) {

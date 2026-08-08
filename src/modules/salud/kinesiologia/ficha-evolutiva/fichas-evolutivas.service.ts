@@ -60,16 +60,23 @@ export class FichasEvolutivasService {
   async listarPorEstudiante(
     estudianteId: string,
     gruposPermitidos: number[] | null,
+    incluirEliminadas: boolean = false,
   ): Promise<FichaEvolutivaRow[]> {
     if (gruposPermitidos !== null) {
       await this.verificarEstudianteEnAlcance(estudianteId, gruposPermitidos);
     }
 
-    const { data, error } = await this.supabase.client
+    let query = this.supabase.client
       .from('kine_fichas_evolutivas')
       .select('*')
       .eq('estudiante_id', estudianteId)
       .order('fecha_evaluacion', { ascending: false });
+
+    if (!incluirEliminadas) {
+      query = query.is('eliminado_at', null);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       throw new InternalServerErrorException(`No se pudo listar las fichas: ${error.message}`);
@@ -83,6 +90,7 @@ export class FichasEvolutivasService {
       .from('kine_fichas_evolutivas')
       .select('*')
       .eq('id', id)
+      .is('eliminado_at', null)
       .single<FichaEvolutivaRow>();
 
     if (error || !data) {
@@ -137,15 +145,42 @@ export class FichasEvolutivasService {
     return data;
   }
 
-  async eliminar(id: string): Promise<void> {
-    const { error } = await this.supabase.client
+  async eliminar(id: string): Promise<FichaEvolutivaRow> {
+    const { data, error } = await this.supabase.client
       .from('kine_fichas_evolutivas')
-      .delete()
-      .eq('id', id);
+      .update({ eliminado_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single<FichaEvolutivaRow>();
 
     if (error) {
       throw new InternalServerErrorException(`No se pudo eliminar la ficha: ${error.message}`);
     }
+
+    if (!data) {
+      throw new NotFoundException('Ficha no encontrada');
+    }
+
+    return data;
+  }
+
+  async restaurar(id: string): Promise<FichaEvolutivaRow> {
+    const { data, error } = await this.supabase.client
+      .from('kine_fichas_evolutivas')
+      .update({ eliminado_at: null })
+      .eq('id', id)
+      .select()
+      .single<FichaEvolutivaRow>();
+
+    if (error) {
+      throw new InternalServerErrorException(`No se pudo restaurar la ficha: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new NotFoundException('Ficha no encontrada');
+    }
+
+    return data;
   }
 
   private async verificarEstudianteEnAlcance(
