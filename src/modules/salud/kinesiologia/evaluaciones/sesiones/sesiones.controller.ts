@@ -75,6 +75,12 @@ export class SesionesController {
   @Delete(':id')
   @Roles(Rol.ADMINISTRADOR)
   eliminar(@Param('id') id: string) {
-    return this.sesionesService.eliminar(id);
+    return this.sesionesService.eliminar(id); // ahora hace soft-delete
+  }
+
+  @Patch(':id/restaurar')
+  @Roles(Rol.ADMINISTRADOR)
+  restaurar(@Param('id') id: string) {
+    return this.sesionesService.restaurar(id);
   }
 }

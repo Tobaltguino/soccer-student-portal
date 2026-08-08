@@ -50,6 +50,7 @@ export class SesionesService {
   async listar(
     grupoId: number | undefined,
     gruposPermitidos: number[] | null,
+    incluirEliminadas: boolean = false,
   ): Promise<KineSesionRow[]> {
     let query = this.supabase.client
       .from('kine_evaluaciones_sesiones')
@@ -60,6 +61,10 @@ export class SesionesService {
       query = query.eq('grupo_id', grupoId);
     } else if (gruposPermitidos !== null) {
       query = query.in('grupo_id', gruposPermitidos);
+    }
+
+    if (!incluirEliminadas) {
+      query = query.is('eliminado_at', null);
     }
 
     const { data, error } = await query;
@@ -76,6 +81,7 @@ export class SesionesService {
       .from('kine_evaluaciones_sesiones')
       .select('*')
       .eq('id', id)
+      .is('eliminado_at', null)
       .single<KineSesionRow>();
 
     if (error || !data) {
@@ -142,14 +148,41 @@ export class SesionesService {
     return data;
   }
 
-  async eliminar(id: string): Promise<void> {
-    const { error } = await this.supabase.client
+  async eliminar(id: string): Promise<KineSesionRow> {
+    const { data, error } = await this.supabase.client
       .from('kine_evaluaciones_sesiones')
-      .delete()
-      .eq('id', id);
+      .update({ eliminado_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single<KineSesionRow>();
 
     if (error) {
       throw new InternalServerErrorException(`No se pudo eliminar la sesión: ${error.message}`);
     }
+
+    if (!data) {
+      throw new NotFoundException('Sesión no encontrada');
+    }
+
+    return data;
+  }
+
+  async restaurar(id: string): Promise<KineSesionRow> {
+    const { data, error } = await this.supabase.client
+      .from('kine_evaluaciones_sesiones')
+      .update({ eliminado_at: null })
+      .eq('id', id)
+      .select()
+      .single<KineSesionRow>();
+
+    if (error) {
+      throw new InternalServerErrorException(`No se pudo restaurar la sesión: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new NotFoundException('Sesión no encontrada');
+    }
+
+    return data;
   }
 }

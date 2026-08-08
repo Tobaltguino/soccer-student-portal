@@ -9,4 +9,5 @@ export interface KineSesionRow {
   estado: EstadoKineSesion;
   observacion: string | null;
   created_at: string;
+  eliminado_at: string | null;
 }
