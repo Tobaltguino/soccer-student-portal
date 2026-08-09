@@ -8,6 +8,7 @@ import { AdministracionModule } from './modules/administracion/administracion.mo
 import { SaludModule } from './modules/salud/salud.module';
 
 import { SharedModule } from './shared/shared.module';
+import { AuditModule } from './core/audit/audit.module';
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { SharedModule } from './shared/shared.module';
     AcademicoModule,
     AdministracionModule,
     SaludModule,
-    SharedModule
+    SharedModule,
+    AuditModule
   ],
 })
 export class AppModule {}

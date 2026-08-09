@@ -1,6 +1,7 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { AuditInterceptor } from './core/audit/audit.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -20,6 +21,9 @@ async function bootstrap() {
       transform: true,            // Transforma automáticamente los payloads a las instancias de los DTOs
     }),
   );
+
+  // Auditoría automática de POST/PATCH/DELETE y GETs sensibles (datos de salud)
+  app.useGlobalInterceptors(app.get(AuditInterceptor));
 
   await app.listen(process.env.PORT ?? 3000);
 }
