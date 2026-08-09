@@ -20,6 +20,7 @@ import { Rol } from '../../../../../shared/enums/rol.enum';
 import { CurrentUser } from '../../../../../core/auth/decorators/current-user.decorator';
 import type { RequestUser } from '../../../../../core/auth/strategies/jwt.strategy';
 import { AlcanceGruposService } from '../../../../../shared/services/alcance-grupos.service';
+import { FiltrarSesionesDto } from './dto/filtrar-sesiones.dto';
 
 @Controller('kine-evaluaciones-sesiones')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -38,9 +39,9 @@ export class SesionesController {
 
   @Get()
   @Roles(Rol.ADMINISTRADOR, Rol.KINESIOLOGO, Rol.PROFESOR)
-  async listar(@CurrentUser() user: RequestUser, @Query('grupoId') grupoId?: string) {
+  async listar(@CurrentUser() user: RequestUser, @Query() filtros: FiltrarSesionesDto) {
     const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
-    return this.sesionesService.listar(grupoId ? Number(grupoId) : undefined, gruposPermitidos);
+    return this.sesionesService.listar(filtros, gruposPermitidos);
   }
 
   @Get(':id')

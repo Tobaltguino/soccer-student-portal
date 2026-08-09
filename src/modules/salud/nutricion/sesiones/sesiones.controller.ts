@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { SesionesService } from './sesiones.service';
@@ -18,6 +19,7 @@ import { Roles } from '../../../../core/auth/decorators/roles.decorator';
 import { Rol } from '../../../../shared/enums/rol.enum';
 import { CurrentUser } from '../../../../core/auth/decorators/current-user.decorator';
 import type { RequestUser } from '../../../../core/auth/strategies/jwt.strategy';
+import { FiltrarSesionesDto } from './dto/filtrar-sesion.dto';
 
 @Controller('nutri-evaluacion-sesiones')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -32,9 +34,9 @@ export class SesionesController {
 
   @Get()
   @Roles(Rol.ADMINISTRADOR, Rol.NUTRICIONISTA)
-  listar(@CurrentUser() user: RequestUser) {
+  listar(@CurrentUser() user: RequestUser, @Query() filtros: FiltrarSesionesDto) {
     const soloDeNutricionista = user.rol === Rol.ADMINISTRADOR ? null : user.id;
-    return this.sesionesService.listar(soloDeNutricionista);
+    return this.sesionesService.listar(soloDeNutricionista, filtros);
   }
 
   @Get(':id')

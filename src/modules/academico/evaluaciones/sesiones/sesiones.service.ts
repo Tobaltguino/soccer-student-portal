@@ -5,6 +5,7 @@ import { ActualizarSesionDto } from './dto/actualizar-sesion.dto';
 import { CambiarEstadoSesionDto } from './dto/cambiar-estado-sesion.dto';
 import type { SesionRow } from './interfaces/sesion.interface';
 import { lanzarErrorSupabaseConFk } from '../../../../shared/utils/supabase-error.util';
+import { FiltrarSesionesDto } from './dto/filtrar-sesiones.dto';
 
 @Injectable()
 export class SesionesService {
@@ -47,32 +48,45 @@ export class SesionesService {
   }
 
   async listar(
-    grupoId?: number,
+    filtros: FiltrarSesionesDto,
     gruposPermitidos: number[] | null = null,
-    incluirEliminadas: boolean = false,
-  ): Promise<SesionRow[]> {
+  ): Promise<{ registros: SesionRow[]; total: number; pagina: number; limite: number }> {
+    const pagina = filtros.pagina ?? 1;
+    const limite = Math.min(filtros.limite ?? 20, 100);
+    const desde = (pagina - 1) * limite;
+    const hasta = desde + limite - 1;
+
     let query = this.supabase.client
       .from('evaluaciones_sesiones')
-      .select('*')
-      .order('fecha', { ascending: false });
+      .select('*', { count: 'exact' })
+      .order('fecha', { ascending: false })
+      .range(desde, hasta);
 
-    if (grupoId !== undefined) {
-      query = query.eq('grupo_id', grupoId);
+    if (filtros.grupoId !== undefined) {
+      query = query.eq('grupo_id', filtros.grupoId);
     } else if (gruposPermitidos !== null) {
       query = query.in('grupo_id', gruposPermitidos);
     }
 
-    if (!incluirEliminadas) {
+    if (filtros.desde) {
+      query = query.gte('fecha', filtros.desde);
+    }
+
+    if (filtros.hasta) {
+      query = query.lte('fecha', filtros.hasta);
+    }
+
+    if (!filtros.incluirEliminadas) {
       query = query.is('eliminado_at', null);
     }
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     if (error) {
       throw new InternalServerErrorException(`No se pudo listar las sesiones: ${error.message}`);
     }
 
-    return data ?? [];
+    return { registros: data ?? [], total: count ?? 0, pagina, limite };
   }
 
   async buscarPorId(id: string, gruposPermitidos: number[] | null = null): Promise<SesionRow> {

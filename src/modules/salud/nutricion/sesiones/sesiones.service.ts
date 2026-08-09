@@ -4,6 +4,7 @@ import { CrearSesionDto } from './dto/crear-sesion.dto';
 import { CambiarEstadoSesionDto } from './dto/cambiar-estado-sesion.dto';
 import type { NutriSesionRow } from './interfaces/sesion.interface';
 import { lanzarErrorSupabaseConFk } from '../../../../shared/utils/supabase-error.util';
+import { FiltrarSesionesDto } from './dto/filtrar-sesion.dto';
 
 @Injectable()
 export class SesionesService {
@@ -44,28 +45,42 @@ export class SesionesService {
 
   async listar(
     soloDeNutricionista: string | null,
-    incluirEliminadas: boolean = false,
-  ): Promise<NutriSesionRow[]> {
+    filtros: FiltrarSesionesDto,
+  ): Promise<{ registros: NutriSesionRow[]; total: number; pagina: number; limite: number }> {
+    const pagina = filtros.pagina ?? 1;
+    const limite = Math.min(filtros.limite ?? 20, 100);
+    const desde = (pagina - 1) * limite;
+    const hasta = desde + limite - 1;
+
     let query = this.supabase.client
       .from('nutri_evaluacion_sesiones')
-      .select('*')
-      .order('fecha', { ascending: false });
+      .select('*', { count: 'exact' })
+      .order('fecha', { ascending: false })
+      .range(desde, hasta);
 
     if (soloDeNutricionista !== null) {
       query = query.eq('nutricionista_id', soloDeNutricionista);
     }
 
-    if (!incluirEliminadas) {
+    if (filtros.desde) {
+      query = query.gte('fecha', filtros.desde);
+    }
+
+    if (filtros.hasta) {
+      query = query.lte('fecha', filtros.hasta);
+    }
+
+    if (!filtros.incluirEliminadas) {
       query = query.is('eliminado_at', null);
     }
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     if (error) {
       throw new InternalServerErrorException(`No se pudo listar las sesiones: ${error.message}`);
     }
 
-    return data ?? [];
+    return { registros: data ?? [], total: count ?? 0, pagina, limite };
   }
 
   async buscarPorId(id: string, soloDeNutricionista: string | null): Promise<NutriSesionRow> {
