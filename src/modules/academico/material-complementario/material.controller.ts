@@ -23,6 +23,7 @@ import { Roles } from '../../../core/auth/decorators/roles.decorator';
 import { Rol } from '../../../shared/enums/rol.enum';
 import { CurrentUser } from '../../../core/auth/decorators/current-user.decorator';
 import type { RequestUser } from '../../../core/auth/strategies/jwt.strategy';
+import { FiltrarMaterialDto } from './dto/filtrar-material.dto';
 
 @Controller('material-complementario')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -42,11 +43,8 @@ export class MaterialController {
 
   @Get()
   @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.ESTUDIANTE)
-  listar(@Query('grupoId') grupoId?: string, @Query('claseId') claseId?: string) {
-    return this.materialService.listar(
-      grupoId ? Number(grupoId) : undefined,
-      claseId ? Number(claseId) : undefined,
-    );
+  listar(@Query() filtros: FiltrarMaterialDto) {
+    return this.materialService.listar(filtros);
   }
 
   @Get(':id')

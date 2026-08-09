@@ -6,6 +6,7 @@ import { ActualizarMaterialDto } from './dto/actualizar-material.dto';
 import type { MaterialRow } from './interfaces/material.interface';
 import { lanzarErrorSupabaseConFk } from '../../../shared/utils/supabase-error.util';
 import { randomUUID } from 'crypto';
+import { FiltrarMaterialDto } from './dto/filtrar-material.dto';
 
 const BUCKET = 'material-complementario';
 const TIPOS_PERMITIDOS = [
@@ -58,27 +59,52 @@ export class MaterialService {
     return data;
   }
 
-  async listar(grupoId?: number, claseId?: number): Promise<MaterialRow[]> {
+  async listar(filtros: FiltrarMaterialDto): Promise<{
+    registros: MaterialRow[];
+    total: number;
+    pagina: number;
+    limite: number;
+  }> {
+    const pagina = filtros.pagina ?? 1;
+    const limite = Math.min(filtros.limite ?? 20, 100);
+    const desde = (pagina - 1) * limite;
+    const hasta = desde + limite - 1;
+
     let query = this.supabase.client
       .from('material_complementario')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(desde, hasta);
 
-    if (grupoId !== undefined) {
-      query = query.eq('grupo_id', grupoId);
+    if (filtros.grupoId !== undefined) {
+      query = query.eq('grupo_id', filtros.grupoId);
     }
 
-    if (claseId !== undefined) {
-      query = query.eq('clase_id', claseId);
+    if (filtros.claseId !== undefined) {
+      query = query.eq('clase_id', filtros.claseId);
     }
 
-    const { data, error } = await query;
+    if (filtros.tipoMaterial) {
+      query = query.eq('tipo_material', filtros.tipoMaterial);
+    }
+
+    if (filtros.busqueda) {
+      const b = filtros.busqueda.replace(/[%_]/g, '');
+      query = query.or(`titulo.ilike.%${b}%,descripcion.ilike.%${b}%`);
+    }
+
+    const { data, error, count } = await query;
 
     if (error) {
       throw new InternalServerErrorException(`No se pudo listar el material: ${error.message}`);
     }
 
-    return data ?? [];
+    return {
+      registros: data ?? [],
+      total: count ?? 0,
+      pagina,
+      limite,
+    };
   }
 
   async buscarPorId(id: string): Promise<MaterialRow> {
