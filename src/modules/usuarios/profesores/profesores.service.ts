@@ -94,4 +94,18 @@ export class ProfesoresService {
 
     return data ?? [];
   }
+
+  async filtrarIds(filtros: { tipoProfesor?: string[] }): Promise<string[]> {
+    let query = this.supabase.client.from('profesores').select('usuario_id');
+
+    if (filtros.tipoProfesor?.length) {
+      query = query.in('tipo_profesor', filtros.tipoProfesor);
+    }
+
+    const { data, error } = await query;
+
+    if (error) return [];
+
+    return (data ?? []).map((row: any) => row.usuario_id);
+  }
 }

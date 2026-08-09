@@ -8,6 +8,7 @@ import { Roles } from '../../../core/auth/decorators/roles.decorator';
 import { Rol } from '../../../shared/enums/rol.enum';
 import { CurrentUser } from '../../../core/auth/decorators/current-user.decorator';
 import type { RequestUser } from '../../../core/auth/strategies/jwt.strategy';
+import { FiltrarUsuariosDto } from './dto/filtrar-usuarios.dto';
 
 @Controller('usuarios')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -22,8 +23,8 @@ export class CentralController {
 
   @Get()
   @Roles(Rol.ADMINISTRADOR)
-  listarUsuarios(@Query('rol') rol?: Rol) {
-    return this.centralService.listarUsuarios(rol);
+  listarUsuarios(@Query() filtros: FiltrarUsuariosDto) {
+    return this.centralService.listarUsuarios(filtros);
   }
 
   @Get('me')

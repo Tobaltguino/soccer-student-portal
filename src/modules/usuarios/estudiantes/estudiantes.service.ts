@@ -4,6 +4,8 @@ import { CrearUsuarioDto } from '../central/dto/crear-usuario.dto';
 import { ActualizarEstudianteDto } from './dto/actualizar-estudiante.dto';
 import type { EstudianteRow } from './interfaces/estudiante.interface';
 import { lanzarErrorSupabase } from '../../../shared/utils/supabase-error.util';
+import { FiltrarEstudiantesDto } from './dto/flitrar-estudiante.dto';
+import { UsuarioPerfilRow } from 'src/shared/interfaces/usuario-perfil.interface';
 
 @Injectable()
 export class EstudiantesService {
@@ -119,5 +121,119 @@ export class EstudiantesService {
     }
 
     return data ?? [];
+  }
+
+  async filtrarIds(filtros: { grupoIds?: number[]; posiciones?: string[] }): Promise<string[]> {
+    let query = this.supabase.client.from('estudiantes').select('usuario_id');
+
+    if (filtros.grupoIds?.length) {
+      query = query.in('grupo_id', filtros.grupoIds);
+    }
+
+    if (filtros.posiciones?.length) {
+      query = query.overlaps('posiciones', filtros.posiciones);
+    }
+
+    const { data, error } = await query;
+
+    if (error) return [];
+
+    return (data ?? []).map((row: any) => row.usuario_id);
+  }
+
+  async listarConFiltros(filtros: FiltrarEstudiantesDto): Promise<{
+    registros: (EstudianteRow & { perfil: UsuarioPerfilRow })[];
+    total: number;
+    pagina: number;
+    limite: number;
+  }> {
+    const pagina = filtros.pagina ?? 1;
+    const limite = Math.min(filtros.limite ?? 20, 100);
+    const desde = (pagina - 1) * limite;
+    const hasta = desde + limite - 1;
+
+    // Si hay búsqueda o filtro de activo, primero resolvemos qué usuario_ids califican
+    let idsPreseleccionados: string[] | null = null;
+
+    if (filtros.busqueda || filtros.activo !== undefined) {
+      let queryPerfiles = this.supabase.client
+        .from('usuarios_perfiles')
+        .select('id_usuario')
+        .eq('rol', 'estudiante');
+
+      if (filtros.busqueda) {
+        const b = filtros.busqueda.replace(/[%_]/g, '');
+        queryPerfiles = queryPerfiles.or(
+          `nombre.ilike.%${b}%,apellido.ilike.%${b}%,rut.ilike.%${b}%,email.ilike.%${b}%`,
+        );
+      }
+
+      if (filtros.activo !== undefined) {
+        queryPerfiles = queryPerfiles.eq('activo', filtros.activo);
+      }
+
+      const { data, error } = await queryPerfiles;
+
+      if (error) {
+        throw new InternalServerErrorException(`No se pudo filtrar estudiantes: ${error.message}`);
+      }
+
+      idsPreseleccionados = (data ?? []).map((row: any) => row.id_usuario);
+
+      if (idsPreseleccionados.length === 0) {
+        return { registros: [], total: 0, pagina, limite };
+      }
+    }
+
+    let query = this.supabase.client
+      .from('estudiantes')
+      .select('*', { count: 'exact' })
+      .range(desde, hasta);
+
+    if (idsPreseleccionados !== null) {
+      query = query.in('usuario_id', idsPreseleccionados);
+    }
+
+    if (filtros.grupoIds?.length) {
+      query = query.in('grupo_id', filtros.grupoIds);
+    }
+
+    if (filtros.posiciones?.length) {
+      query = query.overlaps('posiciones', filtros.posiciones);
+    }
+
+    const { data: estudiantes, error, count } = await query;
+
+    if (error) {
+      throw new InternalServerErrorException(`No se pudo listar estudiantes: ${error.message}`);
+    }
+
+    const lista = (estudiantes ?? []) as EstudianteRow[];
+
+    if (lista.length === 0) {
+      return { registros: [], total: count ?? 0, pagina, limite };
+    }
+
+    // Trae los perfiles correspondientes para armar la respuesta completa
+    const { data: perfiles, error: errorPerfiles } = await this.supabase.client
+      .from('usuarios_perfiles')
+      .select('*')
+      .in(
+        'id_usuario',
+        lista.map((e) => e.usuario_id),
+      );
+
+    if (errorPerfiles) {
+      throw new InternalServerErrorException(`No se pudo obtener los perfiles: ${errorPerfiles.message}`);
+    }
+
+    const mapaPerfiles = new Map((perfiles ?? []).map((p: any) => [p.id_usuario, p]));
+
+    const registros = lista.map((e) => ({
+      ...e,
+      perfil: mapaPerfiles.get(e.usuario_id),
+    })) as (EstudianteRow & { perfil: UsuarioPerfilRow })[];
+
+    return { registros, total: count ?? 0, pagina, limite };
   }
 }

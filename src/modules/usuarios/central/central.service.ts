@@ -11,6 +11,7 @@ import { NutricionistasService } from '../nutricionistas/nutricionistas.service'
 import { AdminsService } from '../admins/admins.service';
 import type { UsuarioPerfilRow, UsuarioPerfilCompleto } from '../../../shared/interfaces/usuario-perfil.interface';
 import { lanzarErrorSupabase, lanzarErrorAuth } from '../../../shared/utils/supabase-error.util';
+import { FiltrarUsuariosDto } from './dto/filtrar-usuarios.dto';
 
 @Injectable()
 export class CentralService {
@@ -81,30 +82,73 @@ export class CentralService {
     };
   }
 
-  async listarUsuarios(rolFiltro?: Rol): Promise<UsuarioPerfilCompleto[]> {
-    let query = this.supabase.client.from('usuarios_perfiles').select('*');
+  async listarUsuarios(filtros: FiltrarUsuariosDto): Promise<{
+    registros: UsuarioPerfilCompleto[];
+    total: number;
+    pagina: number;
+    limite: number;
+  }> {
+    const pagina = filtros.pagina ?? 1;
+    const limite = Math.min(filtros.limite ?? 20, 100);
+    const desde = (pagina - 1) * limite;
+    const hasta = desde + limite - 1;
 
-    if (rolFiltro) {
-      query = query.eq('rol', rolFiltro);
+    // Si hay filtros que solo existen en las sub-tablas, primero acotamos los ids
+    let idsPreseleccionados: string[] | null = null;
+
+    if (filtros.rol === Rol.ESTUDIANTE && (filtros.grupoIds?.length || filtros.posiciones?.length)) {
+      idsPreseleccionados = await this.estudiantesService.filtrarIds({
+        grupoIds: filtros.grupoIds,
+        posiciones: filtros.posiciones,
+      });
     }
 
-    const { data: perfiles, error } = await query;
+    if (filtros.rol === Rol.PROFESOR && filtros.tipoProfesor?.length) {
+      idsPreseleccionados = await this.profesoresService.filtrarIds({
+        tipoProfesor: filtros.tipoProfesor,
+      });
+    }
+
+    // Si el filtro de sub-tabla no encontró a nadie, no hace falta ni consultar usuarios_perfiles
+    if (idsPreseleccionados !== null && idsPreseleccionados.length === 0) {
+      return { registros: [], total: 0, pagina, limite };
+    }
+
+    let query = this.supabase.client
+      .from('usuarios_perfiles')
+      .select('*', { count: 'exact' })
+      .order('nombre')
+      .range(desde, hasta);
+
+    if (filtros.rol) {
+      query = query.eq('rol', filtros.rol);
+    }
+
+    if (filtros.activo !== undefined) {
+      query = query.eq('activo', filtros.activo);
+    }
+
+    if (filtros.busqueda) {
+      const b = filtros.busqueda.replace(/[%_]/g, '');
+      query = query.or(
+        `nombre.ilike.%${b}%,apellido.ilike.%${b}%,rut.ilike.%${b}%,email.ilike.%${b}%`,
+      );
+    }
+
+    if (idsPreseleccionados !== null) {
+      query = query.in('id_usuario', idsPreseleccionados);
+    }
+
+    const { data: perfiles, error, count } = await query;
 
     if (error) {
-      throw new InternalServerErrorException(
-        `No se pudo listar usuarios: ${error.message}`,
-      );
+      throw new InternalServerErrorException(`No se pudo listar usuarios: ${error.message}`);
     }
 
     const listaPerfiles = (perfiles ?? []) as UsuarioPerfilRow[];
 
-    const idsEstudiantes = listaPerfiles
-      .filter((p) => p.rol === Rol.ESTUDIANTE)
-      .map((p) => p.id_usuario);
-
-    const idsProfesores = listaPerfiles
-      .filter((p) => p.rol === Rol.PROFESOR)
-      .map((p) => p.id_usuario);
+    const idsEstudiantes = listaPerfiles.filter((p) => p.rol === Rol.ESTUDIANTE).map((p) => p.id_usuario);
+    const idsProfesores = listaPerfiles.filter((p) => p.rol === Rol.PROFESOR).map((p) => p.id_usuario);
 
     const [datosEstudiantes, datosProfesores] = await Promise.all([
       this.estudiantesService.buscarPorIds(idsEstudiantes),
@@ -114,7 +158,7 @@ export class CentralService {
     const mapaEstudiantes = new Map(datosEstudiantes.map((e) => [e.usuario_id, e]));
     const mapaProfesores = new Map(datosProfesores.map((p) => [p.usuario_id, p]));
 
-    return listaPerfiles.map((perfil) => ({
+    const registros = listaPerfiles.map((perfil) => ({
       ...perfil,
       ...(mapaEstudiantes.has(perfil.id_usuario) && {
         datosEstudiante: mapaEstudiantes.get(perfil.id_usuario),
@@ -123,6 +167,8 @@ export class CentralService {
         datosProfesor: mapaProfesores.get(perfil.id_usuario),
       }),
     }));
+
+    return { registros, total: count ?? 0, pagina, limite };
   }
 
   async actualizarUsuario(
