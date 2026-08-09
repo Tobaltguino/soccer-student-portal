@@ -8,6 +8,7 @@ export const RUTAS_GET_AUDITABLES = [
   '/estudiantes/me/nutri-resultados',
   '/estudiantes/me/fichas-evolutivas',
   '/estudiantes/me/historial-clinico',
+  '/auditoria',
 ];
 
 export function esRutaSensible(ruta: string): boolean {
