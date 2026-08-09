@@ -20,6 +20,7 @@ import { Rol } from '../../../shared/enums/rol.enum';
 import { CurrentUser } from '../../../core/auth/decorators/current-user.decorator';
 import type { RequestUser } from '../../../core/auth/strategies/jwt.strategy';
 import { AlcanceGruposService } from '../../../shared/services/alcance-grupos.service';
+import { FiltrarClasesDto } from './dto/filtrar-clases.dto';
 
 @Controller('clases')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -40,16 +41,10 @@ export class ClasesController {
   @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO)
   async listar(
     @CurrentUser() user: RequestUser,
-    @Query('grupoId') grupoId?: string,
-    @Query('incluirEliminadas') incluirEliminadas?: string,
+    @Query() filtros: FiltrarClasesDto,
   ) {
     const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
-
-    return this.clasesService.listar(
-      grupoId ? Number(grupoId) : undefined,
-      incluirEliminadas === 'true',
-      gruposPermitidos,
-    );
+    return this.clasesService.listar(filtros, gruposPermitidos);
   }
 
   @Get('mis-clases')

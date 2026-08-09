@@ -4,6 +4,7 @@ import { CrearClaseDto } from './dto/crear-clase.dto';
 import { ActualizarClaseDto } from './dto/actualizar-clase.dto';
 import type { ClaseRow } from './interfaces/clase.interface';
 import { lanzarErrorSupabaseConFk } from '../../../shared/utils/supabase-error.util';
+import { FiltrarClasesDto } from './dto/filtrar-clases.dto';
 
 @Injectable()
   export class ClasesService {
@@ -46,29 +47,55 @@ import { lanzarErrorSupabaseConFk } from '../../../shared/utils/supabase-error.u
   }
 
   async listar(
-    grupoId?: number,
-    incluirEliminadas: boolean = false,
+    filtros: FiltrarClasesDto,
     gruposPermitidos: number[] | null = null,
-  ): Promise<ClaseRow[]> {
-    let query = this.supabase.client.from('clases').select('*').order('fecha', { ascending: false });
+  ): Promise<{
+    registros: ClaseRow[];
+    total: number;
+    pagina: number;
+    limite: number;
+  }> {
+    const pagina = filtros.pagina ?? 1;
+    const limite = Math.min(filtros.limite ?? 20, 100);
+    const desde = (pagina - 1) * limite;
+    const hasta = desde + limite - 1;
 
-    if (grupoId !== undefined) {
-      query = query.eq('grupo_id', grupoId);
+    let query = this.supabase.client
+      .from('clases')
+      .select('*', { count: 'exact' })
+      .order('fecha', { ascending: false })
+      .range(desde, hasta);
+
+    if (filtros.grupoId !== undefined) {
+      query = query.eq('grupo_id', filtros.grupoId);
     } else if (gruposPermitidos !== null) {
       query = query.in('grupo_id', gruposPermitidos);
     }
 
-    if (!incluirEliminadas) {
+    if (filtros.desde) {
+      query = query.gte('fecha', filtros.desde);
+    }
+
+    if (filtros.hasta) {
+      query = query.lte('fecha', filtros.hasta);
+    }
+
+    if (!filtros.incluirEliminadas) {
       query = query.is('eliminado_at', null);
     }
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     if (error) {
       throw new InternalServerErrorException(`No se pudo listar las clases: ${error.message}`);
     }
 
-    return data ?? [];
+    return {
+      registros: data ?? [],
+      total: count ?? 0,
+      pagina,
+      limite,
+    };
   }
 
   async listarPorGrupoDeEstudiante(estudianteId: string): Promise<ClaseRow[]> {
