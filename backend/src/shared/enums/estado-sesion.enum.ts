@@ -1,0 +1,6 @@
+export enum EstadoSesion {
+  PROGRAMADA = 'PROGRAMADA',
+  EN_CURSO = 'EN_CURSO',
+  FINALIZADA = 'FINALIZADA',
+  CANCELADA = 'CANCELADA',
+}

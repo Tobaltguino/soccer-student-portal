@@ -1,0 +1,44 @@
+# ==========================================
+# BACKEND (NestJS)
+# ==========================================
+backend/dist
+backend/node_modules
+backend/.env
+backend/*.env
+!backend/.env.example
+
+# ==========================================
+# FRONTEND (Angular)
+# ==========================================
+frontend/dist
+frontend/node_modules
+frontend/.angular/cache
+frontend/src/environments/environment.ts
+frontend/src/environments/environment.prod.ts
+!frontend/src/environments/environment.example.ts
+
+# ==========================================
+# COMPARTIDO (ambos proyectos)
+# ==========================================
+
+# IDEs y editores
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+*.sublime-workspace
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log
+yarn-error.log
+*.log
+
+# Cobertura de tests
+/coverage
