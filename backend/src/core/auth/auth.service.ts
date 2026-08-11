@@ -9,27 +9,47 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 
 @Injectable()
 export class AuthService {
-  // Cliente "anon" separado del de service_role: el login debe hacerse
-  // con la anon key, igual que lo haría el frontend, no con la de admin.
   private readonly supabaseAnon: SupabaseClient;
+  private readonly supabaseAdmin: SupabaseClient; // Añadimos el cliente admin
 
   constructor(private configService: ConfigService) {
+    // Cliente anónimo (para hacer el login simulando al frontend)
     this.supabaseAnon = createClient(
       this.configService.getOrThrow<string>('SUPABASE_URL'),
       this.configService.getOrThrow<string>('SUPABASE_ANON_KEY'),
     );
+
+    // Cliente admin (para saltar el RLS y poder buscar el correo mediante el RUT)
+    this.supabaseAdmin = createClient(
+      this.configService.getOrThrow<string>('SUPABASE_URL'),
+      this.configService.getOrThrow<string>('SUPABASE_SERVICE_ROLE_KEY'), // Asegúrate de tener esta llave en tu .env
+    );
   }
 
   async login(dto: LoginDto) {
+    // 1. Buscar el email del usuario usando el RUT proporcionado
+    const { data: perfil, error: perfilError } = await this.supabaseAdmin
+      .from('usuarios_perfiles')
+      .select('email, rol') // Traemos el email (y de paso el rol si lo necesitas)
+      .eq('rut', dto.rut) // Asumiendo que tu DTO ahora recibe 'rut'
+      .single();
+
+    if (perfilError || !perfil) {
+      console.log('== ERROR REAL DE SUPABASE ==', perfilError);
+      throw new UnauthorizedException('El RUT ingresado no está registrado');
+    }
+
+    // 2. Hacer el login real contra Supabase usando el email encontrado
     const { data, error } = await this.supabaseAnon.auth.signInWithPassword({
-      email: dto.email,
+      email: perfil.email,
       password: dto.password,
     });
 
     if (error || !data.session) {
-      throw new UnauthorizedException('Credenciales inválidas');
+      throw new UnauthorizedException('Contraseña incorrecta');
     }
 
+    // 3. Retornar el token y los datos consolidados
     return {
       access_token: data.session.access_token,
       refresh_token: data.session.refresh_token,
@@ -37,6 +57,8 @@ export class AuthService {
       user: {
         id: data.user.id,
         email: data.user.email,
+        rut: dto.rut, // Podemos devolver el RUT
+        role: perfil.rol, // Y el rol que encontramos en la tabla
       },
     };
   }
@@ -58,7 +80,6 @@ export class AuthService {
   }
 
   async logout(accessToken: string) {
-    // signOut invalida la sesión en Supabase (requiere el token del usuario, no admin)
     const client = createClient(
       this.configService.getOrThrow<string>('SUPABASE_URL'),
       this.configService.getOrThrow<string>('SUPABASE_ANON_KEY'),
