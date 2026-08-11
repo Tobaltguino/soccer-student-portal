@@ -8,8 +8,4 @@ export class CrearProfesorDto {
   @IsNotEmpty({ message: 'El tipo de profesor es obligatorio' })
   tipo_profesor!: string;
 
-  // Ejemplo de campo opcional a futuro:
-  // @IsString()
-  // @IsOptional()
-  // especialidad?: string;
 }
