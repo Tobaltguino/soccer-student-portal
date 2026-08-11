@@ -6,69 +6,69 @@ import { roleGuard } from './core/auth/role.guard';
 import { Role } from './core/auth/role.enum';
 
 // --- HOME ---
-import { HomeComponent } from './features/home/home/home';
+import { HomeComponent } from './features/components/home/home/home';
 
 // --- AUTH ---
-import { LoginComponent } from './features/auth/login/login';
-import { UpdatePasswordComponent } from './features/auth/update-password/update-password';
-import { TerminosComponent } from './features/terminos/terminos';
+import { LoginComponent } from './features/components/auth/login/login';
+import { UpdatePasswordComponent } from './features/components/auth/update-password/update-password';
+import { TerminosComponent } from './features/components/terminos/terminos';
 
 // --- ADMIN IMPORTS ---
-import { AdminLayoutComponent } from './features/users/admin/admin-layout/admin-layout';
-import { AdminDashboardComponent } from './features/users/admin/admin-dashboard/admin-dashboard';
-import { AdminUsersComponent } from './features/users/admin/admin-users/admin-users';
-import { AdminGroupsComponent } from './features/users/admin/admin-groups/admin-groups';
-import { AdminClassesComponent } from './features/users/admin/admin-classes/admin-classes';
-import { AdminEvaluationsComponent } from './features/users/admin/admin-evaluations/admin-evaluations';
-import { AdminKineComponent } from './features/users/admin/admin-kine/admin-kine'; 
-import { AdminNutriComponent } from './features/users/admin/admin-nutri/admin-nutri'; 
-import { AdminPaymentsComponent } from './features/users/admin/admin-payments/admin-payments';
-import { AdminGuidesManagementComponent } from './features/users/admin/admin-guides-management/admin-guides-management';
-import { AdminAttendanceComponent } from './features/users/admin/admin-attendance/admin-attendance';
-import { AdminHomeConfigComponent } from './features/users/admin/admin-home-config/admin-home-config';
+import { AdminLayoutComponent } from './features/components/users/admin/admin-layout/admin-layout';
+import { AdminDashboardComponent } from './features/components/users/admin/admin-dashboard/admin-dashboard';
+import { AdminUsersComponent } from './features/components/users/admin/admin-users/admin-users';
+import { AdminGroupsComponent } from './features/components/users/admin/admin-groups/admin-groups';
+import { AdminClassesComponent } from './features/components/users/admin/admin-classes/admin-classes';
+import { AdminEvaluationsComponent } from './features/components/users/admin/admin-evaluations/admin-evaluations';
+import { AdminKineComponent } from './features/components/users/admin/admin-kine/admin-kine'; 
+import { AdminNutriComponent } from './features/components/users/admin/admin-nutri/admin-nutri'; 
+import { AdminPaymentsComponent } from './features/components/users/admin/admin-payments/admin-payments';
+import { AdminGuidesManagementComponent } from './features/components/users/admin/admin-guides-management/admin-guides-management';
+import { AdminAttendanceComponent } from './features/components/users/admin/admin-attendance/admin-attendance';
+import { AdminHomeConfigComponent } from './features/components/users/admin/admin-home-config/admin-home-config';
 
 // --- STUDENT IMPORTS (Portal Alumno) ---
-import { StudentLayoutComponent } from './features/users/student/student-layout/student-layout';
-import { StudentDashboardComponent } from './features/users/student/student-dashboard/student-dashboard';
-import { StudentScheduleComponent } from './features/users/student/student-schedule/student-schedule';
-import { StudentClassesComponent } from './features/users/student/student-classes/student-classes';
-import { StudentAttendanceComponent } from './features/users/student/student-attendance/student-attendance';
-import { StudentEvaluationsComponent } from './features/users/student/student-evaluations/student-evaluations';
-import { StudentKineComponent } from './features/users/student/student-kine/student-kine';
-import { StudentNutriComponent } from './features/users/student/student-nutri/student-nutri';
-import { StudentViewGuidesComponent } from './features/users/student/student-view-guides/student-view-guides';
-import { ViewTeachersComponent } from './features/users/student/view-teachers/view-teachers';
+import { StudentLayoutComponent } from './features/components/users/student/student-layout/student-layout';
+import { StudentDashboardComponent } from './features/components/users/student/student-dashboard/student-dashboard';
+import { StudentScheduleComponent } from './features/components/users/student/student-schedule/student-schedule';
+import { StudentClassesComponent } from './features/components/users/student/student-classes/student-classes';
+import { StudentAttendanceComponent } from './features/components/users/student/student-attendance/student-attendance';
+import { StudentEvaluationsComponent } from './features/components/users/student/student-evaluations/student-evaluations';
+import { StudentKineComponent } from './features/components/users/student/student-kine/student-kine';
+import { StudentNutriComponent } from './features/components/users/student/student-nutri/student-nutri';
+import { StudentViewGuidesComponent } from './features/components/users/student/student-view-guides/student-view-guides';
+import { ViewTeachersComponent } from './features/components/users/student/view-teachers/view-teachers';
 
 // --- PROFESSOR IMPORTS (Portal Profesor) ---
-import { ProfessorLayoutComponent } from './features/users/professor/professor-layout/professor-layout';
-import { ProfessorDashboardComponent } from './features/users/professor/professor-dashboard/professor-dashboard';
-import { ProfessorAttendanceComponent } from './features/users/professor/professor-attendance/professor-attendance';
-import { ProfessorClassesComponent } from './features/users/professor/professor-classes/professor-classes';
-import { ProfessorEvaluationsComponent } from './features/users/professor/professor-evaluations/professor-evaluations';
-import { ProfessorKinesiologyComponent } from './features/users/professor/professor-kinesiology/professor-kinesiology';
-import { ProfessorNutritionComponent } from './features/users/professor/professor-nutrition/professor-nutrition';
-import { ProfessorScheduleComponent } from './features/users/professor/professor-schedule/professor-schedule';
-import { ProfessorViewGuidesComponent } from './features/users/professor/professor-view-guides/professor-view-guides';
-import { ProfessorViewStudentsComponent } from './features/users/professor/professor-view-students/professor-view-students';
+import { ProfessorLayoutComponent } from './features/components/users/professor/professor-layout/professor-layout';
+import { ProfessorDashboardComponent } from './features/components/users/professor/professor-dashboard/professor-dashboard';
+import { ProfessorAttendanceComponent } from './features/components/users/professor/professor-attendance/professor-attendance';
+import { ProfessorClassesComponent } from './features/components/users/professor/professor-classes/professor-classes';
+import { ProfessorEvaluationsComponent } from './features/components/users/professor/professor-evaluations/professor-evaluations';
+import { ProfessorKinesiologyComponent } from './features/components/users/professor/professor-kinesiology/professor-kinesiology';
+import { ProfessorNutritionComponent } from './features/components/users/professor/professor-nutrition/professor-nutrition';
+import { ProfessorScheduleComponent } from './features/components/users/professor/professor-schedule/professor-schedule';
+import { ProfessorViewGuidesComponent } from './features/components/users/professor/professor-view-guides/professor-view-guides';
+import { ProfessorViewStudentsComponent } from './features/components/users/professor/professor-view-students/professor-view-students';
 
 // --- KINE IMPORTS ---
-import { KineLayoutComponent } from './features/users/kine/kine-layout/kine-layout';
-import { KineDashboardComponent } from './features/users/kine/kine-dashboard/kine-dashboard';
-import { KineClassesComponent } from './features/users/kine/kine-classes/kine-classes';
-import { KineEvaluationComponent } from './features/users/kine/kine-evaluation/kine-evaluation';
-import { KineScheduleComponent } from './features/users/kine/kine-schedule/kine-schedule';
-import { KineNutritionComponent } from './features/users/kine/kine-nutrition/kine-nutrition';
-import { KineViewGuidesComponent } from './features/users/kine/kine-view-guides/kine-view-guides';
-import { KineEvaluationsKineComponent } from './features/users/kine/kine-evaluations-kine/kine-evaluations-kine';
-import { KineInjuryTrackingComponent } from './features/users/kine/kine-injury-tracking/kine-injury-tracking';
-import { KinePatientsComponent } from './features/users/kine/kine-patients/kine-patients';
-import { KineStudentProfileComponent } from './features/users/kine/kine-student-profile/kine-student-profile';
+import { KineLayoutComponent } from './features/components/users/kine/kine-layout/kine-layout';
+import { KineDashboardComponent } from './features/components/users/kine/kine-dashboard/kine-dashboard';
+import { KineClassesComponent } from './features/components/users/kine/kine-classes/kine-classes';
+import { KineEvaluationComponent } from './features/components/users/kine/kine-evaluation/kine-evaluation';
+import { KineScheduleComponent } from './features/components/users/kine/kine-schedule/kine-schedule';
+import { KineNutritionComponent } from './features/components/users/kine/kine-nutrition/kine-nutrition';
+import { KineViewGuidesComponent } from './features/components/users/kine/kine-view-guides/kine-view-guides';
+import { KineEvaluationsKineComponent } from './features/components/users/kine/kine-evaluations-kine/kine-evaluations-kine';
+import { KineInjuryTrackingComponent } from './features/components/users/kine/kine-injury-tracking/kine-injury-tracking';
+import { KinePatientsComponent } from './features/components/users/kine/kine-patients/kine-patients';
+import { KineStudentProfileComponent } from './features/components/users/kine/kine-student-profile/kine-student-profile';
 
 // --- NUTRI IMPORTS ---
-import { NutriLayoutComponent } from './features/users/nutri/nutri-layout/nutri-layout';
-import { NutriDashboardComponent } from './features/users/nutri/nutri-dashboard/nutri-dashboard';
-import { NutriEvaluationsComponent } from './features/users/nutri/nutri-evaluation/nutri-evaluation';
-import { NutriGuidesComponent } from './features/users/nutri/nutri-guides/nutri-guides';
+import { NutriLayoutComponent } from './features/components/users/nutri/nutri-layout/nutri-layout';
+import { NutriDashboardComponent } from './features/components/users/nutri/nutri-dashboard/nutri-dashboard';
+import { NutriEvaluationsComponent } from './features/components/users/nutri/nutri-evaluation/nutri-evaluation';
+import { NutriGuidesComponent } from './features/components/users/nutri/nutri-guides/nutri-guides';
 
 export const routes: Routes = [
     // ==========================================
