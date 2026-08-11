@@ -1,5 +1,7 @@
 <div class="classes-container fadein animation-duration-500">
     
+    <p-toast position="top-right"></p-toast>
+    
     <header class="page-header">
         <div class="header-content">
             <h1 class="m-0 text-main">Mis Clases</h1>
@@ -11,8 +13,8 @@
         </div>
     </header>
 
-    <div class="filter-bar">
-        <div class="filter-row">
+    <div class="filter-bar card mb-4 p-3 surface-card border-round shadow-1">
+        <div class="filter-row flex flex-wrap gap-3">
             <div class="filter-item flex-grow-1">
                 <label><i class="pi pi-calendar mr-1"></i> Fecha</label>
                 <p-datepicker [(ngModel)]="filtroFecha" 
@@ -44,16 +46,16 @@
                           appendTo="body"></p-select>
             </div>
 
-            <div class="filter-btn">
+            <div class="filter-item-btn flex align-items-end">
                 <button pButton icon="pi pi-filter-slash" 
-                        class="p-button-outlined p-button-secondary" 
+                        class="p-button-outlined p-button-secondary w-full" 
                         (click)="limpiarFiltros()" 
                         pTooltip="Limpiar"></button>
             </div>
         </div>
     </div>
 
-    <div class="main-card">
+    <div class="main-card table-responsive">
         <p-table [value]="clases" [loading]="loading" [rows]="10" [paginator]="true" 
                  styleClass="p-datatable-sm p-datatable-striped" [rowHover]="true" 
                  responsiveLayout="stack" [breakpoint]="'768px'">
@@ -118,25 +120,25 @@
         <div *ngIf="selectedClase" class="animation-fade-in pt-2">
             
             <div class="field mb-4">
-                <label class="modal-label"><i class="pi pi-bullseye text-primary mr-2"></i> Objetivo Principal</label>
-                <div class="modal-content-box font-bold">
+                <label class="font-bold text-primary mb-2 block"><i class="pi pi-bullseye mr-2"></i> Objetivo Principal</label>
+                <div class="p-3 surface-100 border-round font-medium">
                     {{ selectedClase.objetivo && selectedClase.objetivo !== 'EMPTY' ? selectedClase.objetivo : 'Sin objetivo definido' }}
                 </div>
             </div>
 
             <div class="field mb-3" *ngIf="selectedClase.calentamiento && selectedClase.calentamiento !== 'EMPTY'">
-                <label class="modal-label"><span class="mr-2">🔥</span> Calentamiento</label>
-                <div class="modal-content-box text-sm" style="white-space: pre-wrap;">{{ selectedClase.calentamiento }}</div>
+                <label class="font-bold text-700 mb-2 block"><span class="mr-2">🔥</span> Calentamiento</label>
+                <div class="p-3 surface-50 border-round text-sm" style="white-space: pre-wrap;">{{ selectedClase.calentamiento }}</div>
             </div>
 
             <div class="field mb-3" *ngIf="selectedClase.parte_principal && selectedClase.parte_principal !== 'EMPTY'">
-                <label class="modal-label"><span class="mr-2">⚽</span> Parte Principal</label>
-                <div class="modal-content-box text-sm" style="white-space: pre-wrap;">{{ selectedClase.parte_principal }}</div>
+                <label class="font-bold text-700 mb-2 block"><span class="mr-2">⚽</span> Parte Principal</label>
+                <div class="p-3 surface-50 border-round text-sm" style="white-space: pre-wrap;">{{ selectedClase.parte_principal }}</div>
             </div>
 
             <div class="field mb-3" *ngIf="selectedClase.vuelta_calma && selectedClase.vuelta_calma !== 'EMPTY'">
-                <label class="modal-label"><span class="mr-2">❄️</span> Vuelta a la Calma</label>
-                <div class="modal-content-box text-sm" style="white-space: pre-wrap;">{{ selectedClase.vuelta_calma }}</div>
+                <label class="font-bold text-700 mb-2 block"><span class="mr-2">❄️</span> Vuelta a la Calma</label>
+                <div class="p-3 surface-50 border-round text-sm" style="white-space: pre-wrap;">{{ selectedClase.vuelta_calma }}</div>
             </div>
 
         </div>

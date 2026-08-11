@@ -29,7 +29,7 @@
 
             <div class="filter-item flex-grow-1">
                 <label><i class="pi pi-map-marker mr-1"></i> Lugar</label>
-                <input pInputText type="text" [(ngModel)]="filtroLugar" (input)="aplicarFiltros()" 
+                <input pInputText type="text" [(ngModel)]="filtroLugar" (keyup.enter)="aplicarFiltros()" 
                        placeholder="Buscar Lugar..." class="w-full"/>
             </div>
 
@@ -55,7 +55,6 @@
                 <tr>
                     <td>
                         <span class="p-column-title font-bold text-secondary hidden-desktop">Fecha / Hora:</span>
-                        
                         <div class="text-right sm:text-left">
                             <div class="font-bold text-main">{{ item.fecha | date: 'dd/MM/yyyy' }}</div>
                             <div class="text-sm text-500 flex align-items-center mt-1 justify-content-end sm:justify-content-start">
@@ -66,7 +65,8 @@
                     
                     <td>
                         <span class="p-column-title font-bold text-secondary hidden-desktop">Grupo:</span>
-                        <p-tag [value]="item.grupos?.nombre" severity="info"></p-tag>
+                        <!-- TODO: Ajustar cómo se muestra el nombre del grupo cuando migres Asistencia/Grupos -->
+                        <p-tag [value]="item.grupo_id" severity="info"></p-tag>
                     </td>
                     
                     <td class="text-main">
@@ -89,7 +89,8 @@
         </p-table>
     </div>
 
-    <p-dialog [(visible)]="displayAttendanceDialog" [header]="'Asistencia: ' + (claseSeleccionada?.grupos?.nombre)" [modal]="true" [style]="{width: '90vw', maxWidth: '450px'}" styleClass="p-fluid">
+    <!-- Modal de Asistencia -->
+    <p-dialog [(visible)]="displayAttendanceDialog" [header]="'Asistencia (Clase ID: ' + (claseSeleccionada?.id) + ')'" [modal]="true" [style]="{width: '90vw', maxWidth: '450px'}" styleClass="p-fluid">
         <ng-template pTemplate="content">
             <p-table [value]="alumnosAsistencia" [loading]="loadingAsistencia" scrollable="true" scrollHeight="300px" styleClass="p-datatable-sm">
                 <ng-template pTemplate="header">
@@ -117,6 +118,7 @@
         </ng-template>
     </p-dialog>
 
+    <!-- Modal Formulario de Clase -->
     <p-dialog [(visible)]="displayDialog" [header]="tituloDialogo" [modal]="true" [style]="{width: '90vw', maxWidth: '550px'}" styleClass="p-fluid">
         <ng-template pTemplate="content">
             
