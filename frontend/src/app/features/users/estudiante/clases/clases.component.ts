@@ -15,8 +15,8 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
 // Nuevos Imports de Dominio
-import { ClaseService } from '../../../../core/domains/clases/services/clase.service';
-import { Clase } from '../../../../core/domains/clases/models/clase.interface';
+import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
+import { Clase } from '../../../../core/domains/academico/clases/models/clase.interface';
 
 // Extendemos la interfaz localmente para aceptar "presente" temporalmente
 export type ClaseEstudiante = Clase & { presente?: boolean | null };

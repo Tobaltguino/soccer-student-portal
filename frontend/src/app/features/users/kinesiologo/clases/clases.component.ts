@@ -15,8 +15,8 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
 // Dominios
-import { ClaseService } from '../../../../core/domains/clases/services/clase.service';
-import { Clase, FiltrosClase } from '../../../../core/domains/clases/models/clase.interface';
+import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
+import { Clase, FiltrosClase } from '../../../../core/domains/academico/clases/models/clase.interface';
 
 @Component({
   selector: 'app-kinesiologo-clases',
