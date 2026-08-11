@@ -1,0 +1,5 @@
+export enum TipoMaterial {
+  FISICO = 'FISICO',
+  KINESIOLOGICO = 'KINESIOLOGICO',
+  NUTRICION = 'NUTRICION',
+}
