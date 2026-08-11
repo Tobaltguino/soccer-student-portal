@@ -1,0 +1,214 @@
+/* --- CONFIGURACIÓN BASE --- */
+:host {
+    display: block;
+    min-height: 100vh;
+    padding: 1.5rem; /* Sincronizado con el Dashboard */
+}
+
+.users-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* --- TEXTOS --- */
+.text-main { color: var(--text-main); }
+.text-secondary { color: var(--text-secondary); }
+.text-primary { color: var(--primary-color); }
+
+/* --- ENCABEZADO --- */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.header-content h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.header-content p {
+    margin: 0.25rem 0 0;
+    font-size: 0.85rem;
+}
+
+/* --- TARJETA PRINCIPAL --- */
+.main-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    padding: 1rem 1.25rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+/* --- PESTAÑAS (TABS) PRIMENG --- */
+:host ::ng-deep .p-tablist-tab-list {
+    background: transparent !important;
+    border: none !important;
+}
+
+:host ::ng-deep .p-tabpanels {
+    background: transparent !important;
+    padding: 1.25rem 0 0 0 !important;
+}
+
+/* --- BOTONES COMPACTOS --- */
+:host ::ng-deep .btn-create {
+    padding: 0.5rem 1rem !important;
+    border-radius: 8px !important;
+    font-size: 0.85rem !important;
+    white-space: nowrap;
+}
+:host ::ng-deep .btn-create .p-button-icon {
+    font-size: 0.8rem !important;
+    margin-right: 6px !important;
+}
+
+/* --- TABLAS ULTRA COMPACTAS Y CENTRADAS --- */
+:host ::ng-deep .p-datatable .p-datatable-header {
+    background: transparent; 
+    border: none; 
+    padding: 0.5rem 0 1rem 0;
+}
+
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+    background: var(--bg-main) !important;
+    color: var(--text-secondary) !important;
+    font-weight: 600;
+    font-size: 0.75rem !important;
+    text-transform: uppercase;
+    padding: 0.5rem 0.4rem !important;
+    border-bottom: 1px solid var(--border-color);
+    text-align: center !important; 
+    white-space: nowrap;
+}
+
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+    padding: 0.5rem 0.4rem !important;
+    font-size: 0.8rem !important;
+    border-bottom: 1px solid var(--bg-main);
+    color: var(--text-main);
+    vertical-align: middle;
+    text-align: center !important; 
+}
+
+/* --- ACCIONES DE LA TABLA --- */
+.action-buttons { 
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    gap: 0.15rem;
+    width: 100%;
+}
+
+:host ::ng-deep .action-buttons .p-button {
+    width: 1.8rem !important; 
+    height: 1.8rem !important; 
+    padding: 0 !important;
+}
+
+:host ::ng-deep .action-buttons .p-button .p-button-icon {
+    font-size: 0.85rem !important; 
+}
+
+/* --- FORMULARIOS Y MODALES --- */
+.field {
+    margin-bottom: 1.25rem;
+}
+
+label {
+    color: var(--text-main);
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 4px;
+}
+
+textarea {
+    resize: vertical;
+}
+
+:host ::ng-deep .p-dialog-content {
+    padding-top: 1rem !important;
+    overflow-y: auto;
+}
+
+/* =========================================
+   IMÁGENES Y PREVIEW DE LOGOS
+   ========================================= */
+.object-contain {
+    object-fit: contain;
+}
+
+.logo-tabla {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+    border-radius: 6px;
+}
+
+/* ✅ CONTENEDOR RECTANGULAR CORREGIDO (Oculta imágenes desbordadas) */
+.sponsor-preview-container {
+    width: 100%;
+    max-width: 250px;
+    height: 120px;
+    margin: 0 auto 1.5rem auto;
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; /* Oculta TODO lo que se pase de los 250x120px */
+    position: relative;
+    background-color: transparent;
+}
+
+.sponsor-preview-container img {
+    max-width: 100% !important; /* Fuerza el ancho máximo al 100% de la caja */
+    max-height: 100% !important; /* Fuerza el alto máximo al 100% de la caja */
+    object-fit: contain !important; /* Contiene sin recortar */
+    padding: 1rem;
+    display: block;
+}
+
+.sponsor-preview-container i.pi-image {
+    font-size: 3rem;
+    color: var(--text-secondary);
+    opacity: 0.4;
+}
+
+/* =========================================
+   RESPONSIVE MÓVIL
+   ========================================= */
+@media (max-width: 768px) {
+    :host {
+        padding: 1rem;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+        margin-bottom: 1rem;
+    }
+
+    .header-content h1 { 
+        font-size: 1.25rem; 
+    }
+
+    .logo-tabla {
+        width: 45px;
+        height: 45px;
+    }
+
+    :host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+        padding: 0.6rem 0.4rem !important;
+        font-size: 0.85rem !important;
+    }
+}

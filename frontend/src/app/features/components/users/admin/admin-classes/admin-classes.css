@@ -1,0 +1,301 @@
+/* --- CONFIGURACIÓN BASE --- */
+:host {
+    display: block;
+    min-height: 100vh;
+    padding: 1.5rem; /* Sincronizado con dashboard */
+}
+
+.classes-container { 
+    max-width: 1200px; /* Igualado a Grupos y Guías */
+    margin: 0 auto; 
+}
+
+/* --- HEADER --- */
+.page-header {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    margin-bottom: 1.5rem; 
+    flex-wrap: wrap; 
+    gap: 0.75rem;
+}
+
+.header-content h1 { 
+    margin: 0; 
+    font-size: 1.4rem; 
+    font-weight: 700; 
+    color: var(--text-main); 
+}
+
+.header-content p { 
+    margin: 0.25rem 0 0; 
+    color: var(--text-secondary); 
+    font-size: 0.85rem; 
+}
+
+/* --- BOTÓN NUEVO (ULTRA COMPACTO) --- */
+:host ::ng-deep .btn-create {
+    padding: 0.5rem 1rem !important;
+    border-radius: 8px !important;
+    font-size: 0.85rem !important;
+    white-space: nowrap;
+}
+:host ::ng-deep .btn-create .p-button-icon {
+    font-size: 0.8rem !important;
+    margin-right: 6px !important;
+}
+
+/* =========================================
+   BARRA DE FILTROS (HORIZONTAL Y RESPONSIVA)
+   ========================================= */
+.filter-bar {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    margin-bottom: 1.5rem;
+}
+
+.filter-row {
+    display: flex;
+    align-items: flex-end; 
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.filter-item label {
+    color: var(--text-secondary);
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0; 
+}
+
+.filter-item-btn {
+    flex: none;
+    padding-bottom: 1px; 
+}
+
+.flex-grow-1 {
+    flex: 1;
+    min-width: 130px;
+}
+
+:host ::ng-deep .filter-bar .p-select,
+:host ::ng-deep .filter-bar .p-datepicker,
+:host ::ng-deep .filter-bar .p-inputtext {
+    width: 100%;
+}
+
+:host ::ng-deep .filter-bar .p-inputtext,
+:host ::ng-deep .filter-bar .p-select .p-select-label {
+    padding: 0.4rem 0.5rem !important; 
+    font-size: 0.8rem !important; 
+}
+
+/* --- ESTILOS DEL FORMULARIO (MODAL) --- */
+.field {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    margin-bottom: 1.25rem !important;
+    width: 100% !important;
+}
+
+.field label {
+    font-weight: 600 !important;
+    color: var(--text-main);
+    font-size: 0.85rem;
+    margin: 0 !important;
+    display: flex;
+    align-items: center;
+}
+
+.field input, 
+.field textarea,
+.field p-select,
+.field p-datepicker,
+.field p-calendar,
+.field p-multiSelect {
+    width: 100% !important;
+    display: flex;
+}
+
+.field textarea {
+    min-height: 80px;
+}
+
+/* --- FIX: SCROLL EN EL MODAL --- */
+:host ::ng-deep .p-dialog-content {
+    overflow-y: auto !important; 
+    max-height: 70vh !important; 
+    padding: 1rem !important;
+}
+
+/* --- ANIMACIONES Y SWITCHER --- */
+.animation-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+:host ::ng-deep .p-selectbutton {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+/* --- TABLA PRINCIPAL --- */
+.card-table {
+    background-color: var(--bg-card); 
+    padding: 1rem 1.25rem; 
+    border-radius: 12px;
+    border: 1px solid var(--border-color); 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    overflow-x: auto;
+}
+
+/* --- TABLAS ULTRA COMPACTAS Y CENTRADAS --- */
+:host ::ng-deep .p-datatable .p-datatable-header { 
+    background: transparent; border: none; padding: 0.5rem 0 1rem 0; 
+}
+
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+    background: var(--bg-main) !important; 
+    color: var(--text-secondary) !important;
+    font-weight: 600; font-size: 0.75rem !important; 
+    text-transform: uppercase; padding: 0.5rem 0.4rem !important; 
+    border-bottom: 1px solid var(--border-color);
+    text-align: center !important; white-space: nowrap;
+}
+
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+    padding: 0.5rem 0.4rem !important; font-size: 0.8rem !important; 
+    border-bottom: 1px solid var(--bg-main); color: var(--text-main);
+    vertical-align: middle; text-align: center !important;
+    white-space: normal !important; /* Salto de línea activado */
+}
+
+/* Solución para que los textos largos bajen en lugar de romper la tabla */
+:host ::ng-deep .p-datatable-tbody > tr > td span:not(.p-column-title) {
+    display: inline-block !important;
+    max-width: 100% !important; 
+    white-space: normal !important; 
+    word-break: break-word !important; 
+    overflow-wrap: break-word !important;
+}
+
+/* --- ACCIONES DE LA TABLA --- */
+.action-buttons { 
+    display: flex; justify-content: center; align-items: center;
+    gap: 0.15rem; width: 100%;
+}
+
+:host ::ng-deep .action-buttons .p-button {
+    width: 1.8rem !important; height: 1.8rem !important; padding: 0 !important;
+}
+
+:host ::ng-deep .action-buttons .p-button .p-button-icon {
+    font-size: 0.85rem !important; 
+}
+
+/* --- TEXTOS Y UTILIDADES --- */
+.text-main { color: var(--text-main); }
+.text-secondary { color: var(--text-secondary); }
+.text-xs { font-size: 0.75rem; }
+.font-bold { font-weight: 700; }
+.text-primary { color: var(--primary-color); }
+
+.hidden-mobile { display: table-cell; }
+.visible-mobile { display: none; }
+.mobile-meta { font-size: 0.85rem; margin-top: 4px; line-height: 1.3; }
+
+/* --- ESPACIADO DE ICONOS --- */
+.field label i, 
+:host ::ng-deep p-button i,
+:host ::ng-deep .p-button i,
+.action-buttons button i {
+    margin-right: 6px !important;
+}
+
+.text-main i, .text-sm i, .mobile-meta i {
+    margin-right: 6px !important;
+}
+
+.field label span {
+    margin-right: 6px; font-size: 1rem; display: inline-block; width: 20px; text-align: center;
+}
+
+:host ::ng-deep .p-selectbutton .p-button .p-button-label i {
+    margin-right: 6px;
+}
+
+/* =========================================
+   MEDIA QUERIES - MÓVIL Y TARJETAS
+   ========================================= */
+.hidden-desktop { display: none; }
+
+@media (max-width: 768px) {
+    :host { padding: 1rem; }
+    
+    .page-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; margin-bottom: 1rem; }
+    .header-content, .btn-create { width: 100%; justify-content: flex-start; }
+    .header-content h1 { font-size: 1.25rem; }
+    .btn-create { justify-content: center; }
+    
+    .filter-row { flex-direction: column; align-items: stretch; gap: 0.75rem; }
+    .filter-item, .filter-item-btn { width: 100%; min-width: 100%; flex: none; }
+    
+    .hidden-mobile { display: none !important; }
+    .visible-mobile { display: block !important; }
+    
+    .formgrid.grid .col-6 {
+        width: 100% !important; display: block !important; flex: none;
+        padding-left: 0 !important; padding-right: 0 !important;
+    }
+
+    /* --- MAGIA: TABLA A TARJETAS MÓVILES (SOLO TABLA PRINCIPAL) --- */
+    .hidden-desktop { display: inline-block; }
+    
+    :host ::ng-deep .card-table .p-datatable-thead { display: none !important; }
+
+    :host ::ng-deep .card-table .p-datatable-tbody > tr {
+        display: flex; flex-direction: column;
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 12px; margin-bottom: 1rem;
+        padding: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    :host ::ng-deep .card-table .p-datatable-tbody > tr > td {
+        display: flex !important; align-items: center !important; justify-content: space-between !important; 
+        width: 100% !important; padding: 0.6rem 0 !important;
+        border: none !important; border-bottom: 1px solid var(--border-color) !important;
+        text-align: right !important; white-space: normal; font-size: 0.85rem !important;
+    }
+
+    :host ::ng-deep .card-table .p-datatable-tbody > tr > td .p-column-title {
+        display: inline-block !important; font-weight: 700; margin-bottom: 0;
+        font-size: 0.85rem; color: var(--text-secondary); text-transform: none;
+    }
+
+    :host ::ng-deep .card-table .p-datatable-tbody > tr > td:last-child {
+        border-bottom: none !important; padding-top: 0.75rem !important; justify-content: center !important;
+    }
+
+    .card-table .action-buttons {
+        width: 100%; justify-content: space-around !important; 
+        background-color: rgba(0,0,0,0.02); border-radius: 8px; padding: 0.4rem;
+    }
+}

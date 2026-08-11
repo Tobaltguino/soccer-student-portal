@@ -1,0 +1,160 @@
+<div class="eval-container fadein animation-duration-500">
+    <p-toast position="top-right"></p-toast>
+
+    <header class="page-header">
+        <div class="header-content">
+            <h1 class="m-0 text-main">Historial Nutricional</h1>
+            <p class="text-secondary m-0 mt-1">Revisa los informes de composición corporal y pautas de los pacientes.</p>
+        </div>
+    </header>
+
+    <div class="filter-bar">
+        <div class="filter-row">
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-calendar mr-1"></i> Fecha</label>
+                <p-datepicker [(ngModel)]="filtroFecha" dateFormat="dd/mm/yy" [showIcon]="false" 
+                              placeholder="Filtrar por Fecha" 
+                              (onSelect)="aplicarFiltros()" [showClear]="true" (onClear)="aplicarFiltros()" 
+                              styleClass="w-full" appendTo="body"></p-datepicker>
+            </div>
+
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-heart-fill mr-1"></i> Tipo de Evaluación</label>
+                <p-select [options]="tiposEvaluacion" [(ngModel)]="filtroPrueba" optionLabel="nombre" 
+                          placeholder="Filtrar por Tipo de Evaluación" 
+                          (onChange)="aplicarFiltros()" [showClear]="true" 
+                          styleClass="w-full" appendTo="body"></p-select>
+            </div>
+
+            <div class="filter-btn">
+                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary" 
+                        (click)="limpiarFiltros()" pTooltip="Limpiar"></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-card">
+        <p-table [value]="sesionesFiltradas" [loading]="loading" [rows]="10" [paginator]="true" 
+                 styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="stack" [breakpoint]="'768px'">
+            
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width: 20%">Fecha</th>
+                    <th style="width: 50%">Tipo de Evaluación</th>
+                    <th style="width: 15%" class="text-center">Estado</th>
+                    <th style="width: 15%" class="text-center">Acción</th>
+                </tr>
+            </ng-template>
+            
+            <ng-template pTemplate="body" let-sesion>
+                <tr>
+                    <td>
+                        <span class="p-column-title hidden-desktop">Fecha</span>
+                        <span class="font-bold text-main">{{ sesion.fecha | date:'dd/MM/yyyy' }}</span>
+                    </td>
+                    <td>
+                        <span class="p-column-title hidden-desktop">Tipo de Evaluación</span>
+                        <span class="font-bold text-main">{{ sesion.tipo_evaluacion?.nombre }}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="p-column-title hidden-desktop">Estado</span>
+                        <p-tag [value]="sesion.estado" severity="success" styleClass="text-xs"></p-tag>
+                    </td>
+                    <td class="text-center">
+                        <span class="p-column-title hidden-desktop">Acción</span>
+                        <div class="action-buttons">
+                            <button pButton icon="pi pi-eye" class="p-button-text p-button-info" 
+                                    (click)="verResultados(sesion)" pTooltip="Ver Informe Completo"></button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+            
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="4" class="text-center p-5 text-secondary">
+                        <i class="pi pi-folder-open text-400 mb-3 block" style="font-size: 2rem"></i>
+                        No hay evaluaciones nutricionales finalizadas disponibles.
+                    </td>
+                </tr>
+            </ng-template>
+            
+        </p-table>
+    </div>
+
+    <p-dialog [(visible)]="displayGradesDialog" header="Informe de Resultados" 
+              [modal]="true" [style]="{width: '95vw', maxWidth: '1000px'}" [maximizable]="true" styleClass="p-fluid">
+        <ng-template pTemplate="content">
+            
+            <div class="modal-content-box mb-4 flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3 mt-2">
+                <div class="flex flex-column">
+                    <span class="text-xs text-secondary text-uppercase font-bold tracking-wider">Evaluación Seleccionada</span>
+                    <span class="text-xl font-bold text-main mt-1">{{evalLogistica.tipo_evaluacion?.nombre}}</span>
+                </div>
+                <div class="flex flex-column sm:align-items-end">
+                    <span class="text-xs text-secondary text-uppercase font-bold tracking-wider mb-1">Fecha del Informe</span>
+                    <span class="font-bold text-main">{{ evalLogistica.fecha | date:'dd/MM/yyyy' }}</span>
+                </div>
+            </div>
+
+            <p-table [value]="estudiantes" [scrollable]="true" scrollHeight="500px" 
+                     styleClass="p-datatable-gridlines p-datatable-sm" responsiveLayout="stack" [breakpoint]="'768px'">
+                
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 30%">Paciente / Estudiante</th>
+                        <th style="width: 35%" class="text-center">Documento (PDF)</th>
+                        <th style="width: 35%">Observación Médica</th>
+                    </tr>
+                </ng-template>
+                
+                <ng-template pTemplate="body" let-estudiante>
+                    <tr>
+                        <td>
+                            <span class="p-column-title hidden-desktop">Paciente</span>
+                            <span class="font-bold text-main">{{estudiante.apellido}}</span>, {{estudiante.nombre}}
+                        </td>
+                        
+                        <td class="text-center">
+                            <span class="p-column-title hidden-desktop">Documento PDF</span>
+                            <div class="action-buttons w-full">
+                                <div *ngIf="estudiante.archivo_url_previo; else noFile" class="w-full">
+                                    <a [href]="estudiante.archivo_url_previo" target="_blank" class="no-underline w-full">
+                                        <button pButton class="p-button-outlined p-button-danger w-full justify-content-center text-sm gap-2">
+                                            <i class="pi pi-file-pdf"></i>
+                                            <span class="text-truncate" [title]="estudiante.nombre_archivo_previo">
+                                                Descargar / Ver PDF
+                                            </span>
+                                        </button>
+                                    </a>
+                                </div>
+                                <ng-template #noFile>
+                                    <span class="text-500 italic text-sm w-full block text-center"><i class="pi pi-times-circle mr-1"></i> Sin documento</span>
+                                </ng-template>
+                            </div>
+                        </td>
+
+                        <td>
+                            <span class="p-column-title hidden-desktop">Observación</span>
+                            <span *ngIf="estudiante.observacion" class="text-secondary text-sm line-height-2">{{ estudiante.observacion }}</span>
+                            <span *ngIf="!estudiante.observacion" class="text-400 italic text-sm">-</span>
+                        </td>
+                    </tr>
+                </ng-template>
+
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="3" class="text-center p-4 text-secondary">No hay pacientes registrados en este informe.</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+
+        </ng-template>
+        
+        <ng-template pTemplate="footer">
+            <div class="flex justify-content-end w-full">
+                <button pButton label="Cerrar Informe" icon="pi pi-times" class="p-button-secondary w-full sm:w-auto" (click)="displayGradesDialog = false"></button>
+            </div>
+        </ng-template>
+    </p-dialog>
+</div>

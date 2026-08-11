@@ -1,0 +1,168 @@
+<div class="home-wrapper fadein animation-duration-500">
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo-container">
+                <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="Logo ProFutbol" class="logo-img logo-dark-mode">
+                <img src="assets/images/ProFutbol_Transparentenegro.png" alt="Logo ProFutbol" class="logo-img logo-light-mode">
+                <span class="brand-text">ProFutbol</span>
+            </div>
+            
+            <div class="nav-links hidden-mobile">
+                <a (click)="scrollTo('nosotros')">Metodología</a>
+                <a (click)="scrollTo('programas')">Categorías</a>
+                <a (click)="scrollTo('auspiciadores')">Auspiciadores</a>
+                <a (click)="scrollTo('beneficios')">Beneficios</a>
+            </div>
+
+            <div class="nav-actions flex align-items-center gap-3">
+                <button pButton 
+                        [icon]="isDarkMode ? 'pi pi-sun' : 'pi pi-moon'" 
+                        class="p-button-rounded p-button-text p-button-secondary theme-toggle-btn" 
+                        (click)="toggleTheme()"
+                        aria-label="Cambiar tema">
+                </button>
+                <button pButton label="Portal Profutbol" icon="pi pi-user" class="p-button-outlined p-button-sm md:p-button-md btn-portal" (click)="irAlLogin()"></button>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero-section">
+        <div class="hero-overlay"></div> 
+        
+        <div class="hero-content fade-in-up">
+            <span class="badge">Academia de Fútbol de Alto Rendimiento</span>
+            <h1 class="hero-title text-wrap" [innerHTML]="heroTitulo"></h1>
+            <p class="hero-subtitle text-wrap">{{heroSubtitulo}}</p>
+            
+            <div class="hero-buttons">
+                <button pButton label="Únete a Nosotros" icon="pi pi-whatsapp" class="p-button-primary shadow-4 btn-hero" (click)="irA(linkWhatsApp)"></button>
+                <button pButton label="Conocer Más" icon="pi pi-arrow-down" class="p-button-outlined p-button-secondary btn-hero bg-white-alpha-10 text-white border-white hover:bg-white-alpha-20" (click)="scrollTo('nosotros')"></button>
+            </div>
+        </div>
+    </header>
+
+    <section id="nosotros" class="info-section">
+        <div class="section-container">
+            <div class="section-header text-center mb-5">
+                <h2 class="section-title text-wrap">Nuestra Metodología</h2>
+                <div class="title-divider"></div>
+                <p class="section-desc text-wrap">No solo formamos jugadores, formamos atletas integrales apoyados por un equipo de profesionales de primer nivel.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card main-card" *ngFor="let m of metodologias">
+                    <div class="icon-wrapper"><i class="pi {{ m.icono }}"></i></div>
+                    <h3 class="text-wrap">{{ m.titulo }}</h3>
+                    <p class="text-wrap">{{ m.descripcion }}</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="programas" class="programs-section">
+        <div class="section-container">
+            <div class="section-header text-center mb-5">
+                <h2 class="section-title text-wrap">Nuestras Categorías</h2>
+                <div class="title-divider"></div>
+            </div>
+
+            <div class="programs-grid">
+                <div class="program-card main-card p-0" *ngFor="let p of programas">
+                    <div class="program-img {{ p.color_fondo }} flex align-items-center justify-content-center h-10rem border-round-top">
+                        <i class="pi {{ p.icono }} text-5xl {{ p.color_texto }}"></i>
+                    </div>
+                    <div class="program-content">
+                        <h3 class="text-wrap">{{ p.titulo }}</h3>
+                        <p class="text-wrap">{{ p.descripcion }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="auspiciadores" class="info-section">
+        <div class="section-container">
+            <div class="section-header text-center mb-5">
+                <h2 class="section-title text-wrap">Nuestros Auspiciadores</h2>
+                <div class="title-divider"></div>
+                <p class="section-desc text-wrap">Gracias al constante apoyo de estas grandes marcas e instituciones, seguimos impulsando el talento deportivo en nuestra academia.</p>
+            </div>
+
+            <div class="sponsors-grid">
+                <div class="sponsor-card main-card flex flex-column h-full" *ngFor="let au of auspiciadores">
+                    
+                    <div class="sponsor-logo-wrapper mb-4 mt-2">
+                        <img [src]="au.imagen_url || 'assets/images/default-sponsor.png'" [alt]="au.nombre" class="sponsor-logo">
+                    </div>
+                    <h3 class="text-wrap">{{ au.nombre }}</h3>
+                    
+                    <p class="text-wrap flex-grow-1">{{ au.descripcion }}</p>
+                    
+                    <div class="mt-4" *ngIf="au.instagram_url">
+                        <button pButton label="Ver Instagram" icon="pi pi-instagram" 
+                                class="btn-instagram w-full justify-content-center" 
+                                (click)="irA(au.instagram_url)">
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="beneficios" class="programs-section">
+        <div class="section-container">
+            <div class="section-header text-center mb-5">
+                <h2 class="section-title text-wrap">Alianzas y Beneficios</h2>
+                <div class="title-divider"></div>
+                <p class="section-desc text-wrap">Trabajamos con las mejores instituciones para ofrecer beneficios exclusivos de salud, equipamiento y bienestar a todos nuestros jugadores y sus familias.</p>
+            </div>
+
+            <div class="sponsors-grid">
+                <div class="sponsor-card main-card flex flex-column h-full" *ngFor="let a of alianzas">
+                    <div class="sponsor-logo-wrapper mb-4 mt-2">
+                        <img [src]="a.imagen_url || 'assets/images/default-sponsor.png'" [alt]="a.nombre" class="sponsor-logo">
+                    </div>
+                    <h3 class="text-wrap">{{ a.nombre }}</h3>
+                    <p class="text-wrap flex-grow-1">{{ a.descripcion }}</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer id="contacto" class="footer-section">
+        <div class="section-container footer-container">
+            <div class="footer-brand">
+                <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="Logo" class="footer-logo mb-3">
+                <p class="text-wrap">Cambiando la forma de vivir el fútbol formativo. Únete a la evolución deportiva.</p>
+            </div>
+            
+            <div class="footer-links">
+                <h4>Contacto</h4>
+                <p class="text-wrap"><i class="pi pi-whatsapp mr-3 text-xl"></i> {{telefonoAcademia}}</p>
+                <p class="text-wrap"><i class="pi pi-envelope mr-3 text-xl"></i> {{correoAcademia}}</p>
+            </div>
+
+            <div class="footer-links social-column">
+                <h4>Síguenos</h4>
+                <p class="mb-3 text-sm text-400">Descubre nuestro día a día</p>
+                
+                <div class="social-list mt-3">
+                    <div class="social-item cursor-pointer" (click)="irA(linkInstagram)">
+                        <div class="icon-circle"><i class="pi pi-instagram text-xl"></i></div>
+                        <span class="social-name text-wrap">{{nombreInstagram}}</span>
+                    </div>
+
+                    <div class="social-item cursor-pointer" (click)="irA(linkFacebook)">
+                        <div class="icon-circle"><i class="pi pi-facebook text-xl"></i></div>
+                        <span class="social-name text-wrap">{{nombreFacebook}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2026 ProFutbol. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+</div>

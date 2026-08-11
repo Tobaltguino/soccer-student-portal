@@ -1,0 +1,97 @@
+<div class="stats-container fadein animation-duration-500">
+    
+    <header class="page-header">
+        <div class="header-content">
+            <h1 class="m-0 text-main">Estadísticas de Asistencia</h1>
+            <p class="text-secondary m-0 mt-1">Seguimiento de desempeño deportivo</p>
+        </div>
+        
+        <div class="header-actions filter-bar m-0 p-2 border-none bg-transparent shadow-none w-auto flex-row align-items-center">
+            <p-select [options]="years" [(ngModel)]="selectedYear" 
+                      optionLabel="label" optionValue="value"
+                      (onChange)="cargarDatosEstadisticos()" 
+                      styleClass="w-full sm:w-auto" placeholder="Año" appendTo="body"></p-select>
+            
+            <p-select [options]="months" [(ngModel)]="selectedMonth" 
+                      optionLabel="label" optionValue="value"
+                      (onChange)="cargarDatosEstadisticos()" 
+                      styleClass="w-full sm:w-auto" placeholder="Mes" appendTo="body"></p-select>
+
+            <button pButton icon="pi pi-refresh" class="p-button-outlined p-button-secondary btn-create" 
+                    (click)="cargarDatosEstadisticos()" [loading]="loading" pTooltip="Actualizar"></button>
+        </div>
+    </header>
+
+    <div class="grid mb-4">
+        <div class="col-12 md:col-6">
+            <div class="main-card summary-card border-left-3 border-green-500">
+                <div class="flex justify-content-between align-items-center">
+                    <div>
+                        <span class="block text-secondary font-bold text-sm text-uppercase tracking-wider mb-2">
+                            Asistidas ({{ selectedMonth === null ? 'Año' : 'Mes' }})
+                        </span>
+                        <div class="text-main font-bold text-4xl">{{ totalAsistidas }}</div>
+                    </div>
+                    <div class="icon-circle bg-green-100">
+                        <i class="pi pi-check-circle text-green-500 text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12 md:col-6">
+            <div class="main-card summary-card border-left-3 border-blue-500">
+                <div class="flex justify-content-between align-items-center">
+                    <div>
+                        <span class="block text-secondary font-bold text-sm text-uppercase tracking-wider mb-2">
+                            Índice de Asistencia
+                        </span>
+                        <div class="text-main font-bold text-4xl">{{ porcentajeAsistencia }}%</div>
+                    </div>
+                    <div class="icon-circle bg-blue-100">
+                        <i class="pi pi-chart-line text-blue-500 text-3xl"></i>
+                    </div>
+                </div>
+                <p-progressBar [value]="porcentajeAsistencia" [showValue]="false" styleClass="mt-4 custom-progress"></p-progressBar>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid align-items-start">
+        
+        <div class="col-12 lg:col-4">
+            <div class="main-card h-full">
+                <h3 class="text-center mb-4 text-main">Distribución de {{ selectedMonth === null ? 'Todo el Año' : 'Mes' }}</h3>
+                <div class="chart-container-pie">
+                    @if (hasData) {
+                        <p-chart type="doughnut" [data]="pieData" [options]="pieOptions"></p-chart>
+                    } @else {
+                        <div class="empty-state">
+                            <i class="pi pi-calendar-times mb-3 text-400 text-4xl"></i>
+                            <p class="text-secondary m-0 font-bold">Sin clases registradas</p>
+                            <span class="text-500 text-sm">en este periodo</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 lg:col-8">
+            <div class="main-card h-full">
+                <h3 class="mb-4 text-main">Evolución Anual ({{ selectedYear }})</h3>
+                <div class="chart-container-bar">
+                    @if (hasYearlyData) {
+                        <p-chart type="bar" [data]="barData" [options]="barOptions"></p-chart>
+                    } @else {
+                        <div class="empty-state">
+                            <i class="pi pi-chart-bar mb-3 text-400 text-4xl"></i>
+                            <p class="text-secondary m-0 font-bold">No hay asistencias</p>
+                            <span class="text-500 text-sm">registradas en {{ selectedYear }}</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>

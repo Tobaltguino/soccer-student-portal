@@ -1,0 +1,73 @@
+<div class="schedule-container fadein animation-duration-500">
+    
+    <header class="page-header">
+        <div class="header-content">
+            <h1 class="m-0 text-main">Agenda General</h1>
+            <p class="text-secondary m-0 mt-1">Visualiza los entrenamientos programados para todas tus categorías.</p>
+        </div>
+        <div class="header-actions">
+            <button pButton icon="pi pi-sync" class="p-button-outlined p-button-secondary btn-create" 
+                    (click)="cargarClasesCalendario()" [loading]="loading" pTooltip="Actualizar Agenda"></button>
+        </div>
+    </header>
+
+    <div class="main-card calendar-wrapper p-3 md:p-4">
+        <full-calendar [options]="calendarOptions"></full-calendar>
+    </div>
+
+    <p-dialog [(visible)]="displayDetalle" header="Detalle del Entrenamiento" 
+              [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" 
+              [draggable]="false" [resizable]="false" styleClass="p-fluid">
+        
+        <div *ngIf="claseSeleccionada" class="animation-fade-in pt-2">
+            
+            <div class="modal-header-info mb-4 border-bottom-1 border-300 pb-3 mt-2">
+                <div class="info-block">
+                    <span class="info-label">Categoría / Grupo</span>
+                    <p-tag [value]="claseSeleccionada.grupoNombre" severity="info" styleClass="text-sm px-2 py-1"></p-tag>
+                </div>
+                <div class="info-block text-right">
+                    <span class="info-label">Fecha y Hora</span>
+                    <span class="info-value text-main font-bold text-sm sm:text-base">
+                        <i class="pi pi-calendar mr-2 text-primary"></i>
+                        {{ claseSeleccionada?.fecha | date:'dd/MM/yyyy' }} - {{ claseSeleccionada?.hora ? (claseSeleccionada.hora | slice:0:5) : '--:--' }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="field mb-4">
+                <label class="modal-label"><i class="pi pi-map-marker text-primary mr-2"></i> Lugar</label>
+                <div class="modal-content-box font-bold">
+                    {{ claseSeleccionada?.lugar || 'Cancha Principal' }}
+                </div>
+            </div>
+
+            <div class="field mb-4">
+                <label class="modal-label"><i class="pi pi-bullseye text-primary mr-2"></i> Objetivo Principal</label>
+                <div class="modal-content-box italic text-secondary">
+                    {{ claseSeleccionada?.objetivo && claseSeleccionada?.objetivo !== 'EMPTY' ? claseSeleccionada.objetivo : 'Sin objetivo definido' }}
+                </div>
+            </div>
+            
+            <div class="field mb-3" *ngIf="claseSeleccionada.calentamiento && claseSeleccionada.calentamiento !== 'EMPTY'">
+                <label class="modal-label"><span class="mr-2">🔥</span> Calentamiento</label>
+                <div class="modal-content-box text-sm" style="white-space: pre-wrap;">{{ claseSeleccionada.calentamiento }}</div>
+            </div>
+             
+            <div class="field mb-3" *ngIf="claseSeleccionada.parte_principal && claseSeleccionada.parte_principal !== 'EMPTY'">
+                <label class="modal-label"><span class="mr-2">⚽</span> Parte Principal</label>
+                <div class="modal-content-box text-sm" style="white-space: pre-wrap;">{{ claseSeleccionada.parte_principal }}</div>
+            </div>
+
+            <div class="field mb-3" *ngIf="claseSeleccionada.vuelta_calma && claseSeleccionada.vuelta_calma !== 'EMPTY'">
+                <label class="modal-label"><span class="mr-2">❄️</span> Vuelta a la Calma</label>
+                <div class="modal-content-box text-sm" style="white-space: pre-wrap;">{{ claseSeleccionada.vuelta_calma }}</div>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text w-full sm:w-auto" 
+                    (click)="displayDetalle = false"></button>
+        </ng-template>
+    </p-dialog>
+</div>

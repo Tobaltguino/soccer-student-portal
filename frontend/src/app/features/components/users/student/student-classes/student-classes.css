@@ -1,0 +1,333 @@
+/* =========================================
+   1. CONFIGURACIÓN BASE Y LAYOUT
+   ========================================= */
+:host { 
+    display: block; 
+    min-height: 100vh;
+    padding: 1.5rem; /* Sincronizado con el Dashboard */
+}
+
+.classes-container { 
+    max-width: 1200px; /* Estándar */
+    margin: 0 auto; 
+}
+
+/* =========================================
+   2. HEADER PRINCIPAL
+   ========================================= */
+.page-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    margin-bottom: 1.5rem; 
+    flex-wrap: wrap; 
+    gap: 0.75rem;
+}
+
+.header-content h1 { 
+    margin: 0; 
+    font-size: 1.4rem; 
+    font-weight: 700; 
+    color: var(--text-main); 
+}
+
+.header-content p { 
+    margin: 0.25rem 0 0; 
+    color: var(--text-secondary); 
+    font-size: 0.85rem; 
+}
+
+.header-actions { 
+    display: flex; 
+    gap: 0.5rem; 
+}
+
+/* Botones de cabecera compactos */
+:host ::ng-deep .btn-create,
+:host ::ng-deep .header-actions .p-button {
+    padding: 0.5rem 1rem !important;
+    border-radius: 8px !important;
+    font-size: 0.85rem !important;
+    white-space: nowrap;
+}
+
+/* =========================================
+   3. BARRA DE FILTROS ESTANDARIZADA
+   ========================================= */
+.filter-bar {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    margin-bottom: 1.5rem;
+}
+
+.filter-row {
+    display: flex;
+    align-items: flex-end; 
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.filter-item label {
+    color: var(--text-secondary);
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0; 
+}
+
+.flex-grow-1 {
+    flex: 1;
+    min-width: 130px;
+}
+
+/* Forzar ancho y altura de los inputs */
+:host ::ng-deep .filter-bar .p-select,
+:host ::ng-deep .filter-bar .p-datepicker,
+:host ::ng-deep .filter-bar .p-inputtext,
+:host ::ng-deep .filter-bar .p-dropdown {
+    width: 100%;
+}
+
+:host ::ng-deep .filter-bar .p-inputtext,
+:host ::ng-deep .filter-bar .p-select .p-select-label {
+    padding: 0.4rem 0.5rem !important; 
+    font-size: 0.8rem !important; 
+    height: 36px;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box !important;
+}
+
+.filter-btn {
+    align-self: flex-end;
+}
+
+.filter-btn button {
+    height: 36px !important;
+    width: 36px !important;
+    padding: 0 !important;
+}
+
+/* =========================================
+   4. TABLAS Y CENTRADO COMPACTO
+   ========================================= */
+.main-card {
+    background-color: var(--bg-card); 
+    border-radius: 12px;
+    border: 1px solid var(--border-color); 
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    overflow-x: auto;
+    padding: 1rem 1.25rem;
+}
+
+.hidden-desktop { display: none !important; }
+
+/* Limpiar y compactar encabezados */
+:host ::ng-deep .p-datatable .p-datatable-header {
+    background: transparent; border: none; padding: 0.5rem 0 1rem 0; 
+}
+
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+    background: var(--bg-main) !important;
+    color: var(--text-secondary) !important;
+    font-weight: 600; font-size: 0.75rem !important;
+    text-transform: uppercase; padding: 0.5rem 0.4rem !important;
+    border-bottom: 1px solid var(--border-color);
+    text-align: center !important; white-space: nowrap;
+}
+
+/* Estilo de las celdas (TD) */
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td { 
+    vertical-align: middle; 
+    padding: 0.5rem 0.4rem !important; 
+    font-size: 0.8rem !important;
+    border-bottom: 1px solid var(--bg-main);
+    text-align: center !important; 
+    color: var(--text-main);
+    white-space: normal !important;
+}
+
+/* Alinear PC a la izquierda donde corresponda */
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td:nth-child(1),
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td:nth-child(2) {
+    text-align: left !important;
+}
+
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th:nth-child(1) .p-column-header-content,
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th:nth-child(2) .p-column-header-content {
+    justify-content: flex-start !important;
+}
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th:nth-child(3) .p-column-header-content,
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th:nth-child(4) .p-column-header-content {
+    justify-content: center !important;
+}
+
+/* Magia de salto de línea para textos largos en la tabla */
+:host ::ng-deep .p-datatable-tbody > tr > td span:not(.p-column-title):not(.p-button-label) {
+    display: inline-block !important;
+    max-width: 100% !important; 
+    white-space: normal !important; 
+    word-break: break-word !important; 
+    overflow-wrap: break-word !important;
+}
+
+:host ::ng-deep .p-datatable-tbody > tr > td p-tag {
+    display: inline-flex !important;
+    align-items: center;
+    font-size: 0.65rem !important;
+    padding: 0.2rem 0.4rem !important;
+}
+
+/* ACCIONES DE LA TABLA */
+.action-buttons { 
+    display: flex; justify-content: center; align-items: center;
+    gap: 0.15rem; width: 100%;
+}
+
+:host ::ng-deep .action-buttons .p-button {
+    width: 2rem !important; height: 2rem !important; padding: 0 !important;
+}
+
+:host ::ng-deep .action-buttons .p-button .p-button-icon {
+    font-size: 0.9rem !important; 
+}
+
+/* =========================================
+   5. ESTILOS DEL MODAL (VER PLANIFICACIÓN)
+   ========================================= */
+.field { 
+    display: flex !important; 
+    flex-direction: column !important; 
+    gap: 4px !important; 
+    margin-bottom: 1.25rem !important; 
+    width: 100% !important; 
+}
+
+:host ::ng-deep .p-dialog-content {
+    padding-top: 1rem !important;
+    overflow-y: auto !important;
+    max-height: 70vh !important;
+}
+
+.modal-label {
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem !important;
+    font-size: 0.85rem;
+}
+
+.modal-content-box {
+    background-color: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    color: var(--text-main);
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+/* ANIMACIONES */
+.animation-fade-in { animation: fadeIn 0.3s ease-in-out; }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================
+   6. UTILIDADES Y FIXES DE PRIMENG
+   ========================================= */
+.text-main { color: var(--text-main); }
+.text-secondary { color: var(--text-secondary); }
+
+/* FIX: TAMAÑO DE LAS OPCIONES DEL SELECT FLOTANTE */
+::ng-deep .p-select-panel .p-select-item,
+::ng-deep .p-dropdown-panel .p-dropdown-item {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.85rem !important;
+    white-space: nowrap !important; 
+}
+
+::ng-deep .p-select-panel,
+::ng-deep .p-dropdown-panel {
+    max-height: 250px !important; 
+}
+
+::ng-deep .p-select-panel .p-select-items-wrapper,
+::ng-deep .p-dropdown-panel .p-dropdown-items-wrapper {
+    overflow: hidden !important; 
+    overflow-y: auto !important; 
+}
+
+/* =========================================
+   7. RESPONSIVE (MÓVIL Y TARJETAS)
+   ========================================= */
+@media (max-width: 768px) {
+    :host { padding: 1rem; }
+    
+    .page-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; margin-bottom: 1rem;}
+    .header-content { width: 100%; }
+    .header-content h1 { font-size: 1.25rem; }
+    .header-actions { width: 100%; justify-content: flex-start; }
+    .header-actions button { flex: 1; justify-content: center; }
+
+    /* --- FILTROS APILADOS --- */
+    .filter-row { 
+        flex-direction: column !important; 
+        align-items: stretch !important; 
+        gap: 0.75rem;
+    }
+    .filter-item { 
+        width: 100% !important; 
+        min-width: 100% !important;
+    }
+    .filter-btn, .filter-btn button { 
+        width: 100% !important; 
+    }
+
+    /* --- MAGIA: TABLA A TARJETAS MÓVILES --- */
+    .hidden-desktop { display: inline-block !important; }
+    
+    :host ::ng-deep .main-card .p-datatable-thead { display: none !important; }
+
+    :host ::ng-deep .main-card .p-datatable-tbody > tr {
+        display: flex; flex-direction: column;
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 12px; margin-bottom: 1rem;
+        padding: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    :host ::ng-deep .main-card .p-datatable-tbody > tr > td {
+        display: flex !important; flex-direction: column !important; align-items: flex-start !important; 
+        width: 100% !important; padding: 0.6rem 0 !important;
+        border: none !important; border-bottom: 1px solid var(--border-color) !important;
+        text-align: left !important; white-space: normal; font-size: 0.85rem !important;
+    }
+
+    :host ::ng-deep .main-card .p-datatable-tbody > tr > td .p-column-title {
+        display: inline-block !important; font-weight: 700; margin-bottom: 0.5rem;
+        font-size: 0.85rem; color: var(--text-secondary); text-transform: none;
+    }
+
+    :host ::ng-deep .main-card .p-datatable-tbody > tr > td:last-child {
+        border-bottom: none !important; padding-top: 1.25rem !important; align-items: center !important;
+    }
+
+    .action-buttons {
+        display: flex !important; justify-content: center !important; gap: 0.5rem !important;
+        width: 100%; background-color: rgba(0,0,0,0.02); 
+        border-radius: 8px; padding: 0.4rem; flex-wrap: nowrap !important; margin: 0 auto;
+    }
+}

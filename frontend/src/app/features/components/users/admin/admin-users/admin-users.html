@@ -1,0 +1,394 @@
+<div class="users-container">
+    <p-toast position="top-right"></p-toast>
+    <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
+
+    <header class="page-header">
+        <div class="header-content">
+            <div>
+                <h1>Gestión de Usuarios</h1>
+                <p>Administra los roles y perfiles de la academia.</p>
+            </div>
+        </div>
+        <button pButton label="Nuevo Usuario" icon="pi pi-plus" class="btn-create" (click)="abrirNuevo()"></button>
+    </header>
+
+    <div class="view-selector-container mb-3">
+        <div class="selector-wrapper">
+            <div class="icon-box"><i class="pi pi-users"></i></div>
+            <p-select [options]="opcionesVista" [(ngModel)]="vistaActual" (onChange)="cambiarVista()" 
+                      optionLabel="label" optionValue="value" styleClass="w-full"></p-select>
+        </div>
+    </div>
+
+    <div class="filter-bar card mb-3 p-3 surface-card border-round shadow-1">
+        <div class="filter-row">
+            
+            <div class="filter-item flex-grow-2">
+                <label>Buscador</label>
+                <input pInputText type="text" [(ngModel)]="filtros.global" 
+                       (input)="dt.filterGlobal(filtros.global, 'contains')" 
+                       placeholder="Nombre, RUT o Email..." class="w-full"/>
+            </div>
+
+            <ng-container *ngIf="vistaActual === 'estudiantes'">
+                <div class="filter-item flex-grow-1">
+                    <label>Grupos</label>
+                    <p-multiSelect [options]="listaGrupos" [(ngModel)]="filtros.grupo" 
+                                   optionLabel="nombre" optionValue="id" placeholder="Todos" 
+                                   (onChange)="dt.filter($event.value, 'grupo_id', 'in')" 
+                                   display="chip" [showClear]="true" styleClass="w-full"
+                                   [maxSelectedLabels]="1" selectedItemsLabel="{0} grupos"></p-multiSelect>
+                </div>
+                <div class="filter-item flex-grow-1">
+                    <label>Posiciones</label>
+                    <p-multiSelect [options]="listaPosiciones" [(ngModel)]="filtros.posicion"
+                                   optionLabel="nombre" optionValue="id" placeholder="Todas"
+                                   (onChange)="dt.filter($event.value, 'estudiantes_posiciones', 'contienePosicion')"
+                                   display="chip" [showClear]="true" styleClass="w-full"
+                                   [maxSelectedLabels]="1" selectedItemsLabel="{0} pos."></p-multiSelect>
+                </div>
+            </ng-container>
+
+            <ng-container *ngIf="vistaActual === 'profesores'">
+                <div class="filter-item flex-grow-2">
+                    <label>Especialidad</label>
+                    <p-multiSelect [options]="listaTiposProfesor" [(ngModel)]="filtros.tipoProfesor"
+                                   optionLabel="label" optionValue="value" placeholder="Todas las especialidades"
+                                   (onChange)="dt.filter($event.value, 'tipo_profesor', 'in')" 
+                                   display="chip" [showClear]="true" styleClass="w-full"
+                                   [maxSelectedLabels]="1" selectedItemsLabel="{0} tipos"></p-multiSelect>
+                </div>
+            </ng-container>
+
+             <div class="filter-item flex-grow-2" *ngIf="vistaActual !== 'estudiantes' && vistaActual !== 'profesores'"></div>
+
+            <div class="filter-item w-10rem">
+                <label>Estado</label>
+                <p-select [options]="opcionesEstado" [(ngModel)]="filtros.estado" 
+                          placeholder="Todos" (onChange)="dt.filter($event.value, 'activo', 'equals')" 
+                          [showClear]="true" styleClass="w-full">
+                    <ng-template let-option pTemplate="item">
+                        <p-tag [value]="option.label" [severity]="option.value ? 'success' : 'danger'"></p-tag>
+                    </ng-template>
+                </p-select>
+            </div>
+
+            <div class="filter-item-btn">
+                <button pButton icon="pi pi-filter-slash" 
+                        class="p-button-outlined p-button-secondary w-full" 
+                        (click)="limpiarFiltros()" pTooltip="Limpiar"></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-card">
+        <p-table #dt [value]="dataList" [loading]="loading" [rows]="10" [paginator]="true" 
+                 styleClass="p-datatable-sm" [rowHover]="true" responsiveLayout="stack"
+                 [globalFilterFields]="['nombre', 'apellido', 'rut', 'email', 'tipo_profesor']">
+            
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width: 4rem"></th> 
+                    <th pSortableColumn="nombre">Nombre / RUT</th>
+                    <th class="text-center" *ngIf="vistaActual === 'estudiantes'">F. Nac</th>
+                    <th *ngIf="vistaActual === 'estudiantes'">Grupo</th>
+                    <th *ngIf="vistaActual === 'estudiantes'">Posiciones</th>
+                    <th *ngIf="vistaActual === 'profesores'">Especialidad / Grupos</th>
+                    <th *ngIf="vistaActual === 'kinesiologos'">Grupos Asignados</th>
+                    <th class="hidden-mobile">Email</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-item>
+                <tr [ngClass]="{'row-inactive': !item.activo}">
+                    
+                    <td>
+                        <div class="flex align-items-center justify-content-center sm:justify-content-start">
+                            <img [src]="item.foto_url || 'assets/images/default-user.png'" 
+                                alt="Avatar" class="avatar-img">
+                        </div>
+                    </td>
+
+                    <td>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Usuario:</span>
+                        <div class="text-right sm:text-left">
+                            <div class="font-bold text-main">{{ item.nombre }} {{ item.apellido }}</div>
+                            <div class="text-xs text-secondary mt-1 justify-content-end sm:justify-content-start flex align-items-center"><i class="pi pi-id-card"></i> {{ item.rut || 'Sin RUT' }}</div>
+                        </div>
+                    </td>
+                    
+                    <td class="text-center" *ngIf="vistaActual === 'estudiantes'">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">F. Nacimiento:</span>
+                        <div *ngIf="item.fecha_nacimiento" class="fecha-nac-container text-right sm:text-center">
+                            <span class="fecha-nac-text">{{ item.fecha_nacimiento | date:'dd/MM/yyyy' }}</span>
+                            <span class="edad-text"><i class="pi pi-calendar mr-1"></i> {{ calcularEdad(item.fecha_nacimiento) }} años</span>
+                        </div>
+                        <span *ngIf="!item.fecha_nacimiento" class="text-secondary">-</span>
+                    </td>
+
+                    <td *ngIf="vistaActual === 'estudiantes'">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Grupo:</span>
+                        <p-tag [value]="item.grupos?.nombre || 'Sin Grupo'" [severity]="item.grupos ? 'info' : 'secondary'"></p-tag>
+                    </td>
+
+                    <td *ngIf="vistaActual === 'estudiantes'">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Posiciones:</span>
+                        <div class="flex gap-1 flex-wrap justify-content-end sm:justify-content-start">
+                            <p-tag *ngFor="let p of item.estudiantes_posiciones" [value]="p.posiciones?.nombre" severity="warn"></p-tag>
+                        </div>
+                    </td>
+
+                    <td *ngIf="vistaActual === 'profesores'">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Detalles:</span>
+                        <div class="text-right sm:text-left">
+                            <div class="flex gap-1 flex-wrap mb-1 justify-content-end sm:justify-content-start">
+                                <p-tag *ngFor="let gp of item.grupos_profesores" [value]="gp.grupos?.nombre" severity="success"></p-tag>
+                            </div>
+                            <small class="text-secondary">{{ item.tipo_profesor }}</small>
+                        </div>
+                    </td>
+
+                    <td *ngIf="vistaActual === 'kinesiologos'">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Grupos:</span>
+                        <div class="text-right sm:text-left">
+                            <div class="flex gap-1 flex-wrap justify-content-end sm:justify-content-start">
+                                <p-tag *ngFor="let gk of item.grupos_kine" [value]="getGrupoNombre(gk.grupo_id)" severity="success"></p-tag>
+                            </div>
+                            <small *ngIf="!item.grupos_kine || item.grupos_kine.length === 0" class="text-secondary italic">Sin grupos asignados</small>
+                        </div>
+                    </td>
+
+                    <td class="text-sm">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Email:</span>
+                        <span class="break-email">{{ item.email }}</span>
+                    </td>
+
+                    <td class="text-center">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Estado:</span>
+                        <p-tag [severity]="item.activo ? 'success' : 'danger'" [value]="item.activo ? 'ACTIVO' : 'INACTIVO'" [rounded]="true"></p-tag>
+                    </td>
+
+                    <td class="text-center">
+                        <div class="action-buttons">
+                            <ng-container *ngIf="item.rut !== '1-1'">
+                                <button *ngIf="vistaActual === 'estudiantes'" pButton icon="pi pi-eye" class="p-button-text p-button-info" 
+                                        (click)="abrirFicha(item)" pTooltip="Ver Ficha Completa"></button>
+                                <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning" 
+                                        (click)="abrirEditar(item)" pTooltip="Editar"></button>
+                                <button pButton [icon]="item.activo ? 'pi pi-lock-open' : 'pi pi-lock'" 
+                                        [class]="item.activo ? 'p-button-text p-button-success' : 'p-button-text p-button-danger'" 
+                                        (click)="toggleEstado(item)" pTooltip="Cambiar Estado"></button>
+                                <button pButton icon="pi pi-trash" class="p-button-text p-button-danger" 
+                                        (click)="eliminar(item)" pTooltip="Eliminar"></button>
+                            </ng-container>
+                            <p-tag *ngIf="item.rut === '1-1'" icon="pi pi-shield" severity="info" value="SISTEMA" pTooltip="Cuenta protegida"></p-tag>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <p-dialog [(visible)]="displayDialog" [header]="tituloDialogo" [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" styleClass="p-fluid">
+        <div class="flex flex-column gap-3 pt-2">
+
+            <div class="field photo-section">
+                <div class="photo-upload-wrapper">
+                    <div class="avatar-preview-container shadow-4">
+                        <img *ngIf="previewUrl" [src]="previewUrl" alt="Vista previa">
+                        <div *ngIf="!previewUrl" class="avatar-placeholder"><i class="pi pi-camera"></i></div>
+                        <div *ngIf="uploadingFoto" class="loading-overlay">
+                            <i class="pi pi-spin pi-spinner text-3xl text-white"></i>
+                        </div>
+                    </div>
+
+                    <div class="photo-actions">
+                        <p-fileUpload mode="basic" chooseIcon="pi pi-plus" chooseLabel="Elegir foto" accept="image/*" [auto]="true" [customUpload]="true" (uploadHandler)="onFileSelected($event)" styleClass="p-button-rounded p-button-outlined btn-icon-only"></p-fileUpload>
+                        <button *ngIf="previewUrl" pButton icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text btn-icon-only" (click)="clearFoto()"></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field">
+                <label><i class="pi pi-envelope"></i> Email <span class="text-red-500 font-bold">*</span></label>
+                <input pInputText [(ngModel)]="userForm.email" />
+            </div>
+            
+            <div class="formgrid grid">
+                <div class="field col-6">
+                    <label><i class="pi pi-user"></i> Nombre <span class="text-red-500 font-bold">*</span></label>
+                    <input pInputText [(ngModel)]="userForm.nombre" />
+                </div>
+                <div class="field col-6">
+                    <label><i class="pi pi-user"></i> Apellido <span class="text-red-500 font-bold">*</span></label>
+                    <input pInputText [(ngModel)]="userForm.apellido" />
+                </div>
+            </div>
+            
+            <div class="field">
+                <label><i class="pi pi-id-card"></i> RUT <span class="text-red-500 font-bold">*</span></label>
+                <input pInputText appRutFormat [(ngModel)]="userForm.rut" placeholder="12.345.678-9" />
+            </div>
+            
+            <div class="field" *ngIf="vistaActual === 'estudiantes'">
+                <label><i class="pi pi-calendar"></i> Fecha de Nacimiento <span class="text-red-500 font-bold">*</span></label>
+                <p-datepicker [(ngModel)]="userForm.fecha_nacimiento" [showIcon]="true" appendTo="body" dateFormat="dd/mm/yy" [maxDate]="maxDate" placeholder="Selecciona fecha"></p-datepicker>
+            </div>
+            
+            <div class="field bg-blue-50 p-3 border-round" *ngIf="!isEditing">
+                <span class="text-blue-700 text-sm font-medium">
+                    <i class="pi pi-info-circle mr-1"></i> La contraseña inicial se generará automáticamente usando el RUT del usuario (sin puntos ni guiones).
+                </span>
+            </div>
+            
+            <ng-container *ngIf="vistaActual === 'estudiantes'">
+                <div class="field">
+                    <label><i class="pi pi-users"></i> Grupo</label> 
+                    <p-select [options]="listaGrupos" [(ngModel)]="userForm.grupo_id" optionLabel="nombre" optionValue="id" placeholder="Selecciona grupo" appendTo="body" [showClear]="true"></p-select>
+                </div>
+                <div class="field">
+                    <label><i class="pi pi-map"></i> Posiciones de Juego</label>
+                    <p-multiSelect [options]="listaPosiciones" [(ngModel)]="userForm.posicionesIds" optionLabel="nombre" optionValue="id" placeholder="Seleccionar" display="chip" appendTo="body"></p-multiSelect>
+                </div>
+
+                <div class="border-top-1 border-300 my-3 pt-3">
+                    <span class="text-sm font-bold text-secondary uppercase tracking-wider mb-3 block">Datos Médicos y Contacto (Opcionales)</span>
+                    
+                    <div class="field">
+                        <label><i class="pi pi-home"></i> Dirección</label>
+                        <input pInputText [(ngModel)]="userForm.direccion" placeholder="Ej: Av. Siempre Viva 123" />
+                    </div>
+                    
+                    <div class="field">
+                        <label><i class="pi pi-heart"></i> Previsión Médica</label>
+                        <input pInputText [(ngModel)]="userForm.prevision" placeholder="Ej: Fonasa, Isapre Consalud..." />
+                    </div>
+
+                    <div class="formgrid grid">
+                        <div class="field col-6">
+                            <label><i class="pi pi-sort-numeric-up"></i> Peso (kg)</label>
+                            <p-inputNumber [(ngModel)]="userForm.peso" mode="decimal" [minFractionDigits]="1" [maxFractionDigits]="2" placeholder="Ej: 75.5" styleClass="w-full"></p-inputNumber>
+                        </div>
+                        <div class="field col-6">
+                            <label><i class="pi pi-arrows-v"></i> Altura (m)</label>
+                            <p-inputNumber [(ngModel)]="userForm.altura" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" placeholder="Ej: 1.75" styleClass="w-full"></p-inputNumber>
+                        </div>
+                    </div>
+                </div>
+            </ng-container>
+            
+            <ng-container *ngIf="vistaActual === 'profesores'">
+                <div class="field">
+                    <label><i class="pi pi-briefcase"></i> Especialidad <span class="text-red-500 font-bold">*</span></label> 
+                    <p-select [options]="listaTiposProfesor" [(ngModel)]="userForm.tipo_profesor" optionLabel="label" optionValue="value" placeholder="Seleccione" appendTo="body"></p-select>
+                </div>
+                <div class="field">
+                    <label><i class="pi pi-sitemap"></i> Grupos a Cargo</label>
+                    <p-multiSelect [options]="listaGrupos" [(ngModel)]="userForm.gruposIds" placeholder="Seleccionar grupos" optionLabel="nombre" optionValue="id" display="chip" appendTo="body"></p-multiSelect>
+                </div>
+            </ng-container>
+
+            <ng-container *ngIf="vistaActual === 'kinesiologos'">
+                <div class="field mt-3">
+                    <label><i class="pi pi-sitemap"></i> Asignar Categorías / Grupos</label>
+                    <p-multiSelect [options]="listaGrupos" [(ngModel)]="userForm.gruposIds" placeholder="Seleccionar los grupos que atenderá" optionLabel="nombre" optionValue="id" display="chip" appendTo="body"></p-multiSelect>
+                    <small class="text-500 mt-1 block">Si no seleccionas ninguno, no podrá ver pacientes.</small>
+                </div>
+            </ng-container>
+            
+        </div>
+
+        <ng-template pTemplate="footer">
+            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="displayDialog = false"></button>
+            <button pButton label="Guardar" icon="pi pi-check" (click)="guardar()" [loading]="loading"></button>
+        </ng-template>
+    </p-dialog>
+
+
+    <p-dialog [(visible)]="displayFicha" header="Ficha del Jugador" [modal]="true" [style]="{width: '90vw', maxWidth: '650px'}" styleClass="p-fluid">
+        <div *ngIf="selectedEstudianteFicha" class="flex flex-column pt-2 animation-fade-in">
+
+            <div class="flex flex-column align-items-center mb-4 pb-3 border-bottom-1 border-300">
+                <img [src]="selectedEstudianteFicha.foto_url || 'assets/images/default-user.png'" 
+                     alt="Avatar" class="avatar-preview-container shadow-2 mb-3">
+                <h2 class="m-0 text-main text-center">{{selectedEstudianteFicha.nombre}} {{selectedEstudianteFicha.apellido}}</h2>
+                <div class="flex align-items-center gap-2 mt-2">
+                    <span class="text-secondary font-medium"><i class="pi pi-id-card mr-1 text-primary"></i> {{selectedEstudianteFicha.rut || 'Sin RUT'}}</span>
+                    <p-tag [value]="selectedEstudianteFicha.grupos?.nombre || 'Sin Grupo'" severity="info"></p-tag>
+                </div>
+            </div>
+
+            <div class="section-title">
+                <i class="pi pi-user mr-2 text-primary"></i> Datos Generales
+            </div>
+            
+            <div class="formgrid grid mt-3 mb-4">
+                <div class="field col-12 md:col-6">
+                    <label><i class="pi pi-calendar text-primary"></i> F. Nacimiento</label>
+                    <div class="read-only-box">{{ selectedEstudianteFicha.fecha_nacimiento ? (selectedEstudianteFicha.fecha_nacimiento | date:'dd/MM/yyyy') : '--/--/----' }}</div>
+                </div>
+                <div class="field col-12 md:col-6">
+                    <label><i class="pi pi-envelope text-primary"></i> Email</label>
+                    <div class="read-only-box">{{ selectedEstudianteFicha.email || 'No registrado' }}</div>
+                </div>
+                <div class="field col-12">
+                    <label><i class="pi pi-home text-primary"></i> Dirección</label>
+                    <div class="read-only-box">{{ selectedEstudianteFicha.direccion || 'No registrada' }}</div>
+                </div>
+                <div class="field col-12 md:col-4">
+                    <label><i class="pi pi-heart text-primary"></i> Previsión Médica</label>
+                    <div class="read-only-box">{{ selectedEstudianteFicha.prevision || 'Ninguna' }}</div>
+                </div>
+                <div class="field col-6 md:col-4">
+                    <label><i class="pi pi-sort-numeric-up text-primary"></i> Peso</label>
+                    <div class="read-only-box">{{ selectedEstudianteFicha.peso ? selectedEstudianteFicha.peso + ' kg' : '-' }}</div>
+                </div>
+                <div class="field col-6 md:col-4">
+                    <label><i class="pi pi-arrows-v text-primary"></i> Altura</label>
+                    <div class="read-only-box">{{ selectedEstudianteFicha.altura ? selectedEstudianteFicha.altura + ' m' : '-' }}</div>
+                </div>
+            </div>
+
+            <div class="section-title mt-4">
+                <i class="pi pi-heart mr-2 text-red-500"></i> Historial Médico
+            </div>
+
+            <div class="mt-3">
+                <p-table [value]="historialClinico" [loading]="loadingHistorial" styleClass="p-datatable-sm" responsiveLayout="scroll">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Diagnóstico</th>
+                            <th class="text-center">Estado</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-evento>
+                        <tr>
+                            <td>{{ evento.fecha_evento | date:'dd/MM/yy' }}</td>
+                            <td><p-tag [value]="evento.tipo" [severity]="getSeveridadHistorial(evento.tipo)"></p-tag></td>
+                            <td class="font-bold text-main">{{ evento.diagnostico }}</td>
+                            <td class="text-center">
+                                <p-tag [value]="evento.estado" [severity]="getSeveridadEstado(evento.estado)"></p-tag>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="4" class="text-center p-5 text-secondary">
+                                <i class="pi pi-check-circle text-5xl mb-3 text-green-500 block"></i>
+                                <span class="font-medium text-lg">El alumno no registra eventos médicos.</span>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+            
+        </div>
+        <ng-template pTemplate="footer">
+            <button pButton label="Cerrar Ficha" icon="pi pi-times" class="p-button-text p-button-secondary w-full sm:w-auto" (click)="displayFicha = false"></button>
+        </ng-template>
+    </p-dialog>
+</div>

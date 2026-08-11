@@ -1,0 +1,112 @@
+<div class="guides-container fadein animation-duration-500">
+    <p-toast position="top-right"></p-toast>
+
+    <header class="page-header">
+        <div class="header-content">
+            <h1 class="m-0 text-main">Material Nutricional</h1>
+            <p class="text-secondary m-0 mt-1">Sube pautas generales y documentos de apoyo para todos los estudiantes.</p>
+        </div>
+        <div class="header-actions">
+            <button pButton label="Subir Material" icon="pi pi-upload" class="btn-create p-button-success" (click)="abrirNuevo()"></button>
+        </div>
+    </header>
+
+    <div class="main-card">
+        <p-table [value]="guias" [loading]="loading" [rows]="10" [paginator]="true" 
+                 styleClass="p-datatable-sm p-datatable-striped" [rowHover]="true" 
+                 responsiveLayout="stack" [breakpoint]="'768px'">
+            
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width: 30%">Título</th>
+                    <th style="width: 45%">Descripción</th>
+                    <th style="width: 15%" class="text-center">Fecha de Subida</th>
+                    <th style="width: 10%" class="text-center">Documento</th>
+                </tr>
+            </ng-template>
+            
+            <ng-template pTemplate="body" let-guia>
+                <tr>
+                    <td>
+                        <span class="p-column-title hidden-desktop">Título</span>
+                        <span class="font-bold text-main text-lg sm:text-base">{{guia.titulo}}</span>
+                    </td>
+                    <td>
+                        <span class="p-column-title hidden-desktop">Descripción</span>
+                        <span class="text-secondary line-height-2">{{guia.descripcion || 'Sin descripción adicional.'}}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="p-column-title hidden-desktop">Fecha</span>
+                        <span class="text-secondary"><i class="pi pi-calendar mr-1"></i> {{guia.created_at | date:'dd/MM/yyyy HH:mm'}}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="p-column-title hidden-desktop">Acción</span>
+                        <div class="action-buttons w-full">
+                            <a [href]="guia.archivo_url" target="_blank" class="no-underline w-full sm:w-auto">
+                                <button pButton icon="pi pi-download" class="p-button-outlined p-button-primary w-full" pTooltip="Descargar"></button>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+            
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="4" class="text-center p-5 text-secondary">
+                        <i class="pi pi-file text-400 mb-3 block" style="font-size: 2rem"></i>
+                        No hay material nutricional subido en el sistema.
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <p-dialog [(visible)]="displayDialog" header="Subir Nuevo Material" [modal]="true" 
+              [style]="{width: '90vw', maxWidth: '500px'}" styleClass="p-fluid" [closable]="!subiendoArchivo">
+        
+        <ng-template pTemplate="content">
+            <div class="field mt-2">
+                <label>Título del Documento <span class="text-red-500 font-bold ml-1">*</span></label>
+                <input pInputText [(ngModel)]="nuevaGuia.titulo" placeholder="Ej: Guía de Hidratación Deportiva" [disabled]="subiendoArchivo">
+            </div>
+
+            <div class="field mb-4">
+                <label>Descripción (Opcional)</label>
+                <textarea pInputText [(ngModel)]="nuevaGuia.descripcion" rows="3" placeholder="Instrucciones breves sobre este material..." [disabled]="subiendoArchivo" class="w-full p-2"></textarea>
+            </div>
+
+            <div class="field">
+                <label>Archivo <span class="text-red-500 font-bold ml-1">*</span></label>
+                
+                <div class="file-upload-container text-center cursor-pointer" 
+                     (click)="fileInput.click()" 
+                     [class.opacity-50]="subiendoArchivo"
+                     [class.pointer-events-none]="subiendoArchivo">
+                    
+                    <input type="file" #fileInput class="hidden" (click)="$event.stopPropagation()" (change)="onFileSelect($event)" accept=".pdf,.doc,.docx,.jpg,.png" [disabled]="subiendoArchivo">
+                    
+                    <div *ngIf="!archivoSeleccionado">
+                        <i class="pi pi-cloud-upload text-primary text-4xl mb-2"></i>
+                        <div class="text-main font-bold text-base">
+                            Haz clic aquí para adjuntar el archivo
+                        </div>
+                        <div class="text-secondary text-sm mt-1">PDF, Word o Imágenes (Máx. 5MB)</div>
+                    </div>
+
+                    <div *ngIf="archivoSeleccionado" class="flex flex-column align-items-center">
+                        <i class="pi pi-file-check text-4xl text-green-500 mb-2"></i>
+                        <div class="text-main font-bold text-sm w-full white-space-nowrap overflow-hidden text-overflow-ellipsis px-2">{{archivoSeleccionado.name}}</div>
+                        <div class="text-secondary text-xs mt-1">{{ (archivoSeleccionado.size / 1024 / 1024) | number:'1.2-2' }} MB</div>
+                    </div>
+                </div>
+            </div>
+        </ng-template>
+        
+        <ng-template pTemplate="footer">
+            <div class="flex w-full justify-content-end gap-2">
+                <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text p-button-secondary w-full sm:w-auto" (click)="displayDialog=false" [disabled]="subiendoArchivo"></button>
+                <button pButton label="Publicar Documento" icon="pi pi-check" class="p-button-success w-full sm:w-auto" (click)="guardarGuia()" [loading]="subiendoArchivo"></button>
+            </div>
+        </ng-template>
+    </p-dialog>
+</div>

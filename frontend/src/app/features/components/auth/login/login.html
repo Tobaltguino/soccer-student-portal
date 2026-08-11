@@ -1,0 +1,117 @@
+<p-toast position="top-right"></p-toast>
+
+<div class="login-wrapper">
+    
+    <p-card styleClass="login-card">
+        <div class="login-content">
+            
+            <div class="logo-section">
+                <img [src]="logoUrl" 
+                     alt="Logo ProFutbol" 
+                     class="logo-img">
+                <h2>Acceso ProFutbol</h2>
+                <p class="subtitle">Gestión Deportiva Integral</p>
+            </div>
+
+            <!-- 1. Envolvemos la sección en el formulario reactivo -->
+            <form [formGroup]="loginForm" (ngSubmit)="ingresar()" class="form-section">
+                
+                <div class="field">
+                    <label for="rut">RUT del Usuario</label>
+                    <div class="input-group">
+                        <div class="input-icon">
+                            <i class="pi pi-id-card"></i>
+                        </div>
+                        <!-- 2. Cambiamos [(ngModel)] por formControlName="rut" -->
+                        <input pInputText 
+                               id="rut" 
+                               type="text" 
+                               appRutFormat
+                               formControlName="rut" 
+                               placeholder="12.345.678-9" 
+                               class="custom-input"/>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="password">Contraseña</label>
+                    <div class="input-group">
+                        <div class="input-icon">
+                            <i class="pi pi-lock"></i>
+                        </div>
+                        <!-- 3. Cambiamos [(ngModel)] por formControlName="password" -->
+                        <p-password 
+                            id="password" 
+                            formControlName="password" 
+                            [feedback]="false" 
+                            [toggleMask]="true" 
+                            placeholder="••••••••"
+                            styleClass="w-full"
+                            inputStyleClass="custom-input-password">
+                        </p-password>
+                    </div>
+                </div>
+
+                <!-- 4. El botón ahora es de tipo submit -->
+                <button pButton 
+                        type="submit"
+                        label="Iniciar Sesión" 
+                        [loading]="loading"
+                        icon="pi pi-sign-in" 
+                        class="btn-login w-full mt-3">
+                </button>
+
+                <div class="forgot-password">
+                    <a (click)="abrirDialogoRecuperacion()">
+                        ¿Olvidaste tu contraseña?
+                    </a>
+                </div>
+
+                <div class="Volver-home">
+                    <button pButton 
+                            type="button"
+                            icon="pi pi-arrow-left" 
+                            label="Volver a la página principal" 
+                            class="p-button-text btn-secundario-centrado" 
+                            (click)="volverAlHome()">
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </p-card>
+
+    <!-- Diálogo de Recuperación (Se mantiene igual por ahora) -->
+    <p-dialog 
+        header="Recuperar Contraseña" 
+        [(visible)]="displayResetDialog" 
+        [modal]="true" 
+        [style]="{ width: '90vw', maxWidth: '400px' }" 
+        styleClass="p-fluid">
+        
+        <div class="flex flex-column gap-3 pt-2">
+            <p class="text-secondary text-sm mb-3">
+                Ingresa tu <b>RUT</b>. Buscaremos el correo electrónico asociado a tu cuenta y te enviaremos instrucciones para crear una nueva contraseña.
+            </p>
+            
+            <div class="field">
+                <label for="rutRecuperacion" class="font-bold mb-2 block">RUT del Usuario</label>
+                <div class="p-input-icon-left w-full">
+                    <i class="pi pi-id-card"></i>
+                    <!-- Aquí podemos dejar ngModel si manejamos el modal de forma simple en el TS -->
+                    <input pInputText 
+                           id="rutRecuperacion" 
+                           [(ngModel)]="rutRecuperacion" 
+                           appRutFormat
+                           placeholder="12.345.678-9"/>
+                </div>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="displayResetDialog = false"></button>
+            <button pButton label="Enviar Enlace" icon="pi pi-send" [loading]="loadingReset" (click)="enviarCorreoRecuperacion()"></button>
+        </ng-template>
+    </p-dialog>
+
+</div>
