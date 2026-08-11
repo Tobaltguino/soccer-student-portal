@@ -1,5 +1,9 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth-guard';
+
+// --- NUEVOS IMPORTS DE SEGURIDAD ---
+import { jwtGuard } from './core/auth/jwt.guard';
+import { roleGuard } from './core/auth/role.guard';
+import { Role } from './core/auth/role.enum';
 
 // --- HOME ---
 import { HomeComponent } from './features/home/home/home';
@@ -85,8 +89,8 @@ export const routes: Routes = [
     {
         path: 'admin',
         component: AdminLayoutComponent,
-        canActivate: [authGuard],
-        data: { roles: ['admin'] }, 
+        canActivate: [jwtGuard, roleGuard], // <-- Aplicamos ambos guardias
+        data: { roles: [Role.ADMIN] },      // <-- Usamos el Enum estricto
         children: [
             { path: 'dashboard', component: AdminDashboardComponent },
             { path: 'users', component: AdminUsersComponent },
@@ -108,8 +112,8 @@ export const routes: Routes = [
     {
         path: 'student',
         component: StudentLayoutComponent,
-        canActivate: [authGuard], 
-        data: { roles: ['student', 'estudiante'] },
+        canActivate: [jwtGuard, roleGuard], 
+        data: { roles: [Role.STUDENT] },
         children: [
             { path: 'dashboard', component: StudentDashboardComponent },
             { path: 'schedule', component: StudentScheduleComponent },
@@ -129,8 +133,8 @@ export const routes: Routes = [
     {
         path: 'professor',
         component: ProfessorLayoutComponent,
-        canActivate: [authGuard], 
-        data: { roles: ['professor', 'profesor'] },
+        canActivate: [jwtGuard, roleGuard], 
+        data: { roles: [Role.PROFESSOR] },
         children: [
             { path: 'dashboard', component: ProfessorDashboardComponent },
             { path: 'attendance', component: ProfessorAttendanceComponent },
@@ -150,8 +154,8 @@ export const routes: Routes = [
     {
         path: 'kine',
         component: KineLayoutComponent,
-        canActivate: [authGuard], 
-        data: { roles: ['kine', 'kinesiologo'] },
+        canActivate: [jwtGuard, roleGuard], 
+        data: { roles: [Role.KINE] },
         children: [
             { path: 'dashboard', component: KineDashboardComponent },
             { path: 'classes', component: KineClassesComponent },
@@ -163,7 +167,6 @@ export const routes: Routes = [
             { path: 'patients', component: KinePatientsComponent },
             { path: 'student-profile', component: KineStudentProfileComponent },
             { path: 'evaluation-kine', component: KineEvaluationsKineComponent },
-
         ]
     },
 
@@ -173,8 +176,8 @@ export const routes: Routes = [
     {
         path: 'nutri',
         component: NutriLayoutComponent,
-        canActivate: [authGuard], 
-        data: { roles: ['nutri', 'nutricionista'] },
+        canActivate: [jwtGuard, roleGuard], 
+        data: { roles: [Role.NUTRI] },
         children: [
             { path: 'dashboard', component: NutriDashboardComponent },
             { path: 'evaluations', component: NutriEvaluationsComponent },

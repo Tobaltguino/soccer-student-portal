@@ -9,12 +9,12 @@
                 <img [src]="logoUrl" 
                      alt="Logo ProFutbol" 
                      class="logo-img">
-
                 <h2>Acceso ProFutbol</h2>
                 <p class="subtitle">Gestión Deportiva Integral</p>
             </div>
 
-            <div class="form-section">
+            <!-- 1. Envolvemos la sección en el formulario reactivo -->
+            <form [formGroup]="loginForm" (ngSubmit)="ingresar()" class="form-section">
                 
                 <div class="field">
                     <label for="rut">RUT del Usuario</label>
@@ -22,14 +22,14 @@
                         <div class="input-icon">
                             <i class="pi pi-id-card"></i>
                         </div>
+                        <!-- 2. Cambiamos [(ngModel)] por formControlName="rut" -->
                         <input pInputText 
                                id="rut" 
                                type="text" 
                                appRutFormat
-                               [(ngModel)]="rut" 
+                               formControlName="rut" 
                                placeholder="12.345.678-9" 
-                               class="custom-input"
-                               (keyup.enter)="ingresar()"/>
+                               class="custom-input"/>
                     </div>
                 </div>
 
@@ -39,22 +39,23 @@
                         <div class="input-icon">
                             <i class="pi pi-lock"></i>
                         </div>
+                        <!-- 3. Cambiamos [(ngModel)] por formControlName="password" -->
                         <p-password 
                             id="password" 
-                            [(ngModel)]="password" 
+                            formControlName="password" 
                             [feedback]="false" 
                             [toggleMask]="true" 
                             placeholder="••••••••"
                             styleClass="w-full"
-                            inputStyleClass="custom-input-password"
-                            (keyup.enter)="ingresar()">
+                            inputStyleClass="custom-input-password">
                         </p-password>
                     </div>
                 </div>
 
+                <!-- 4. El botón ahora es de tipo submit -->
                 <button pButton 
+                        type="submit"
                         label="Iniciar Sesión" 
-                        (click)="ingresar()" 
                         [loading]="loading"
                         icon="pi pi-sign-in" 
                         class="btn-login w-full mt-3">
@@ -68,6 +69,7 @@
 
                 <div class="Volver-home">
                     <button pButton 
+                            type="button"
                             icon="pi pi-arrow-left" 
                             label="Volver a la página principal" 
                             class="p-button-text btn-secundario-centrado" 
@@ -75,10 +77,11 @@
                     </button>
                 </div>
 
-            </div>
+            </form>
         </div>
     </p-card>
 
+    <!-- Diálogo de Recuperación (Se mantiene igual por ahora) -->
     <p-dialog 
         header="Recuperar Contraseña" 
         [(visible)]="displayResetDialog" 
@@ -95,6 +98,7 @@
                 <label for="rutRecuperacion" class="font-bold mb-2 block">RUT del Usuario</label>
                 <div class="p-input-icon-left w-full">
                     <i class="pi pi-id-card"></i>
+                    <!-- Aquí podemos dejar ngModel si manejamos el modal de forma simple en el TS -->
                     <input pInputText 
                            id="rutRecuperacion" 
                            [(ngModel)]="rutRecuperacion" 

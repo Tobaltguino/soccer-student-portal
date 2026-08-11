@@ -1,23 +1,14 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideAnimationsAsync } from '@angular/platform-browser/animations/async'; // Importar animaciones
-import { providePrimeNG } from 'primeng/config'; // Importar configuración
-import Aura from '@primeng/themes/aura'; // Importar el tema Aura
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
-import { routes } from './app.routes';
+import { routes } from './app.routes'; // Tus rutas
+import { jwtInterceptor } from './core/interceptors/jwt.interceptor'; // Tu nuevo interceptor
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideAnimationsAsync(), // Activar animaciones
-    providePrimeNG({
-        theme: {
-            preset: Aura,
-            options: {
-                darkModeSelector: false || 'none' // Opcional: Esto fuerza el modo claro por defecto
-            }
-        }
-    })
+    // Así le dices a Angular que use tu interceptor para todas las peticiones
+    provideHttpClient(withInterceptors([jwtInterceptor]))
   ]
 };
