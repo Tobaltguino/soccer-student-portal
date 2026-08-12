@@ -15,6 +15,11 @@ export class WebConfiguracionController {
     return this.service.obtener();
   }
 
+  @Get('landing')
+  obtenerLanding() {
+    return this.service.obtenerDatosLanding();
+  }
+
   @Patch()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Rol.ADMINISTRADOR)

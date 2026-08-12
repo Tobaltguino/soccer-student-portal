@@ -1,11 +1,13 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
-// PrimeNG & Servicios
+// PrimeNG
 import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip'; // ✅ Añadido para mostrar tooltip al pasar el mouse
-import { SupabaseService } from '../../../../core/services/supabase.service';
+import { TooltipModule } from 'primeng/tooltip';
+
+// Servicios de Dominio
+import { WebConfiguracionService } from '../../../core/domains/administracion/web/web-configuracion/services/web-configuracion.service';
 
 @Component({
   selector: 'app-home',
@@ -17,6 +19,11 @@ import { SupabaseService } from '../../../../core/services/supabase.service';
 export class HomeComponent implements OnInit {
 
   isDarkMode: boolean = false;
+
+  // --- Inyección de dependencias moderna ---
+  private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
+  private webConfigService = inject(WebConfiguracionService);
 
   // ==========================================
   // DATOS POR DEFECTO (Configuración General)
@@ -50,7 +57,6 @@ export class HomeComponent implements OnInit {
     { icono: 'pi-shield', color_fondo: 'bg-orange-100', color_texto: 'text-orange-500', titulo: 'Proyección (15 a 18 años)', descripcion: 'Alto rendimiento, exigencia física, apoyo nutricional y preparación para competencias exigentes.' }
   ];
 
-  // ✅ NUEVA LISTA DE AUSPICIADORES
   auspiciadores: any[] = [
     { imagen_url: 'assets/images/default-sponsor.png', nombre: 'Barbería & Tattoo', descripcion: 'Descuentos en cortes para jugadores.', instagram_url: 'https://instagram.com' }
   ];
@@ -60,50 +66,42 @@ export class HomeComponent implements OnInit {
     { imagen_url: 'assets/images/default-sponsor.png', nombre: 'Clínica Traumatológica', descripcion: 'Convenio con atención preferencial, urgencias sin costo de ingreso y descuentos en Rayos X y Resonancias.' }
   ];
 
-  constructor(
-    private router: Router,
-    private supabase: SupabaseService,
-    private cdr: ChangeDetectorRef 
-  ) {}
-
   ngOnInit() {
     this.checkThemePreference();
     this.cargarDatosDinamicos();
   }
 
-  // --- OBTENER DATOS DE SUPABASE ---
-  async cargarDatosDinamicos() {
-    try {
-      const [config, met, prog, ali, aus] = await Promise.all([
-        this.supabase.getConfiguracionWeb(),
-        this.supabase.getWebMetodologias(),
-        this.supabase.getWebProgramas(),
-        this.supabase.getWebAlianzas(),
-        this.supabase.getWebAuspiciadores() // ✅ Añadido a la consulta paralela
-      ]);
+  // --- OBTENER DATOS DESDE EL ENDPOINT UNIFICADO ---
+  cargarDatosDinamicos() {
+    this.webConfigService.obtenerDatosLanding().subscribe({
+      next: (res) => {
+        // Mapeo de la configuración central
+        if (res.configuracion) {
+          this.telefonoAcademia = res.configuracion.telefono || this.telefonoAcademia;
+          this.correoAcademia = res.configuracion.correo || this.correoAcademia;
+          this.nombreInstagram = res.configuracion.instagram_nombre || this.nombreInstagram;
+          this.linkInstagram = res.configuracion.instagram_url || this.linkInstagram;
+          this.nombreFacebook = res.configuracion.facebook_nombre || this.nombreFacebook;
+          this.linkFacebook = res.configuracion.facebook_url || this.linkFacebook;
+          this.mensajeWhatsApp = res.configuracion.whatsapp_mensaje || this.mensajeWhatsApp;
+          this.heroTitulo = res.configuracion.hero_titulo || this.heroTitulo;
+          this.heroSubtitulo = res.configuracion.hero_subtitulo || this.heroSubtitulo;
+        }
 
-      if (config.data && !config.error) {
-        this.telefonoAcademia = config.data.telefono || this.telefonoAcademia;
-        this.correoAcademia = config.data.correo || this.correoAcademia;
-        this.nombreInstagram = config.data.instagram_nombre || this.nombreInstagram;
-        this.linkInstagram = config.data.instagram_url || this.linkInstagram;
-        this.nombreFacebook = config.data.facebook_nombre || this.nombreFacebook;
-        this.linkFacebook = config.data.facebook_url || this.linkFacebook;
-        this.mensajeWhatsApp = config.data.whatsapp_mensaje || this.mensajeWhatsApp;
-        this.heroTitulo = config.data.hero_titulo || this.heroTitulo;
-        this.heroSubtitulo = config.data.hero_subtitulo || this.heroSubtitulo;
+        // Mapeo de las listas dinámicas (solo si traen datos)
+        if (res.metodologias && res.metodologias.length > 0) this.metodologias = res.metodologias;
+        if (res.programas && res.programas.length > 0) this.programas = res.programas;
+        if (res.auspiciadores && res.auspiciadores.length > 0) this.auspiciadores = res.auspiciadores;
+        if (res.beneficios && res.beneficios.length > 0) this.alianzas = res.beneficios;
+      },
+      error: (err) => {
+        console.error('Error cargando datos de la landing, se usarán los valores por defecto', err);
+      },
+      complete: () => {
+        // Forzamos la detección de cambios para actualizar la vista
+        this.cdr.detectChanges(); 
       }
-
-      if (met.data && met.data.length > 0) this.metodologias = met.data;
-      if (prog.data && prog.data.length > 0) this.programas = prog.data;
-      if (ali.data && ali.data.length > 0) this.alianzas = ali.data;
-      if (aus.data && aus.data.length > 0) this.auspiciadores = aus.data; // ✅ Asignado
-
-    } catch (error) {
-      // Mantiene datos por defecto si falla
-    } finally {
-      this.cdr.detectChanges(); 
-    }
+    });
   }
 
   get linkWhatsApp(): string {
@@ -112,6 +110,7 @@ export class HomeComponent implements OnInit {
     return `https://wa.me/${numeroLimpio}?text=${mensajeEncodeado}`;
   }
 
+  // --- MANEJO DE TEMA (DARK/LIGHT MODE) ---
   checkThemePreference() {
     const savedTheme = localStorage.getItem('theme');
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -143,6 +142,7 @@ export class HomeComponent implements OnInit {
     localStorage.setItem('theme', 'light');
   }
 
+  // --- NAVEGACIÓN Y UTILIDADES ---
   irAlLogin() {
     this.router.navigate(['/login']);
   }

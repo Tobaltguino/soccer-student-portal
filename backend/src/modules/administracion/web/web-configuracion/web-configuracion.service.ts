@@ -22,7 +22,27 @@ export class WebConfiguracionService {
     return data;
   }
 
+  async obtenerDatosLanding() {
+    const [config, metodologias, programas, auspiciadores, beneficios] = await Promise.all([
+      this.supabase.client.from('web_configuracion').select('*').eq('id', 1).single(),
+      this.supabase.client.from('web_metodologias').select('*').order('orden'),
+      this.supabase.client.from('web_programas').select('*').order('orden'),
+      this.supabase.client.from('web_auspiciadores').select('*').order('orden'),
+      this.supabase.client.from('web_beneficios').select('*').order('orden'),
+    ]);
+
+    // Devolvemos un solo objeto consolidado
+    return {
+      configuracion: config.data ?? null,
+      metodologias: metodologias.data ?? [],
+      programas: programas.data ?? [],
+      auspiciadores: auspiciadores.data ?? [],
+      beneficios: beneficios.data ?? [],
+    };
+  }
+
   async actualizar(dto: ActualizarWebConfiguracionDto): Promise<WebConfiguracionRow> {
+    // ... tu código de actualizar se mantiene igual ...
     const { data, error } = await this.supabase.client
       .from('web_configuracion')
       .upsert({
@@ -40,13 +60,8 @@ export class WebConfiguracionService {
       .select()
       .single<WebConfiguracionRow>();
 
-    if (error) {
-      lanzarErrorSupabase(error, 'No se pudo actualizar la configuración web');
-    }
-
-    if (!data) {
-      throw new InternalServerErrorException('No se recibió la configuración actualizada');
-    }
+    if (error) lanzarErrorSupabase(error, 'No se pudo actualizar la configuración web');
+    if (!data) throw new InternalServerErrorException('No se recibió la configuración actualizada');
 
     return data;
   }

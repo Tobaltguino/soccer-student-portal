@@ -24,3 +24,11 @@ export interface ActualizarWebConfiguracionPayload {
   heroTitulo?: string;
   heroSubtitulo?: string;
 }
+
+export interface LandingData {
+  configuracion: any;
+  metodologias: any[];
+  programas: any[];
+  auspiciadores: any[];
+  beneficios: any[];
+}

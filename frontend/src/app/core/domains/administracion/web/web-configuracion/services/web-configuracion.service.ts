@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../../../../environments/environment';
-import { WebConfiguracion, ActualizarWebConfiguracionPayload } from '../models/web-configuracion.interface';
+import { WebConfiguracion, ActualizarWebConfiguracionPayload, LandingData } from '../models/web-configuracion.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -18,6 +18,14 @@ export class WebConfiguracionService {
   obtenerConfiguracion(): Observable<WebConfiguracion> {
     return this.http.get<WebConfiguracion>(this.apiUrl);
   }
+
+  /**
+   * GET /web-configuracion/landing
+   * Obtiene la configuración general de la landing page general.
+   */
+  obtenerDatosLanding(): Observable<LandingData> {
+  return this.http.get<LandingData>(`${this.apiUrl}/landing`);
+}
 
   /**
    * PATCH /web-configuracion
