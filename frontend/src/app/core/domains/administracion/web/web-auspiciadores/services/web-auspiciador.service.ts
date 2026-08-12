@@ -1,0 +1,78 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../../../../../environments/environment';
+import { WebAuspiciador, CrearWebAuspiciadorPayload, ActualizarWebAuspiciadorPayload } from '../models/web-auspiciador.interface';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class WebAuspiciadorService {
+  private http = inject(HttpClient);
+  private apiUrl = `${environment.apiUrl}/web-auspiciadores`;
+
+  /**
+   * GET /web-auspiciadores
+   * Lista todos los auspiciadores ordenados por el campo 'orden' (Público).
+   */
+  listarAuspiciadores(): Observable<WebAuspiciador[]> {
+    return this.http.get<WebAuspiciador[]>(this.apiUrl);
+  }
+
+  /**
+   * GET /web-auspiciadores/:id
+   * Busca un auspiciador específico por su ID (Público).
+   */
+  obtenerAuspiciadorPorId(id: number): Observable<WebAuspiciador> {
+    return this.http.get<WebAuspiciador>(`${this.apiUrl}/${id}`);
+  }
+
+  /**
+   * POST /web-auspiciadores
+   * Crea un auspiciador. Soporta subida de imagen opcional mediante FormData (Solo Admin).
+   */
+  crearAuspiciador(payload: CrearWebAuspiciadorPayload, imagen?: File): Observable<WebAuspiciador> {
+    const formData = new FormData();
+    
+    formData.append('nombre', payload.nombre);
+    
+    if (payload.descripcion) formData.append('descripcion', payload.descripcion);
+    if (payload.orden !== undefined) formData.append('orden', payload.orden.toString());
+    if (payload.instagramUrl) formData.append('instagramUrl', payload.instagramUrl);
+    if (imagen) formData.append('imagen', imagen);
+
+    return this.http.post<WebAuspiciador>(this.apiUrl, formData);
+  }
+
+  /**
+   * PATCH /web-auspiciadores/:id
+   * Actualiza un auspiciador existente. Soporta reemplazo de imagen mediante FormData (Solo Admin).
+   */
+  actualizarAuspiciador(id: number, payload: ActualizarWebAuspiciadorPayload, imagen?: File): Observable<WebAuspiciador> {
+    const formData = new FormData();
+    
+    if (payload.nombre !== undefined) formData.append('nombre', payload.nombre);
+    if (payload.descripcion !== undefined) formData.append('descripcion', payload.descripcion);
+    if (payload.orden !== undefined) formData.append('orden', payload.orden.toString());
+    if (payload.instagramUrl !== undefined) formData.append('instagramUrl', payload.instagramUrl);
+    if (imagen) formData.append('imagen', imagen);
+
+    return this.http.patch<WebAuspiciador>(`${this.apiUrl}/${id}`, formData);
+  }
+
+  /**
+   * DELETE /web-auspiciadores/:id
+   * Elimina completamente el auspiciador y su imagen del bucket (Solo Admin).
+   */
+  eliminarAuspiciador(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  /**
+   * DELETE /web-auspiciadores/:id/imagen
+   * Borra únicamente la imagen asociada a un auspiciador, dejándolo sin logo (Solo Admin).
+   */
+  eliminarImagen(id: number): Observable<WebAuspiciador> {
+    return this.http.delete<WebAuspiciador>(`${this.apiUrl}/${id}/imagen`);
+  }
+}
