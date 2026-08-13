@@ -14,19 +14,17 @@ import { UpdatePasswordDto } from './dto/update-password.dto';
 @Injectable()
 export class AuthService {
   private readonly supabaseAnon: SupabaseClient;
-  private readonly supabaseAdmin: SupabaseClient; // Añadimos el cliente admin
+  private readonly supabaseAdmin: SupabaseClient;
 
   constructor(private configService: ConfigService) {
-    // Cliente anónimo (para hacer el login simulando al frontend)
     this.supabaseAnon = createClient(
       this.configService.getOrThrow<string>('SUPABASE_URL'),
       this.configService.getOrThrow<string>('SUPABASE_ANON_KEY'),
     );
 
-    // Cliente admin (para saltar el RLS y poder buscar el correo mediante el RUT)
     this.supabaseAdmin = createClient(
       this.configService.getOrThrow<string>('SUPABASE_URL'),
-      this.configService.getOrThrow<string>('SUPABASE_SERVICE_ROLE_KEY'), // Asegúrate de tener esta llave en tu .env
+      this.configService.getOrThrow<string>('SUPABASE_SERVICE_ROLE_KEY'),
     );
   }
 
@@ -34,8 +32,8 @@ export class AuthService {
     // 1. Buscar el email del usuario usando el RUT proporcionado
     const { data: perfil, error: perfilError } = await this.supabaseAdmin
       .from('usuarios_perfiles')
-      .select('email, rol') // Traemos el email (y de paso el rol si lo necesitas)
-      .eq('rut', dto.rut) // Asumiendo que tu DTO ahora recibe 'rut'
+      .select('email, rol')
+      .eq('rut', dto.rut)
       .single();
 
     if (perfilError || !perfil) {
@@ -53,7 +51,22 @@ export class AuthService {
       throw new UnauthorizedException('Contraseña incorrecta');
     }
 
-    // 3. Retornar el token y los datos consolidados
+    // ✨ 3. VERIFICACIÓN DE TÉRMINOS Y CONDICIONES
+    // Nota: A futuro puedes mover esto al .env (ej. process.env.VERSION_TERMINOS)
+    const VERSION_ACTUAL_TERMINOS = '1.0';
+    const VERSION_ACTUAL_POLITICA = '1.0';
+
+    const { data: aceptacion } = await this.supabaseAdmin
+      .from('aceptaciones_legales') // Ajusta el nombre si tu tabla se llama distinto
+      .select('id')
+      .eq('usuario_id', data.user.id)
+      .eq('version_terminos', VERSION_ACTUAL_TERMINOS)
+      .eq('version_politica', VERSION_ACTUAL_POLITICA)
+      .maybeSingle(); // maybeSingle retorna null si no existe, en lugar de error
+
+    const necesitaAceptarTerminos = !aceptacion;
+
+    // 4. Retornar el token y los datos consolidados
     return {
       access_token: data.session.access_token,
       refresh_token: data.session.refresh_token,
@@ -61,14 +74,14 @@ export class AuthService {
       user: {
         id: data.user.id,
         email: data.user.email,
-        rut: dto.rut, // Podemos devolver el RUT
-        role: perfil.rol, // Y el rol que encontramos en la tabla
+        rut: dto.rut, 
+        role: perfil.rol, 
+        necesitaAceptarTerminos, // <--- Enviamos la instrucción al frontend
       },
     };
   }
 
   async recuperarPassword(dto: RecuperarPasswordDto) {
-    // 1. Buscar el email del usuario usando el RUT proporcionado
     const { data: perfil, error: perfilError } = await this.supabaseAdmin
       .from('usuarios_perfiles')
       .select('email')
@@ -79,7 +92,6 @@ export class AuthService {
       throw new NotFoundException('El RUT ingresado no está registrado');
     }
 
-    // 2. Enviar el correo de recuperación mediante Supabase
     const { error } = await this.supabaseAnon.auth.resetPasswordForEmail(perfil.email, {
       redirectTo: this.configService.get<string>('FRONTEND_URL') || 'http://localhost:4200/update-password',
     });
@@ -93,7 +105,6 @@ export class AuthService {
   }
 
   async updatePassword(userId: string, dto: UpdatePasswordDto) {
-    // 1. Actualizar la contraseña en Supabase usando el Admin API
     const { error } = await this.supabaseAdmin.auth.admin.updateUserById(userId, {
       password: dto.password,
     });
@@ -102,11 +113,8 @@ export class AuthService {
       throw new InternalServerErrorException('No se pudo actualizar la contraseña');
     }
 
-    // 2. Forzar el cierre de todas las sesiones antiguas por seguridad
     await this.supabaseAdmin.auth.admin.signOut(userId);
 
-    // 3. Retornamos éxito. 
-    // Tu Middleware/Interceptor de NestJS se encargará automáticamente de guardar la auditoría.
     return { message: 'Contraseña actualizada correctamente' };
   }
 

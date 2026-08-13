@@ -2,35 +2,44 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { LoginCredentials, AuthResponse } from './auth.interface'; // Importación limpia
-import { environment } from '../../../environments/environment'; 
+import { LoginCredentials, AuthResponse } from '../models/auth.interface'; 
+import { environment } from '../../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/auth`;
+  // La ruta base ya incluye '/auth'
+  private apiUrl = `${environment.apiUrl}/auth`; 
 
   login(credentials: LoginCredentials): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`, credentials).pipe(
       tap((response) => {
+        // Guardamos los tokens y el rol
         localStorage.setItem('access_token', response.access_token);
+        localStorage.setItem('refresh_token', response.refresh_token);
         localStorage.setItem('user_role', response.user.role);
+        
+        // Opcional: Podrías guardar si necesita términos en el storage por si refresca la página
+        localStorage.setItem('necesita_terminos', String(response.user.necesitaAceptarTerminos));
       })
     );
   }
 
-  getMe(): Observable<any> {
-    return this.http.post(`${this.apiUrl}/me`, {});
+  // ✨ Unifiqué getMe() y me() en uno solo, y corregí la URL
+  me(): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/me`, {}); 
   }
 
+  // Corregida la URL duplicada (quitamos el /auth/ extra)
   recuperarPassword(rut: string) {
-    return this.http.post<{ message: string }>(`${this.apiUrl}/auth/recuperar-password`, { rut });
+    return this.http.post<{ message: string }>(`${this.apiUrl}/recuperar-password`, { rut });
   }
 
   updatePassword(password: string) {
-    return this.http.post<{ message: string }>(`${this.apiUrl}/auth/update-password`, { password });
+    // Si en NestJS lo dejaste como @Patch, cambia este .post por .patch
+    return this.http.post<{ message: string }>(`${this.apiUrl}/update-password`, { password });
   }
 
   refreshToken(refreshToken: string): Observable<AuthResponse> {
@@ -53,6 +62,7 @@ export class AuthService {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user_role');
+    localStorage.removeItem('necesita_terminos'); // Limpiamos también esto
   }
 
   isLoggedIn(): boolean {

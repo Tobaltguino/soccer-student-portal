@@ -13,7 +13,7 @@ import { DialogModule } from 'primeng/dialog';
 import { MessageService } from 'primeng/api';
 
 // Servicios de Angular
-import { AuthService } from '../../../core/auth/auth.service';
+import { AuthService } from '../../../core/auth/services/auth.service';
 import { Rol } from '../../../shared/enums/rol.enum';
 
 @Component({
@@ -36,7 +36,7 @@ import { Rol } from '../../../shared/enums/rol.enum';
 })
 export class LoginComponent implements OnInit {
   private fb = inject(FormBuilder);
-  private authService = inject(AuthService); // Conectado 100% a tu backend NestJS
+  private authService = inject(AuthService); // Conectado 100% a NestJS
   private router = inject(Router);
   private messageService = inject(MessageService);
 
@@ -50,7 +50,7 @@ export class LoginComponent implements OnInit {
 
   loading: boolean = false;
   
-  // Variables para recuperación de contraseña
+  // Variables para el modal de recuperación
   displayResetDialog: boolean = false;
   rutRecuperacion: string = '';
   loadingReset: boolean = false;
@@ -75,16 +75,19 @@ export class LoginComponent implements OnInit {
 
     this.loading = true;
 
-    // Llamamos al AuthService que se conecta con POST /auth/login en NestJS
     this.authService.login(this.loginForm.value).subscribe({
       next: (response) => {
         this.loading = false;
-        // Tu backend ya devuelve response.user.role directamente
-        this.redirectByRole(response.user.role);
+        
+        // ✨ EL GRAN CAMBIO: Evaluamos si necesita ir a términos o al dashboard
+        if (response.user.necesitaAceptarTerminos) {
+          this.router.navigate(['/terminos']);
+        } else {
+          this.redirectByRole(response.user.role);
+        }
       },
       error: (error) => {
         this.loading = false;
-        // El backend lanzará "El RUT ingresado no está registrado" o "Contraseña incorrecta"
         const mensajeError = error.error?.message || 'Error al conectar con el servidor';
         
         this.messageService.add({ 
@@ -136,7 +139,7 @@ export class LoginComponent implements OnInit {
 
     this.loadingReset = true;
     
-    // Llamamos a nuestro backend en NestJS
+    // Llamamos a nuestro backend en NestJS para gestionar la recuperación
     this.authService.recuperarPassword(this.rutRecuperacion).subscribe({
       next: (response) => {
         this.loadingReset = false;

@@ -1,9 +1,9 @@
 import { Routes } from '@angular/router';
 
 // --- NUEVOS IMPORTS DE SEGURIDAD ---
-import { jwtGuard } from './core/auth/jwt.guard';
-import { roleGuard } from './core/auth/role.guard';
-import { Role } from './core/auth/role.enum';
+import { jwtGuard } from './core/auth/guards/jwt.guard';
+import { roleGuard } from './core/auth/guards/role.guard';
+import { Role } from './core/auth/models/role.enum';
 
 // --- HOME ---
 import { HomeComponent } from './features/components/home/home/home';

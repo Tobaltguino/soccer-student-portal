@@ -28,6 +28,7 @@
   margin: 0 0 0.5rem 0;
   color: var(--text-color, #1e293b);
   font-size: 1.75rem;
+  font-weight: 700;
 }
 
 .terminos-header p {
@@ -35,10 +36,9 @@
   color: var(--text-color-secondary, #64748b);
 }
 
-/* La caja donde va el texto legal */
 .terminos-content-box {
-  padding: 2rem;
-  max-height: 50vh; /* Obliga a hacer scroll si es muy largo */
+  padding: 2rem 2.5rem;
+  max-height: 50vh; 
   overflow-y: auto;
   background-color: var(--surface-ground, #f8fafc);
   color: var(--text-color, #334155);
@@ -46,11 +46,29 @@
   line-height: 1.6;
 }
 
+/* Diseño de la barra de scroll para que se vea profesional */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--surface-ground, #f8fafc); 
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--surface-border, #cbd5e1); 
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--text-color-secondary, #94a3b8); 
+}
+
 .terminos-content-box h3 {
-  margin-top: 1.5rem;
-  margin-bottom: 0.5rem;
-  font-size: 1.1rem;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.15rem;
   color: var(--text-color, #0f172a);
+  border-bottom: 2px solid var(--primary-color, #3b82f6);
+  display: inline-block;
+  padding-bottom: 0.25rem;
 }
 
 .terminos-content-box h3:first-child {
@@ -59,7 +77,11 @@
 
 .terminos-content-box ul {
   padding-left: 1.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.terminos-content-box li {
+  margin-bottom: 0.5rem;
 }
 
 .terminos-footer {
@@ -73,13 +95,15 @@
   align-items: flex-start;
   gap: 0.75rem;
   margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: var(--surface-ground, #f8fafc);
+  border-radius: 8px;
+  border: 1px solid var(--surface-border, #e2e8f0);
 }
 
 .checkbox-area label {
-  cursor: pointer;
-  color: var(--text-color, #334155);
-  font-weight: 500;
   line-height: 1.4;
+  margin-top: 2px;
 }
 
 .actions {
@@ -88,7 +112,7 @@
   gap: 1rem;
 }
 
-/* Modo oscuro opcional */
+/* Modo oscuro */
 :host-context(body.dark-mode) .terminos-wrapper {
   background-color: #0f172a;
 }
@@ -104,4 +128,8 @@
 :host-context(body.dark-mode) .terminos-header h2,
 :host-context(body.dark-mode) .terminos-content-box h3 {
   color: #f8fafc;
+}
+:host-context(body.dark-mode) .checkbox-area {
+  background-color: #0f172a;
+  border-color: #334155;
 }

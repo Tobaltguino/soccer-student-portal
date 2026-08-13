@@ -1,14 +1,19 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { SupabaseService } from '../../../core/services/supabase.service';
 
 // PrimeNG
 import { CheckboxModule } from 'primeng/checkbox';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+
+// Servicios
+import { AuthService } from '../../core/auth/services/auth.service';
+// 👇 Importamos tu servicio dedicado (Ajusta la ruta según tu estructura de carpetas)
+import { AceptacionLegalService } from '../../core/domains/administracion/aceptaciones-legales/services/aceptaacion-legal.service';
+import { Rol } from '../../shared/enums/rol.enum';
 
 @Component({
   selector: 'app-terminos',
@@ -20,72 +25,81 @@ import { MessageService } from 'primeng/api';
 })
 export class TerminosComponent implements OnInit {
   
+  private authService = inject(AuthService);
+  private aceptacionLegalService = inject(AceptacionLegalService); // Inyectamos el servicio
+  private router = inject(Router);
+  private messageService = inject(MessageService);
+
   acepto: boolean = false;
   guardando: boolean = false;
-  
-  userId: string | null = null;
   userRole: string | null = null;
-  userEmail: string = '';
 
-  constructor(
-    private supabase: SupabaseService,
-    private router: Router,
-    private messageService: MessageService
-  ) {}
-
-  async ngOnInit() {
-    // Obtenemos el usuario actual para saber a quién actualizar
-    const { data: { user } } = await this.supabase.getUser();
-    if (user && user.email) {
-      this.userId = user.id;
-      this.userEmail = user.email;
-      // Usamos la función segura que creaste para obtener el rol/tabla
-      this.userRole = await this.supabase.getRolSeguro(user.id);
-    } else {
-      this.router.navigate(['/login']);
-    }
+  ngOnInit() {
+    // Obtenemos el perfil del usuario logueado para saber a dónde redirigirlo después
+    this.authService.me().subscribe({
+      next: (user: any) => {
+        this.userRole = user.role; // O user.rol, según tu backend
+      },
+      error: () => {
+        this.router.navigate(['/login']);
+      }
+    });
   }
 
-  async confirmarAceptacion() {
-    if (!this.acepto || !this.userId || !this.userRole) return;
+  confirmarAceptacion() {
+    if (!this.acepto || !this.userRole) return;
 
     this.guardando = true;
-    try {
-      // Determinamos la tabla real basada en el rol
-      let tabla = 'estudiantes';
-      if (this.userRole === 'admin') tabla = 'admins';
-      else if (this.userRole === 'professor') tabla = 'profesores';
-      else if (this.userRole === 'kine') tabla = 'kinesiologos';
-      else if (this.userRole === 'nutri') tabla = 'nutricionistas';
-
-      // ✅ Usamos el nuevo método seguro y directo
-      const { error } = await this.supabase.registrarFirmaTerminos(tabla, this.userId);
-      
-      if (error) throw error;
-
-      // ¡Firmado! Lo mandamos a su panel correspondiente
-      this.redirigirPorRol(this.userRole);
-
-    } catch (error) {
-      console.error(error); // Para que veas si hay problemas de permisos (RLS) en el desarrollo local
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo registrar la aceptación. Intente nuevamente.' });
-    } finally {
-      this.guardando = false;
-    }
+    
+    const payload = {
+      versionTerminos: '1.0', // Puedes cambiar esto si en el futuro actualizas los términos
+      versionPolitica: '1.0' 
+    };
+    
+    // Llamamos a tu servicio dedicado de aceptaciones legales
+    this.aceptacionLegalService.aceptarTerminos(payload).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: '¡Éxito!', detail: 'Términos aceptados correctamente.' });
+        
+        // Esperamos 1 segundo para que el usuario vea el mensaje verde y redirigimos
+        setTimeout(() => {
+          this.redirigirPorRol(this.userRole!);
+        }, 1000);
+      },
+      error: (err) => {
+        this.guardando = false;
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo registrar la aceptación. Intente nuevamente.' });
+        console.error(err);
+      }
+    });
   }
 
-  redirigirPorRol(role: string) {
-    switch (role) {
-      case 'admin': this.router.navigate(['/admin/dashboard']); break;
-      case 'professor': this.router.navigate(['/professor/dashboard']); break;
-      case 'kine': this.router.navigate(['/kine/dashboard']); break;
-      case 'nutri': this.router.navigate(['/nutri/dashboard']); break;
-      default: this.router.navigate(['/student/dashboard']); break;
+  redirigirPorRol(rol: string) {
+    switch (rol) {
+      case Rol.ESTUDIANTE:
+        this.router.navigate(['/estudiante']); 
+        break;
+      case Rol.PROFESOR:
+        this.router.navigate(['/profesor']);
+        break;
+      case Rol.KINESIOLOGO:
+        this.router.navigate(['/salud/kinesiologia']);
+        break;
+      case Rol.NUTRICIONISTA:
+        this.router.navigate(['/salud/nutricion']);
+        break;
+      case Rol.ADMINISTRADOR:
+        this.router.navigate(['/admin']);
+        break;
+      default:
+        this.router.navigate(['/']);
     }
   }
 
   rechazar() {
-    this.supabase.logout();
-    this.router.navigate(['/login']);
+    // Si rechaza, cerramos sesión y lo devolvemos al login
+    this.authService.logout().subscribe(() => {
+      this.router.navigate(['/login']);
+    });
   }
 }
