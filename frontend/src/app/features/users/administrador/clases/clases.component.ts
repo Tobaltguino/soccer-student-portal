@@ -2,7 +2,6 @@ import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-// PrimeNG
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -17,7 +16,6 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { DatePickerModule } from 'primeng/datepicker';
 import { CheckboxModule } from 'primeng/checkbox';
 
-// Dominios
 import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
 import { Clase, CrearClasePayload, FiltrosClase } from '../../../../core/domains/academico/clases/models/clase.interface';
 
@@ -25,8 +23,8 @@ import { Clase, CrearClasePayload, FiltrosClase } from '../../../../core/domains
   selector: 'app-administrador-clases',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, TableModule, ButtonModule, DialogModule, 
-    InputTextModule, TextareaModule, SelectModule, TagModule, ToastModule, 
+    CommonModule, FormsModule, TableModule, ButtonModule, DialogModule,
+    InputTextModule, TextareaModule, SelectModule, TagModule, ToastModule,
     ConfirmDialogModule, DatePickerModule, CheckboxModule, SelectButtonModule
   ],
   providers: [ConfirmationService, MessageService],
@@ -34,23 +32,23 @@ import { Clase, CrearClasePayload, FiltrosClase } from '../../../../core/domains
   styleUrls: ['./clases.component.css']
 })
 export class AdministradorClasesComponent implements OnInit {
-  
+
   private claseService = inject(ClaseService);
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
   private cdr = inject(ChangeDetectorRef);
 
-  clases: Clase[] = [];           
+  clases: Clase[] = [];
   totalRegistros: number = 0;
   grupos: any[] = []; // TODO: Reemplazar cuando exista GrupoService
-  
+
   loading: boolean = true;
   displayDialog: boolean = false;
   displayAttendanceDialog: boolean = false;
   isEditing: boolean = false;
   tituloDialogo: string = '';
 
-  vistaFormulario: string = 'logistica'; 
+  vistaFormulario: string = 'logistica';
   opcionesVistaForm = [
       { label: 'Logística', value: 'logistica', icon: 'pi pi-map-marker' },
       { label: 'Planificación', value: 'planificacion', icon: 'pi pi-list' }
@@ -58,7 +56,7 @@ export class AdministradorClasesComponent implements OnInit {
 
   filtroFecha: Date | null = null;
   filtroGrupoId: number | null = null;
-  filtroLugar: string = ''; 
+  filtroLugar: string = '';
 
   claseSeleccionada: Clase | null = null;
   alumnosAsistencia: any[] = [];
@@ -72,27 +70,22 @@ export class AdministradorClasesComponent implements OnInit {
 
   cargarDatos() {
     this.loading = true;
-    this.aplicarFiltros(); 
+    this.aplicarFiltros();
   }
 
   aplicarFiltros() {
     this.loading = true;
-    
+
     const filtros: FiltrosClase = {
       grupoId: this.filtroGrupoId || undefined,
       desde: this.filtroFecha ? this.formatearFecha(this.filtroFecha) : undefined,
+      lugar: this.filtroLugar?.trim() || undefined,
     };
 
     this.claseService.listarClases(filtros).subscribe({
       next: (response) => {
         this.clases = response.registros;
         this.totalRegistros = response.total;
-        
-        if (this.filtroLugar && this.filtroLugar.trim() !== '') {
-          const busqueda = this.filtroLugar.toLowerCase();
-          this.clases = this.clases.filter(c => c.lugar?.toLowerCase().includes(busqueda));
-        }
-
         this.loading = false;
         this.cdr.detectChanges();
       },
@@ -119,28 +112,28 @@ export class AdministradorClasesComponent implements OnInit {
 
   guardarAsistencia() {}
 
-  abrirNuevo() { 
-    this.isEditing = false; 
-    this.tituloDialogo = 'Nueva Clase'; 
-    this.claseForm = this.getFormularioVacio(); 
+  abrirNuevo() {
+    this.isEditing = false;
+    this.tituloDialogo = 'Nueva Clase';
+    this.claseForm = this.getFormularioVacio();
     this.vistaFormulario = 'logistica';
-    
+
     const ahora = new Date();
     this.claseForm.hora = ('0' + ahora.getHours()).slice(-2) + ':' + ('0' + ahora.getMinutes()).slice(-2);
-    
-    this.displayDialog = true; 
+
+    this.displayDialog = true;
   }
-  
+
   abrirEditar(clase: Clase) {
     this.isEditing = true;
     this.tituloDialogo = 'Editar Clase';
     this.vistaFormulario = 'logistica';
-    
+
     this.claseForm = { ...clase };
     if (this.claseForm.fecha) {
-      this.claseForm.fecha = new Date(this.claseForm.fecha + 'T00:00:00') as any; 
+      this.claseForm.fecha = new Date(this.claseForm.fecha + 'T00:00:00') as any;
     }
-    
+
     this.displayDialog = true;
   }
 
@@ -150,11 +143,10 @@ export class AdministradorClasesComponent implements OnInit {
         return;
     }
 
-    // AQUI ESTÁ LA SOLUCIÓN: Usamos ?? undefined para convertir nulls a undefined
     const datosParaEnviar: CrearClasePayload = {
       grupoId: this.claseForm.grupo_id,
       fecha: this.formatearFecha(this.claseForm.fecha as unknown as Date),
-      hora: this.claseForm.hora, 
+      hora: this.claseForm.hora,
       lugar: this.claseForm.lugar ?? undefined,
       objetivo: this.claseForm.objetivo ?? undefined,
       calentamiento: this.claseForm.calentamiento ?? undefined,
@@ -191,7 +183,7 @@ export class AdministradorClasesComponent implements OnInit {
         header: 'Confirmar Eliminación',
         icon: 'pi pi-exclamation-triangle',
         acceptButtonStyleClass: 'p-button-danger p-button-text',
-        accept: () => { 
+        accept: () => {
             this.claseService.eliminarClase(id).subscribe({
               next: () => {
                 this.messageService.add({ severity: 'success', summary: 'Eliminada', detail: 'Clase eliminada' });
@@ -199,19 +191,19 @@ export class AdministradorClasesComponent implements OnInit {
               },
               error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar' })
             });
-        } 
+        }
     });
   }
 
   private getFormularioVacio(): Partial<Clase> {
-    return { 
-        grupo_id: undefined, fecha: undefined, hora: undefined, lugar: undefined, 
-        objetivo: undefined, calentamiento: undefined, parte_principal: undefined, vuelta_calma: undefined 
+    return {
+        grupo_id: undefined, fecha: undefined, hora: undefined, lugar: undefined,
+        objetivo: undefined, calentamiento: undefined, parte_principal: undefined, vuelta_calma: undefined
     };
   }
 
-  formatearFecha(date: Date | null): string { 
-      if (!date) return ''; 
-      return `${date.getFullYear()}-${('0' + (date.getMonth() + 1)).slice(-2)}-${('0' + date.getDate()).slice(-2)}`; 
+  formatearFecha(date: Date | null): string {
+      if (!date) return '';
+      return `${date.getFullYear()}-${('0' + (date.getMonth() + 1)).slice(-2)}-${('0' + date.getDate()).slice(-2)}`;
   }
 }

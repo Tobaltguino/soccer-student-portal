@@ -2,7 +2,6 @@ import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-// PrimeNG
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
@@ -14,18 +13,14 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
-// Nuevos Imports de Dominio
 import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
 import { Clase } from '../../../../core/domains/academico/clases/models/clase.interface';
-
-// Extendemos la interfaz localmente para aceptar "presente" temporalmente
-export type ClaseEstudiante = Clase & { presente?: boolean | null };
 
 @Component({
   selector: 'app-estudiante-clases',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, TableModule, TagModule, ButtonModule, 
+    CommonModule, FormsModule, TableModule, TagModule, ButtonModule,
     DialogModule, InputTextModule, DatePickerModule, SelectModule, TooltipModule, ToastModule
   ],
   providers: [MessageService],
@@ -33,16 +28,15 @@ export type ClaseEstudiante = Clase & { presente?: boolean | null };
   styleUrls: ['./clases.component.css']
 })
 export class EstudianteClasesComponent implements OnInit {
-  
-  // Inyección moderna
+
   private claseService = inject(ClaseService);
   private cdr = inject(ChangeDetectorRef);
   private messageService = inject(MessageService);
 
-  clases: ClaseEstudiante[] = [];
-  clasesOriginales: ClaseEstudiante[] = [];
+  clases: Clase[] = [];
+  clasesOriginales: Clase[] = [];
   loading: boolean = true;
-  
+
   filtroFecha: Date | null = null;
   filtroLugar: string = '';
   filtroAsistencia: any = null;
@@ -54,7 +48,7 @@ export class EstudianteClasesComponent implements OnInit {
   ];
 
   displayPlan: boolean = false;
-  selectedClase: ClaseEstudiante | null = null;
+  selectedClase: Clase | null = null;
 
   ngOnInit() {
     this.cargarClases();
@@ -62,11 +56,9 @@ export class EstudianteClasesComponent implements OnInit {
 
   cargarClases() {
     this.loading = true;
-    
-    // Llamamos directamente a nuestro NestJS mediante el servicio
+
     this.claseService.obtenerMisClases().subscribe({
       next: (data) => {
-        // Ordenamos los datos localmente
         this.clasesOriginales = data.sort((a, b) => {
           const tiempoA = new Date(`${a.fecha}T${a.hora}`).getTime();
           const tiempoB = new Date(`${b.fecha}T${b.hora}`).getTime();
@@ -113,7 +105,7 @@ export class EstudianteClasesComponent implements OnInit {
 
       return cumpleFecha && cumpleLugar && cumpleAsistencia;
     });
-    
+
     this.cdr.detectChanges();
   }
 
@@ -131,7 +123,7 @@ export class EstudianteClasesComponent implements OnInit {
     return `${year}-${month}-${day}`;
   }
 
-  verPlanificacion(clase: ClaseEstudiante) {
+  verPlanificacion(clase: Clase) {
     this.selectedClase = clase;
     this.displayPlan = true;
   }
@@ -148,12 +140,12 @@ export class EstudianteClasesComponent implements OnInit {
     return 'secondary';
   }
 
-  puedeVerPlanificacion(clase: ClaseEstudiante): boolean {
+  puedeVerPlanificacion(clase: Clase): boolean {
     if (!clase.fecha || !clase.hora) return false;
-    
+
     const tiempoClase = new Date(`${clase.fecha}T${clase.hora}`).getTime();
     const tiempoAhora = new Date().getTime();
-    
+
     return tiempoClase <= tiempoAhora;
   }
 }

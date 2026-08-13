@@ -2,12 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../../../environments/environment';
-import { 
-  Clase, 
-  CrearClasePayload, 
-  ActualizarClasePayload, 
-  PaginacionClases, 
-  FiltrosClase 
+import {
+  Clase,
+  CrearClasePayload,
+  ActualizarClasePayload,
+  PaginacionClases,
+  FiltrosClase
 } from '../models/clase.interface';
 
 @Injectable({
@@ -15,7 +15,7 @@ import {
 })
 export class ClaseService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/clases`; // URL base para este controlador
+  private apiUrl = `${environment.apiUrl}/clases`;
 
   /**
    * GET /clases
@@ -23,12 +23,12 @@ export class ClaseService {
    */
   listarClases(filtros?: FiltrosClase): Observable<PaginacionClases> {
     let params = new HttpParams();
-    
-    // Construimos los Query Params dinámicamente si existen
+
     if (filtros) {
       if (filtros.grupoId) params = params.set('grupoId', filtros.grupoId);
       if (filtros.desde) params = params.set('desde', filtros.desde);
       if (filtros.hasta) params = params.set('hasta', filtros.hasta);
+      if (filtros.lugar) params = params.set('lugar', filtros.lugar);
       if (filtros.incluirEliminadas) params = params.set('incluirEliminadas', filtros.incluirEliminadas);
       if (filtros.pagina) params = params.set('pagina', filtros.pagina);
       if (filtros.limite) params = params.set('limite', filtros.limite);
@@ -39,7 +39,7 @@ export class ClaseService {
 
   /**
    * GET /clases/mis-clases
-   * Lista exclusiva para el rol Estudiante
+   * Lista exclusiva para el rol Estudiante (incluye "presente" ya resuelto por el backend)
    */
   obtenerMisClases(): Observable<Clase[]> {
     return this.http.get<Clase[]>(`${this.apiUrl}/mis-clases`);
@@ -47,7 +47,6 @@ export class ClaseService {
 
   /**
    * GET /clases/:id
-   * Obtiene el detalle de una clase específica
    */
   obtenerClasePorId(id: number): Observable<Clase> {
     return this.http.get<Clase>(`${this.apiUrl}/${id}`);
@@ -55,7 +54,6 @@ export class ClaseService {
 
   /**
    * POST /clases
-   * Crea una nueva clase (Admin o Profesor)
    */
   crearClase(clase: CrearClasePayload): Observable<Clase> {
     return this.http.post<Clase>(this.apiUrl, clase);
@@ -63,7 +61,6 @@ export class ClaseService {
 
   /**
    * PATCH /clases/:id
-   * Actualiza los datos de una clase existente
    */
   actualizarClase(id: number, clase: ActualizarClasePayload): Observable<Clase> {
     return this.http.patch<Clase>(`${this.apiUrl}/${id}`, clase);
@@ -71,7 +68,6 @@ export class ClaseService {
 
   /**
    * DELETE /clases/:id
-   * Soft-delete de una clase (Solo Admin)
    */
   eliminarClase(id: number): Observable<Clase> {
     return this.http.delete<Clase>(`${this.apiUrl}/${id}`);
@@ -79,7 +75,6 @@ export class ClaseService {
 
   /**
    * PATCH /clases/:id/restaurar
-   * Restaura una clase eliminada (Solo Admin)
    */
   restaurarClase(id: number): Observable<Clase> {
     return this.http.patch<Clase>(`${this.apiUrl}/${id}/restaurar`, {});

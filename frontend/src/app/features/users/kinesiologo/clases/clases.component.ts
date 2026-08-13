@@ -72,24 +72,16 @@ export class KinesiologoClasesComponent implements OnInit {
   cargarClases() {
     this.loading = true;
 
-    // Preparamos los filtros para enviar a NestJS
     const filtros: FiltrosClase = {
       grupoId: this.selectedGrupoId || undefined,
       desde: this.filtroFecha ? this.formatearFecha(this.filtroFecha) : undefined,
+      lugar: this.filtroLugar?.trim() || undefined,
     };
 
     this.claseService.listarClases(filtros).subscribe({
       next: (response) => {
-        let registros = response.registros;
+        this.clases = response.registros;
         this.totalRegistros = response.total;
-
-        // Filtro local por lugar (temporal hasta que lo soporte el DTO del backend)
-        if (this.filtroLugar && this.filtroLugar.trim() !== '') {
-          const busqueda = this.filtroLugar.toLowerCase();
-          registros = registros.filter(c => c.lugar?.toLowerCase().includes(busqueda));
-        }
-
-        this.clases = registros;
         this.loading = false;
         this.cdr.detectChanges();
       },

@@ -72,6 +72,11 @@ import { FiltrarClasesDto } from './dto/filtrar-clases.dto';
       query = query.in('grupo_id', gruposPermitidos);
     }
 
+    if (filtros.lugar) {
+      const l = filtros.lugar.replace(/[%_]/g, '');
+      query = query.ilike('lugar', `%${l}%`);
+    }
+
     if (filtros.desde) {
       query = query.gte('fecha', filtros.desde);
     }
@@ -98,7 +103,7 @@ import { FiltrarClasesDto } from './dto/filtrar-clases.dto';
     };
   }
 
-  async listarPorGrupoDeEstudiante(estudianteId: string): Promise<ClaseRow[]> {
+  async listarPorGrupoDeEstudiante(estudianteId: string): Promise<(ClaseRow & { presente: boolean | null })[]> {
     const { data: estudiante, error: errorEstudiante } = await this.supabase.client
       .from('estudiantes')
       .select('grupo_id')
@@ -110,10 +115,10 @@ import { FiltrarClasesDto } from './dto/filtrar-clases.dto';
     }
 
     if (!estudiante.grupo_id) {
-      return []; // el estudiante no tiene grupo asignado todavía
+      return [];
     }
 
-    const { data, error } = await this.supabase.client
+    const { data: clases, error } = await this.supabase.client
       .from('clases')
       .select('*')
       .eq('grupo_id', estudiante.grupo_id)
@@ -124,7 +129,31 @@ import { FiltrarClasesDto } from './dto/filtrar-clases.dto';
       throw new InternalServerErrorException(`No se pudo listar las clases: ${error.message}`);
     }
 
-    return data ?? [];
+    const listaClases = (clases ?? []) as ClaseRow[];
+
+    if (listaClases.length === 0) return [];
+
+    // Trae la asistencia del estudiante para esas clases específicas
+    const { data: asistencias, error: errorAsistencias } = await this.supabase.client
+      .from('asistencias')
+      .select('clase_id, presente')
+      .eq('estudiante_id', estudianteId)
+      .in('clase_id', listaClases.map((c) => c.id));
+
+    if (errorAsistencias) {
+      throw new InternalServerErrorException(
+        `No se pudo obtener la asistencia: ${errorAsistencias.message}`,
+      );
+    }
+
+    const mapaAsistencia = new Map(
+      (asistencias ?? []).map((a: any) => [a.clase_id, a.presente]),
+    );
+
+    return listaClases.map((clase) => ({
+      ...clase,
+      presente: mapaAsistencia.has(clase.id) ? mapaAsistencia.get(clase.id)! : null,
+    }));
   }
 
   async buscarPorId(id: number, gruposPermitidos: number[] | null = null): Promise<ClaseRow> {

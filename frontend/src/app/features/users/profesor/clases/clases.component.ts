@@ -95,18 +95,12 @@ export class ProfesorClasesComponent implements OnInit {
     const filtros: FiltrosClase = {
       grupoId: this.selectedGrupoId || undefined,
       desde: this.filtroFecha ? this.formatearFecha(this.filtroFecha) : undefined,
+      lugar: this.filtroLugar?.trim() || undefined,
     };
 
     this.claseService.listarClases(filtros).subscribe({
       next: (response) => {
-        let registros = response.registros;
-
-        if (this.filtroLugar && this.filtroLugar.trim() !== '') {
-          const busqueda = this.filtroLugar.toLowerCase();
-          registros = registros.filter(c => c.lugar?.toLowerCase().includes(busqueda));
-        }
-
-        this.clasesOriginales = registros;
+        this.clasesOriginales = response.registros;
         this.clases = [...this.clasesOriginales];
         this.loading = false;
         this.cdr.detectChanges();
