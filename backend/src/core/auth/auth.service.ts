@@ -1,11 +1,15 @@
 import {
   Injectable,
+  InternalServerErrorException,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { ConfigService } from '@nestjs/config';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { RecuperarPasswordDto } from './dto/recuperar-password.dto';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -61,6 +65,49 @@ export class AuthService {
         role: perfil.rol, // Y el rol que encontramos en la tabla
       },
     };
+  }
+
+  async recuperarPassword(dto: RecuperarPasswordDto) {
+    // 1. Buscar el email del usuario usando el RUT proporcionado
+    const { data: perfil, error: perfilError } = await this.supabaseAdmin
+      .from('usuarios_perfiles')
+      .select('email')
+      .eq('rut', dto.rut)
+      .single();
+
+    if (perfilError || !perfil) {
+      throw new NotFoundException('El RUT ingresado no está registrado');
+    }
+
+    // 2. Enviar el correo de recuperación mediante Supabase
+    const { error } = await this.supabaseAnon.auth.resetPasswordForEmail(perfil.email, {
+      redirectTo: this.configService.get<string>('FRONTEND_URL') || 'http://localhost:4200/update-password',
+    });
+
+    if (error) {
+      console.error('Error enviando correo de recuperación:', error);
+      throw new InternalServerErrorException('No se pudo enviar el correo de recuperación');
+    }
+
+    return { message: 'Si el RUT existe, se ha enviado un correo con las instrucciones' };
+  }
+
+  async updatePassword(userId: string, dto: UpdatePasswordDto) {
+    // 1. Actualizar la contraseña en Supabase usando el Admin API
+    const { error } = await this.supabaseAdmin.auth.admin.updateUserById(userId, {
+      password: dto.password,
+    });
+
+    if (error) {
+      throw new InternalServerErrorException('No se pudo actualizar la contraseña');
+    }
+
+    // 2. Forzar el cierre de todas las sesiones antiguas por seguridad
+    await this.supabaseAdmin.auth.admin.signOut(userId);
+
+    // 3. Retornamos éxito. 
+    // Tu Middleware/Interceptor de NestJS se encargará automáticamente de guardar la auditoría.
+    return { message: 'Contraseña actualizada correctamente' };
   }
 
   async refresh(dto: RefreshTokenDto) {

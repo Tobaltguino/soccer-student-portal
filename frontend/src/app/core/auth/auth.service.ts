@@ -25,6 +25,14 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/me`, {});
   }
 
+  recuperarPassword(rut: string) {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/auth/recuperar-password`, { rut });
+  }
+
+  updatePassword(password: string) {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/auth/update-password`, { password });
+  }
+
   refreshToken(refreshToken: string): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/refresh`, { refreshToken }).pipe(
       tap((response) => {

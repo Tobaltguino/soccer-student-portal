@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 
@@ -9,65 +9,70 @@ import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 
-import { SupabaseService } from '../../../../core/services/supabase.service';
+// Usamos tu servicio que conecta con NestJS
+import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-update-password',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardModule, PasswordModule, ButtonModule, ToastModule],
+  imports: [
+    CommonModule, 
+    ReactiveFormsModule, 
+    CardModule, 
+    PasswordModule, 
+    ButtonModule, 
+    ToastModule
+  ],
   providers: [MessageService],
   templateUrl: './update-password.html',
   styleUrls: ['./update-password.css']
 })
 export class UpdatePasswordComponent {
-  nuevaPassword = '';
-  confirmarPassword = '';
+  
+  private fb = inject(FormBuilder);
+  private authService = inject(AuthService); // <-- Conectado a NestJS
+  private router = inject(Router);
+  private messageService = inject(MessageService);
+
   loading = false;
 
-  constructor(
-    private supabaseService: SupabaseService,
-    private router: Router,
-    private messageService: MessageService
-  ) {}
+  updateForm: FormGroup = this.fb.group({
+    nuevaPassword: ['', [Validators.required, Validators.minLength(6)]],
+    confirmarPassword: ['', [Validators.required]]
+  });
 
-  async actualizarPassword() {
-    if (!this.nuevaPassword || !this.confirmarPassword) {
-      this.messageService.add({ severity: 'warn', summary: 'Campos Vacíos', detail: 'Por favor completa ambos campos.' });
+  actualizarPassword() {
+    if (this.updateForm.invalid) {
+      this.updateForm.markAllAsTouched();
       return;
     }
 
-    if (this.nuevaPassword !== this.confirmarPassword) {
+    const { nuevaPassword, confirmarPassword } = this.updateForm.value;
+
+    if (nuevaPassword !== confirmarPassword) {
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Las contraseñas no coinciden.' });
-      return;
-    }
-
-    if (this.nuevaPassword.length < 6) {
-      this.messageService.add({ severity: 'warn', summary: 'Contraseña Débil', detail: 'La contraseña debe tener al menos 6 caracteres.' });
       return;
     }
 
     this.loading = true;
 
-    try {
-      const { error } = await this.supabaseService.updatePassword(this.nuevaPassword);
-
-      if (error) {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: error.message });
-      } else {
-        this.messageService.add({ severity: 'success', summary: '¡Éxito!', detail: 'Tu contraseña ha sido actualizada correctamente.' });
+    // Llamamos a NestJS para que cambie la clave y guarde la auditoría
+    this.authService.updatePassword(nuevaPassword).subscribe({
+      next: (res) => {
+        this.loading = false;
+        this.messageService.add({ severity: 'success', summary: '¡Éxito!', detail: 'Tu contraseña ha sido actualizada.' });
         
-        // Cerramos la sesión temporal y mandamos al login
-        await this.supabaseService.logout();
-        
+        // Redirigimos al login después de 2 segundos
         setTimeout(() => {
           this.router.navigate(['/login']);
         }, 2000);
+      },
+      error: (err) => {
+        this.loading = false;
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar la contraseña.' });
+        console.error(err);
       }
-    } catch (e) {
-      this.messageService.add({ severity: 'error', summary: 'Error Crítico', detail: 'No se pudo actualizar la contraseña.' });
-    } finally {
-      this.loading = false;
-    }
+    });
   }
 
   irAlLogin() {
