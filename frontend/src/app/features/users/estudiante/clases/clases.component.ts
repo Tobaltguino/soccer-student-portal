@@ -83,6 +83,7 @@ export class EstudianteClasesComponent implements OnInit {
       let cumpleLugar = true;
       let cumpleAsistencia = true;
 
+      // ✅ Filtrado de fecha ajustado para manejar correctamente Date objects vs Strings
       if (this.filtroFecha) {
         const fechaBusqueda = this.formatearFecha(this.filtroFecha);
         const fechaClase = clase.fecha ? clase.fecha.substring(0, 10) : '';

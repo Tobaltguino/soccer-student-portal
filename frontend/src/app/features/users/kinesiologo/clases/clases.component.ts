@@ -14,9 +14,13 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
-// Dominios
+// Clases
 import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
 import { Clase, FiltrosClase } from '../../../../core/domains/academico/clases/models/clase.interface';
+
+// Grupos
+import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
+import { Grupo } from '../../../../core/domains/academico/grupos/models/grupo.interface';
 
 @Component({
   selector: 'app-kinesiologo-clases',
@@ -32,13 +36,13 @@ import { Clase, FiltrosClase } from '../../../../core/domains/academico/clases/m
 })
 export class KinesiologoClasesComponent implements OnInit {
   
-  // Inyección moderna de dependencias
   private claseService = inject(ClaseService);
+  private grupoService = inject(GrupoService); // ✅ Inyectado
   private cdr = inject(ChangeDetectorRef);
   private messageService = inject(MessageService);
 
   // Datos
-  grupos: any[] = []; // TODO: Reemplazar con la interfaz Grupo cuando se cree el GrupoService
+  grupos: Grupo[] = []; // ✅ Ahora usa la interfaz Grupo
   selectedGrupoId: number | null = null;
   clases: Clase[] = [];
   totalRegistros: number = 0;
@@ -59,14 +63,21 @@ export class KinesiologoClasesComponent implements OnInit {
   }
 
   // --- CARGA DE DATOS ---
+  // ✅ Modificado para cargar los grupos reales desde el backend
   cargarGrupos() {
     this.loading = true;
     
-    // TODO: Aquí llamaremos al futuro GrupoService para llenar el dropdown.
-    // ej: this.grupoService.obtenerMisGrupos().subscribe(...)
-    // Por ahora, procedemos a cargar todas las clases permitidas para este Kine.
-    
-    this.cargarClases();
+    this.grupoService.listarGrupos().subscribe({
+      next: (data) => {
+        this.grupos = data;
+        this.cargarClases(); // Cargamos la agenda una vez que tenemos los grupos
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar las categorías' });
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   cargarClases() {
@@ -76,6 +87,7 @@ export class KinesiologoClasesComponent implements OnInit {
       grupoId: this.selectedGrupoId || undefined,
       desde: this.filtroFecha ? this.formatearFecha(this.filtroFecha) : undefined,
       lugar: this.filtroLugar?.trim() || undefined,
+      limite: 100 // ✅ Obtenemos un buen bloque para delegar la paginación a PrimeNG
     };
 
     this.claseService.listarClases(filtros).subscribe({

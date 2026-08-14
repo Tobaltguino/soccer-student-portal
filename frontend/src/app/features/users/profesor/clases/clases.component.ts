@@ -15,10 +15,15 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { CheckboxModule } from 'primeng/checkbox';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { TextareaModule } from 'primeng/textarea';
 
-// Dominios
+// Clases
 import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
 import { Clase, CrearClasePayload, FiltrosClase } from '../../../../core/domains/academico/clases/models/clase.interface';
+
+// Grupo
+import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
+import { Grupo } from '../../../../core/domains/academico/grupos/models/grupo.interface';
 
 @Component({
   selector: 'app-profesor-clases',
@@ -26,7 +31,8 @@ import { Clase, CrearClasePayload, FiltrosClase } from '../../../../core/domains
   imports: [
     CommonModule, FormsModule, TableModule, TagModule, ButtonModule, 
     DialogModule, InputTextModule, DatePickerModule, SelectModule, 
-    TooltipModule, SelectButtonModule, CheckboxModule, ToastModule
+    TooltipModule, SelectButtonModule, CheckboxModule, ToastModule,
+    TextareaModule
   ],
   providers: [MessageService],
   templateUrl: './clases.component.html',
@@ -34,13 +40,13 @@ import { Clase, CrearClasePayload, FiltrosClase } from '../../../../core/domains
 })
 export class ProfesorClasesComponent implements OnInit {
   
-  // Inyección moderna de dependencias
   private claseService = inject(ClaseService);
+  private grupoService = inject(GrupoService); // ✅ Inyectado
   private messageService = inject(MessageService);
   private cdr = inject(ChangeDetectorRef);
 
   // Datos
-  grupos: any[] = []; // TODO: Reemplazar con interfaz Grupo desde GrupoService
+  grupos: Grupo[] = []; // ✅ Ahora usa la interfaz Grupo
   selectedGrupoId: number | null = null;
   clases: Clase[] = [];
   clasesOriginales: Clase[] = [];
@@ -62,7 +68,7 @@ export class ProfesorClasesComponent implements OnInit {
   isEditing: boolean = false;
   claseForm: Partial<Clase> = this.getFormularioVacio();
 
-  // Asistencia (NUEVO)
+  // Asistencia
   displayAttendanceDialog: boolean = false;
   alumnosAsistencia: any[] = [];
   loadingAsistencia: boolean = false;
@@ -80,13 +86,21 @@ export class ProfesorClasesComponent implements OnInit {
   }
 
   // --- CARGA DE DATOS ---
+  // ✅ Modificado para cargar los grupos reales del profesor desde el backend
   cargarGrupos() {
     this.loading = true;
     
-    // TODO: Implementar llamada a GrupoService para obtener los grupos del profesor
-    // this.grupoService.obtenerMisGrupos().subscribe(...)
-    
-    this.cargarClasesPorGrupo();
+    this.grupoService.listarGrupos().subscribe({
+      next: (data) => {
+        this.grupos = data;
+        this.cargarClasesPorGrupo(); // Cargamos las clases una vez listos los grupos
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar tus grupos asignados' });
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   cargarClasesPorGrupo() {
@@ -96,6 +110,7 @@ export class ProfesorClasesComponent implements OnInit {
       grupoId: this.selectedGrupoId || undefined,
       desde: this.filtroFecha ? this.formatearFecha(this.filtroFecha) : undefined,
       lugar: this.filtroLugar?.trim() || undefined,
+      limite: 100 // Obtenemos suficientes registros para que PrimeNG pagine localmente
     };
 
     this.claseService.listarClases(filtros).subscribe({
@@ -132,12 +147,19 @@ export class ProfesorClasesComponent implements OnInit {
 
   // --- FORMULARIO CREAR / EDITAR ---
   abrirNuevaClase() {
-    if (!this.selectedGrupoId) return;
+    if (!this.selectedGrupoId) {
+      this.messageService.add({ severity: 'info', summary: 'Atención', detail: 'Seleccione un grupo primero' });
+      return;
+    }
+    
     this.isEditing = false;
     this.vistaFormulario = 'logistica';
     
     this.claseForm = this.getFormularioVacio();
     this.claseForm.grupo_id = this.selectedGrupoId;
+
+    const ahora = new Date();
+    this.claseForm.hora = ('0' + ahora.getHours()).slice(-2) + ':' + ('0' + ahora.getMinutes()).slice(-2);
 
     this.displayForm = true;
   }
@@ -148,8 +170,10 @@ export class ProfesorClasesComponent implements OnInit {
     
     this.claseForm = { ...clase };
     
+    // FIX Zona horaria
     if (this.claseForm.fecha) {
-      this.claseForm.fecha = new Date(this.claseForm.fecha + 'T00:00:00') as any;
+      const [year, month, day] = (this.claseForm.fecha as string).split('-');
+      this.claseForm.fecha = new Date(Number(year), Number(month) - 1, Number(day)) as any;
     }
     
     this.displayForm = true;
@@ -181,11 +205,11 @@ export class ProfesorClasesComponent implements OnInit {
       grupoId: this.selectedGrupoId,
       fecha: this.formatearFecha(fechaSeleccionada),
       hora: this.claseForm.hora,
-      lugar: this.claseForm.lugar ?? undefined,
-      objetivo: this.claseForm.objetivo ?? undefined,
-      calentamiento: this.claseForm.calentamiento ?? undefined,
-      partePrincipal: this.claseForm.parte_principal ?? undefined,
-      vueltaCalma: this.claseForm.vuelta_calma ?? undefined
+      lugar: this.claseForm.lugar?.trim() || undefined,
+      objetivo: this.claseForm.objetivo?.trim() || undefined,
+      calentamiento: this.claseForm.calentamiento?.trim() || undefined,
+      partePrincipal: this.claseForm.parte_principal?.trim() || undefined,
+      vueltaCalma: this.claseForm.vuelta_calma?.trim() || undefined
     };
 
     if (this.isEditing && this.claseForm.id) {

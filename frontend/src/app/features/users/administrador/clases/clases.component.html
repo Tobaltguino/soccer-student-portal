@@ -17,7 +17,7 @@
                 <label><i class="pi pi-calendar mr-1"></i> Fecha</label>
                 <p-datepicker [(ngModel)]="filtroFecha" placeholder="Seleccionar Fecha" 
                               (onSelect)="aplicarFiltros()" [showClear]="true" (onClear)="aplicarFiltros()" 
-                              dateFormat="dd/mm/yy" styleClass="w-full"></p-datepicker>
+                              dateFormat="dd/mm/yy" styleClass="w-full" appendTo="body"></p-datepicker>
             </div>
 
             <div class="filter-item flex-grow-1">
@@ -183,8 +183,8 @@
         </ng-template>
 
         <ng-template pTemplate="footer">
-            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="displayDialog = false"></button>
-            <button pButton label="Guardar Clase" icon="pi pi-check" (click)="guardarClase()"></button>
+            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="displayDialog = false" [disabled]="guardando"></button>
+            <button pButton [label]="isEditing ? 'Guardar Cambios' : 'Crear Clase'" icon="pi pi-check" (click)="guardarClase()" [loading]="guardando"></button>
         </ng-template>
     </p-dialog>
 </div>
