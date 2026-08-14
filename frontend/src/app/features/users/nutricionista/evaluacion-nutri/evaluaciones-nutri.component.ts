@@ -1,8 +1,10 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; 
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core'; 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 
-import { SupabaseService } from '../../../../../core/services/supabase.service';
+// Enum
+import { EstadoSesion } from '../../../../shared/enums/estado-sesion.enum';
 
 // Importaciones de PrimeNG
 import { TableModule } from 'primeng/table';
@@ -16,36 +18,55 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { TooltipModule } from 'primeng/tooltip';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
+// Servicios de Dominio
+import { NutriTipoEvaluacionService } from '../../../../core/domains/salud/nutricion/tipos/services/tipo-evaluacion.service';
+import { NutriSesionService } from '../../../../core/domains/salud/nutricion/sesiones/services/sesion.service';
+import { NutriResultadoService } from '../../../../core/domains/salud/nutricion/resultados/services/resultado.service';
+import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
+
 @Component({
-  selector: 'app-nutricionista-evaluaciones-nutri',
+  selector: 'app-nutri-evaluation',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, DialogModule, ButtonModule, 
     SelectModule, DatePickerModule, TagModule, InputTextModule, ToastModule, 
-    ConfirmDialogModule, RadioButtonModule, TooltipModule
+    ConfirmDialogModule, RadioButtonModule, TooltipModule, ProgressSpinnerModule
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './evaluaciones-nutri.component.html',
   styleUrls: ['./evaluaciones-nutri.component.css']
 })
-export class NutricionistaEvaluacionesNutiComponent implements OnInit {
+export class NutriEvaluationsComponent implements OnInit {
   
+  // ✅ Exponemos el Enum al HTML
+  readonly EstadoSesion = EstadoSesion;
+
+  // Inyección de Servicios
+  private nutriTipoService = inject(NutriTipoEvaluacionService);
+  private nutriSesionService = inject(NutriSesionService);
+  private nutriResultadoService = inject(NutriResultadoService);
+  private estudianteService = inject(EstudianteService);
+  private messageService = inject(MessageService);
+  private confirmationService = inject(ConfirmationService);
+  private cdr = inject(ChangeDetectorRef); 
+
   // Datos
   sesiones: any[] = [];
   sesionesFiltradas: any[] = [];
   tiposEvaluacion: any[] = [];
   estudiantes: any[] = [];
-  nutricionistaId: string | null = null;
 
   // Filtros
   filtroFecha: Date | null = null;
   filtroPrueba: any = null;
-  filtroEstado: string | null = null;
+  filtroEstado: EstadoSesion | null = null;
+  
   opcionesEstadoFiltro = [
-    { label: 'Pendientes', value: 'PENDIENTE' },
-    { label: 'Finalizadas', value: 'FINALIZADO' }
+    { label: 'Pendientes', value: EstadoSesion.PROGRAMADA },
+    { label: 'Finalizadas', value: EstadoSesion.FINALIZADA }
   ];
 
   // Modales y Estado
@@ -57,73 +78,59 @@ export class NutricionistaEvaluacionesNutiComponent implements OnInit {
   // Objeto para crear/editar evaluación
   evalLogistica: any = {};
 
-  constructor(
-    private supabase: SupabaseService,
-    private messageService: MessageService,
-    private cdr: ChangeDetectorRef 
-  ) {}
-
-  async ngOnInit() {
-    await this.cargarDatosBase();
+  ngOnInit() {
+    this.cargarDatosBase();
   }
 
-  async cargarDatosBase() {
-    try {
-      this.loading = true;
-      this.cdr.detectChanges(); 
+  // ==========================================
+  // CARGA DE DATOS PRINCIPALES
+  // ==========================================
+  cargarDatosBase() {
+    this.loading = true;
 
-      const { data: { user } } = await this.supabase.getUser();
-      if (user) {
-        const { data: nutri } = await this.supabase.supabase
-          .from('nutricionistas')
-          .select('id')
-          .eq('email', user.email)
-          .single();
-        this.nutricionistaId = nutri?.id;
+    forkJoin({
+      tipos: this.nutriTipoService.listarTiposEvaluacion(),
+      sesiones: this.nutriSesionService.listarSesiones({ limite: 1000 })
+    }).subscribe({
+      next: (data) => {
+        this.tiposEvaluacion = data.tipos || [];
+        
+        // Mapeamos las sesiones de este nutricionista
+        const regs = data.sesiones.registros || [];
+        this.sesiones = regs.map((s: any) => ({
+          ...s,
+          tipoObj: this.tiposEvaluacion.find(t => t.id === (s.tipo_evaluacion_id || s.tipoEvaluacionId)) || { nombre: 'Desconocido' }
+        }));
+
+        this.aplicarFiltros();
+        this.loading = false;
+        this.cdr.detectChanges(); 
+      },
+      error: () => {
+        this.mostrarError('No se pudieron cargar los datos base.');
+        this.loading = false;
+        this.cdr.detectChanges();
       }
-
-      const resTipos = await this.supabase.getTiposEvaluacionNutri();
-      this.tiposEvaluacion = resTipos.data || [];
-
-      const resEst = await this.supabase.getEstudiantesBasico();
-      // ✅ Preparamos a los estudiantes con los nuevos campos
-      this.estudiantes = (resEst.data || []).map(est => ({
-        ...est,
-        archivoSeleccionado: null,
-        archivo_url_previo: null,
-        nombre_archivo_previo: null,
-        observacion: ''
-      }));
-
-      await this.cargarSesiones();
-
-    } catch (error) {
-      this.mostrarError('No se pudieron cargar los datos base.');
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges(); 
-    }
+    });
   }
 
-  async cargarSesiones() {
-    const res = await this.supabase.getEvaluacionesNutri();
-    this.sesiones = res.data || [];
-    this.aplicarFiltros();
-    this.cdr.detectChanges(); 
-  }
-
+  // ==========================================
+  // FILTROS
+  // ==========================================
   aplicarFiltros() {
     this.sesionesFiltradas = this.sesiones.filter(s => {
       let cumpleFecha = true;
       let cumplePrueba = true;
       let cumpleEstado = true;
 
+      const tId = s.tipo_evaluacion_id || s.tipoEvaluacionId;
+
       if (this.filtroFecha) {
-        const dFiltro = this.filtroFecha.toISOString().split('T')[0];
-        cumpleFecha = s.fecha === dFiltro;
+        const dFiltro = this.formatearFechaIso(this.filtroFecha);
+        cumpleFecha = (s.fecha || '').substring(0, 10) === dFiltro;
       }
       if (this.filtroPrueba) {
-        cumplePrueba = s.tipo_id === this.filtroPrueba.id;
+        cumplePrueba = tId === this.filtroPrueba.id;
       }
       if (this.filtroEstado) {
         cumpleEstado = s.estado === this.filtroEstado;
@@ -141,105 +148,129 @@ export class NutricionistaEvaluacionesNutiComponent implements OnInit {
     this.aplicarFiltros();
   }
 
+  private formatearFechaIso(fecha: any): string {
+    if (!fecha) return '';
+    const d = new Date(fecha);
+    const tzOffset = d.getTimezoneOffset() * 60000;
+    return (new Date(d.getTime() - tzOffset)).toISOString().split('T')[0];
+  }
+
+  // ==========================================
+  // LOGÍSTICA DE SESIONES
+  // ==========================================
   abrirNuevo() {
     this.evalLogistica = {
       id: null,
       fecha: new Date(),
       tipo_id: null,
-      estado: 'PENDIENTE'
+      estado: EstadoSesion.PROGRAMADA
     };
     this.displayMainDialog = true;
     this.cdr.detectChanges(); 
   }
 
   editarSesion(sesion: any) {
-    const [year, month, day] = sesion.fecha.split('-');
+    const fechaObj = new Date(sesion.fecha + 'T00:00:00');
     this.evalLogistica = { 
       ...sesion,
-      fecha: new Date(year, month - 1, day)
+      tipo_id: sesion.tipo_evaluacion_id || sesion.tipoEvaluacionId,
+      fecha: fechaObj
     };
     this.displayMainDialog = true;
     this.cdr.detectChanges(); 
   }
 
-  async guardarSesionPlanificada() {
-    if (!this.evalLogistica.fecha || !this.evalLogistica.tipo_id || !this.nutricionistaId) {
+  guardarSesionPlanificada() {
+    if (!this.evalLogistica.fecha || !this.evalLogistica.tipo_id) {
       this.mostrarError('Faltan campos obligatorios');
       return;
     }
 
-    try {
-      this.loading = true;
-      this.cdr.detectChanges(); 
-      
-      const payload = {
-        tipo_id: this.evalLogistica.tipo_id,
-        nutricionista_id: this.nutricionistaId,
-        fecha: this.evalLogistica.fecha.toISOString().split('T')[0],
-        estado: this.evalLogistica.estado
-      };
+    this.loading = true;
+    const fechaSeleccionada = new Date(this.evalLogistica.fecha);
+    
+    // 💡 El backend ya sabe quién es el nutricionista por su JWT, no es necesario enviarlo
+    const payload = {
+      tipoId: this.evalLogistica.tipo_id,
+      fecha: fechaSeleccionada.toISOString().split('T')[0],
+      estado: this.evalLogistica.estado || EstadoSesion.PROGRAMADA
+    };
 
-      if (this.evalLogistica.id) {
-        await this.supabase.actualizarEvaluacionNutri(this.evalLogistica.id, payload);
-        this.mostrarExito('Sesión actualizada correctamente');
-      } else {
-        await this.supabase.crearEvaluacionNutri(payload);
-        this.mostrarExito('Sesión creada correctamente');
+    const peticion$ = this.evalLogistica.id 
+      ? this.nutriSesionService.actualizarSesion(this.evalLogistica.id, payload as any)
+      : this.nutriSesionService.crearSesion(payload as any);
+
+    peticion$.subscribe({
+      next: () => {
+        this.mostrarExito(this.evalLogistica.id ? 'Sesión actualizada' : 'Sesión creada');
+        this.displayMainDialog = false;
+        this.cargarDatosBase();
+      },
+      error: () => {
+        this.mostrarError('Error al guardar la sesión');
+        this.loading = false;
+        this.cdr.detectChanges();
       }
-
-      this.displayMainDialog = false;
-      await this.cargarSesiones();
-    } catch (error) {
-      this.mostrarError('Error al guardar la sesión');
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges(); 
-    }
+    });
   }
 
-  // --- LÓGICA MODAL 2: REGISTRAR RESULTADOS ---
-  async abrirCalificador(sesion: any) {
+  // ==========================================
+  // REGISTRAR RESULTADOS (PDFs)
+  // ==========================================
+  abrirCalificador(sesion: any) {
     this.evalLogistica = sesion;
-    
-    try {
-      this.loading = true;
-      this.cdr.detectChanges();
+    this.loading = true;
 
-      // ✅ 1. Buscamos resultados previos
-      const resResultados = await this.supabase.getResultadosPorSesionNutri(sesion.id);
-      const resultadosPrevios = resResultados.data || [];
+    forkJoin({
+      alumnos: this.estudianteService.listarEstudiantes({ limite: 2000, activo: true }),
+      resultados: this.nutriResultadoService.listarResultadosPorSesion(sesion.id)
+    }).subscribe({
+      next: (res) => {
+        const alumnosBD = res.alumnos.registros || [];
+        const resultadosPrevios = res.resultados || [];
 
-      // ✅ 2. Mapeamos la lista limpiando la selección actual pero cargando el historial
-      this.estudiantes.forEach(est => {
-        const resultadoGuardado = resultadosPrevios.find(r => r.estudiante_id === est.id);
+        this.estudiantes = alumnosBD.map((est: any) => {
+          const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id || est.id;
+          const nombre = est.perfil ? est.perfil.nombre : est.nombre;
+          const apellido = est.perfil ? est.perfil.apellido : est.apellido;
 
-        est.archivoSeleccionado = null; 
-        est.archivo_url_previo = resultadoGuardado ? resultadoGuardado.archivo_url : null;
-        est.observacion = resultadoGuardado ? resultadoGuardado.observaciones : '';
+          const resultadoGuardado: any = resultadosPrevios.find((r: any) => r.estudianteId === idUsuario || r.estudiante_id === idUsuario);
 
-        // Extraer el nombre original del archivo
-        if (est.archivo_url_previo) {
-          const urlParts = est.archivo_url_previo.split('/');
-          const rawName = decodeURIComponent(urlParts[urlParts.length - 1]);
-          const underscoreIndex = rawName.indexOf('_');
-          est.nombre_archivo_previo = underscoreIndex !== -1 ? rawName.substring(underscoreIndex + 1) : rawName;
-        } else {
-          est.nombre_archivo_previo = null;
-        }
-      });
+          const nuevoEst = {
+            id: idUsuario,
+            nombre: nombre,
+            apellido: apellido,
+            resultado_id: resultadoGuardado ? resultadoGuardado.id : null,
+            archivoSeleccionado: null as File | null, 
+            archivo_url_previo: resultadoGuardado ? (resultadoGuardado.archivo_url || resultadoGuardado.archivoUrl) : null,
+            nombre_archivo_previo: null as string | null, 
+            observacion: resultadoGuardado ? (resultadoGuardado.observaciones || resultadoGuardado.observacion) : ''
+          };
 
-      this.displayGradesDialog = true;
-    } catch (error) {
-      this.mostrarError('Error al cargar los resultados previos.');
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges(); 
-    }
+          if (nuevoEst.archivo_url_previo) {
+            const urlParts = nuevoEst.archivo_url_previo.split('/');
+            const rawName = decodeURIComponent(urlParts[urlParts.length - 1]);
+            const underscoreIndex = rawName.indexOf('_');
+            nuevoEst.nombre_archivo_previo = underscoreIndex !== -1 ? rawName.substring(underscoreIndex + 1) : rawName;
+          }
+
+          return nuevoEst;
+        });
+
+        this.displayGradesDialog = true;
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.mostrarError('Error al cargar alumnos y resultados.');
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   onFileSelected(event: any, estudiante: any) {
     const file = event.target.files[0];
-    
     if (file) {
       if (file.type !== 'application/pdf') {
         this.mostrarError('Formato inválido. Por favor, sube únicamente archivos PDF.');
@@ -248,7 +279,6 @@ export class NutricionistaEvaluacionesNutiComponent implements OnInit {
         this.cdr.detectChanges(); 
         return;
       }
-      
       estudiante.archivoSeleccionado = file;
       this.cdr.detectChanges(); 
     }
@@ -257,55 +287,56 @@ export class NutricionistaEvaluacionesNutiComponent implements OnInit {
   limpiarFila(estudiante: any, fileInput: any) {
     estudiante.archivoSeleccionado = null;
     estudiante.observacion = '';
-    if(fileInput) fileInput.value = ''; // ✅ Limpia el input nativo oculto
+    if(fileInput) fileInput.value = ''; 
     this.cdr.detectChanges(); 
   }
 
-  async guardarNotasFinales() {
-    const porGuardar = this.estudiantes.filter(e => e.archivoSeleccionado);
+  guardarNotasFinales() {
+    const porGuardar = this.estudiantes.filter(e => e.archivoSeleccionado || (e.resultado_id && e.observacion !== undefined));
 
     if (porGuardar.length === 0) {
-      this.mostrarError('No has adjuntado ningún archivo nuevo para guardar.');
+      this.mostrarError('No has adjuntado ningún archivo ni observación nueva para guardar.');
       return;
     }
 
-    try {
-      this.guardando = true;
-      this.messageService.add({ severity: 'info', summary: 'Guardando', detail: `Subiendo ${porGuardar.length} resultados...` });
-      this.cdr.detectChanges(); 
+    this.guardando = true;
+    this.messageService.add({ severity: 'info', summary: 'Guardando', detail: `Subiendo ${porGuardar.length} resultados...` });
 
-      for (const est of porGuardar) {
-        const archivoUrl = await this.supabase.subirArchivoNutricion(est.archivoSeleccionado, est.archivoSeleccionado.name);
-        
-        await this.supabase.guardarResultadoNutri({
-          evaluacion_id: this.evalLogistica.id,
-          estudiante_id: est.id,
-          archivo_url: archivoUrl,
-          observaciones: est.observacion
-        });
-      }
+    const peticiones = porGuardar.map(est => {
+      const payload = {
+        evaluacionId: this.evalLogistica.id,
+        estudianteId: est.id,
+        observaciones: est.observacion || ''
+      };
 
-      this.mostrarExito('Todos los resultados se guardaron correctamente');
-      this.displayGradesDialog = false;
-
-    } catch (error: any) {
-      if (error.code === '23505') {
-         this.mostrarError('Algunos estudiantes ya tenían resultados registrados en esta sesión.');
+      // FormData se maneja automáticamente en el NutriResultadoService ✨
+      if (est.resultado_id) {
+        return this.nutriResultadoService.actualizarResultado(est.resultado_id, payload, est.archivoSeleccionado);
       } else {
-         this.mostrarError('Ocurrió un error al subir los archivos.');
+        return this.nutriResultadoService.crearResultado(payload, est.archivoSeleccionado);
       }
-    } finally {
-      this.guardando = false;
-      this.cdr.detectChanges(); 
-    }
+    });
+
+    forkJoin(peticiones).subscribe({
+      next: () => {
+        this.mostrarExito('Todos los resultados se guardaron correctamente');
+        this.displayGradesDialog = false;
+        this.guardando = false;
+        this.cargarDatosBase();
+      },
+      error: () => {
+        this.mostrarError('Ocurrió un error al subir los archivos.');
+        this.guardando = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   mostrarExito(mensaje: string) {
     this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
-    this.cdr.detectChanges();
   }
+  
   mostrarError(mensaje: string) {
     this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
-    this.cdr.detectChanges();
   }
 }

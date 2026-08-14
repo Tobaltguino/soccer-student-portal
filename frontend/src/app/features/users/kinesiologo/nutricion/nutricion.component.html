@@ -1,4 +1,12 @@
 <div class="eval-container fadein animation-duration-500">
+    
+    <div *ngIf="loading && !displayGradesDialog" class="loading-overlay">
+        <div class="flex flex-column align-items-center">
+            <p-progressSpinner styleClass="w-4rem h-4rem" strokeWidth="4" animationDuration=".5s"></p-progressSpinner>
+            <span class="text-white font-bold mt-3">Cargando...</span>
+        </div>
+    </div>
+
     <p-toast position="top-right"></p-toast>
 
     <header class="page-header">
@@ -54,15 +62,15 @@
                     </td>
                     <td>
                         <span class="p-column-title hidden-desktop">Tipo de Evaluación</span>
-                        <span class="font-bold text-main">{{ sesion.tipo_evaluacion?.nombre }}</span>
+                        <span class="font-bold text-main">{{ sesion.tipoObj?.nombre }}</span>
                     </td>
                     <td class="text-center">
                         <span class="p-column-title hidden-desktop">Estado</span>
-                        <p-tag [value]="sesion.estado" severity="success" styleClass="text-xs"></p-tag>
+                        <p-tag [value]="'Finalizado'" severity="success" styleClass="text-xs"></p-tag>
                     </td>
                     <td class="text-center">
                         <span class="p-column-title hidden-desktop">Acción</span>
-                        <div class="action-buttons">
+                        <div class="action-buttons justify-content-center">
                             <button pButton icon="pi pi-eye" class="p-button-text p-button-info" 
                                     (click)="verResultados(sesion)" pTooltip="Ver Informe Completo"></button>
                         </div>
@@ -82,72 +90,79 @@
         </p-table>
     </div>
 
-    <p-dialog [(visible)]="displayGradesDialog" header="Informe de Resultados" 
+    <p-dialog [(visible)]="displayGradesDialog" header="Informe de Resultados Nutricionales" 
               [modal]="true" [style]="{width: '95vw', maxWidth: '1000px'}" [maximizable]="true" styleClass="p-fluid">
         <ng-template pTemplate="content">
             
-            <div class="modal-content-box mb-4 flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3 mt-2">
-                <div class="flex flex-column">
-                    <span class="text-xs text-secondary text-uppercase font-bold tracking-wider">Evaluación Seleccionada</span>
-                    <span class="text-xl font-bold text-main mt-1">{{evalLogistica.tipo_evaluacion?.nombre}}</span>
-                </div>
-                <div class="flex flex-column sm:align-items-end">
-                    <span class="text-xs text-secondary text-uppercase font-bold tracking-wider mb-1">Fecha del Informe</span>
-                    <span class="font-bold text-main">{{ evalLogistica.fecha | date:'dd/MM/yyyy' }}</span>
-                </div>
+            <div *ngIf="cargandoResultados" class="flex flex-column align-items-center p-5">
+                <p-progressSpinner styleClass="w-3rem h-3rem" strokeWidth="4" animationDuration=".5s"></p-progressSpinner>
+                <span class="text-secondary mt-3">Cargando informes...</span>
             </div>
 
-            <p-table [value]="estudiantes" [scrollable]="true" scrollHeight="500px" 
-                     styleClass="p-datatable-gridlines p-datatable-sm" responsiveLayout="stack" [breakpoint]="'768px'">
-                
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th style="width: 30%">Paciente / Estudiante</th>
-                        <th style="width: 35%" class="text-center">Documento (PDF)</th>
-                        <th style="width: 35%">Observación Médica</th>
-                    </tr>
-                </ng-template>
-                
-                <ng-template pTemplate="body" let-estudiante>
-                    <tr>
-                        <td>
-                            <span class="p-column-title hidden-desktop">Paciente</span>
-                            <span class="font-bold text-main">{{estudiante.apellido}}</span>, {{estudiante.nombre}}
-                        </td>
-                        
-                        <td class="text-center">
-                            <span class="p-column-title hidden-desktop">Documento PDF</span>
-                            <div class="action-buttons w-full">
-                                <div *ngIf="estudiante.archivo_url_previo; else noFile" class="w-full">
-                                    <a [href]="estudiante.archivo_url_previo" target="_blank" class="no-underline w-full">
-                                        <button pButton class="p-button-outlined p-button-danger w-full justify-content-center text-sm gap-2">
-                                            <i class="pi pi-file-pdf"></i>
-                                            <span class="text-truncate" [title]="estudiante.nombre_archivo_previo">
-                                                Descargar / Ver PDF
-                                            </span>
-                                        </button>
-                                    </a>
+            <div *ngIf="!cargandoResultados">
+                <div class="modal-content-box mb-4 flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3 mt-2">
+                    <div class="flex flex-column">
+                        <span class="text-xs text-secondary text-uppercase font-bold tracking-wider">Evaluación Seleccionada</span>
+                        <span class="text-xl font-bold text-main mt-1">{{evalLogistica.tipoObj?.nombre}}</span>
+                    </div>
+                    <div class="flex flex-column sm:align-items-end">
+                        <span class="text-xs text-secondary text-uppercase font-bold tracking-wider mb-1">Fecha del Informe</span>
+                        <span class="font-bold text-main">{{ evalLogistica.fecha | date:'dd/MM/yyyy' }}</span>
+                    </div>
+                </div>
+
+                <p-table [value]="estudiantes" [scrollable]="true" scrollHeight="500px" 
+                         styleClass="p-datatable-gridlines p-datatable-sm" responsiveLayout="stack" [breakpoint]="'768px'">
+                    
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th style="width: 30%">Paciente / Estudiante</th>
+                            <th style="width: 35%" class="text-center">Documento (PDF)</th>
+                            <th style="width: 35%">Observación Médica</th>
+                        </tr>
+                    </ng-template>
+                    
+                    <ng-template pTemplate="body" let-estudiante>
+                        <tr>
+                            <td>
+                                <span class="p-column-title hidden-desktop">Paciente</span>
+                                <span class="font-bold text-main">{{estudiante.apellido}}</span>, {{estudiante.nombre}}
+                            </td>
+                            
+                            <td class="text-center">
+                                <span class="p-column-title hidden-desktop">Documento PDF</span>
+                                <div class="action-buttons w-full">
+                                    <div *ngIf="estudiante.archivo_url_previo; else noFile" class="w-full">
+                                        <a [href]="estudiante.archivo_url_previo" target="_blank" class="no-underline w-full">
+                                            <button pButton class="p-button-outlined p-button-danger w-full justify-content-center text-sm gap-2">
+                                                <i class="pi pi-file-pdf"></i>
+                                                <span class="text-truncate" [title]="estudiante.nombre_archivo_previo">
+                                                    Descargar / Ver PDF
+                                                </span>
+                                            </button>
+                                        </a>
+                                    </div>
+                                    <ng-template #noFile>
+                                        <span class="text-500 italic text-sm w-full block text-center"><i class="pi pi-times-circle mr-1"></i> Sin documento</span>
+                                    </ng-template>
                                 </div>
-                                <ng-template #noFile>
-                                    <span class="text-500 italic text-sm w-full block text-center"><i class="pi pi-times-circle mr-1"></i> Sin documento</span>
-                                </ng-template>
-                            </div>
-                        </td>
+                            </td>
 
-                        <td>
-                            <span class="p-column-title hidden-desktop">Observación</span>
-                            <span *ngIf="estudiante.observacion" class="text-secondary text-sm line-height-2">{{ estudiante.observacion }}</span>
-                            <span *ngIf="!estudiante.observacion" class="text-400 italic text-sm">-</span>
-                        </td>
-                    </tr>
-                </ng-template>
+                            <td>
+                                <span class="p-column-title hidden-desktop">Observación</span>
+                                <span *ngIf="estudiante.observacion" class="text-secondary text-sm line-height-2">{{ estudiante.observacion }}</span>
+                                <span *ngIf="!estudiante.observacion" class="text-400 italic text-sm">-</span>
+                            </td>
+                        </tr>
+                    </ng-template>
 
-                <ng-template pTemplate="emptymessage">
-                    <tr>
-                        <td colspan="3" class="text-center p-4 text-secondary">No hay pacientes registrados en este informe.</td>
-                    </tr>
-                </ng-template>
-            </p-table>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="3" class="text-center p-4 text-secondary">No hay pacientes registrados en este informe.</td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
 
         </ng-template>
         

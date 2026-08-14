@@ -1,8 +1,10 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; 
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core'; 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 
-import { SupabaseService } from '../../../../../core/services/supabase.service';
+// Enum
+import { EstadoSesion } from '../../../../shared/enums/estado-sesion.enum';
 
 // Importaciones de PrimeNG
 import { TableModule } from 'primeng/table';
@@ -13,21 +15,40 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageService } from 'primeng/api';
 
+// Servicios de Dominio
+import { NutriTipoEvaluacionService } from '../../../../core/domains/salud/nutricion/tipos/services/tipo-evaluacion.service';
+import { NutriSesionService } from '../../../../core/domains/salud/nutricion/sesiones/services/sesion.service';
+import { NutriResultadoService } from '../../../../core/domains/salud/nutricion/resultados/services/resultado.service';
+import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
+
 @Component({
-  selector: 'app-kinesiologo-nutricion',
+  selector: 'app-kine-nutrition',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, DialogModule, ButtonModule, 
-    SelectModule, DatePickerModule, TagModule, TooltipModule, ToastModule
+    SelectModule, DatePickerModule, TagModule, TooltipModule, ToastModule,
+    ProgressSpinnerModule
   ],
   providers: [MessageService],
-  templateUrl: './nutricion.component.html',
-  styleUrls: ['./nutricion.component.css']
+  templateUrl: './kine-nutrition.html',
+  styleUrls: ['./kine-nutrition.css']
 })
-export class KinesiologoNutricionComponent implements OnInit {
+export class KineNutritionComponent implements OnInit {
   
+  // ✅ Exponemos el Enum para el HTML
+  readonly EstadoSesion = EstadoSesion;
+
+  // Inyección de Servicios
+  private nutriTipoService = inject(NutriTipoEvaluacionService);
+  private nutriSesionService = inject(NutriSesionService);
+  private nutriResultadoService = inject(NutriResultadoService);
+  private estudianteService = inject(EstudianteService);
+  private messageService = inject(MessageService);
+  private cdr = inject(ChangeDetectorRef);
+
   // Datos
   sesiones: any[] = [];
   sesionesFiltradas: any[] = [];
@@ -41,65 +62,65 @@ export class KinesiologoNutricionComponent implements OnInit {
   // Modales y Estado
   displayGradesDialog = false;
   loading = false;
+  cargandoResultados = false;
 
   evalLogistica: any = {};
 
-  constructor(
-    private supabase: SupabaseService,
-    private messageService: MessageService,
-    private cdr: ChangeDetectorRef
-  ) {}
-
-  async ngOnInit() {
-    await this.cargarDatosBase();
+  ngOnInit() {
+    this.cargarDatosBase();
   }
 
-  async cargarDatosBase() {
-    try {
-      this.loading = true;
-      this.cdr.detectChanges();
+  // ==========================================
+  // CARGA DE DATOS PRINCIPALES
+  // ==========================================
+  cargarDatosBase() {
+    this.loading = true;
 
-      const resTipos = await this.supabase.getTiposEvaluacionNutri();
-      this.tiposEvaluacion = resTipos.data || [];
+    forkJoin({
+      tipos: this.nutriTipoService.listarTiposEvaluacion(),
+      sesionesData: this.nutriSesionService.listarSesiones({ limite: 1000 })
+    }).subscribe({
+      next: (data) => {
+        this.tiposEvaluacion = data.tipos || [];
+        
+        const todasLasSesiones = data.sesionesData.registros || [];
+        
+        // ✅ Regla estricta: Solo guardamos en memoria las que están FINALIZADAS
+        const sesionesFinalizadas = todasLasSesiones.filter((s: any) => s.estado === EstadoSesion.FINALIZADA);
 
-      const resEst = await this.supabase.getEstudiantesBasico();
-      this.estudiantes = (resEst.data || []).map(est => ({
-        ...est,
-        archivo_url_previo: null,
-        nombre_archivo_previo: null,
-        observacion: ''
-      }));
+        this.sesiones = sesionesFinalizadas.map((s: any) => ({
+          ...s,
+          tipoObj: this.tiposEvaluacion.find(t => t.id === (s.tipo_evaluacion_id || s.tipoEvaluacionId)) || { nombre: 'Desconocido' }
+        }));
 
-      await this.cargarSesiones();
-
-    } catch (error) {
-      this.mostrarError('No se pudieron cargar los datos base.');
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
+        this.aplicarFiltros();
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.mostrarError('No se pudieron cargar los datos de nutrición.');
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
-  async cargarSesiones() {
-    const res = await this.supabase.getEvaluacionesNutri();
-    // ✅ Regla estricta: Solo guardamos en memoria las que están FINALIZADAS
-    this.sesiones = (res.data || []).filter(s => s.estado === 'FINALIZADO');
-    this.aplicarFiltros();
-    this.cdr.detectChanges();
-  }
-
-  // --- LÓGICA DE FILTROS ---
+  // ==========================================
+  // LÓGICA DE FILTROS
+  // ==========================================
   aplicarFiltros() {
     this.sesionesFiltradas = this.sesiones.filter(s => {
       let cumpleFecha = true;
       let cumplePrueba = true;
 
+      const tId = s.tipo_evaluacion_id || s.tipoEvaluacionId;
+
       if (this.filtroFecha) {
-        const dFiltro = this.filtroFecha.toISOString().split('T')[0];
-        cumpleFecha = s.fecha === dFiltro;
+        const dFiltro = this.formatearFechaIso(this.filtroFecha);
+        cumpleFecha = (s.fecha || '').substring(0, 10) === dFiltro;
       }
       if (this.filtroPrueba) {
-        cumplePrueba = s.tipo_id === this.filtroPrueba.id;
+        cumplePrueba = tId === this.filtroPrueba.id;
       }
 
       return cumpleFecha && cumplePrueba;
@@ -113,45 +134,74 @@ export class KinesiologoNutricionComponent implements OnInit {
     this.aplicarFiltros();
   }
 
-  // --- LÓGICA MODAL: VER RESULTADOS ---
-  async verResultados(sesion: any) {
+  private formatearFechaIso(fecha: any): string {
+    if (!fecha) return '';
+    const d = new Date(fecha);
+    const tzOffset = d.getTimezoneOffset() * 60000;
+    return (new Date(d.getTime() - tzOffset)).toISOString().split('T')[0];
+  }
+
+  // ==========================================
+  // LÓGICA MODAL: VER RESULTADOS
+  // ==========================================
+  verResultados(sesion: any) {
     this.evalLogistica = sesion;
-    
-    try {
-      this.loading = true;
-      this.cdr.detectChanges();
+    this.cargandoResultados = true;
+    this.displayGradesDialog = true;
+    this.cdr.detectChanges();
 
-      const resResultados = await this.supabase.getResultadosPorSesionNutri(sesion.id);
-      const resultadosPrevios = resResultados.data || [];
+    forkJoin({
+      alumnos: this.estudianteService.listarEstudiantes({ limite: 2000, activo: true }),
+      resultados: this.nutriResultadoService.listarResultadosPorSesion(sesion.id)
+    }).subscribe({
+      next: (res) => {
+        const alumnosBD = res.alumnos.registros || [];
+        const resultadosPrevios = res.resultados || [];
 
-      this.estudiantes.forEach(est => {
-        const resultadoGuardado = resultadosPrevios.find(r => r.estudiante_id === est.id);
+        // Mapeamos los alumnos para adjuntar sus resultados y PDFs
+        this.estudiantes = alumnosBD.map((est: any) => {
+          const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id || est.id;
+          const nombre = est.perfil ? est.perfil.nombre : est.nombre;
+          const apellido = est.perfil ? est.perfil.apellido : est.apellido;
 
-        est.archivo_url_previo = resultadoGuardado ? resultadoGuardado.archivo_url : null;
-        est.observacion = resultadoGuardado ? resultadoGuardado.observaciones : '';
+          const resultadoGuardado: any = resultadosPrevios.find((r: any) => r.estudianteId === idUsuario || r.estudiante_id === idUsuario);
 
-        // Extraer nombre del archivo para mostrarlo limpio
-        if (est.archivo_url_previo) {
-          const urlParts = est.archivo_url_previo.split('/');
-          const rawName = decodeURIComponent(urlParts[urlParts.length - 1]);
-          const underscoreIndex = rawName.indexOf('_');
-          est.nombre_archivo_previo = underscoreIndex !== -1 ? rawName.substring(underscoreIndex + 1) : rawName;
-        } else {
-          est.nombre_archivo_previo = null;
-        }
-      });
+          const estudianteConResultados = {
+            id: idUsuario,
+            nombre: nombre,
+            apellido: apellido,
+            archivo_url_previo: resultadoGuardado ? (resultadoGuardado.archivoUrl || resultadoGuardado.archivo_url) : null,
+            nombre_archivo_previo: null as string | null,
+            observacion: resultadoGuardado ? (resultadoGuardado.observaciones || resultadoGuardado.observacion) : ''
+          };
 
-      this.displayGradesDialog = true;
-    } catch (error) {
-      this.mostrarError('Error al cargar los resultados de los estudiantes.');
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
+          // Extraer nombre del archivo para mostrarlo limpio
+          if (estudianteConResultados.archivo_url_previo) {
+            const urlParts = estudianteConResultados.archivo_url_previo.split('/');
+            const rawName = decodeURIComponent(urlParts[urlParts.length - 1]);
+            const underscoreIndex = rawName.indexOf('_');
+            estudianteConResultados.nombre_archivo_previo = underscoreIndex !== -1 ? rawName.substring(underscoreIndex + 1) : rawName;
+          }
+
+          return estudianteConResultados;
+        });
+
+        // Opcional: Si quieres que el kinesiólogo SOLO vea a los que sí tienen pauta/resultado para que la lista no sea gigante:
+        // this.estudiantes = this.estudiantes.filter(e => e.archivo_url_previo || e.observacion);
+
+        this.cargandoResultados = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.mostrarError('Error al cargar los resultados de los estudiantes.');
+        this.cargandoResultados = false;
+        this.displayGradesDialog = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   mostrarError(mensaje: string) {
     this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
-    this.cdr.detectChanges();
   }
 }

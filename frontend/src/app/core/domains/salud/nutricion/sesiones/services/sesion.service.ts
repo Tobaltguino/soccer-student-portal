@@ -52,6 +52,14 @@ export class NutriSesionService {
   }
 
   /**
+   * PATCH /nutri-evaluacion-sesiones/:id
+   * Actualiza los datos logísticos de la sesión
+   */
+  actualizarSesion(id: string, payload: any): Observable<NutriSesion> {
+    return this.http.patch<NutriSesion>(`${this.apiUrl}/${id}`, payload);
+  }
+
+  /**
    * PATCH /nutri-evaluacion-sesiones/:id/estado
    * Cambia el estado de la sesión (PROGRAMADA, EN_CURSO, FINALIZADA, CANCELADA).
    */

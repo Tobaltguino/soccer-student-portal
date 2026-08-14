@@ -1,4 +1,13 @@
 <div class="eval-container fadein animation-duration-500">
+    
+    <div *ngIf="loading" class="loading-overlay">
+        <div class="flex flex-column align-items-center">
+            <p-progressSpinner styleClass="w-4rem h-4rem" strokeWidth="4" animationDuration=".5s"></p-progressSpinner>
+            <span class="text-white font-bold mt-3">Cargando tus resultados...</span>
+        </div>
+    </div>
+
+    <p-toast position="top-right"></p-toast>
 
     <header class="page-header">
         <div class="header-content">
@@ -65,15 +74,10 @@
                     </td>
                     <td class="text-center">
                         <span class="p-column-title hidden-desktop">Documento</span>
-                        <div class="action-buttons">
+                        <div class="action-buttons justify-content-center flex">
                             <div *ngIf="resultado.archivo_url; else noFile" class="w-full">
                                 <a [href]="resultado.archivo_url" target="_blank" class="no-underline w-full">
-                                    <button pButton class="p-button-outlined p-button-danger w-full justify-content-center text-sm gap-2">
-                                        <i class="pi pi-file-pdf"></i>
-                                        <span class="text-truncate" [title]="resultado.nombre_archivo">
-                                            {{ resultado.nombre_archivo }}
-                                        </span>
-                                    </button>
+                                    <button pButton label="Descargar PDF" icon="pi pi-download" class="p-button-outlined p-button-danger p-button-sm"></button>
                                 </a>
                             </div>
                             <ng-template #noFile>

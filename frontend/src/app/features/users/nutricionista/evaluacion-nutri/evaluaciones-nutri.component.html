@@ -1,4 +1,12 @@
 <div class="eval-container fadein animation-duration-500">
+    
+    <div *ngIf="loading && !displayMainDialog && !displayGradesDialog" class="loading-overlay">
+        <div class="flex flex-column align-items-center">
+            <p-progressSpinner styleClass="w-4rem h-4rem" strokeWidth="4" animationDuration=".5s"></p-progressSpinner>
+            <span class="text-white font-bold mt-3">Cargando...</span>
+        </div>
+    </div>
+
     <p-toast position="top-right"></p-toast>
     <p-confirmdialog></p-confirmdialog>
 
@@ -37,7 +45,7 @@
                           (onChange)="aplicarFiltros()" [showClear]="true" 
                           styleClass="w-full" appendTo="body">
                     <ng-template let-option pTemplate="item">
-                        <p-tag [value]="option.label" [severity]="option.value === 'PENDIENTE' ? 'warn' : 'success'"></p-tag>
+                        <p-tag [value]="option.label" [severity]="option.value === EstadoSesion.PROGRAMADA ? 'warn' : 'success'"></p-tag>
                     </ng-template>
                 </p-select>
             </div>
@@ -70,11 +78,12 @@
                     </td>
                     <td>
                         <span class="p-column-title hidden-desktop">Tipo de Evaluación</span>
-                        <span class="font-bold text-main">{{ sesion.tipo_evaluacion?.nombre }}</span>
+                        <span class="font-bold text-main">{{ sesion.tipoObj?.nombre }}</span>
                     </td>
                     <td class="text-center">
                         <span class="p-column-title hidden-desktop">Estado</span>
-                        <p-tag [value]="sesion.estado" [severity]="sesion.estado === 'PENDIENTE' ? 'warn' : 'success'" styleClass="text-xs"></p-tag>
+                        <p-tag [value]="sesion.estado === EstadoSesion.PROGRAMADA ? 'Pendiente' : 'Finalizado'" 
+                               [severity]="sesion.estado === EstadoSesion.PROGRAMADA ? 'warn' : 'success'"></p-tag>
                     </td>
                     <td class="text-center">
                         <span class="p-column-title hidden-desktop">Acciones</span>
@@ -99,8 +108,9 @@
         </p-table>
     </div>
 
+    <!-- MODAL NUEVA/EDITAR SESIÓN -->
     <p-dialog [(visible)]="displayMainDialog" [header]="evalLogistica.id ? 'Editar Sesión' : 'Nueva Sesión'" 
-              [modal]="true" [style]="{width: '90vw', maxWidth: '450px'}" styleClass="p-fluid">
+              [modal]="true" [style]="{width: '450px'}" styleClass="p-fluid">
         <ng-template pTemplate="content">
             
             <div class="field mt-2">
@@ -118,11 +128,11 @@
                 <label class="mb-2 block">Estado de la Sesión</label>
                 <div class="flex gap-4">
                     <div class="flex align-items-center">
-                        <p-radioButton name="estado" value="PENDIENTE" [(ngModel)]="evalLogistica.estado" inputId="st1"></p-radioButton>
+                        <p-radioButton name="estado" [value]="EstadoSesion.PROGRAMADA" [(ngModel)]="evalLogistica.estado" inputId="st1"></p-radioButton>
                         <label for="st1" class="ml-2 mb-0 font-normal">Pendiente</label>
                     </div>
                     <div class="flex align-items-center">
-                        <p-radioButton name="estado" value="FINALIZADO" [(ngModel)]="evalLogistica.estado" inputId="st2"></p-radioButton>
+                        <p-radioButton name="estado" [value]="EstadoSesion.FINALIZADA" [(ngModel)]="evalLogistica.estado" inputId="st2"></p-radioButton>
                         <label for="st2" class="ml-2 mb-0 font-normal">Finalizado</label>
                     </div>
                 </div>
@@ -135,14 +145,15 @@
         </ng-template>
     </p-dialog>
 
+    <!-- MODAL SUBIR RESULTADOS (PDF) -->
     <p-dialog [(visible)]="displayGradesDialog" header="Registro de Resultados" 
               [modal]="true" [style]="{width: '95vw', maxWidth: '1000px'}" [maximizable]="true" styleClass="p-fluid">
         <ng-template pTemplate="content">
             
-            <div class="modal-content-box mb-4 flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3 mt-2">
+            <div class="surface-100 p-3 border-round mb-3 flex justify-content-between align-items-center flex-wrap gap-2 mt-2">
                 <div class="flex flex-column">
                     <span class="text-xs text-secondary text-uppercase font-bold tracking-wider">Evaluación Seleccionada</span>
-                    <span class="text-xl font-bold text-main mt-1">{{evalLogistica.tipo_evaluacion?.nombre}}</span>
+                    <span class="text-xl font-bold text-main mt-1">{{evalLogistica.tipoObj?.nombre}}</span>
                 </div>
                 <div class="flex flex-column sm:align-items-end">
                     <span class="text-xs text-secondary text-uppercase font-bold tracking-wider mb-1">Total Estudiantes</span>
@@ -166,19 +177,20 @@
                     <tr>
                         <td>
                             <span class="p-column-title hidden-desktop">Estudiante</span>
-                            <span class="font-bold text-main">{{estudiante.apellido}}</span>, {{estudiante.nombre}}
+                            <span class="font-bold text-main">{{estudiante.apellido}}</span>, <span class="text-secondary">{{estudiante.nombre}}</span>
                         </td>
                         
                         <td class="text-center">
                             <span class="p-column-title hidden-desktop">Archivo Adjunto</span>
-                            <div class="action-buttons w-full">
+                            
+                            <div class="flex flex-column align-items-center justify-content-center w-full px-2">
                                 <input type="file" #fileInput hidden accept="application/pdf, .pdf" (change)="onFileSelected($event, estudiante)">
                                 
                                 <div *ngIf="estudiante.archivoSeleccionado || estudiante.archivo_url_previo; else noFile" class="flex flex-column gap-2 w-full">
                                     
-                                    <div class="flex align-items-center gap-2 border-1 border-color p-2 border-round bg-main overflow-hidden w-full">
+                                    <div class="flex align-items-center gap-2 border-1 surface-border p-2 border-round surface-50 overflow-hidden w-full">
                                         <i class="pi pi-file-pdf text-red-500 text-xl flex-shrink-0"></i>
-                                        <span class="text-sm text-main font-medium text-truncate" 
+                                        <span class="text-sm text-main font-medium text-truncate text-left flex-grow-1" 
                                               [title]="estudiante.archivoSeleccionado?.name || estudiante.nombre_archivo_previo">
                                             {{ estudiante.archivoSeleccionado?.name || estudiante.nombre_archivo_previo }}
                                         </span>
@@ -187,20 +199,22 @@
                                     <div class="flex gap-2 w-full">
                                         <button pButton type="button" label="Cambiar" icon="pi pi-sync" 
                                                 class="p-button-outlined p-button-secondary p-button-sm flex-grow-1" 
+                                                style="padding: 0.4rem !important;"
                                                 (click)="fileInput.click()"></button>
                                         
                                         <a *ngIf="estudiante.archivo_url_previo && !estudiante.archivoSeleccionado" 
                                            [href]="estudiante.archivo_url_previo" target="_blank" 
-                                           class="p-button p-component p-button-text p-button-sm p-button-info flex align-items-center justify-content-center p-0 flex-shrink-0" 
-                                           style="width: 40px" pTooltip="Ver PDF guardado">
+                                           class="p-button p-component p-button-outlined p-button-info flex align-items-center justify-content-center p-0 flex-shrink-0" 
+                                           style="width: 32px; height: 32px;" pTooltip="Ver PDF guardado">
                                             <i class="pi pi-external-link"></i>
                                         </a>
                                     </div>
                                 </div>
 
                                 <ng-template #noFile>
-                                    <button pButton type="button" label="Seleccionar PDF" icon="pi pi-upload" 
-                                            class="p-button-outlined p-button-secondary p-button-sm w-full border-dashed" 
+                                    <button pButton type="button" label="Adjuntar PDF" icon="pi pi-upload" 
+                                            class="p-button-outlined p-button-secondary p-button-sm w-full" 
+                                            style="border-style: dashed !important; padding: 0.5rem !important; background: transparent;"
                                             (click)="fileInput.click()"></button>
                                 </ng-template>
                             </div>
@@ -213,24 +227,22 @@
                         
                         <td class="text-center">
                             <span class="p-column-title hidden-desktop">Borrar Selección</span>
-                            <button pButton icon="pi pi-refresh" class="p-button-rounded p-button-text p-button-secondary" 
-                                    (click)="limpiarFila(estudiante, fileInput)" pTooltip="Deshacer selección"></button>
+                            <div class="action-buttons">
+                                <button pButton icon="pi pi-eraser" class="p-button-text p-button-secondary" 
+                                        (click)="limpiarFila(estudiante, fileInput)" pTooltip="Deshacer selección"></button>
+                            </div>
                         </td>
                     </tr>
                 </ng-template>
-
                 <ng-template pTemplate="emptymessage">
-                    <tr>
-                        <td colspan="4" class="text-center p-4 text-secondary">No hay estudiantes activos para esta evaluación.</td>
-                    </tr>
+                    <tr><td colspan="4" class="text-center p-4 text-secondary">No hay estudiantes activos para esta evaluación.</td></tr>
                 </ng-template>
             </p-table>
-
         </ng-template>
         
         <ng-template pTemplate="footer">
             <div class="flex flex-column sm:flex-row justify-content-between align-items-center w-full gap-3">
-                <small class="text-secondary italic"><i class="pi pi-info-circle mr-1"></i> Se subirán los archivos de los estudiantes que hayas modificado.</small>
+                <small class="text-secondary italic"><i class="pi pi-info-circle mr-1"></i> Se subirán los archivos de los estudiantes modificados.</small>
                 <div class="flex gap-2 w-full sm:w-auto">
                     <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text p-button-secondary w-full sm:w-auto" (click)="displayGradesDialog = false" [disabled]="guardando"></button>
                     <button pButton label="Subir y Guardar" icon="pi pi-cloud-upload" class="p-button-success w-full sm:w-auto" (click)="guardarNotasFinales()" [loading]="guardando"></button>

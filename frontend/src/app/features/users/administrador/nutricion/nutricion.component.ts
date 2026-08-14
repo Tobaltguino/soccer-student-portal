@@ -1,7 +1,12 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; 
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core'; 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { SupabaseService } from '../../../../../core/services/supabase.service';
+import { forkJoin, Observable, of } from 'rxjs';
+
+// Enum
+import { EstadoSesion } from '../../../../shared/enums/estado-sesion.enum';
+
+// PrimeNG Imports
 import { TableModule } from 'primeng/table';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -13,22 +18,43 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { TooltipModule } from 'primeng/tooltip';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
+// Nuevos Servicios de Dominio
+import { NutriTipoEvaluacionService } from '../../../../core/domains/salud/nutricion/tipos/services/tipo-evaluacion.service';
+import { NutriSesionService } from '../../../../core/domains/salud/nutricion/sesiones/services/sesion.service';
+import { NutriResultadoService } from '../../../../core/domains/salud/nutricion/resultados/services/resultado.service';
+import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
+import { UsuarioService } from '../../../../core/domains/usuarios/central/services/usuario.service';
+
 @Component({
-  selector: 'app-administrador-nutricion',
+  selector: 'app-admin-nutri',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, DialogModule, ButtonModule, 
     SelectModule, DatePickerModule, TagModule, InputTextModule, ToastModule, 
-    ConfirmDialogModule, RadioButtonModule, TooltipModule
+    ConfirmDialogModule, RadioButtonModule, TooltipModule, ProgressSpinnerModule
   ],
   providers: [MessageService, ConfirmationService],
-  templateUrl: './nutricion.component.html',
-  styleUrls: ['./nutricion.component.css']
+  templateUrl: './admin-nutri.html',
+  styleUrls: ['./admin-nutri.css']
 })
-export class AdministradorNutricionComponent implements OnInit {
+export class AdminNutriComponent implements OnInit {
   
+  // ✅ Exponemos el Enum para poder usarlo en el HTML
+  readonly EstadoSesion = EstadoSesion;
+
+  // Inyección de servicios
+  private nutriTipoService = inject(NutriTipoEvaluacionService);
+  private nutriSesionService = inject(NutriSesionService);
+  private nutriResultadoService = inject(NutriResultadoService);
+  private estudianteService = inject(EstudianteService);
+  private usuarioService = inject(UsuarioService);
+  private messageService = inject(MessageService);
+  private confirmationService = inject(ConfirmationService); 
+  private cdr = inject(ChangeDetectorRef);
+
   sesiones: any[] = [];
   sesionesFiltradas: any[] = [];
   tiposEvaluacion: any[] = [];
@@ -37,10 +63,11 @@ export class AdministradorNutricionComponent implements OnInit {
 
   filtroFecha: Date | null = null;
   filtroPrueba: any = null;
-  filtroEstado: string | null = null;
+  filtroEstado: EstadoSesion | null = null;
+  
   opcionesEstadoFiltro = [
-    { label: 'Pendientes', value: 'PENDIENTE' },
-    { label: 'Finalizadas', value: 'FINALIZADO' }
+    { label: 'Pendientes', value: EstadoSesion.PROGRAMADA },
+    { label: 'Finalizadas', value: EstadoSesion.FINALIZADA }
   ];
 
   displayMainDialog = false;
@@ -52,110 +79,82 @@ export class AdministradorNutricionComponent implements OnInit {
   evalLogistica: any = {};
   nuevoTipo = { nombre: '', descripcion: '' };
 
-  constructor(
-    private supabase: SupabaseService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService, 
-    private cdr: ChangeDetectorRef
-  ) {}
-
-  async ngOnInit() {
-    await this.cargarDatosBase();
+  ngOnInit() {
+    this.cargarDatosBase();
   }
 
-  async cargarDatosBase() {
-    try {
-      this.loading = true;
-      this.cdr.detectChanges();
+  // ==========================================
+  // CARGA DE DATOS
+  // ==========================================
+  cargarDatosBase() {
+    this.loading = true;
 
-      await this.cargarTiposEvaluacion();
+    // Asumimos que usuarioService tiene listarNutricionistas(). Si usa otro nombre, cámbialo.
+    const nutricionistasReq: Observable<any[]> = (this.usuarioService as any).listarNutricionistas 
+      ? (this.usuarioService as any).listarNutricionistas() 
+      : of([]);
 
-      const resNutris = await this.supabase.supabase.from('nutricionistas').select('id, nombre, apellido');
-      this.nutricionistas = (resNutris.data || []).map(n => ({
-        id: n.id,
-        nombreCompleto: `${n.nombre} ${n.apellido}`
-      }));
+    forkJoin({
+      tipos: this.nutriTipoService.listarTiposEvaluacion(),
+      nutris: nutricionistasReq,
+      sesiones: this.nutriSesionService.listarSesiones({ limite: 1000 })
+    }).subscribe({
+      next: (data) => {
+        this.tiposEvaluacion = data.tipos || [];
+        this.nutricionistas = (data.nutris || []).map((n: any) => ({
+          ...n,
+          nombreCompleto: `${n.nombre} ${n.apellido}`
+        }));
+        
+        const regs = data.sesiones.registros || [];
+        this.sesiones = regs.map((s: any) => ({
+          ...s,
+          tipoObj: this.tiposEvaluacion.find(t => t.id === (s.tipo_evaluacion_id || s.tipoEvaluacionId)) || { nombre: 'Desconocido' },
+          nutriObj: this.nutricionistas.find(n => n.id === (s.nutricionista_id || s.nutricionistaId)) || { nombreCompleto: 'No asignado' }
+        }));
 
-      const resEst = await this.supabase.getEstudiantesBasico();
-      this.estudiantes = (resEst.data || []).map(est => ({
-        ...est,
-        archivoSeleccionado: null,
-        archivo_url_previo: null,
-        nombre_archivo_previo: null, // ✅ Nueva propiedad para el nombre bonito
-        observacion: ''
-      }));
-
-      await this.cargarSesiones();
-
-    } catch (error) {
-      this.mostrarError('No se pudieron cargar los datos base.');
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
-  }
-
-  async cargarTiposEvaluacion() {
-    const resTipos = await this.supabase.getTiposEvaluacionNutri();
-    this.tiposEvaluacion = resTipos.data || [];
-  }
-
-  async cargarSesiones() {
-    const res = await this.supabase.getEvaluacionesNutri();
-    this.sesiones = res.data || [];
-    this.aplicarFiltros();
-    this.cdr.detectChanges();
-  }
-
-  aplicarFiltros() {
-    this.sesionesFiltradas = this.sesiones.filter(s => {
-      let cumpleFecha = true;
-      let cumplePrueba = true;
-      let cumpleEstado = true;
-
-      if (this.filtroFecha) {
-        const dFiltro = this.filtroFecha.toISOString().split('T')[0];
-        cumpleFecha = s.fecha === dFiltro;
+        this.aplicarFiltros();
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.mostrarError('Error al cargar datos principales.');
+        this.loading = false;
+        this.cdr.detectChanges();
       }
-      if (this.filtroPrueba) {
-        cumplePrueba = s.tipo_id === this.filtroPrueba.id;
-      }
-      if (this.filtroEstado) {
-        cumpleEstado = s.estado === this.filtroEstado;
-      }
-
-      return cumpleFecha && cumplePrueba && cumpleEstado;
     });
-    this.cdr.detectChanges();
   }
 
-  limpiarFiltros() {
-    this.filtroFecha = null;
-    this.filtroPrueba = null;
-    this.filtroEstado = null;
-    this.aplicarFiltros();
-  }
-
+  // ==========================================
+  // GESTIÓN DE TIPOS (CONFIGURACIÓN)
+  // ==========================================
   abrirConfiguracionTipos() {
     this.nuevoTipo = { nombre: '', descripcion: '' };
     this.displayTiposDialog = true;
-    this.cdr.detectChanges();
   }
 
-  async guardarNuevoTipo() {
+  guardarNuevoTipo() {
     if (!this.nuevoTipo.nombre) return;
-    try {
-      this.loading = true;
-      await this.supabase.crearTipoEvaluacionNutri(this.nuevoTipo);
-      this.mostrarExito('Test agregado correctamente');
-      this.nuevoTipo = { nombre: '', descripcion: '' };
-      await this.cargarTiposEvaluacion(); 
-    } catch (error) {
-      this.mostrarError('Error al guardar el tipo de test');
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
+    this.loading = true;
+    
+    this.nutriTipoService.crearTipoEvaluacion(this.nuevoTipo).subscribe({
+      next: () => {
+        this.mostrarExito('Test agregado correctamente');
+        this.nuevoTipo = { nombre: '', descripcion: '' };
+        
+        // Recargar la lista de tipos para la tabla del modal
+        this.nutriTipoService.listarTiposEvaluacion().subscribe(res => {
+          this.tiposEvaluacion = res || [];
+          this.loading = false;
+          this.cdr.detectChanges();
+        });
+      },
+      error: () => {
+        this.mostrarError('Error al guardar el tipo de test');
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   eliminarTipo(tipo: any) {
@@ -166,149 +165,171 @@ export class AdministradorNutricionComponent implements OnInit {
       acceptLabel: 'Sí, Eliminar',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-danger',
-      accept: async () => {
-        try {
-          this.loading = true;
-          this.cdr.detectChanges();
-          await this.supabase.eliminarTipoEvaluacionNutri(tipo.id);
-          this.mostrarExito('Test eliminado correctamente');
-          await this.cargarTiposEvaluacion(); 
-        } catch (error: any) {
-          if (error.code === '23503') {
-            this.mostrarError('No se puede eliminar porque ya hay sesiones usando este test.');
-          } else {
-            this.mostrarError('Hubo un error al eliminar el test');
+      accept: () => {
+        this.loading = true;
+        this.nutriTipoService.eliminarTipoEvaluacion(tipo.id).subscribe({
+          next: () => {
+            this.mostrarExito('Test eliminado correctamente');
+            this.nutriTipoService.listarTiposEvaluacion().subscribe(res => {
+              this.tiposEvaluacion = res || [];
+              this.loading = false;
+              this.cdr.detectChanges();
+            });
+          },
+          error: (err) => {
+            // Manejo rudimentario de error de llave foránea según la lógica anterior
+            if (err?.error?.message?.includes('violates foreign key') || err?.error?.statusCode === 500) {
+              this.mostrarError('No se puede eliminar porque ya hay sesiones usando este test.');
+            } else {
+              this.mostrarError('Hubo un error al eliminar el test');
+            }
+            this.loading = false;
+            this.cdr.detectChanges();
           }
-        } finally {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }
+        });
       }
     });
   }
 
+  // ==========================================
+  // GESTIÓN DE SESIONES (LOGÍSTICA)
+  // ==========================================
   abrirNuevo() {
     this.evalLogistica = {
-      id: null,
-      fecha: new Date(),
-      tipo_id: null,
-      nutricionista_id: null, 
-      estado: 'PENDIENTE'
+      id: null, fecha: new Date(), tipo_id: null, nutricionista_id: null, estado: EstadoSesion.PROGRAMADA
     };
     this.displayMainDialog = true;
-    this.cdr.detectChanges();
   }
 
   editarSesion(sesion: any) {
-    const [year, month, day] = sesion.fecha.split('-');
+    const fechaObj = new Date(sesion.fecha + 'T00:00:00');
     this.evalLogistica = { 
       ...sesion,
-      fecha: new Date(year, month - 1, day)
+      fecha: fechaObj,
+      tipo_id: sesion.tipo_evaluacion_id || sesion.tipoEvaluacionId,
+      nutricionista_id: sesion.nutricionista_id || sesion.nutricionistaId
     };
     this.displayMainDialog = true;
-    this.cdr.detectChanges();
   }
 
-  async guardarSesionPlanificada() {
+  guardarSesionPlanificada() {
     if (!this.evalLogistica.fecha || !this.evalLogistica.tipo_id || !this.evalLogistica.nutricionista_id) {
       this.mostrarError('Faltan campos obligatorios');
       return;
     }
 
-    try {
-      this.loading = true;
-      this.cdr.detectChanges();
-      
-      const payload = {
-        tipo_id: this.evalLogistica.tipo_id,
-        nutricionista_id: this.evalLogistica.nutricionista_id,
-        fecha: this.evalLogistica.fecha.toISOString().split('T')[0],
-        estado: this.evalLogistica.estado
-      };
+    this.loading = true;
+    const fechaSeleccionada = new Date(this.evalLogistica.fecha);
+    
+    const payload = {
+      tipoId: this.evalLogistica.tipo_id,
+      nutricionistaId: this.evalLogistica.nutricionista_id,
+      fecha: fechaSeleccionada.toISOString().split('T')[0],
+      estado: this.evalLogistica.estado || EstadoSesion.PROGRAMADA
+    };
 
-      if (this.evalLogistica.id) {
-        await this.supabase.actualizarEvaluacionNutri(this.evalLogistica.id, payload);
-        this.mostrarExito('Sesión actualizada correctamente');
-      } else {
-        await this.supabase.crearEvaluacionNutri(payload);
-        this.mostrarExito('Sesión creada correctamente');
+    const peticion$ = this.evalLogistica.id 
+      ? this.nutriSesionService.actualizarSesion(this.evalLogistica.id, payload)
+      : this.nutriSesionService.crearSesion(payload as any);
+
+    peticion$.subscribe({
+      next: () => {
+        this.mostrarExito(this.evalLogistica.id ? 'Sesión actualizada' : 'Sesión creada');
+        this.displayMainDialog = false;
+        this.cargarDatosBase(); // Refrescar todo
+      },
+      error: () => {
+        this.mostrarError('Error al guardar la sesión');
+        this.loading = false;
+        this.cdr.detectChanges();
       }
-
-      this.displayMainDialog = false;
-      await this.cargarSesiones();
-    } catch (error) {
-      this.mostrarError('Error al guardar la sesión');
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
+    });
   }
 
   eliminarSesion(sesion: any) {
     this.confirmationService.confirm({
-      message: `¿Estás seguro de eliminar la sesión "${sesion.tipo_evaluacion?.nombre}"? Se perderán todos los archivos adjuntos de los estudiantes.`,
+      message: `¿Estás seguro de eliminar la sesión "${sesion.tipoObj?.nombre}"? Se perderán todos los archivos adjuntos.`,
       header: 'Confirmar Eliminación',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Sí, Eliminar',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-danger',
-      accept: async () => {
-        try {
-          this.loading = true;
-          this.cdr.detectChanges();
-          await this.supabase.eliminarEvaluacionNutri(sesion.id);
-          this.mostrarExito('Sesión eliminada correctamente');
-          await this.cargarSesiones();
-        } catch (error) {
-          this.mostrarError('Hubo un error al eliminar la sesión');
-        } finally {
-          this.loading = false;
-          this.cdr.detectChanges();
-        }
+      accept: () => {
+        this.loading = true;
+        this.nutriSesionService.eliminarSesion(sesion.id).subscribe({
+          next: () => {
+            this.mostrarExito('Sesión eliminada correctamente');
+            this.cargarDatosBase();
+          },
+          error: () => {
+            this.mostrarError('Hubo un error al eliminar la sesión');
+            this.loading = false;
+            this.cdr.detectChanges();
+          }
+        });
       }
     });
   }
 
-  async abrirCalificador(sesion: any) {
+  // ==========================================
+  // CALIFICACIÓN Y ARCHIVOS
+  // ==========================================
+  abrirCalificador(sesion: any) {
     this.evalLogistica = sesion;
-    
-    try {
-      this.loading = true;
-      this.cdr.detectChanges();
+    this.loading = true;
 
-      const resResultados = await this.supabase.getResultadosPorSesionNutri(sesion.id);
-      const resultadosPrevios = resResultados.data || [];
+    forkJoin({
+      alumnos: this.estudianteService.listarEstudiantes({ limite: 2000, activo: true }),
+      resultados: this.nutriResultadoService.listarResultadosPorSesion(sesion.id)
+    }).subscribe({
+      next: (res) => {
+        const alumnosBD = res.alumnos.registros || [];
+        const resultadosPrevios = res.resultados || [];
 
-      this.estudiantes.forEach(est => {
-        const resultadoGuardado = resultadosPrevios.find(r => r.estudiante_id === est.id);
+        this.estudiantes = alumnosBD.map((est: any) => {
+          const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id || est.id;
+          const nombre = est.perfil ? est.perfil.nombre : est.nombre;
+          const apellido = est.perfil ? est.perfil.apellido : est.apellido;
 
-        est.archivoSeleccionado = null; 
-        est.archivo_url_previo = resultadoGuardado ? resultadoGuardado.archivo_url : null;
-        est.observacion = resultadoGuardado ? resultadoGuardado.observaciones : '';
+          // ✅ Al poner ': any', TypeScript deja de quejarse por si es camelCase o snake_case
+          const resultadoGuardado: any = resultadosPrevios.find((r: any) => r.estudianteId === idUsuario || r.estudiante_id === idUsuario);
 
-        // ✅ Extraer y limpiar el nombre del archivo de la URL
-        if (est.archivo_url_previo) {
-          const urlParts = est.archivo_url_previo.split('/');
-          const rawName = decodeURIComponent(urlParts[urlParts.length - 1]);
-          const underscoreIndex = rawName.indexOf('_');
-          est.nombre_archivo_previo = underscoreIndex !== -1 ? rawName.substring(underscoreIndex + 1) : rawName;
-        } else {
-          est.nombre_archivo_previo = null;
-        }
-      });
+          const nuevoEst = {
+            id: idUsuario,
+            nombre: nombre,
+            apellido: apellido,
+            resultado_id: resultadoGuardado ? resultadoGuardado.id : null,
+            archivoSeleccionado: null as File | null, 
+            // ✅ Soportamos tanto archivo_url como archivoUrl
+            archivo_url_previo: resultadoGuardado ? (resultadoGuardado.archivo_url || resultadoGuardado.archivoUrl) : null,
+            nombre_archivo_previo: null as string | null, 
+            observacion: resultadoGuardado ? (resultadoGuardado.observaciones || resultadoGuardado.observacion) : ''
+          };
 
-      this.displayGradesDialog = true;
-    } catch (error) {
-      this.mostrarError('Error al cargar los resultados previos.');
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
+          if (nuevoEst.archivo_url_previo) {
+            const urlParts = nuevoEst.archivo_url_previo.split('/');
+            const rawName = decodeURIComponent(urlParts[urlParts.length - 1]);
+            const underscoreIndex = rawName.indexOf('_');
+            nuevoEst.nombre_archivo_previo = underscoreIndex !== -1 ? rawName.substring(underscoreIndex + 1) : rawName;
+          }
+
+          return nuevoEst;
+        });
+
+        this.displayGradesDialog = true;
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.mostrarError('Error al cargar alumnos y resultados.');
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   onFileSelected(event: any, estudiante: any) {
     const file = event.target.files[0];
-    
     if (file) {
       if (file.type !== 'application/pdf') {
         this.mostrarError('Formato inválido. Sube únicamente archivos PDF.');
@@ -317,7 +338,6 @@ export class AdministradorNutricionComponent implements OnInit {
         this.cdr.detectChanges();
         return;
       }
-      
       estudiante.archivoSeleccionado = file;
       this.cdr.detectChanges();
     }
@@ -326,55 +346,79 @@ export class AdministradorNutricionComponent implements OnInit {
   limpiarFila(estudiante: any, fileInput: any) {
     estudiante.archivoSeleccionado = null;
     estudiante.observacion = '';
-    if(fileInput) fileInput.value = ''; // Limpia el input nativo oculto
+    if(fileInput) fileInput.value = ''; 
     this.cdr.detectChanges();
   }
 
-  async guardarNotasFinales() {
-    const porGuardar = this.estudiantes.filter(e => e.archivoSeleccionado);
-
+  guardarNotasFinales() {
+    const porGuardar = this.estudiantes.filter(e => e.archivoSeleccionado || (e.resultado_id && e.observacion !== undefined));
     if (porGuardar.length === 0) {
-      this.mostrarError('No has adjuntado ningún archivo nuevo para guardar.');
+      this.mostrarError('No hay archivos nuevos ni modificaciones para guardar.');
       return;
     }
 
-    try {
-      this.guardando = true;
-      this.messageService.add({ severity: 'info', summary: 'Guardando', detail: `Subiendo ${porGuardar.length} resultados...` });
-      this.cdr.detectChanges();
+    this.guardando = true;
+    this.messageService.add({ severity: 'info', summary: 'Guardando', detail: `Procesando ${porGuardar.length} resultados...` });
 
-      for (const est of porGuardar) {
-        const archivoUrl = await this.supabase.subirArchivoNutricion(est.archivoSeleccionado, est.archivoSeleccionado.name);
-        
-        await this.supabase.guardarResultadoNutri({
-          evaluacion_id: this.evalLogistica.id,
-          estudiante_id: est.id,
-          archivo_url: archivoUrl,
-          observaciones: est.observacion
-        });
-      }
+    const peticiones = porGuardar.map(est => {
+      const payload = {
+        evaluacionId: this.evalLogistica.id,
+        estudianteId: est.id,
+        observaciones: est.observacion || ''
+      };
 
-      this.mostrarExito('Todos los resultados se guardaron correctamente');
-      this.displayGradesDialog = false;
-
-    } catch (error: any) {
-      if (error.code === '23505') {
-         this.mostrarError('Algunos estudiantes ya tenían resultados registrados en esta sesión.');
+      if (est.resultado_id) {
+        return this.nutriResultadoService.actualizarResultado(est.resultado_id, payload, est.archivoSeleccionado);
       } else {
-         this.mostrarError('Ocurrió un error al subir los archivos.');
+        return this.nutriResultadoService.crearResultado(payload, est.archivoSeleccionado);
       }
-    } finally {
-      this.guardando = false;
-      this.cdr.detectChanges();
-    }
+    });
+
+    forkJoin(peticiones).subscribe({
+      next: () => {
+        this.mostrarExito('Resultados guardados correctamente');
+        this.displayGradesDialog = false;
+        this.guardando = false;
+        this.cargarDatosBase();
+      },
+      error: () => {
+        this.mostrarError('Ocurrió un error al subir los archivos. Revisa el tamaño (max 5MB).');
+        this.guardando = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
-  mostrarExito(mensaje: string) {
-    this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
-    this.cdr.detectChanges();
+  // ==========================================
+  // HELPERS Y FILTROS
+  // ==========================================
+  aplicarFiltros() {
+    this.sesionesFiltradas = this.sesiones.filter(s => {
+      let f = true, p = true, e = true;
+      const tId = s.tipo_evaluacion_id || s.tipoEvaluacionId;
+
+      if (this.filtroFecha) f = (s.fecha || '').substring(0, 10) === this.formatearFechaIso(this.filtroFecha);
+      if (this.filtroPrueba) p = tId === this.filtroPrueba.id;
+      if (this.filtroEstado) e = s.estado === this.filtroEstado;
+      return f && p && e;
+    });
   }
-  mostrarError(mensaje: string) {
-    this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
-    this.cdr.detectChanges();
+
+  limpiarFiltros() {
+    this.filtroFecha = null;
+    this.filtroPrueba = null;
+    this.filtroEstado = null;
+    this.aplicarFiltros();
   }
+
+  private formatearFechaIso(fecha: any): string {
+    if (!fecha) return '';
+    const d = new Date(fecha);
+    const tzOffset = d.getTimezoneOffset() * 60000;
+    return (new Date(d.getTime() - tzOffset)).toISOString().split('T')[0];
+  }
+
+  mostrarExito(m: string) { this.messageService.add({ severity: 'success', summary: 'Éxito', detail: m }); }
+  mostrarError(m: string) { this.messageService.add({ severity: 'error', summary: 'Error', detail: m }); }
+  mostrarAdvertencia(m: string) { this.messageService.add({ severity: 'warn', summary: 'Atención', detail: m }); }
 }
