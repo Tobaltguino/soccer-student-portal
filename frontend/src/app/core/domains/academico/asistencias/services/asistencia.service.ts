@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../../../environments/environment';
 import { Asistencia, RegistrarAsistenciasLotePayload } from '../models/asistencia.interface';
@@ -42,5 +42,30 @@ export class AsistenciaService {
    */
   listarPorEstudiante(estudianteId: string): Observable<Asistencia[]> {
     return this.http.get<Asistencia[]>(`${this.apiUrl}/estudiantes/${estudianteId}/asistencias`);
+  }
+
+  /**
+   * GET /asistencias/reportes/mensual
+   * Obtiene el consolidado de asistencias de un grupo en un mes específico.
+   */
+  obtenerReporteMensual(grupoId: number, mes: number, anio: number): Observable<any[]> {
+    let params = new HttpParams()
+      .set('grupoId', grupoId.toString())
+      .set('mes', mes.toString())
+      .set('anio', anio.toString());
+
+    return this.http.get<any[]>(`${this.apiUrl}/reportes/mensual`, { params });
+  }
+
+  /**
+   * GET /asistencias/estudiantes/:id/asistencias/mensual
+   * Obtiene el detalle día a día de un estudiante específico.
+   */
+  obtenerDetalleMensualEstudiante(estudianteId: string, mes: number, anio: number): Observable<any[]> {
+    let params = new HttpParams()
+      .set('mes', mes.toString())
+      .set('anio', anio.toString());
+
+    return this.http.get<any[]>(`${this.apiUrl}/estudiantes/${estudianteId}/asistencias/mensual`, { params });
   }
 }

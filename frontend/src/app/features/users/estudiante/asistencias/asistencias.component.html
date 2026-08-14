@@ -1,20 +1,19 @@
 <div class="stats-container fadein animation-duration-500">
+    <p-toast position="top-right"></p-toast>
     
     <header class="page-header">
-        <div class="header-content">
-            <h1 class="m-0 text-main">Estadísticas de Asistencia</h1>
-            <p class="text-secondary m-0 mt-1">Seguimiento de desempeño deportivo</p>
-        </div>
+        <!-- ... -->
         
         <div class="header-actions filter-bar m-0 p-2 border-none bg-transparent shadow-none w-auto flex-row align-items-center">
+            
             <p-select [options]="years" [(ngModel)]="selectedYear" 
                       optionLabel="label" optionValue="value"
-                      (onChange)="cargarDatosEstadisticos()" 
+                      (onChange)="procesarEstadisticas()" 
                       styleClass="w-full sm:w-auto" placeholder="Año" appendTo="body"></p-select>
             
             <p-select [options]="months" [(ngModel)]="selectedMonth" 
                       optionLabel="label" optionValue="value"
-                      (onChange)="cargarDatosEstadisticos()" 
+                      (onChange)="procesarEstadisticas()" 
                       styleClass="w-full sm:w-auto" placeholder="Mes" appendTo="body"></p-select>
 
             <button pButton icon="pi pi-refresh" class="p-button-outlined p-button-secondary btn-create" 

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -13,7 +13,9 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
-import { SupabaseService } from '../../../../../core/services/supabase.service';
+// Servicios
+import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
+import { AsistenciaService } from '../../../../core/domains/academico/asistencias/services/asistencia.service';
 
 @Component({
   selector: 'app-administrador-asistencias',
@@ -29,6 +31,11 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
 })
 export class AdministradorAsistenciasComponent implements OnInit {
   
+  private grupoService = inject(GrupoService);
+  private asistenciaService = inject(AsistenciaService);
+  private messageService = inject(MessageService);
+  private cdr = inject(ChangeDetectorRef);
+
   // Datos principales
   grupos: any[] = [];
   grupoSeleccionado: any = null;
@@ -52,120 +59,89 @@ export class AdministradorAsistenciasComponent implements OnInit {
   filtroMes: number = new Date().getMonth() + 1;
   filtroAnio: number = new Date().getFullYear();
 
-  constructor(
-    private supabase: SupabaseService,
-    private messageService: MessageService,
-    private cdr: ChangeDetectorRef
-  ) {}
-
-  async ngOnInit() {
-    await this.cargarTodosLosGrupos();
+  ngOnInit() {
+    this.cargarTodosLosGrupos();
   }
 
   /**
    * Carga TODOS los grupos disponibles en la academia (Vista Admin)
    */
-  async cargarTodosLosGrupos() {
+  cargarTodosLosGrupos() {
     this.loading = true;
-    try {
-      const { data } = await this.supabase.getGrupos();
-      this.grupos = data || [];
-    } catch (error) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los grupos' });
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
+    this.grupoService.listarGrupos().subscribe({
+      next: (data) => {
+        this.grupos = data || [];
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los grupos' });
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   /**
    * Se ejecuta al cambiar de grupo o de mes/año
    */
-  async onFilterChange() {
+  onFilterChange() {
     if (!this.grupoSeleccionado) {
       this.estudiantesAsistencia = [];
       return;
     }
 
     this.loading = true;
-    try {
-      // 1. Obtener alumnos activos del grupo
-      const { data: alumnos } = await this.supabase.getAlumnosPorGrupo(this.grupoSeleccionado);
-      
-      // 2. Definir rango de fechas válido
-      const mesStr = ('0' + this.filtroMes).slice(-2);
-      const primerDia = `${this.filtroAnio}-${mesStr}-01`;
-      const ultimoDiaNum = new Date(this.filtroAnio, this.filtroMes, 0).getDate();
-      const ultimoDia = `${this.filtroAnio}-${mesStr}-${ultimoDiaNum}`;
-
-      // 3. Obtener asistencias del grupo en ese rango de fechas
-      const { data: asistenciasMes, error } = await this.supabase.supabase
-        .from('asistencias')
-        .select('estudiante_id, presente, clases!inner(fecha)')
-        .eq('clases.grupo_id', this.grupoSeleccionado)
-        .gte('clases.fecha', primerDia)
-        .lte('clases.fecha', ultimoDia);
-
-      if (error) throw error;
-
-      // 4. Procesar y calcular porcentajes
-      this.estudiantesAsistencia = (alumnos || []).map(est => {
-        const registrosAlumno = asistenciasMes?.filter(a => a.estudiante_id === est.id) || [];
-        const totalClases = registrosAlumno.length;
-        const totalPresentes = registrosAlumno.filter(a => a.presente).length;
-        const porcentaje = totalClases > 0 ? Math.round((totalPresentes / totalClases) * 100) : 0;
-
-        return { 
-          ...est, 
-          porcentaje, 
-          resumen: `${totalPresentes} / ${totalClases}` 
-        };
+    
+    // 🔥 Delegamos toda la carga pesada al nuevo endpoint de NestJS
+    this.asistenciaService.obtenerReporteMensual(this.grupoSeleccionado, this.filtroMes, this.filtroAnio)
+      .subscribe({
+        next: (data) => {
+          this.estudiantesAsistencia = data;
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al calcular estadísticas' });
+          this.loading = false;
+          this.cdr.detectChanges();
+        }
       });
-
-    } catch (error) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al calcular estadísticas' });
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
   }
 
   /**
    * Abre el modal de historial detallado
    */
-  async verHistorialIndividual(alumno: any) {
+  verHistorialIndividual(alumno: any) {
     this.alumnoSeleccionado = alumno;
     this.displayHistorial = true;
-    await this.cargarDetalleHistorial();
+    this.cargarDetalleHistorial();
   }
 
   /**
    * Carga el detalle de asistencias día por día para el modal
    */
-  async cargarDetalleHistorial() {
+  cargarDetalleHistorial() {
+    if (!this.alumnoSeleccionado) return;
+
     this.loadingHistorial = true;
-    try {
-      const mesStr = ('0' + this.filtroMes).slice(-2);
-      const primerDia = `${this.filtroAnio}-${mesStr}-01`;
-      const ultimoDiaNum = new Date(this.filtroAnio, this.filtroMes, 0).getDate();
-      const ultimoDia = `${this.filtroAnio}-${mesStr}-${ultimoDiaNum}`;
+    
+    // Usamos estudiante_id porque así lo manda ahora el backend NestJS
+    const estudianteId = this.alumnoSeleccionado.estudiante_id;
 
-      const { data, error } = await this.supabase.supabase
-        .from('asistencias')
-        .select('presente, clases!inner(fecha, hora, lugar)')
-        .eq('estudiante_id', this.alumnoSeleccionado.id)
-        .gte('clases.fecha', primerDia)
-        .lte('clases.fecha', ultimoDia)
-        .order('clases(fecha)', { ascending: false });
-
-      if (error) throw error;
-      this.historialAlumno = data || [];
-    } catch (error) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el historial.' });
-    } finally {
-      this.loadingHistorial = false;
-      this.cdr.detectChanges();
-    }
+    this.asistenciaService.obtenerDetalleMensualEstudiante(estudianteId, this.filtroMes, this.filtroAnio)
+      .subscribe({
+        next: (data) => {
+          this.historialAlumno = data || [];
+          this.loadingHistorial = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el historial.' });
+          this.loadingHistorial = false;
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   getSeverity(porcentaje: number): "success" | "warn" | "danger" | "secondary" {

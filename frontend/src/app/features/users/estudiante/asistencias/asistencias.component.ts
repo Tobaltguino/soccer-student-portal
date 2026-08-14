@@ -1,14 +1,19 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 
 // PrimeNG Modules
 import { ChartModule } from 'primeng/chart';
 import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
 import { ProgressBarModule } from 'primeng/progressbar';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 
-import { SupabaseService } from '../../../../../core/services/supabase.service';
+// Servicios de Dominio
+import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
+import { AsistenciaService } from '../../../../core/domains/academico/asistencias/services/asistencia.service';
 
 @Component({
   selector: 'app-estudiante-asistencias',
@@ -19,12 +24,20 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
     ChartModule,
     SelectModule,
     ButtonModule,
-    ProgressBarModule
+    ProgressBarModule,
+    ToastModule
   ],
+  providers: [MessageService],
   templateUrl: './asistencias.component.html',
   styleUrl: './asistencias.component.css',
 })
 export class EstudianteAsistenciasComponent implements OnInit {
+  
+  private claseService = inject(ClaseService);
+  private asistenciaService = inject(AsistenciaService);
+  private messageService = inject(MessageService);
+  private cdr = inject(ChangeDetectorRef);
+
   loading: boolean = false;
   hasData: boolean = false; // Control para el gráfico circular
   hasYearlyData: boolean = false; // Control para el gráfico de barras
@@ -35,7 +48,8 @@ export class EstudianteAsistenciasComponent implements OnInit {
   years = [
     { label: '2024', value: 2024 },
     { label: '2025', value: 2025 },
-    { label: '2026', value: 2026 }
+    { label: '2026', value: 2026 },
+    { label: '2027', value: 2027 }
   ];
 
   months = [
@@ -56,45 +70,61 @@ export class EstudianteAsistenciasComponent implements OnInit {
   totalAsistidas: number = 0;
   porcentajeAsistencia: number = 0;
 
-  constructor(
-    private supabaseService: SupabaseService,
-    private cdr: ChangeDetectorRef
-  ) {}
+  // Guardamos las clases cacheadas para no volver a llamar al servidor al cambiar de filtro
+  clasesCacheadas: any[] = [];
 
   ngOnInit() {
     this.initOptions();
     this.cargarDatosEstadisticos();
   }
 
-  async cargarDatosEstadisticos() {
+  cargarDatosEstadisticos() {
     this.loading = true;
-    this.cdr.detectChanges(); // Despierta a Angular para mostrar el loading
+    this.cdr.detectChanges(); 
 
-    try {
-      const { data: { user } } = await this.supabaseService.getUser();
-      if (!user) return;
+    // ✅ Ejecutamos ambas peticiones en paralelo
+    forkJoin({
+      clases: this.claseService.obtenerMisClases(),
+      asistencias: this.asistenciaService.obtenerMisAsistencias()
+    }).subscribe({
+      next: ({ clases, asistencias }) => {
+        
+        const asistenciasMap = new Map();
+        asistencias.forEach(a => asistenciasMap.set(a.clase_id, a.presente));
 
-      const inicioAnio = `${this.selectedYear}-01-01`;
-      const { data, error } = await this.supabaseService.getClasesAlumno(user.id, inicioAnio);
+        // Cruzamos las clases con su asistencia
+        this.clasesCacheadas = clases.map(clase => ({
+          ...clase,
+          presente: asistenciasMap.has(clase.id) ? asistenciasMap.get(clase.id) : null
+        }));
 
-      if (error) throw error;
-      this.procesarEstadisticas(data || []);
-    } catch (error) {
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges(); // Despierta a Angular al finalizar la carga
-    }
+        this.procesarEstadisticas();
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar las estadísticas.' });
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
-  procesarEstadisticas(clases: any[]) {
+  // ✅ Se llama también al cambiar el combo de Año o Mes (ahora sin llamar a BD)
+  procesarEstadisticas() {
+    // Extraemos año y mes del string 'YYYY-MM-DD' para evitar problemas de timezone
+    const getAnio = (fecha: string) => parseInt(fecha.substring(0, 4), 10);
+    const getMes = (fecha: string) => parseInt(fecha.substring(5, 7), 10) - 1; // 0-indexed
+
     // 1. Filtro estricto para el resumen y gráfico circular
-    let filtradas = clases.filter(c => 
-      new Date(c.fecha).getFullYear() === this.selectedYear && 
+    let filtradas = this.clasesCacheadas.filter(c => 
+      c.fecha && 
+      getAnio(c.fecha as string) === this.selectedYear && 
       (c.presente === true || c.presente === false)
     );
 
     if (this.selectedMonth !== null) {
-      filtradas = filtradas.filter(c => new Date(c.fecha).getUTCMonth() === this.selectedMonth);
+      filtradas = filtradas.filter(c => getMes(c.fecha as string) === this.selectedMonth);
     }
 
     this.hasData = filtradas.length > 0;
@@ -121,9 +151,9 @@ export class EstudianteAsistenciasComponent implements OnInit {
     const countsPorMes = new Array(12).fill(0);
     let totalAnual = 0;
 
-    clases.forEach(clase => {
-      if (clase.presente === true && new Date(clase.fecha).getFullYear() === this.selectedYear) {
-        const mes = new Date(clase.fecha).getUTCMonth();
+    this.clasesCacheadas.forEach(clase => {
+      if (clase.fecha && clase.presente === true && getAnio(clase.fecha as string) === this.selectedYear) {
+        const mes = getMes(clase.fecha as string);
         countsPorMes[mes]++;
         totalAnual++;
       }
@@ -142,7 +172,7 @@ export class EstudianteAsistenciasComponent implements OnInit {
       }]
     };
     
-    this.cdr.detectChanges(); // Asegura que los gráficos se dibujen con los nuevos datos
+    this.cdr.detectChanges(); 
   }
 
   initOptions() {
@@ -154,12 +184,12 @@ export class EstudianteAsistenciasComponent implements OnInit {
               position: 'bottom',
               labels: { 
                   usePointStyle: true, 
-                  padding: 8, // ✅ Reducido de 10 o 20 para ahorrar espacio en el celular
-                  font: { size: 14 } // ✅ Fuente un poco más pequeña para el móvil
+                  padding: 8, 
+                  font: { size: 14 } 
               }
           }
       },
-      cutout: '70%' // ✅ Un poco más grueso ayuda a que se vea mejor en pantallas pequeñas
+      cutout: '70%' 
   };
 
     this.barOptions = {

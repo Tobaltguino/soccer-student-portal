@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -13,8 +13,9 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
-import { SupabaseService } from '../../../../../core/services/supabase.service';
-
+// Servicios de Dominio
+import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
+import { AsistenciaService } from '../../../../core/domains/academico/asistencias/services/asistencia.service';
 
 @Component({
   selector: 'app-profesor-asistencias',
@@ -30,6 +31,11 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
 })
 export class ProfesorAsistenciasComponent implements OnInit {
   
+  private grupoService = inject(GrupoService);
+  private asistenciaService = inject(AsistenciaService);
+  private messageService = inject(MessageService);
+  private cdr = inject(ChangeDetectorRef);
+
   // Datos principales
   grupos: any[] = [];
   grupoSeleccionado: any = null;
@@ -53,132 +59,95 @@ export class ProfesorAsistenciasComponent implements OnInit {
   filtroMes: number = new Date().getMonth() + 1;
   filtroAnio: number = new Date().getFullYear();
 
-  constructor(
-    private supabase: SupabaseService,
-    private messageService: MessageService,
-    private cdr: ChangeDetectorRef
-  ) {}
-
-  async ngOnInit() {
-    await this.cargarGrupos();
+  ngOnInit() {
+    this.cargarGrupos();
   }
 
   /**
-   * Carga los grupos asignados al profesor logueado
+   * Carga los grupos asignados al profesor logueado usando NestJS
    */
-  async cargarGrupos() {
+  cargarGrupos() {
     this.loading = true;
-    try {
-      const { data: { user } } = await this.supabase.getUser();
-      if (!user?.email) return;
-
-      const { data: prof } = await this.supabase.getProfesorPorEmail(user.email);
-      if (prof) {
-        const { data: gruposData } = await this.supabase.getGruposDeProfesor(prof.id);
-        this.grupos = gruposData ? gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null) : [];
+    this.grupoService.listarGrupos().subscribe({
+      next: (data) => {
+        this.grupos = data || [];
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los grupos' });
+        this.loading = false;
+        this.cdr.detectChanges();
       }
-    } catch (error) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los grupos' });
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
+    });
   }
 
   /**
    * Se ejecuta al cambiar de grupo o de mes/año en la vista principal
    */
-  async onFilterChange() {
+  onFilterChange() {
     if (!this.grupoSeleccionado) {
       this.estudiantesAsistencia = [];
       return;
     }
 
     this.loading = true;
-    try {
-      // 1. Obtener alumnos activos del grupo (Función de tu servicio)
-      const { data: alumnos } = await this.supabase.getAlumnosPorGrupo(this.grupoSeleccionado);
-      
-      // 2. Definir rango de fechas válido
-      const mesStr = ('0' + this.filtroMes).slice(-2);
-      const primerDia = `${this.filtroAnio}-${mesStr}-01`;
-      const ultimoDiaNum = new Date(this.filtroAnio, this.filtroMes, 0).getDate();
-      const ultimoDia = `${this.filtroAnio}-${mesStr}-${ultimoDiaNum}`;
-
-      // 3. Obtener asistencias del grupo en ese rango
-      const { data: asistenciasMes, error } = await this.supabase.supabase
-        .from('asistencias')
-        .select('estudiante_id, presente, clases!inner(fecha)')
-        .eq('clases.grupo_id', this.grupoSeleccionado)
-        .gte('clases.fecha', primerDia)
-        .lte('clases.fecha', ultimoDia);
-
-      if (error) throw error;
-
-      // 4. Procesar y calcular porcentajes
-      this.estudiantesAsistencia = (alumnos || []).map(est => {
-        const registrosAlumno = asistenciasMes?.filter(a => a.estudiante_id === est.id) || [];
-        const totalClases = registrosAlumno.length;
-        const totalPresentes = registrosAlumno.filter(a => a.presente).length;
-        const porcentaje = totalClases > 0 ? Math.round((totalPresentes / totalClases) * 100) : 0;
-
-        return { 
-          ...est, 
-          porcentaje, 
-          resumen: `${totalPresentes} / ${totalClases}` 
-        };
+    
+    // 🔥 Delegamos el cálculo al backend
+    this.asistenciaService.obtenerReporteMensual(this.grupoSeleccionado, this.filtroMes, this.filtroAnio)
+      .subscribe({
+        next: (data) => {
+          this.estudiantesAsistencia = data;
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al calcular estadísticas' });
+          this.loading = false;
+          this.cdr.detectChanges();
+        }
       });
-
-    } catch (error) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al calcular estadísticas' });
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
   }
 
   /**
    * Abre el modal de historial detallado
    */
-  async verHistorialIndividual(alumno: any) {
+  verHistorialIndividual(alumno: any) {
     this.alumnoSeleccionado = alumno;
     this.displayHistorial = true;
-    await this.cargarDetalleHistorial();
+    this.cargarDetalleHistorial();
   }
 
   /**
    * Carga el detalle de asistencias día por día para el modal
    */
-  async cargarDetalleHistorial() {
+  cargarDetalleHistorial() {
+    if (!this.alumnoSeleccionado) return;
+
     this.loadingHistorial = true;
-    try {
-      const mesStr = ('0' + this.filtroMes).slice(-2);
-      const primerDia = `${this.filtroAnio}-${mesStr}-01`;
-      const ultimoDiaNum = new Date(this.filtroAnio, this.filtroMes, 0).getDate();
-      const ultimoDia = `${this.filtroAnio}-${mesStr}-${ultimoDiaNum}`;
+    
+    // Obtenemos el id plano que nos devuelve el reporte
+    const estudianteId = this.alumnoSeleccionado.estudiante_id;
 
-      const { data, error } = await this.supabase.supabase
-        .from('asistencias')
-        .select('presente, clases!inner(fecha, hora, lugar)')
-        .eq('estudiante_id', this.alumnoSeleccionado.id)
-        .gte('clases.fecha', primerDia)
-        .lte('clases.fecha', ultimoDia)
-        .order('clases(fecha)', { ascending: false });
-
-      if (error) throw error;
-      this.historialAlumno = data || [];
-    } catch (error) {
-    } finally {
-      this.loadingHistorial = false;
-      this.cdr.detectChanges();
-    }
+    this.asistenciaService.obtenerDetalleMensualEstudiante(estudianteId, this.filtroMes, this.filtroAnio)
+      .subscribe({
+        next: (data) => {
+          this.historialAlumno = data || [];
+          this.loadingHistorial = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el historial.' });
+          this.loadingHistorial = false;
+          this.cdr.detectChanges();
+        }
+      });
   }
 
-  // Especificamos los tipos exactos que acepta p-tag de PrimeNG
   getSeverity(porcentaje: number): "success" | "warn" | "danger" | "secondary" {
     if (porcentaje >= 85) return 'success';
     if (porcentaje >= 70) return 'warn';
-    if (porcentaje === 0) return 'secondary'; // Opcional para casos sin datos
+    if (porcentaje === 0) return 'secondary';
     return 'danger';
   }
 }

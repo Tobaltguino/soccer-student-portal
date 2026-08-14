@@ -90,6 +90,7 @@
         <p class="text-600 m-0">No se encontraron registros de asistencia para este grupo en el periodo seleccionado.</p>
     </div>
 
+    <!-- MODAL HISTORIAL ACTUALIZADO PARA LEER VARIABLES PLANAS -->
     <p-dialog [(visible)]="displayHistorial" [header]="'Historial: ' + alumnoSeleccionado?.nombre + ' ' + alumnoSeleccionado?.apellido" 
               [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" [draggable]="false" [resizable]="false">
         
@@ -111,12 +112,14 @@
             <div *ngFor="let h of historialAlumno" class="historial-row">
                 
                 <div class="col-fecha">
-                    {{ h.clases.fecha | date:'dd/MM/yyyy' }}
+                    <!-- ✅ Ahora es h.fecha en lugar de h.clases.fecha -->
+                    {{ h.fecha | date:'dd/MM/yyyy' }}
                 </div>
                 
                 <div class="col-lugar">
                     <i class="pi pi-map-marker mr-1"></i>
-                    <span class="text-truncate">{{ h.clases.lugar }}</span>
+                    <!-- ✅ Ahora es h.lugar en lugar de h.clases.lugar -->
+                    <span class="text-truncate">{{ h.lugar || 'Sin Asignar' }}</span>
                 </div>
                 
                 <div class="col-estado">
