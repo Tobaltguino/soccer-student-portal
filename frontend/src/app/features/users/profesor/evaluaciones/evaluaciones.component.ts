@@ -22,7 +22,7 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
 
 
 @Component({
-  selector: 'app-professor-evaluations',
+  selector: 'app-profesor-evaluaciones',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, ButtonModule, DialogModule,
@@ -30,10 +30,10 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
     TagModule, ToastModule, ConfirmDialogModule, TooltipModule, RadioButtonModule
   ],
   providers: [MessageService, ConfirmationService],
-  templateUrl: './professor-evaluations.html',
-  styleUrls: ['./professor-evaluations.css']
+  templateUrl: './evaluaciones.component.html',
+  styleUrls: ['./evaluaciones.component.css']
 })
-export class ProfessorEvaluationsComponent implements OnInit {
+export class ProfesorEvaluacionesComponent implements OnInit {
 
   // --- DATOS ---
   sesiones: any[] = [];            

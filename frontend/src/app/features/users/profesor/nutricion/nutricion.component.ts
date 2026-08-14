@@ -16,17 +16,17 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
 @Component({
-  selector: 'app-professor-nutrition',
+  selector: 'app-profesor-nutricion',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, DialogModule, ButtonModule, 
     SelectModule, DatePickerModule, TagModule, TooltipModule, ToastModule
   ],
   providers: [MessageService],
-  templateUrl: './professor-nutrition.html',
-  styleUrls: ['./professor-nutrition.css'] // Usa el mismo CSS que admin-nutri
+  templateUrl: './nutricion.component.html',
+  styleUrls: ['./nutricion.component.css'] // Usa el mismo CSS que admin-nutri
 })
-export class ProfessorNutritionComponent implements OnInit {
+export class ProfesorNutricionComponent implements OnInit {
   
   // Datos
   sesiones: any[] = [];

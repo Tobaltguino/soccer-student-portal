@@ -6,11 +6,11 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
 
 
 @Component({
-  selector: 'app-professor-dashboard',
+  selector: 'app-profesor-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './professor-dashboard.html',
-  styleUrls: ['./professor-dashboard.css']
+  templateUrl: './dashboard.component.html',
+  styleUrls: ['./dashboard.component.css']
 })
 export class ProfessorDashboardComponent implements OnInit {
   

@@ -21,7 +21,7 @@ import { Grupo } from '../../../../core/domains/academico/grupos/models/grupo.in
 import { HistorialClinico } from '../../../../core/domains/salud/kinesiologia/historial-clinico/models/historial-clinico.interface';
 
 @Component({
-  selector: 'app-professor-view-students',
+  selector: 'app-profesor-ver-estudiantes',
   standalone: true,
   imports: [
     CommonModule, 
@@ -36,10 +36,10 @@ import { HistorialClinico } from '../../../../core/domains/salud/kinesiologia/hi
     TooltipModule
   ],
   providers: [FilterService],
-  templateUrl: './professor-view-students.html',
-  styleUrls: ['./professor-view-students.css']
+  templateUrl: './ver-estudiantes.component.html',
+  styleUrls: ['./ver-estudiantes.component.css']
 })
-export class ProfessorViewStudentsComponent implements OnInit {
+export class ProfesorVerEstudiantesComponent implements OnInit {
   @ViewChild('dt') dt: Table | undefined;
 
   // --- SERVICIOS INYECTADOS ---

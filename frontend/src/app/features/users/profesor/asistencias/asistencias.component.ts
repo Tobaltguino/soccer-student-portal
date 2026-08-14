@@ -17,7 +17,7 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
 
 
 @Component({
-  selector: 'app-professor-attendance',
+  selector: 'app-profesor-asistencias',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, SelectModule, 
@@ -25,10 +25,10 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
     TooltipModule, ToastModule
   ],
   providers: [MessageService],
-  templateUrl: './professor-attendance.html',
-  styleUrls: ['./professor-attendance.css']
+  templateUrl: './asistencias.component.html',
+  styleUrls: ['./asistencias.component.css']
 })
-export class ProfessorAttendanceComponent implements OnInit {
+export class ProfesorAsistenciasComponent implements OnInit {
   
   // Datos principales
   grupos: any[] = [];
