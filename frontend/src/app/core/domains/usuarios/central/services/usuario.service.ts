@@ -104,4 +104,25 @@ export class UsuarioService {
   eliminarUsuario(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+
+  /**
+   * PATCH /usuarios/:id/foto
+   * Sube o actualiza la foto de perfil de un usuario usando FormData.
+   */
+  actualizarFoto(id: string, foto: File): Observable<{ fotoUrl: string }> {
+    const formData = new FormData();
+    formData.append('foto', foto); 
+    // El nombre 'foto' debe coincidir con el FileInterceptor('foto') del backend
+
+    // HttpClient deduce automáticamente los headers multipart/form-data
+    return this.http.patch<{ fotoUrl: string }>(`${this.apiUrl}/${id}/foto`, formData);
+  }
+
+  /**
+   * DELETE /usuarios/:id/foto
+   * Elimina la foto de perfil actual del usuario y deja el campo en null.
+   */
+  eliminarFoto(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}/foto`);
+  }
 }

@@ -20,6 +20,7 @@ export interface UsuarioPerfil {
   apellido: string;
   email: string;
   rol: Rol;
+  foto_url?: string | null; // <-- Te sugiero agregar esto a tu interface
   telefono: string | null;
   fecha_nacimiento: string | null;
   activo: boolean;

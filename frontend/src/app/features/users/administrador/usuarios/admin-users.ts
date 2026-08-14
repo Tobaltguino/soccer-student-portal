@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, ViewChild } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -20,9 +20,14 @@ import { FileUploadModule } from 'primeng/fileupload';
 
 // Services & Directives
 import { FilterService, ConfirmationService, MessageService } from 'primeng/api';
-import { SupabaseService } from '../../../../../core/services/supabase.service';
-import { RutFormatDirective } from '../../../../../shared/directives/rut-format.directive';
-import { RutValidator } from '../../../../../shared/directives/rut-validator.directive';
+import { HistorialClinicoService } from '../../../../core/domains/salud/kinesiologia/historial-clinico/services/historial-clinico.service';
+import { RutFormatDirective } from '../../../../shared/directives/rut-format.directive';
+import { RutValidator } from '../../../../shared/directives/rut-validator.directive';
+
+// Nuevos Servicios de Dominio
+import { UsuarioService } from '../../../../core/domains/usuarios/central/services/usuario.service';
+import { Rol, CrearUsuarioPayload, ActualizarUsuarioPayload } from '../../../../core/domains/usuarios/central/models/usuario.interface'
+import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
 
 @Component({
   selector: 'app-admin-users',
@@ -31,8 +36,7 @@ import { RutValidator } from '../../../../../shared/directives/rut-validator.dir
     CommonModule, FormsModule, TableModule, ButtonModule, DialogModule, 
     InputTextModule, InputNumberModule, ConfirmDialogModule, SelectModule, MultiSelectModule, 
     ToastModule, TagModule, CheckboxModule, TooltipModule, DatePickerModule,
-    FileUploadModule, 
-    RutFormatDirective
+    FileUploadModule, RutFormatDirective
   ],
   providers: [ConfirmationService, MessageService, FilterService],
   templateUrl: './admin-users.html',
@@ -41,20 +45,34 @@ import { RutValidator } from '../../../../../shared/directives/rut-validator.dir
 export class AdminUsersComponent implements OnInit {
   @ViewChild('dt') dt: Table | undefined;
 
+  // --- SERVICIOS ---
+  private usuarioService = inject(UsuarioService);
+  private grupoService = inject(GrupoService);
+  private historialClinicoService = inject(HistorialClinicoService);
+  private cdr = inject(ChangeDetectorRef);
+  private messageService = inject(MessageService);
+  private confirmationService = inject(ConfirmationService);
+  private filterService = inject(FilterService);
+
   // --- DATOS ---
   dataList: any[] = []; 
   listaGrupos: any[] = [];
-  listaPosiciones: any[] = [];
+  listaPosiciones: any[] = [
+    { id: 'portero', nombre: 'Portero' },
+    { id: 'defensa', nombre: 'Defensa' },
+    { id: 'mediocampista', nombre: 'Mediocampista' },
+    { id: 'delantero', nombre: 'Delantero' }
+  ];
   
   // --- CONFIGURACIÓN DE VISTA ---
-  vistaActual: string = 'estudiantes';
+  vistaActual: Rol = Rol.ESTUDIANTE;
   
   opcionesVista = [
-    { label: 'Estudiantes', value: 'estudiantes' },
-    { label: 'Profesores', value: 'profesores' },
-    { label: 'Administradores', value: 'admins' },
-    { label: 'Kinesiólogos', value: 'kinesiologos' },
-    { label: 'Nutricionistas', value: 'nutricionistas' }
+    { label: 'Estudiantes', value: Rol.ESTUDIANTE },
+    { label: 'Profesores', value: Rol.PROFESOR },
+    { label: 'Administradores', value: Rol.ADMINISTRADOR },
+    { label: 'Kinesiólogos', value: Rol.KINESIOLOGO },
+    { label: 'Nutricionistas', value: Rol.NUTRICIONISTA }
   ];
 
   opcionesEstado = [
@@ -63,9 +81,8 @@ export class AdminUsersComponent implements OnInit {
   ];
 
   listaTiposProfesor = [
-    { label: 'Profesor de Fútbol', value: 'Profesor de futbol' },
-    { label: 'Preparador Físico', value: 'Preparador fisico' },
-    { label: 'Preparador de Arqueros', value: 'Preparador de arqueros' }
+    { label: 'Profesor de Fútbol', value: 'profesor de futbol' },
+    { label: 'Preparador Físico', value: 'preparador fisico' }
   ];
 
   filtros: any = { global: '', grupo: null, posicion: null, tipoProfesor: null, estado: null };
@@ -89,20 +106,7 @@ export class AdminUsersComponent implements OnInit {
   loadingHistorial: boolean = false;
 
   // --- FORMULARIO ---
-  userForm: any = {
-    id: null, nombre: '', apellido: '', rut: '', email: '', password: '', 
-    fecha_nacimiento: null, activo: true, grupo_id: null, tipo_profesor: '',
-    posicionesIds: [], gruposIds: [], foto_url: null,
-    direccion: '', prevision: '', peso: null, altura: null 
-  };
-
-  constructor(
-    private supabase: SupabaseService,
-    private cdr: ChangeDetectorRef,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private filterService: FilterService
-  ) {}
+  userForm: any = this.getFormularioVacio();
 
   ngOnInit() {
     this.configurarFiltrosPersonalizados();
@@ -112,20 +116,17 @@ export class AdminUsersComponent implements OnInit {
 
   configurarFiltrosPersonalizados() {
     this.filterService.register('contienePosicion', (value: any, filter: any): boolean => {
-      if (filter === undefined || filter === null || filter.length === 0) return true;
-      if (value === undefined || value === null) return false;
-      return value.some((p: any) => filter.includes(p.posicion_id));
+      if (!filter || filter.length === 0) return true;
+      if (!value) return false;
+      return value.some((p: string) => filter.includes(p));
     });
   }
 
-  async cargarMaestros() {
-    const resGrupos = await this.supabase.getGrupos();
-    if(resGrupos.data) this.listaGrupos = resGrupos.data;
-    
-    const resPos = await this.supabase.getPosiciones();
-    if(resPos.data) this.listaPosiciones = resPos.data;
-
-    this.cdr.detectChanges();
+  cargarMaestros() {
+    this.grupoService.listarGrupos().subscribe({
+      next: (data) => this.listaGrupos = data,
+      error: () => this.messageService.add({ severity: 'error', summary: 'Aviso', detail: 'No se pudieron cargar los grupos' })
+    });
   }
 
   cambiarVista() { 
@@ -138,39 +139,39 @@ export class AdminUsersComponent implements OnInit {
     if (this.dt) this.dt.reset();
   }
 
-  async cargarDatos() {
+  cargarDatos() {
     this.loading = true;
     this.dataList = [];
-    try {
-      let res: any;
-      switch(this.vistaActual) {
-        case 'estudiantes': res = await this.supabase.getEstudiantes(); break;
-        case 'profesores': res = await this.supabase.getProfesores(); break;
-        case 'admins': res = await this.supabase.getAdmins(); break;
-        case 'kinesiologos': res = await this.supabase.supabase.from('kinesiologos').select(`*, grupos_kine (grupo_id)`); break;
-        case 'nutricionistas': res = await this.supabase.getNutricionistas(); break;
+
+    this.usuarioService.listarUsuarios({ rol: this.vistaActual, limite: 200 }).subscribe({
+      next: (res) => {
+        this.dataList = res.registros.map(user => ({
+          ...user,
+          grupo_id: user.datosEstudiante?.grupo_id,
+          posiciones: user.datosEstudiante?.posiciones || [],
+          tipo_profesor: user.datosProfesor?.tipo_profesor,
+          peso: user.datosEstudiante?.peso,
+          altura: user.datosEstudiante?.altura,
+          prevision: user.datosEstudiante?.prevision,
+          direccion: user.datosEstudiante?.direccion
+        }));
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar la lista de usuarios' });
+        this.loading = false;
+        this.cdr.detectChanges();
       }
-      if (res?.data) this.dataList = res.data;
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
+    });
   }
 
-  calcularEdad(fecha: any): number | null {
-    if (!fecha) return null;
-    const born = new Date(fecha);
-    const today = new Date();
-    let age = today.getFullYear() - born.getFullYear();
-    const monthDiff = today.getMonth() - born.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < born.getDate())) age--;
-    return age;
-  }
-
+  // --- LÓGICA DE FOTOS ---
   onFileSelected(event: any) {
     const file = event.files[0];
     if (file) {
       this.archivoSeleccionado = file;
+      // Mostrar la vista previa inmediatamente
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.previewUrl = e.target.result;
@@ -183,9 +184,10 @@ export class AdminUsersComponent implements OnInit {
   clearFoto() {
     this.archivoSeleccionado = null;
     this.previewUrl = null;
-    this.userForm.foto_url = null; 
+    // Al dejar previewUrl en null, le indicamos al backend que debe eliminar la foto al guardar.
   }
 
+  // --- LÓGICA DE FORMULARIO ---
   abrirNuevo() {
     this.isEditing = false;
     this.tituloDialogo = 'Nuevo Usuario';
@@ -195,7 +197,7 @@ export class AdminUsersComponent implements OnInit {
 
   abrirEditar(usuario: any) {
     if (usuario.rut === '1-1') {
-        this.messageService.add({ severity: 'info', summary: 'Cuenta Protegida', detail: 'Los datos del administrador maestro solo pueden ser modificados desde la base de datos.' });
+        this.messageService.add({ severity: 'info', summary: 'Cuenta Protegida', detail: 'El Administrador maestro no puede ser modificado aquí.' });
         return;
     }
 
@@ -209,38 +211,37 @@ export class AdminUsersComponent implements OnInit {
         if(parts.length === 3) fechaNac = new Date(+parts[0], +parts[1] - 1, +parts[2]);
     }
 
-    this.userForm = { ...usuario, fecha_nacimiento: fechaNac, password: '', activo: usuario.activo ?? true };
-    this.previewUrl = usuario.foto_url || null;
-
-    if (this.vistaActual === 'estudiantes' && usuario.estudiantes_posiciones) {
-        this.userForm.posicionesIds = usuario.estudiantes_posiciones.map((p: any) => p.posicion_id);
-    }
-    if (this.vistaActual === 'profesores' && usuario.grupos_profesores) {
-        this.userForm.gruposIds = usuario.grupos_profesores.map((g: any) => g.grupo_id);
-    }
-    if (this.vistaActual === 'kinesiologos' && usuario.grupos_kine) {
-        this.userForm.gruposIds = usuario.grupos_kine.map((g: any) => g.grupo_id);
-    }
-
+    this.userForm = { 
+      ...usuario, 
+      id: usuario.id_usuario, 
+      fecha_nacimiento: fechaNac, 
+      posicionesIds: usuario.posiciones || []
+    };
+    
+    // ✅ Cargamos la foto actual si existe
+    this.previewUrl = usuario.foto_url || null; 
     this.displayDialog = true;
   }
 
   limpiarForm() {
-    this.userForm = { 
-        id: null, nombre: '', apellido: '', rut: '', email: '', password: '', fecha_nacimiento: null, activo: true, grupo_id: null, tipo_profesor: '', 
-        posicionesIds: [], gruposIds: [], foto_url: null,
-        direccion: '', prevision: '', peso: null, altura: null
-    };
+    this.userForm = this.getFormularioVacio();
     this.archivoSeleccionado = null;
     this.previewUrl = null;
     this.uploadingFoto = false;
   }
 
-  async guardar() {
+  private getFormularioVacio() {
+    return { 
+      id: null, nombre: '', apellido: '', rut: '', email: '', fecha_nacimiento: null, activo: true, 
+      grupo_id: null, tipo_profesor: '', posicionesIds: [], direccion: '', prevision: '', peso: null, altura: null
+    };
+  }
+
+  guardar() {
     if (this.isEditing && this.userForm.rut === '1-1') return;
     
     if (!this.userForm.nombre || !this.userForm.apellido || !this.userForm.email || !this.userForm.rut) {
-        this.messageService.add({ severity: 'warn', summary: 'Incompleto', detail: 'Completa todos los campos (*).' }); return;
+        this.messageService.add({ severity: 'warn', summary: 'Incompleto', detail: 'Completa todos los campos obligatorios (*).' }); return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -250,164 +251,173 @@ export class AdminUsersComponent implements OnInit {
 
     const rutLimpio = this.userForm.rut.replace(/\./g, '').trim();
     if (!RutValidator.esValido(rutLimpio)) {
-        this.messageService.add({ severity: 'error', summary: 'RUT Inválido', detail: 'Formato incorrecto.' }); return;
-    }
-
-    if (this.vistaActual === 'estudiantes' && !this.userForm.fecha_nacimiento) {
-        this.messageService.add({ severity: 'warn', summary: 'Faltan Datos', detail: 'La fecha es obligatoria.' }); return;
-    } else if (this.vistaActual === 'profesores' && !this.userForm.tipo_profesor) {
-        this.messageService.add({ severity: 'warn', summary: 'Faltan Datos', detail: 'Especialidad obligatoria.' }); return;
+        this.messageService.add({ severity: 'error', summary: 'RUT Inválido', detail: 'El RUT ingresado no es válido.' }); return;
     }
 
     this.loading = true;
-    this.cdr.detectChanges();
 
-    try {
-        let finalFotoUrl = this.userForm.foto_url;
+    // 1. Armamos el Payload de Datos
+    const payload: Partial<CrearUsuarioPayload> = {
+      rut: rutLimpio,
+      nombre: this.userForm.nombre,
+      apellido: this.userForm.apellido,
+      email: this.userForm.email.toLowerCase(),
+      rol: this.vistaActual,
+      fechaNacimiento: this.userForm.fecha_nacimiento ? this.formatearFecha(this.userForm.fecha_nacimiento) : undefined
+    };
 
-        if (this.archivoSeleccionado) {
-            this.uploadingFoto = true;
-            const urlSubida = await this.supabase.subirFoto(this.archivoSeleccionado);
-            if (urlSubida) { finalFotoUrl = urlSubida; this.cdr.detectChanges(); }
-            this.uploadingFoto = false;
-            this.cdr.detectChanges();
-        } else if (this.previewUrl === null) {
-            finalFotoUrl = null;
-        }
+    if (this.vistaActual === Rol.ESTUDIANTE) {
+      payload.peso = this.userForm.peso;
+      payload.altura = this.userForm.altura;
+      payload.posiciones = this.userForm.posicionesIds;
+      payload.grupoId = this.userForm.grupo_id;
+      payload.direccion = this.userForm.direccion;
+      payload.prevision = this.userForm.prevision;
+    } else if (this.vistaActual === Rol.PROFESOR) {
+      payload.tipoProfesor = this.userForm.tipo_profesor;
+    }
 
-        const { nombre, apellido, activo } = this.userForm;
-        const datosBase: any = { nombre, apellido, rut: this.userForm.rut, activo, foto_url: finalFotoUrl };
-
-        if (this.vistaActual === 'estudiantes') {
-            let fechaDb = null;
-            if (this.userForm.fecha_nacimiento) {
-                const d = this.userForm.fecha_nacimiento;
-                fechaDb = `${d.getFullYear()}-${('0' + (d.getMonth() + 1)).slice(-2)}-${('0' + d.getDate()).slice(-2)}`;
-            }
-            datosBase.fecha_nacimiento = fechaDb;
-            datosBase.grupo_id = this.userForm.grupo_id;
-            
-            datosBase.direccion = this.userForm.direccion || null;
-            datosBase.prevision = this.userForm.prevision || null;
-            datosBase.peso = this.userForm.peso || null;
-            datosBase.altura = this.userForm.altura || null;
-        
-        } else if (this.vistaActual === 'profesores') {
-            datosBase.tipo_profesor = this.userForm.tipo_profesor;
-        }
-
-        let userId = this.userForm.id;
-
-        if (this.isEditing) {
-            const { error } = await this.supabase.updateUsuario(this.vistaActual, userId, datosBase, this.userForm.email.toLowerCase());
-            if (error) throw error;
-        } else {
-            const generatedPassword = rutLimpio.replace(/-/g, '');
-            const { data, error } = await this.supabase.crearUsuarioCompleto(this.userForm.email.toLowerCase(), generatedPassword, datosBase, this.vistaActual);
-            if (error) throw error;
-            userId = data?.user?.id;
-        }
-
-        if (userId) {
-            if (this.vistaActual === 'estudiantes') await this.supabase.actualizarPosicionesEstudiante(userId, this.userForm.posicionesIds);
-            if (this.vistaActual === 'profesores') await this.supabase.actualizarGruposProfesor(userId, this.userForm.gruposIds);
-            if (this.vistaActual === 'kinesiologos') {
-                const res = await this.supabase.getGruposDeKine(userId);
-                const gruposViejos = res.data || [];
-                for (let viejo of gruposViejos) await this.supabase.removerGrupoDeKine(userId, viejo.grupo_id);
-                for (let nuevoGrupoId of this.userForm.gruposIds) await this.supabase.asignarGrupoAKine(userId, nuevoGrupoId);
-            }
-        }
-
-        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario guardado.' });
-        this.displayDialog = false;
-        
-        setTimeout(() => this.cargarDatos(), 100);
-
-    } catch (error: any) {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: error.message || 'Error al guardar.' });
-    } finally {
-        this.loading = false;
-        this.uploadingFoto = false;
-        this.cdr.markForCheck(); 
+    // 2. Ejecutamos la creación o actualización de los datos básicos
+    if (this.isEditing) {
+      this.usuarioService.actualizarUsuario(this.userForm.id, payload as ActualizarUsuarioPayload).subscribe({
+        next: (res) => this.procesarFotoYFinalizar(res.id_usuario, 'Usuario actualizado con éxito'),
+        error: (err) => this.mostrarErrorGuardado(err)
+      });
+    } else {
+      payload.passwordTemporal = rutLimpio.replace(/-/g, '');
+      this.usuarioService.crearUsuario(payload as CrearUsuarioPayload).subscribe({
+        next: (res) => this.procesarFotoYFinalizar(res.id_usuario, 'Usuario creado con éxito'),
+        error: (err) => this.mostrarErrorGuardado(err)
+      });
     }
   }
 
-  async toggleEstado(usuario: any) {
+  // ✅ 3. Flujo Secuencial: Sube/Elimina foto después de guardar el usuario
+  private procesarFotoYFinalizar(userId: string, mensaje: string) {
+    if (this.archivoSeleccionado) {
+      // El usuario eligió una foto nueva
+      this.uploadingFoto = true;
+      this.usuarioService.actualizarFoto(userId, this.archivoSeleccionado).subscribe({
+        next: () => this.finalizarGuardado(mensaje),
+        error: () => this.finalizarGuardado(mensaje + ' (Pero no se pudo subir la foto)')
+      });
+    } else if (this.isEditing && !this.previewUrl) {
+      // El usuario estaba editando y borró la foto (click en el basurero)
+      this.usuarioService.eliminarFoto(userId).subscribe({
+        next: () => this.finalizarGuardado(mensaje),
+        error: () => this.finalizarGuardado(mensaje + ' (Pero no se pudo eliminar la foto anterior)')
+      });
+    } else {
+      // No hubo cambios en la foto
+      this.finalizarGuardado(mensaje);
+    }
+  }
+
+  private finalizarGuardado(mensaje: string) {
+    this.loading = false;
+    this.uploadingFoto = false;
+    this.displayDialog = false;
+    this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
+    this.cargarDatos();
+  }
+
+  private mostrarErrorGuardado(err: any) {
+    this.loading = false;
+    this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Error al procesar la solicitud' });
+    this.cdr.detectChanges();
+  }
+
+  // --- ACCIONES DE TABLA ---
+  toggleEstado(usuario: any) {
     if (usuario.rut === '1-1') return;
     this.confirmationService.confirm({
-      message: `¿Deseas ${usuario.activo ? 'desactivar' : 'activar'} a ${usuario.nombre}?`,
+      message: `¿Deseas ${usuario.activo ? 'desactivar' : 'reactivar'} a ${usuario.nombre}?`,
       header: 'Confirmar estado',
       icon: usuario.activo ? 'pi pi-exclamation-triangle' : 'pi pi-check-circle',
       acceptLabel: 'Sí', rejectLabel: 'Cancelar', acceptButtonStyleClass: usuario.activo ? 'p-button-danger' : 'p-button-success',
-      accept: async () => {
-        const nuevoEstado = !usuario.activo;
-        const datosUpdate: any = { nombre: usuario.nombre, apellido: usuario.apellido, rut: usuario.rut, activo: nuevoEstado, foto_url: usuario.foto_url };
-
-        if (this.vistaActual === 'estudiantes') {
-          datosUpdate.fecha_nacimiento = usuario.fecha_nacimiento;
-          datosUpdate.grupo_id = usuario.grupo_id;
-        } else if (this.vistaActual === 'profesores') {
-          datosUpdate.tipo_profesor = usuario.tipo_profesor;
-        }
-
-        try {
-          await this.supabase.updateUsuario(this.vistaActual, usuario.id, datosUpdate, usuario.email);
-          usuario.activo = nuevoEstado; 
-          this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Estado actualizado.' });
-          this.cdr.detectChanges();
-        } catch (err) {}
+      accept: () => {
+        const action$ = usuario.activo 
+          ? this.usuarioService.desactivarUsuario(usuario.id_usuario) 
+          : this.usuarioService.reactivarUsuario(usuario.id_usuario);
+          
+        action$.subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Estado actualizado.' });
+            this.cargarDatos();
+          },
+          error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cambiar el estado.' })
+        });
       }
     });
   }
 
-  async eliminar(usuario: any) {
+  eliminar(usuario: any) {
     if (usuario.rut === '1-1') return;
     this.confirmationService.confirm({
-      message: `¿Eliminar permanentemente a ${usuario.nombre}?`,
-      header: 'Confirmar', icon: 'pi pi-trash',
-      acceptLabel: 'Sí', acceptButtonStyleClass: 'p-button-danger', rejectLabel: 'Cancelar',
-      accept: async () => {
-        const { error } = await this.supabase.deleteUsuario(this.vistaActual, usuario.id);
-        if (!error) {
-          this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Usuario borrado.' });
-          this.cargarDatos();
-        }
+      message: `¿Eliminar permanentemente a ${usuario.nombre}? Esta acción borra todo su historial.`,
+      header: 'Eliminar Usuario', icon: 'pi pi-trash',
+      acceptLabel: 'Sí, eliminar', acceptButtonStyleClass: 'p-button-danger', rejectLabel: 'Cancelar',
+      accept: () => {
+        this.usuarioService.eliminarUsuario(usuario.id_usuario).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Usuario borrado del sistema.' });
+            this.cargarDatos();
+          },
+          error: (err) => this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'No se puede eliminar.' })
+        });
       }
     });
   }
 
+  // --- UTILIDADES ---
   getGrupoNombre(grupoId: any): string {
     const grupo = this.listaGrupos.find(g => g.id === grupoId); return grupo ? grupo.nombre : 'Desconocido';
   }
 
-  // ✅ FUNCIONES DE LA FICHA CLÍNICA
-  async abrirFicha(estudiante: any) {
+  formatearFecha(date: Date): string {
+    return `${date.getFullYear()}-${('0' + (date.getMonth() + 1)).slice(-2)}-${('0' + date.getDate()).slice(-2)}`;
+  }
+
+  calcularEdad(fecha: any): number | null {
+    if (!fecha) return null;
+    const born = new Date(fecha);
+    const today = new Date();
+    let age = today.getFullYear() - born.getFullYear();
+    if (today.getMonth() < born.getMonth() || (today.getMonth() === born.getMonth() && today.getDate() < born.getDate())) age--;
+    return age;
+  }
+
+  abrirFicha(estudiante: any) {
     this.selectedEstudianteFicha = estudiante;
     this.displayFicha = true;
     this.loadingHistorial = true;
     this.historialClinico = [];
     this.cdr.detectChanges();
 
-    try {
-        const res = await this.supabase.getHistorialClinico(estudiante.id);
-        this.historialClinico = res.data || [];
-    } catch (error) {
-    } finally {
+    this.historialClinicoService.listarHistorialPorEstudiante(estudiante.id_usuario).subscribe({
+      next: (data) => {
+        this.historialClinico = data || [];
         this.loadingHistorial = false;
         this.cdr.detectChanges();
-    }
+      },
+      error: (err) => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el historial médico.' });
+        this.loadingHistorial = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
-  getSeveridadHistorial(tipo: any): any {
-      if (tipo === 'LESION') return 'danger';
-      if (tipo === 'ALERGIA') return 'warning';
-      return 'info'; 
+  getSeveridadHistorial(tipo: string): any { 
+    if (tipo === 'LESION') return 'danger';
+    if (tipo === 'ALERGIA') return 'warning';
+    return 'info'; // PATOLOGIA u otros
   }
-
-  getSeveridadEstado(estado: any): any {
-      if (estado === 'RECUPERADO') return 'success';
-      if (estado === 'ACTIVO') return 'danger';
-      return 'warning'; 
+  
+  getSeveridadEstado(estado: string): any { 
+    if (estado === 'RECUPERADO') return 'success';
+    if (estado === 'EN_OBSERVACION') return 'warning';
+    if (estado === 'EN_REINTEGRO_DEPORTIVO') return 'info';
+    return 'danger'; // EN_TRATAMIENTO
   }
 }

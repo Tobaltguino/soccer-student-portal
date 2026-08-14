@@ -18,7 +18,7 @@
                 <label>Buscador Global</label>
                 <input pInputText type="text" [(ngModel)]="filtros.global" 
                        (input)="dt.filterGlobal(filtros.global, 'contains')" 
-                       placeholder="Buscar por Nombre, RUT o Email..." class="w-full"/>
+                       placeholder="Buscar por Nombre o RUT..." class="w-full"/>
             </div>
 
             <div class="filter-item flex-grow-1">
@@ -27,23 +27,23 @@
                                optionLabel="nombre" optionValue="id" placeholder="Todos" 
                                (onChange)="dt.filter($event.value, 'grupo_id', 'in')" 
                                display="chip" [showClear]="true" styleClass="w-full"
-                               [maxSelectedLabels]="1" selectedItemsLabel="{0} grupos"></p-multiSelect>
+                               [maxSelectedLabels]="1" selectedItemsLabel="{0} grupos" appendTo="body"></p-multiSelect>
             </div>
             
             <div class="filter-item flex-grow-1">
                 <label>Posiciones</label>
                 <p-multiSelect [options]="listaPosiciones" [(ngModel)]="filtros.posicion"
                                optionLabel="nombre" optionValue="id" placeholder="Todas"
-                               (onChange)="dt.filter($event.value, 'estudiantes_posiciones', 'contienePosicion')"
+                               (onChange)="dt.filter($event.value, 'posiciones', 'contienePosicion')"
                                display="chip" [showClear]="true" styleClass="w-full"
-                               [maxSelectedLabels]="1" selectedItemsLabel="{0} pos."></p-multiSelect>
+                               [maxSelectedLabels]="1" selectedItemsLabel="{0} pos." appendTo="body"></p-multiSelect>
             </div>
 
             <div class="filter-item w-10rem">
                 <label>Estado</label>
                 <p-select [options]="opcionesEstado" [(ngModel)]="filtros.estado" 
                           placeholder="Todos" (onChange)="dt.filter($event.value, 'activo', 'equals')" 
-                          [showClear]="true" styleClass="w-full">
+                          [showClear]="true" styleClass="w-full" appendTo="body">
                     <ng-template let-option pTemplate="item">
                         <p-tag [value]="option.label" [severity]="option.value ? 'success' : 'danger'"></p-tag>
                     </ng-template>
@@ -61,7 +61,7 @@
     <div class="main-card">
         <p-table #dt [value]="dataList" [loading]="loading" [rows]="10" [paginator]="true" 
                  styleClass="p-datatable-sm" [rowHover]="true" responsiveLayout="stack"
-                 [globalFilterFields]="['nombre', 'apellido', 'rut', 'email']">
+                 [globalFilterFields]="['nombre', 'apellido', 'rut']">
             
             <ng-template pTemplate="header">
                 <tr>
@@ -70,8 +70,8 @@
                     <th class="text-center">F. Nac</th>
                     <th>Grupo</th>
                     <th>Posiciones</th>
-                    <th class="hidden-mobile">Email</th>
-                    <th class="text-center">Estado</th>
+                    <th class="text-center">Salud</th>
+                    <th class="text-center">Sistema</th>
                     <th class="text-center">Acción</th>
                 </tr>
             </ng-template>
@@ -105,24 +105,26 @@
 
                     <td>
                         <span class="p-column-title font-bold text-secondary hidden-desktop">Grupo:</span>
-                        <p-tag [value]="item.grupos?.nombre || 'Sin Grupo'" [severity]="item.grupos ? 'info' : 'secondary'"></p-tag>
+                        <p-tag [value]="getGrupoNombre(item.grupo_id)" [severity]="item.grupo_id ? 'info' : 'secondary'"></p-tag>
                     </td>
 
                     <td>
                         <span class="p-column-title font-bold text-secondary hidden-desktop">Posiciones:</span>
                         <div class="flex gap-1 flex-wrap justify-content-end sm:justify-content-start">
-                            <p-tag *ngFor="let p of item.estudiantes_posiciones" [value]="p.posiciones?.nombre" severity="warn"></p-tag>
-                            <span *ngIf="!item.estudiantes_posiciones?.length" class="text-500 text-xs italic">N/A</span>
+                            <p-tag *ngFor="let p of item.posiciones" [value]="p | uppercase" severity="warn"></p-tag>
+                            <span *ngIf="!item.posiciones?.length" class="text-500 text-xs italic">N/A</span>
                         </div>
                     </td>
 
-                    <td class="text-sm">
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Email:</span>
-                        <span class="break-email">{{ item.email || 'No registrado' }}</span>
+                    <td class="text-center">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Salud:</span>
+                        <p-tag [value]="formatEstadoSalud(item.estado_salud)" 
+                               [severity]="getSeveridadEstado(item.estado_salud)">
+                        </p-tag>
                     </td>
 
                     <td class="text-center">
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Estado:</span>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Sistema:</span>
                         <p-tag [severity]="item.activo ? 'success' : 'danger'" [value]="item.activo ? 'ACTIVO' : 'INACTIVO'" [rounded]="true"></p-tag>
                     </td>
 
@@ -145,6 +147,7 @@
         </p-table>
     </div>
 
+    <!-- MODAL FICHA CLÍNICA -->
     <p-dialog [(visible)]="displayDetalle" header="Ficha del Jugador" [modal]="true" [style]="{width: '90vw', maxWidth: '650px'}" styleClass="p-fluid">
         <div *ngIf="selectedEstudiante" class="flex flex-column pt-2 animation-fade-in">
 
@@ -154,7 +157,7 @@
                 <h2 class="m-0 text-main text-center">{{selectedEstudiante.nombre}} {{selectedEstudiante.apellido}}</h2>
                 <div class="flex align-items-center gap-2 mt-2">
                     <span class="text-secondary font-medium"><i class="pi pi-id-card mr-1 text-primary"></i> {{selectedEstudiante.rut || 'Sin RUT'}}</span>
-                    <p-tag [value]="selectedEstudiante.grupos?.nombre || 'Sin Grupo'" severity="info"></p-tag>
+                    <p-tag [value]="getGrupoNombre(selectedEstudiante.grupo_id)" severity="info"></p-tag>
                 </div>
             </div>
 
@@ -209,7 +212,7 @@
                             <td><p-tag [value]="evento.tipo" [severity]="getSeveridadHistorial(evento.tipo)"></p-tag></td>
                             <td class="font-bold text-main">{{ evento.diagnostico }}</td>
                             <td class="text-center">
-                                <p-tag [value]="evento.estado" [severity]="getSeveridadEstado(evento.estado)"></p-tag>
+                                <p-tag [value]="formatEstadoSalud(evento.estado)" [severity]="getSeveridadEstado(evento.estado)"></p-tag>
                             </td>
                         </tr>
                     </ng-template>

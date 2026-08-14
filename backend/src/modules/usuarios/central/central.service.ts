@@ -13,6 +13,14 @@ import type { UsuarioPerfilRow, UsuarioPerfilCompleto } from '../../../shared/in
 import { lanzarErrorSupabase, lanzarErrorAuth } from '../../../shared/utils/supabase-error.util';
 import { FiltrarUsuariosDto } from './dto/filtrar-usuarios.dto';
 
+import 'multer';
+import { randomUUID } from 'crypto';
+
+
+const BUCKET_FOTOS = 'usuarios-fotos';
+const TIPOS_IMAGEN_PERMITIDOS = ['image/png', 'image/jpeg', 'image/webp'];
+const TAMANO_MAXIMO_FOTO = 3 * 1024 * 1024; // 3 MB
+
 @Injectable()
 export class CentralService {
   constructor(
@@ -23,7 +31,7 @@ export class CentralService {
     private readonly nutricionistasService: NutricionistasService,
     private readonly adminsService: AdminsService,
   ) {}
-
+  
   async crearUsuario(dto: CrearUsuarioDto): Promise<UsuarioPerfilRow> {
     const { data: authData, error: authError } =
       await this.supabase.client.auth.admin.createUser({
@@ -410,5 +418,103 @@ private async tieneActividadRelacionada(usuarioId: string): Promise<boolean> {
     if (error) return [];
 
     return (data ?? []).map((row: any) => row[columna]);
+  }
+
+  async actualizarFoto(
+    usuarioId: string,
+    archivo: Express.Multer.File,
+  ): Promise<UsuarioPerfilRow> {
+    this.validarImagen(archivo);
+
+    const perfilActual = await this.buscarPropioPerfil(usuarioId);
+
+    const fotoUrl = await this.subirFoto(archivo, usuarioId);
+
+    // Borra la foto anterior del bucket, si tenía una
+    if (perfilActual.foto_url) {
+      await this.borrarFoto(perfilActual.foto_url);
+    }
+
+    const { data, error } = await this.supabase.client
+      .from('usuarios_perfiles')
+      .update({ foto_url: fotoUrl })
+      .eq('id_usuario', usuarioId)
+      .select()
+      .single<UsuarioPerfilRow>();
+
+    if (error) {
+      lanzarErrorSupabase(error, 'No se pudo actualizar la foto de perfil');
+    }
+
+    if (!data) {
+      throw new InternalServerErrorException('No se recibió el perfil actualizado');
+    }
+
+    return data;
+  }
+
+  async eliminarFoto(usuarioId: string): Promise<UsuarioPerfilRow> {
+    const perfilActual = await this.buscarPropioPerfil(usuarioId);
+
+    if (perfilActual.foto_url) {
+      await this.borrarFoto(perfilActual.foto_url);
+    }
+
+    const { data, error } = await this.supabase.client
+      .from('usuarios_perfiles')
+      .update({ foto_url: null })
+      .eq('id_usuario', usuarioId)
+      .select()
+      .single<UsuarioPerfilRow>();
+
+    if (error) {
+      lanzarErrorSupabase(error, 'No se pudo quitar la foto de perfil');
+    }
+
+    if (!data) {
+      throw new InternalServerErrorException('No se recibió el perfil actualizado');
+    }
+
+    return data;
+  }
+
+  private validarImagen(archivo: Express.Multer.File): void {
+    if (!archivo) {
+      throw new BadRequestException('Debes adjuntar una imagen');
+    }
+
+    if (!TIPOS_IMAGEN_PERMITIDOS.includes(archivo.mimetype)) {
+      throw new BadRequestException(`Tipo de imagen no permitido: ${archivo.mimetype}`);
+    }
+
+    if (archivo.size > TAMANO_MAXIMO_FOTO) {
+      throw new BadRequestException('La imagen supera el tamaño máximo permitido (3 MB)');
+    }
+  }
+
+  private async subirFoto(archivo: Express.Multer.File, usuarioId: string): Promise<string> {
+    const extension = archivo.originalname.split('.').pop();
+    const nombreArchivo = `${usuarioId}/${randomUUID()}.${extension}`;
+
+    const { error } = await this.supabase.client.storage
+      .from(BUCKET_FOTOS)
+      .upload(nombreArchivo, archivo.buffer, { contentType: archivo.mimetype });
+
+    if (error) {
+      throw new InternalServerErrorException(`No se pudo subir la foto: ${error.message}`);
+    }
+
+    const { data } = this.supabase.client.storage.from(BUCKET_FOTOS).getPublicUrl(nombreArchivo);
+
+    return data.publicUrl;
+  }
+
+  private async borrarFoto(url: string): Promise<void> {
+    const marcador = `/${BUCKET_FOTOS}/`;
+    const index = url.indexOf(marcador);
+    if (index === -1) return;
+
+    const path = url.substring(index + marcador.length);
+    await this.supabase.client.storage.from(BUCKET_FOTOS).remove([path]);
   }
 }

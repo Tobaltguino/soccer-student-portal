@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, ViewChild } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -13,7 +13,13 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { FilterService } from 'primeng/api';
 
-import { SupabaseService } from '../../../../../core/services/supabase.service';
+// Nuevos Servicios de Dominio
+import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
+import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
+import { HistorialClinicoService } from '../../../../core/domains/salud/kinesiologia/historial-clinico/services/historial-clinico.service';
+import { Estudiante } from '../../../../core/domains/usuarios/estudiantes/models/estudiante.interface';
+import { Grupo } from '../../../../core/domains/academico/grupos/models/grupo.interface';
+import { HistorialClinico } from '../../../../core/domains/salud/kinesiologia/historial-clinico/models/historial-clinico.interface';
 
 @Component({
   selector: 'app-kine-patients',
@@ -37,9 +43,22 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
 export class KinePatientsComponent implements OnInit {
   @ViewChild('dt') dt: Table | undefined;
 
+  // --- SERVICIOS INYECTADOS ---
+  private estudianteService = inject(EstudianteService);
+  private grupoService = inject(GrupoService);
+  private historialClinicoService = inject(HistorialClinicoService);
+  private cdr = inject(ChangeDetectorRef);
+  private filterService = inject(FilterService);
+
+  // --- DATOS ---
   dataList: any[] = []; 
-  listaGrupos: any[] = [];
-  listaPosiciones: any[] = [];
+  listaGrupos: Grupo[] = [];
+  listaPosiciones: any[] = [
+    { id: 'portero', nombre: 'Portero' },
+    { id: 'defensa', nombre: 'Defensa' },
+    { id: 'mediocampista', nombre: 'Mediocampista' },
+    { id: 'delantero', nombre: 'Delantero' }
+  ];
   
   opcionesEstado = [
     { label: 'Activos', value: true },
@@ -58,14 +77,8 @@ export class KinePatientsComponent implements OnInit {
   // --- VARIABLES PARA LA FICHA MÉDICA ---
   displayDetalle: boolean = false;
   selectedEstudiante: any = null;
-  historialClinico: any[] = [];
+  historialClinico: HistorialClinico[] = [];
   loadingHistorial: boolean = false;
-
-  constructor(
-    private supabase: SupabaseService,
-    private cdr: ChangeDetectorRef,
-    private filterService: FilterService
-  ) {}
 
   ngOnInit() {
     this.configurarFiltrosPersonalizados();
@@ -75,20 +88,21 @@ export class KinePatientsComponent implements OnInit {
 
   configurarFiltrosPersonalizados() {
     this.filterService.register('contienePosicion', (value: any, filter: any): boolean => {
-      if (filter === undefined || filter === null || filter.length === 0) return true;
-      if (value === undefined || value === null) return false;
-      return value.some((p: any) => filter.includes(p.posicion_id));
+      if (!filter || filter.length === 0) return true;
+      if (!value) return false;
+      // Compara el arreglo de posiciones planas (ej: ['portero', 'defensa'])
+      return value.some((p: string) => filter.includes(p));
     });
   }
 
-  async cargarMaestros() {
-    const resGrupos = await this.supabase.getGrupos();
-    if(resGrupos.data) this.listaGrupos = resGrupos.data;
-    
-    const resPos = await this.supabase.getPosiciones();
-    if(resPos.data) this.listaPosiciones = resPos.data;
-
-    this.cdr.detectChanges();
+  cargarMaestros() {
+    // Carga los grupos asignados a este kinesiólogo
+    this.grupoService.listarGrupos().subscribe({
+      next: (data) => {
+        this.listaGrupos = data;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   limpiarFiltros() {
@@ -96,28 +110,29 @@ export class KinePatientsComponent implements OnInit {
     if (this.dt) this.dt.reset();
   }
 
-  async cargarDatos() {
+  cargarDatos() {
     this.loading = true;
     this.dataList = [];
-    this.cdr.detectChanges();
 
-    try {
-      const authData = await this.supabase.getUser();
-      const userId = authData.data.user?.id;
-
-      if (!userId) return;
-
-      const res = await this.supabase.getEstudiantesDeKine(userId); 
-      
-      if (res?.data) {
-        this.dataList = res.data;
+    // Llamamos al endpoint veloz que creaste en NestJS
+    this.estudianteService.obtenerEstudiantesDeMiGrupo().subscribe({
+      next: (data) => {
+        // Aplanamos la data si viene estructurada como EstudianteConPerfil
+        // (Asumiendo que el backend te devuelve el perfil anidado o plano, ajustamos por si acaso)
+        this.dataList = data.map((est: any) => ({
+          ...est,
+          // Si tu backend lo envía plano, esto ya sirve. Si lo envía anidado en "perfil", desestructuramos:
+          ...(est.perfil ? est.perfil : {})
+        }));
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error al cargar pacientes del kine:', err);
+        this.loading = false;
+        this.cdr.detectChanges();
       }
-    } catch (error) {
-      console.error('Error al cargar pacientes del kine:', error);
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
+    });
   }
 
   calcularEdad(fecha: string | Date): number | null {
@@ -130,35 +145,46 @@ export class KinePatientsComponent implements OnInit {
     return age;
   }
 
-  async verDetalle(estudiante: any) {
+  verDetalle(estudiante: any) {
     this.selectedEstudiante = estudiante;
     this.displayDetalle = true;
     this.loadingHistorial = true;
     this.historialClinico = [];
     this.cdr.detectChanges();
 
-    try {
-        const res = await this.supabase.getHistorialClinico(estudiante.id);
-        this.historialClinico = res.data || [];
-    } catch (error) {
-        console.error("Error cargando historial", error);
-    } finally {
+    // ✅ Usamos tu nuevo servicio de historial clínico
+    // Nota: Verificamos si el ID viene en `id_usuario`, `usuario_id` o `id` según cómo responda tu backend
+    const userId = estudiante.id_usuario || estudiante.usuario_id || estudiante.id;
+
+    this.historialClinicoService.listarHistorialPorEstudiante(userId).subscribe({
+      next: (data) => {
+        this.historialClinico = data || [];
         this.loadingHistorial = false;
         this.cdr.detectChanges();
-    }
+      },
+      error: (err) => {
+        console.error("Error cargando historial", err);
+        this.loadingHistorial = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
-  // ✅ HELPER CORREGIDO ('warn' en lugar de 'warning')
+  getGrupoNombre(grupoId: number): string {
+    const grupo = this.listaGrupos.find(g => g.id === grupoId);
+    return grupo ? grupo.nombre : 'Sin Grupo';
+  }
+
   getSeveridadHistorial(tipo: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
       if (tipo === 'LESION') return 'danger';
       if (tipo === 'ALERGIA') return 'warn';
       return 'info'; // PATOLOGIA
   }
 
-  // ✅ HELPER CORREGIDO ('warn' en lugar de 'warning')
   getSeveridadEstado(estado: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
       if (estado === 'RECUPERADO') return 'success';
-      if (estado === 'ACTIVO') return 'danger';
-      return 'warn'; // EN_TRATAMIENTO
+      if (estado === 'ACTIVO') return 'danger'; // En caso de que uses 'ACTIVO' en algún lado
+      if (estado === 'EN_OBSERVACION') return 'warn';
+      return 'info'; // EN_TRATAMIENTO, EN_REINTEGRO_DEPORTIVO
   }
 }

@@ -10,6 +10,11 @@ import { CurrentUser } from '../../../core/auth/decorators/current-user.decorato
 import type { RequestUser } from '../../../core/auth/strategies/jwt.strategy';
 import { FiltrarUsuariosDto } from './dto/filtrar-usuarios.dto';
 
+import 'multer';
+import { memoryStorage } from 'multer';
+import { UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+
 @Controller('usuarios')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class CentralController {
@@ -60,6 +65,22 @@ export class CentralController {
   @Roles(Rol.ADMINISTRADOR)
   reactivar(@Param('id') id: string) {
     return this.centralService.reactivarUsuario(id);
+  }
+
+  @Patch(':id/foto')
+  @Roles(Rol.ADMINISTRADOR)
+  @UseInterceptors(FileInterceptor('foto', { storage: memoryStorage() }))
+  actualizarFoto(
+    @Param('id') id: string,
+    @UploadedFile() archivo: Express.Multer.File,
+  ) {
+    return this.centralService.actualizarFoto(id, archivo);
+  }
+
+  @Delete(':id/foto')
+  @Roles(Rol.ADMINISTRADOR)
+  eliminarFoto(@Param('id') id: string) {
+    return this.centralService.eliminarFoto(id);
   }
 
   @Delete(':id')

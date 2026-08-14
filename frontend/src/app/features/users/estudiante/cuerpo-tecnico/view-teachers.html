@@ -20,9 +20,10 @@
             <div class="card-content flex flex-row align-items-center gap-3">
                 
                 <div class="teacher-avatar">
-                    <img *ngIf="prof.foto_url" [src]="prof.foto_url" class="avatar-img" alt="Foto de {{prof.nombre}}">
+                    <!-- TODO: Ajustar foto_url cuando se implemente en UsuarioPerfil (actualmente no lo tienes en la interfaz del service) -->
+                    <img *ngIf="prof['foto_url']" [src]="prof['foto_url']" class="avatar-img" alt="Foto de {{prof.nombre}}">
                     
-                    <div *ngIf="!prof.foto_url" class="avatar-placeholder">
+                    <div *ngIf="!prof['foto_url']" class="avatar-placeholder">
                         {{ prof.nombre.charAt(0) }}{{ prof.apellido.charAt(0) }}
                     </div>
                 </div>
@@ -31,7 +32,8 @@
                     <h3 class="text-main font-bold m-0 text-xl text-wrap">{{ prof.nombre }} {{ prof.apellido }}</h3>
                     
                     <span class="badge-role mt-2">
-                        {{ prof.tipo_profesor || 'Entrenador' }}
+                        <!-- ✅ Usamos el método inteligente del TS -->
+                        {{ getEtiquetaRol(prof) | titlecase }}
                     </span>
                     
                     <div class="mt-3">
