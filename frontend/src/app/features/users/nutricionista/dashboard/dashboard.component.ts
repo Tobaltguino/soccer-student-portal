@@ -4,13 +4,13 @@ import { RouterModule } from '@angular/router';
 import { SupabaseService } from '../../../../../core/services/supabase.service';
 
 @Component({
-  selector: 'app-nutri-dashboard',
+  selector: 'app-nutricionista-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './nutri-dashboard.html',
-  styleUrl: './nutri-dashboard.css',
+  templateUrl: './dashboard.component.html',
+  styleUrl: './dashboard.component.css',
 })
-export class NutriDashboardComponent implements OnInit {
+export class NutricionistaDashboardComponent implements OnInit {
   loading: boolean = true;
   supabaseStatus: string = 'online';
   

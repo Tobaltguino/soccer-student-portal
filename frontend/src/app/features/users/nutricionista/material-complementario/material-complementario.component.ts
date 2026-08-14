@@ -18,7 +18,7 @@ import { TipoMaterial } from '../../../../shared/enums/tipo-material.enum';
 import { Material, CrearMaterialPayload, ActualizarMaterialPayload } from '../../../../core/domains/academico/material-complementario/models/material.interface';
 
 @Component({
-  selector: 'app-nutri-guides',
+  selector: 'app-nutricionista-material-complementario',
   standalone: true,
   imports: [
     CommonModule, 
@@ -32,10 +32,10 @@ import { Material, CrearMaterialPayload, ActualizarMaterialPayload } from '../..
     TextareaModule
   ],
   providers: [MessageService],
-  templateUrl: './nutri-guides.html',
-  styleUrls: ['./nutri-guides.css']
+  templateUrl: './material-complementario.component.html',
+  styleUrls: ['./material-complementario.component.css']
 })
-export class NutriGuidesComponent implements OnInit {
+export class NutricionistaMaterialComplementarioComponent implements OnInit {
   
   private materialService = inject(MaterialService);
   private messageService = inject(MessageService);

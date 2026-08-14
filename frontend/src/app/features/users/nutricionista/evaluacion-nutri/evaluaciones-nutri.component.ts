@@ -19,7 +19,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 @Component({
-  selector: 'app-nutri-evaluation',
+  selector: 'app-nutricionista-evaluaciones-nutri',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, DialogModule, ButtonModule, 
@@ -27,10 +27,10 @@ import { MessageService, ConfirmationService } from 'primeng/api';
     ConfirmDialogModule, RadioButtonModule, TooltipModule
   ],
   providers: [MessageService, ConfirmationService],
-  templateUrl: './nutri-evaluation.html',
-  styleUrls: ['./nutri-evaluation.css']
+  templateUrl: './evaluaciones-nutri.component.html',
+  styleUrls: ['./evaluaciones-nutri.component.css']
 })
-export class NutriEvaluationsComponent implements OnInit {
+export class NutricionistaEvaluacionesNutiComponent implements OnInit {
   
   // Datos
   sesiones: any[] = [];
