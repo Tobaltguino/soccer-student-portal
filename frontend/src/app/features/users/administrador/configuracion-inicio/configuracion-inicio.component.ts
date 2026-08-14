@@ -1,7 +1,8 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { forkJoin } from 'rxjs';
 
 // PrimeNG
 import { CardModule } from 'primeng/card';
@@ -16,7 +17,12 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SelectModule } from 'primeng/select'; 
 import { FileUploadModule } from 'primeng/fileupload';
 
-import { SupabaseService } from '../../../../../core/services/supabase.service';
+// Nuevos Servicios Web de Dominio
+import { WebConfiguracionService } from '../../../../core/domains/administracion/web/web-configuracion/services/web-configuracion.service';
+import { WebMetodologiaService } from '../../../../core/domains/administracion/web/web-metodologias/services/web-metodologia.sevice';
+import { WebProgramaService } from '../../../../core/domains/administracion/web/web-programas/services/web-programa.service';
+import { WebBeneficioService } from '../../../../core/domains/administracion/web/web-beneficios/services/web-beneficio.service';
+import { WebAuspiciadorService } from '../../../../core/domains/administracion/web/web-auspiciadores/services/web-auspiciador.service';
 
 @Component({
   selector: 'app-admin-home-config',
@@ -32,7 +38,18 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
 })
 export class AdminHomeConfigComponent implements OnInit {
 
+  private webConfigService = inject(WebConfiguracionService);
+  private webMetodologiaService = inject(WebMetodologiaService);
+  private webProgramaService = inject(WebProgramaService);
+  private webBeneficioService = inject(WebBeneficioService); // Alianzas
+  private webAuspiciadorService = inject(WebAuspiciadorService);
+
+  private messageService = inject(MessageService);
+  private confirmationService = inject(ConfirmationService);
+  private cdr = inject(ChangeDetectorRef);
+
   loading = false;
+  saving = false;
 
   // Datos Generales
   config: any = {};
@@ -41,21 +58,21 @@ export class AdminHomeConfigComponent implements OnInit {
   metodologias: any[] = [];
   programas: any[] = [];
   alianzas: any[] = [];
-  auspiciadores: any[] = []; // ✅ NUEVA LISTA
+  auspiciadores: any[] = []; 
 
   // Dialogos
   displayDialogMetodologia = false;
   displayDialogPrograma = false;
   displayDialogAlianza = false;
-  displayDialogAuspiciador = false; // ✅ NUEVO DIALOGO
+  displayDialogAuspiciador = false; 
 
   // Formularios temporales
   itemForm: any = {};
   isEditing = false;
 
-  // Variables para imágenes
+  // Variables para imágenes (AHORA SE GUARDAN PARA ENVIAR CON EL FORMULARIO)
+  archivoSeleccionado: File | null = null;
   previewUrl: string | null = null;
-  uploadingLogo = false;
 
   // Lista de iconos
   listaIconos = [
@@ -79,185 +96,187 @@ export class AdminHomeConfigComponent implements OnInit {
     { label: 'Salud / Más', value: 'pi-plus' }         
   ];
 
-  constructor(
-    private supabase: SupabaseService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private cdr: ChangeDetectorRef 
-  ) {}
-
   ngOnInit() {
     this.cargarTodo();
   }
 
-  async cargarTodo() {
+  cargarTodo() {
     this.loading = true;
     this.cdr.detectChanges(); 
 
-    try {
-      const [conf, met, prog, ali, aus] = await Promise.all([
-        this.supabase.getConfiguracionWeb(),
-        this.supabase.getWebMetodologias(),
-        this.supabase.getWebProgramas(),
-        this.supabase.getWebAlianzas(),
-        this.supabase.getWebAuspiciadores() // ✅ CARGA DE AUSPICIADORES
-      ]);
-
-      this.config = conf.data || {};
-      this.metodologias = met.data || [];
-      this.programas = prog.data || [];
-      this.alianzas = ali.data || [];
-      this.auspiciadores = aus.data || []; // ✅ ASIGNACIÓN
-    } catch (e) {
-      this.mostrarError('Error al cargar la información');
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges(); 
-    }
+    forkJoin({
+      config: this.webConfigService.obtenerConfiguracion(),
+      metodologias: this.webMetodologiaService.listarMetodologias(),
+      programas: this.webProgramaService.listarProgramas(),
+      alianzas: this.webBeneficioService.listarBeneficios(),
+      auspiciadores: this.webAuspiciadorService.listarAuspiciadores()
+    }).subscribe({
+      next: (data) => {
+        this.config = data.config || {};
+        this.metodologias = data.metodologias || [];
+        this.programas = data.programas || [];
+        this.alianzas = data.alianzas || [];
+        this.auspiciadores = data.auspiciadores || [];
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.mostrarError('Error al cargar la información pública');
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   // --- GUARDAR CONFIGURACIÓN GENERAL ---
-  async guardarConfigGeneral() {
+  guardarConfigGeneral() {
     this.loading = true;
-    this.cdr.detectChanges();
-
-    try {
-      await this.supabase.updateConfiguracionWeb(this.config);
-      this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Configuración actualizada' });
-    } catch (e) {
-      this.mostrarError('No se pudo actualizar la configuración');
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
+    this.webConfigService.actualizarConfiguracion(this.config).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Configuración actualizada' });
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.mostrarError('No se pudo actualizar la configuración');
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
-  // --- MANEJO DE LISTAS (GENÉRICO) ---
-  
+  // --- MANEJO DE LISTAS Y MODALES ---
   abrirNuevo(tipo: string) {
     this.isEditing = false;
     this.itemForm = { orden: 0 };
+    this.limpiarImagen();
+    
     if (tipo === 'metodologia') this.displayDialogMetodologia = true;
     if (tipo === 'programa') this.displayDialogPrograma = true;
-    if (tipo === 'alianza') {
-        this.previewUrl = null;
-        this.displayDialogAlianza = true;
-    }
-    // ✅ MANEJO AUSPICIADOR
-    if (tipo === 'auspiciador') {
-        this.previewUrl = null;
-        this.displayDialogAuspiciador = true;
-    }
+    if (tipo === 'alianza') this.displayDialogAlianza = true;
+    if (tipo === 'auspiciador') this.displayDialogAuspiciador = true;
   }
 
   editarItem(tipo: string, item: any) {
     this.isEditing = true;
     this.itemForm = { ...item };
+    this.limpiarImagen();
+    
+    // Si editamos un item con imagen, la previsualizamos
+    if (item.imagenUrl) this.previewUrl = item.imagenUrl;
+    // Si viene de Supabase (Legacy), quizás se llame imagen_url
+    if (item.imagen_url) this.previewUrl = item.imagen_url;
+
     if (tipo === 'metodologia') this.displayDialogMetodologia = true;
     if (tipo === 'programa') this.displayDialogPrograma = true;
-    if (tipo === 'alianza') {
-        this.previewUrl = null; 
-        this.displayDialogAlianza = true;
-    }
-    // ✅ MANEJO AUSPICIADOR
-    if (tipo === 'auspiciador') {
-        this.previewUrl = null;
-        this.displayDialogAuspiciador = true;
-    }
+    if (tipo === 'alianza') this.displayDialogAlianza = true;
+    if (tipo === 'auspiciador') this.displayDialogAuspiciador = true;
   }
 
-  cerrarModalAlianza() {
+  cerrarModales() {
+    this.displayDialogMetodologia = false;
+    this.displayDialogPrograma = false;
     this.displayDialogAlianza = false;
-    this.previewUrl = null;
-  }
-
-  cerrarModalAuspiciador() {
     this.displayDialogAuspiciador = false;
-    this.previewUrl = null;
+    this.limpiarImagen();
   }
 
-  // --- SUBIDA DE IMAGEN (Ahora reutilizable) ---
-  async onFileSelected(event: any, bucket: string = 'alianzas') {
+  // --- SUBIDA DE IMAGEN (Adaptada a NestJS FormData) ---
+  onFileSelected(event: any) {
     const file: File = event.files[0];
     if (file) {
-      this.uploadingLogo = true;
+      this.archivoSeleccionado = file; // Lo guardamos para enviarlo al hacer clic en "Guardar"
       
+      // Mostramos preview inmediato
       const reader = new FileReader();
       reader.onload = (e: any) => this.previewUrl = e.target.result;
       reader.readAsDataURL(file);
-
-      // Usamos el bucket 'alianzas' para todo lo de la web
-      const url = await this.supabase.subirFoto(file, bucket); 
-      
-      if (url) {
-        this.itemForm.imagen_url = url;
-        this.messageService.add({ severity: 'success', summary: 'Subida', detail: 'Imagen cargada correctamente' });
-      } else {
-        this.mostrarError('No se pudo subir la imagen.');
-        this.previewUrl = null;
-      }
-      this.uploadingLogo = false;
-      this.cdr.detectChanges();
     }
   }
 
-  // --- GUARDADO DE TARJETAS ---
-
-  async guardarMetodologia() {
-    try {
-      if (this.isEditing) await this.supabase.updateWebMetodologia(this.itemForm.id, this.itemForm);
-      else await this.supabase.createWebMetodologia(this.itemForm);
-      
-      this.displayDialogMetodologia = false;
-      this.cargarTodo(); 
-      this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Metodología guardada' });
-    } catch (e) { this.mostrarError('Error al guardar'); }
+  limpiarImagen() {
+    this.archivoSeleccionado = null;
+    this.previewUrl = null;
   }
 
-  async guardarPrograma() {
-    try {
-      if (this.isEditing) await this.supabase.updateWebPrograma(this.itemForm.id, this.itemForm);
-      else await this.supabase.createWebPrograma(this.itemForm);
-      
-      this.displayDialogPrograma = false;
-      this.cargarTodo();
-      this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Programa guardado' });
-    } catch (e) { this.mostrarError('Error al guardar'); }
+  // --- GUARDADO DE METODOLOGIAS ---
+  guardarMetodologia() {
+    this.saving = true;
+    const obs$ = this.isEditing 
+      ? this.webMetodologiaService.actualizarMetodologia(this.itemForm.id, this.itemForm)
+      : this.webMetodologiaService.crearMetodologia(this.itemForm);
+
+    obs$.subscribe({
+      next: () => {
+        this.cerrarModales();
+        this.cargarTodo();
+        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Metodología guardada' });
+        this.saving = false;
+      },
+      error: () => { this.mostrarError('Error al guardar'); this.saving = false; }
+    });
   }
 
-  async guardarAlianza() {
-    try {
-      this.loading = true;
-      if (this.isEditing) await this.supabase.updateWebAlianza(this.itemForm.id, this.itemForm);
-      else await this.supabase.createWebAlianza(this.itemForm);
-      
-      this.cerrarModalAlianza();
-      this.cargarTodo();
-      this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Alianza guardada' });
-    } catch (e) { 
-      this.mostrarError('Error al guardar'); 
-    } finally {
-      this.loading = false;
-    }
+  // --- GUARDADO DE PROGRAMAS (CATEGORÍAS) ---
+  guardarPrograma() {
+    this.saving = true;
+    const obs$ = this.isEditing 
+      ? this.webProgramaService.actualizarPrograma(this.itemForm.id, this.itemForm)
+      : this.webProgramaService.crearPrograma(this.itemForm);
+
+    obs$.subscribe({
+      next: () => {
+        this.cerrarModales();
+        this.cargarTodo();
+        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Categoría guardada' });
+        this.saving = false;
+      },
+      error: () => { this.mostrarError('Error al guardar'); this.saving = false; }
+    });
   }
 
-  // ✅ GUARDAR AUSPICIADOR
-  async guardarAuspiciador() {
-    try {
-      this.loading = true;
-      if (this.isEditing) await this.supabase.updateWebAuspiciador(this.itemForm.id, this.itemForm);
-      else await this.supabase.createWebAuspiciador(this.itemForm);
-      
-      this.cerrarModalAuspiciador();
-      this.cargarTodo();
-      this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Auspiciador guardado' });
-    } catch (e) { 
-      this.mostrarError('Error al guardar'); 
-    } finally {
-      this.loading = false;
-    }
+  // --- GUARDADO DE ALIANZAS (BENEFICIOS) ---
+  guardarAlianza() {
+    this.saving = true;
+    // Si hay un archivoSeleccionado, lo pasamos al servicio para que arme el FormData
+    const file = this.archivoSeleccionado || undefined;
+
+    const obs$ = this.isEditing 
+      ? this.webBeneficioService.actualizarBeneficio(this.itemForm.id, this.itemForm, file)
+      : this.webBeneficioService.crearBeneficio(this.itemForm, file);
+
+    obs$.subscribe({
+      next: () => {
+        this.cerrarModales();
+        this.cargarTodo();
+        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Alianza guardada' });
+        this.saving = false;
+      },
+      error: () => { this.mostrarError('Error al guardar'); this.saving = false; }
+    });
   }
 
+  // --- GUARDADO DE AUSPICIADORES ---
+  guardarAuspiciador() {
+    this.saving = true;
+    const file = this.archivoSeleccionado || undefined;
+
+    const obs$ = this.isEditing 
+      ? this.webAuspiciadorService.actualizarAuspiciador(this.itemForm.id, this.itemForm, file)
+      : this.webAuspiciadorService.crearAuspiciador(this.itemForm, file);
+
+    obs$.subscribe({
+      next: () => {
+        this.cerrarModales();
+        this.cargarTodo();
+        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Auspiciador guardado' });
+        this.saving = false;
+      },
+      error: () => { this.mostrarError('Error al guardar'); this.saving = false; }
+    });
+  }
+
+  // --- ELIMINAR ELEMENTOS ---
   confirmarEliminar(tipo: string, id: number) {
     this.confirmationService.confirm({
       message: '¿Estás seguro de que deseas eliminar este elemento? Desaparecerá de la web pública.',
@@ -266,17 +285,21 @@ export class AdminHomeConfigComponent implements OnInit {
       acceptLabel: 'Sí, eliminar',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-danger',
-      accept: async () => {
-        try {
-          if (tipo === 'metodologia') await this.supabase.deleteWebMetodologia(id);
-          if (tipo === 'programa') await this.supabase.deleteWebPrograma(id);
-          if (tipo === 'alianza') await this.supabase.deleteWebAlianza(id);
-          if (tipo === 'auspiciador') await this.supabase.deleteWebAuspiciador(id); // ✅ ELIMINAR AUSPICIADOR
-          
-          this.cargarTodo();
-          this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Elemento eliminado correctamente' });
-        } catch (e) {
-          this.mostrarError('Error al eliminar');
+      accept: () => {
+        let obs$;
+        if (tipo === 'metodologia') obs$ = this.webMetodologiaService.eliminarMetodologia(id);
+        if (tipo === 'programa') obs$ = this.webProgramaService.eliminarPrograma(id);
+        if (tipo === 'alianza') obs$ = this.webBeneficioService.eliminarBeneficio(id);
+        if (tipo === 'auspiciador') obs$ = this.webAuspiciadorService.eliminarAuspiciador(id);
+
+        if (obs$) {
+          obs$.subscribe({
+            next: () => {
+              this.cargarTodo();
+              this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Elemento eliminado correctamente' });
+            },
+            error: () => this.mostrarError('Error al eliminar')
+          });
         }
       }
     });

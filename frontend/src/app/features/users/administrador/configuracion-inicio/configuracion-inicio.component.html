@@ -11,6 +11,7 @@
         </div>
     </header>
 
+    <!-- (Toda la primera parte de Configuración General y las Tablas de p-tabpanel queda exactamente igual) -->
     <div class="main-card">
         <p-tabs value="0">
             <p-tablist>
@@ -29,11 +30,11 @@
                             <h3 class="mt-0 text-primary mb-3">Portada (Hero)</h3>
                             <div class="field mb-3">
                                 <label>Título Principal</label>
-                                <input pInputText [(ngModel)]="config.hero_titulo" class="w-full" />
+                                <input pInputText [(ngModel)]="config.heroTitulo" class="w-full" />
                             </div>
                             <div class="field mb-4">
                                 <label>Subtítulo</label>
-                                <textarea pTextarea [(ngModel)]="config.hero_subtitulo" rows="3" class="w-full"></textarea>
+                                <textarea pTextarea [(ngModel)]="config.heroSubtitulo" rows="3" class="w-full"></textarea>
                             </div>
 
                             <h3 class="mt-0 text-primary border-top-1 surface-border pt-4 mb-3">Contacto</h3>
@@ -49,7 +50,7 @@
                             </div>
                             <div class="field mb-4">
                                 <label>Mensaje Predeterminado WhatsApp</label>
-                                <textarea pTextarea [(ngModel)]="config.whatsapp_mensaje" rows="2" class="w-full"></textarea>
+                                <textarea pTextarea [(ngModel)]="config.whatsappMensaje" rows="2" class="w-full"></textarea>
                             </div>
                         </div>
 
@@ -57,20 +58,20 @@
                             <h3 class="mt-0 text-primary mb-3">Redes Sociales</h3>
                             <div class="field mb-3">
                                 <label><i class="pi pi-instagram mr-1"></i> Nombre Instagram</label>
-                                <input pInputText [(ngModel)]="config.instagram_nombre" class="w-full" />
+                                <input pInputText [(ngModel)]="config.instagramNombre" class="w-full" />
                             </div>
                             <div class="field mb-4">
                                 <label>URL Instagram</label>
-                                <input pInputText [(ngModel)]="config.instagram_url" class="w-full" />
+                                <input pInputText [(ngModel)]="config.instagramUrl" class="w-full" />
                             </div>
 
                             <div class="field mb-3 border-top-1 surface-border pt-4">
                                 <label><i class="pi pi-facebook mr-1"></i> Nombre Facebook</label>
-                                <input pInputText [(ngModel)]="config.facebook_nombre" class="w-full" />
+                                <input pInputText [(ngModel)]="config.facebookNombre" class="w-full" />
                             </div>
                             <div class="field mb-4">
                                 <label>URL Facebook</label>
-                                <input pInputText [(ngModel)]="config.facebook_url" class="w-full" />
+                                <input pInputText [(ngModel)]="config.facebookUrl" class="w-full" />
                             </div>
                         </div>
                     </div>
@@ -79,6 +80,7 @@
                     </div>
                 </p-tabpanel>
 
+                <!-- TABLAS DE METODOLOGIAS Y PROGRAMAS -->
                 <p-tabpanel value="1">
                     <div class="flex justify-content-end mb-3 mt-2">
                         <button pButton label="Añadir Metodología" icon="pi pi-plus" (click)="abrirNuevo('metodologia')" class="btn-create"></button>
@@ -118,8 +120,8 @@
                         <ng-template pTemplate="body" let-item>
                             <tr>
                                 <td>
-                                    <div class="{{item.color_fondo}} p-2 border-round text-center w-3rem mx-auto">
-                                        <i class="pi {{item.icono}} {{item.color_texto}} text-lg"></i>
+                                    <div class="{{item.colorFondo || item.color_fondo}} p-2 border-round text-center w-3rem mx-auto">
+                                        <i class="pi {{item.icono}} {{item.colorTexto || item.color_texto}} text-lg"></i>
                                     </div>
                                 </td>
                                 <td class="font-bold text-main">{{item.titulo}}</td>
@@ -148,7 +150,7 @@
                         <ng-template pTemplate="body" let-item>
                             <tr>
                                 <td> 
-                                    <img [src]="item.imagen_url || 'assets/images/default-sponsor.png'" alt="Logo" class="logo-tabla bg-white p-1 border-1 surface-border">
+                                    <img [src]="item.imagenUrl || item.imagen_url || 'assets/images/default-sponsor.png'" alt="Logo" class="logo-tabla bg-white p-1 border-1 surface-border">
                                 </td>
                                 <td class="font-bold text-main">{{item.nombre}}</td>
                                 <td>{{item.descripcion}}</td>
@@ -176,14 +178,14 @@
                         <ng-template pTemplate="body" let-item>
                             <tr>
                                 <td> 
-                                    <img [src]="item.imagen_url || 'assets/images/default-sponsor.png'" alt="Logo" class="logo-tabla bg-white p-1 border-1 surface-border">
+                                    <img [src]="item.imagenUrl || item.imagen_url || 'assets/images/default-sponsor.png'" alt="Logo" class="logo-tabla bg-white p-1 border-1 surface-border">
                                 </td>
                                 <td class="font-bold text-main">{{item.nombre}}</td>
                                 <td>
-                                    <a *ngIf="item.instagram_url" [href]="item.instagram_url" target="_blank" class="text-primary no-underline font-medium hover:underline">
+                                    <a *ngIf="item.instagramUrl || item.instagram_url" [href]="item.instagramUrl || item.instagram_url" target="_blank" class="text-primary no-underline font-medium hover:underline">
                                         <i class="pi pi-external-link mr-1"></i> Ver Link
                                     </a>
-                                    <span *ngIf="!item.instagram_url" class="text-500 text-sm">Sin Link</span>
+                                    <span *ngIf="!item.instagramUrl && !item.instagram_url" class="text-500 text-sm">Sin Link</span>
                                 </td>
                                 <td>
                                     <div class="action-buttons">
@@ -199,6 +201,8 @@
             </p-tabpanels>
         </p-tabs>
     </div>
+
+    <!-- MODALES DE FORMULARIO -->
 
     <p-dialog [(visible)]="displayDialogMetodologia" [header]="isEditing ? 'Editar Metodología' : 'Nueva Metodología'" [modal]="true" styleClass="p-fluid" [style]="{width: '450px'}">
         <div class="field mt-2">
@@ -227,8 +231,8 @@
             <textarea pTextarea [(ngModel)]="itemForm.descripcion" rows="3"></textarea>
         </div>
         <ng-template pTemplate="footer">
-            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="displayDialogMetodologia = false"></button>
-            <button pButton label="Guardar" icon="pi pi-check" (click)="guardarMetodologia()"></button>
+            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarModales()"></button>
+            <button pButton label="Guardar" icon="pi pi-check" (click)="guardarMetodologia()" [loading]="saving"></button>
         </ng-template>
     </p-dialog>
 
@@ -257,11 +261,11 @@
             </div>
             <div class="field col-6">
                 <label>Fondo (Color)</label>
-                <input pInputText [(ngModel)]="itemForm.color_fondo" placeholder="Ej: bg-blue-100" />
+                <input pInputText [(ngModel)]="itemForm.colorFondo" placeholder="Ej: bg-blue-100" />
             </div>
             <div class="field col-6">
                 <label>Texto (Color)</label>
-                <input pInputText [(ngModel)]="itemForm.color_texto" placeholder="Ej: text-blue-500" />
+                <input pInputText [(ngModel)]="itemForm.colorTexto" placeholder="Ej: text-blue-500" />
             </div>
         </div>
         <div class="field">
@@ -269,8 +273,8 @@
             <textarea pTextarea [(ngModel)]="itemForm.descripcion" rows="3"></textarea>
         </div>
         <ng-template pTemplate="footer">
-            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="displayDialogPrograma = false"></button>
-            <button pButton label="Guardar" icon="pi pi-check" (click)="guardarPrograma()"></button>
+            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarModales()"></button>
+            <button pButton label="Guardar" icon="pi pi-check" (click)="guardarPrograma()" [loading]="saving"></button>
         </ng-template>
     </p-dialog>
 
@@ -278,15 +282,11 @@
         <div class="field flex flex-column mt-3">
             <label class="text-center mb-2">Logo de la Alianza</label>
             <div class="sponsor-preview-container shadow-1">
-                <img *ngIf="previewUrl || itemForm.imagen_url" [src]="previewUrl || itemForm.imagen_url" alt="Logo">
-                <i *ngIf="!previewUrl && !itemForm.imagen_url" class="pi pi-image"></i>
-                
-                <div *ngIf="uploadingLogo" class="absolute top-0 left-0 w-full h-full bg-black-alpha-40 flex align-items-center justify-content-center">
-                    <i class="pi pi-spin pi-spinner text-white text-3xl"></i>
-                </div>
+                <img *ngIf="previewUrl" [src]="previewUrl" alt="Logo">
+                <i *ngIf="!previewUrl" class="pi pi-image"></i>
             </div>
             
-            <p-fileUpload mode="basic" chooseIcon="pi pi-upload" chooseLabel="Subir Logo" accept="image/*" [auto]="true" [customUpload]="true" (uploadHandler)="onFileSelected($event, 'alianzas')" class="p-button-outlined btn-create mx-auto"></p-fileUpload>
+            <p-fileUpload mode="basic" chooseIcon="pi pi-upload" chooseLabel="Seleccionar Logo" accept="image/*" [auto]="true" [customUpload]="true" (uploadHandler)="onFileSelected($event)" class="p-button-outlined btn-create mx-auto"></p-fileUpload>
         </div>
 
         <div class="field mt-2">
@@ -300,8 +300,8 @@
         </div>
 
         <ng-template pTemplate="footer">
-            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarModalAlianza()"></button>
-            <button pButton label="Guardar" icon="pi pi-check" (click)="guardarAlianza()" [loading]="uploadingLogo"></button>
+            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarModales()"></button>
+            <button pButton label="Guardar" icon="pi pi-check" (click)="guardarAlianza()" [loading]="saving"></button>
         </ng-template>
     </p-dialog>
 
@@ -309,15 +309,11 @@
         <div class="field flex flex-column mt-3">
             <label class="text-center mb-2">Logo del Auspiciador</label>
             <div class="sponsor-preview-container shadow-1">
-                <img *ngIf="previewUrl || itemForm.imagen_url" [src]="previewUrl || itemForm.imagen_url" alt="Logo">
-                <i *ngIf="!previewUrl && !itemForm.imagen_url" class="pi pi-image"></i>
-                
-                <div *ngIf="uploadingLogo" class="absolute top-0 left-0 w-full h-full bg-black-alpha-40 flex align-items-center justify-content-center">
-                    <i class="pi pi-spin pi-spinner text-white text-3xl"></i>
-                </div>
+                <img *ngIf="previewUrl" [src]="previewUrl" alt="Logo">
+                <i *ngIf="!previewUrl" class="pi pi-image"></i>
             </div>
             
-            <p-fileUpload mode="basic" chooseIcon="pi pi-upload" chooseLabel="Subir Logo" accept="image/*" [auto]="true" [customUpload]="true" (uploadHandler)="onFileSelected($event, 'alianzas')" class="p-button-outlined btn-create mx-auto"></p-fileUpload>
+            <p-fileUpload mode="basic" chooseIcon="pi pi-upload" chooseLabel="Seleccionar Logo" accept="image/*" [auto]="true" [customUpload]="true" (uploadHandler)="onFileSelected($event)" class="p-button-outlined btn-create mx-auto"></p-fileUpload>
         </div>
 
         <div class="field mt-2">
@@ -332,13 +328,13 @@
 
         <div class="field">
             <label><i class="pi pi-instagram mr-1 text-primary"></i> Link de Instagram</label>
-            <input pInputText [(ngModel)]="itemForm.instagram_url" placeholder="https://instagram.com/..." />
+            <input pInputText [(ngModel)]="itemForm.instagramUrl" placeholder="https://instagram.com/..." />
             <small class="text-500 mt-1">Copia y pega la URL completa del perfil.</small>
         </div>
 
         <ng-template pTemplate="footer">
-            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarModalAuspiciador()"></button>
-            <button pButton label="Guardar" icon="pi pi-check" (click)="guardarAuspiciador()" [loading]="uploadingLogo"></button>
+            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarModales()"></button>
+            <button pButton label="Guardar" icon="pi pi-check" (click)="guardarAuspiciador()" [loading]="saving"></button>
         </ng-template>
     </p-dialog>
 </div>
