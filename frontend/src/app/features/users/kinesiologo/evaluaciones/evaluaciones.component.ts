@@ -1,6 +1,7 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 
 // PrimeNG Imports
 import { TableModule } from 'primeng/table';
@@ -13,9 +14,16 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
-
 import { MessageService } from 'primeng/api';
-import { SupabaseService } from '../../../../../core/services/supabase.service';
+
+// Servicios de Dominio
+import { TipoEvaluacionService } from '../../../../core/domains/academico/evaluaciones/tipos/services/tipo-evaluacion.services';
+import { SesionEvaluacionService } from '../../../../core/domains/academico/evaluaciones/sesiones/services/sesion.service';
+import { ResultadoEvaluacionService } from '../../../../core/domains/academico/evaluaciones/resultados/services/resultado.service';
+import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
+import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
+
+import { EstadoSesion } from '../../../../shared/enums/estado-sesion.enum';
 
 @Component({
   selector: 'app-kinesiologo-evaluaciones',
@@ -30,6 +38,14 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
   styleUrls: ['./evaluaciones.component.css']
 })
 export class KinesiologoEvaluacionesComponent implements OnInit {
+
+  private tipoEvalService = inject(TipoEvaluacionService);
+  private sesionService = inject(SesionEvaluacionService);
+  private resultadoService = inject(ResultadoEvaluacionService);
+  private grupoService = inject(GrupoService);
+  private estudianteService = inject(EstudianteService);
+  private messageService = inject(MessageService);
+  private cdr = inject(ChangeDetectorRef);
 
   // --- DATOS ---
   sesiones: any[] = [];            
@@ -49,12 +65,6 @@ export class KinesiologoEvaluacionesComponent implements OnInit {
 
   evalLogistica: any = {};
 
-  constructor(
-    private supabase: SupabaseService,
-    private messageService: MessageService,
-    private cdr: ChangeDetectorRef
-  ) {}
-
   ngOnInit() {
     this.cargarDatosIniciales();
   }
@@ -62,45 +72,61 @@ export class KinesiologoEvaluacionesComponent implements OnInit {
   // ==========================================
   // 1. CARGA DE DATOS (SOLO SUS GRUPOS Y FINALIZADAS)
   // ==========================================
-  async cargarDatosIniciales() {
+  cargarDatosIniciales() {
     this.loading = true;
-    try {
-      const { data: { user } } = await this.supabase.getUser();
-      if (!user?.email) return;
 
-      const { data: kine } = await this.supabase.supabase
-          .from('kinesiologos')
-          .select('id')
-          .eq('email', user.email)
-          .maybeSingle();
+    // 1. Obtenemos los grupos del kinesiólogo
+    this.grupoService.obtenerMisGrupos().subscribe({
+      next: (gruposData) => {
+        this.grupos = gruposData || [];
+        const misGrupoIds = this.grupos.map(g => g.id).filter(id => id !== undefined) as number[];
 
-      if (kine) {
-        const { data: gruposData } = await this.supabase.getGruposDeKine(kine.id);
-        
-        this.grupos = gruposData ? gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null) : [];
-        const misGrupoIds = this.grupos.map(g => g.id);
-
-        const { data: tData } = await this.supabase.getTiposEvaluacion();
-        this.tiposEvaluacion = tData || [];
-
-        if (misGrupoIds.length > 0) {
-          const { data: sData, error: errorSesiones } = await this.supabase.getSesionesEvaluacionPorGrupos(misGrupoIds);
-                    
-          // ✅ SOLO GUARDAMOS LAS FINALIZADAS
-          this.sesionesOriginales = (sData || []).filter(s => s.estado === 'FINALIZADO');
-        } else {
-          this.sesionesOriginales = [];
+        if (misGrupoIds.length === 0) {
+          this.tipoEvalService.listarTiposEvaluacion().subscribe(t => {
+            this.tiposEvaluacion = t || [];
+            this.sesionesOriginales = [];
+            this.sesiones = [];
+            this.loading = false;
+            this.cdr.detectChanges();
+          });
+          return;
         }
-        
-        this.sesiones = [...this.sesionesOriginales];
-        this.aplicarFiltros();
+
+        // 2. Armamos las peticiones para todos sus grupos
+        const peticionesSesiones = misGrupoIds.map(id => 
+          this.sesionService.listarSesiones({ grupoId: id, limite: 1000 })
+        );
+
+        // 3. Ejecutamos en paralelo Tipos de Evaluación + Sesiones
+        forkJoin({
+          tipos: this.tipoEvalService.listarTiposEvaluacion(),
+          sesionesGrupos: forkJoin(peticionesSesiones)
+        }).subscribe({
+          next: ({ tipos, sesionesGrupos }) => {
+            this.tiposEvaluacion = tipos || [];
+            
+            // Juntamos todas las sesiones y filtramos SOLO las FINALIZADAS
+            const todasLasSesiones = sesionesGrupos.flatMap(res => res.registros);
+            this.sesionesOriginales = todasLasSesiones.filter(s => s.estado === EstadoSesion.FINALIZADA);
+            
+            this.sesiones = [...this.sesionesOriginales];
+            this.aplicarFiltros();
+            this.loading = false;
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Fallo al cargar sesiones.' });
+            this.loading = false;
+            this.cdr.detectChanges();
+          }
+        });
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar tus grupos.' });
+        this.loading = false;
+        this.cdr.detectChanges();
       }
-    } catch (error: any) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Fallo al cargar datos.' });
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
+    });
   }
 
   // ==========================================
@@ -112,16 +138,19 @@ export class KinesiologoEvaluacionesComponent implements OnInit {
         let cumpleGrupo = true;
         let cumplePrueba = true;
 
+        const sGrupoId = sesion.grupo_id || sesion.grupoId;
+        const sTipoEvalId = sesion.tipo_evaluacion_id || sesion.tipoEvaluacionId;
+
         if (this.filtroFecha) {
             const fechaFiltroStr = this.formatearFecha(this.filtroFecha);
             const fechaSesionStr = (sesion.fecha || '').substring(0, 10); 
             cumpleFecha = fechaSesionStr === fechaFiltroStr;
         }
         if (this.filtroGrupo) {
-            cumpleGrupo = sesion.grupo_id === this.filtroGrupo.id;
+            cumpleGrupo = sGrupoId === this.filtroGrupo.id;
         }
         if (this.filtroPrueba) {
-            cumplePrueba = sesion.tipo_evaluacion_id === this.filtroPrueba.id;
+            cumplePrueba = sTipoEvalId === this.filtroPrueba.id;
         }
 
         return cumpleFecha && cumpleGrupo && cumplePrueba;
@@ -132,7 +161,7 @@ export class KinesiologoEvaluacionesComponent implements OnInit {
     this.filtroFecha = null;
     this.filtroGrupo = null;
     this.filtroPrueba = null;
-    this.sesiones = [...this.sesionesOriginales];
+    this.aplicarFiltros();
   }
 
   formatearFecha(date: Date): string {
@@ -148,43 +177,43 @@ export class KinesiologoEvaluacionesComponent implements OnInit {
   // ==========================================
   // 3. VISUALIZACIÓN DE RESULTADOS (SOLO LECTURA)
   // ==========================================
-  async abrirCalificador(sesion: any) {
+  abrirCalificador(sesion: any) {
     this.evalLogistica = { ...sesion };
     this.loading = true;
-    this.cdr.detectChanges(); // Primer llamado para mostrar el círculo de carga
+    
+    const grupoIdToFetch = sesion.grupo_id || sesion.grupoId;
 
-    try {
-      const [resAlumnos, resResultados] = await Promise.all([
-         this.supabase.getAlumnosPorGrupo(sesion.grupo_id),
-         this.supabase.getResultadosPorSesion(sesion.id)
-      ]);
+    forkJoin({
+      alumnos: this.estudianteService.listarEstudiantes({ grupoIds: [grupoIdToFetch], limite: 1000, activo: true }),
+      resultados: this.resultadoService.listarResultadosPorSesion(sesion.id)
+    }).subscribe({
+      next: ({ alumnos, resultados }) => {
+        
+        this.estudiantesGrupo = alumnos.registros.map((est: any) => {
+          const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id;
+          const nombre = est.perfil ? est.perfil.nombre : est.nombre;
+          const apellido = est.perfil ? est.perfil.apellido : est.apellido;
 
-      const alumnos = resAlumnos.data || [];
-      const resultados = resResultados.data || [];
-
-      this.estudiantesGrupo = alumnos.map((alumno: any) => {
-          const notaExistente = resultados.find((r: any) => r.estudiante_id === alumno.id);
+          // Tipamos "any" temporalmente para evitar problemas estrictos de TS
+          const notaExistente: any = resultados.find((r: any) => r.estudianteId === idUsuario || r.estudiante_id === idUsuario);
+          
           return {
-              nombre: alumno.nombre,
-              apellido: alumno.apellido,
-              valor_numerico: notaExistente ? notaExistente.valor_numerico : null,
+              nombre: nombre,
+              apellido: apellido,
+              valor_numerico: notaExistente ? (notaExistente.valorNumerico || notaExistente.valor_numerico) : null,
               observacion: notaExistente ? notaExistente.observacion : ''
           };
-      });
-      
-      this.displayGradesDialog = true;
-
-    } catch (e: any) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar la lista de pacientes.' });
-    } finally {
-      this.loading = false;
-      
-      // ✅ EL DESPERTADOR DEFINITIVO DE ANGULAR
-      // Lo metemos en un setTimeout de 0ms para obligar a Angular a dibujar el modal en el siguiente ciclo del procesador.
-      setTimeout(() => {
-          this.cdr.markForCheck();
-          this.cdr.detectChanges();
-      }, 0);
-    }
+        });
+        
+        this.displayGradesDialog = true;
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar la lista de pacientes.' });
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 }

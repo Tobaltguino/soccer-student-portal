@@ -79,11 +79,11 @@
                     </td>
                     <td>
                         <span class="p-column-title hidden-desktop">Grupo</span>
-                        <p-tag [value]="sesion.grupos?.nombre" severity="info" styleClass="text-xs"></p-tag>
+                        <p-tag [value]="sesion.grupo?.nombre || sesion.grupos?.nombre || 'Grupo'" severity="info" styleClass="text-xs"></p-tag>
                     </td>
                     <td>
                         <span class="p-column-title hidden-desktop">Prueba</span>
-                        <span class="font-bold text-main">{{ sesion.tipo_evaluacion?.nombre }}</span>
+                        <span class="font-bold text-main">{{ sesion.tipoEvaluacion?.nombre || sesion.tipo_evaluacion?.nombre || 'Test' }}</span>
                     </td>
                     <td class="text-center">
                         <span class="p-column-title hidden-desktop">Estado</span>
@@ -134,7 +134,7 @@
                     <ng-template let-item pTemplate="item">
                         <div class="flex align-items-center gap-2">
                             <span>{{item.nombre}}</span>
-                            <p-tag [value]="item.unidad_medida" severity="secondary" styleClass="text-xs"></p-tag>
+                            <p-tag [value]="item.unidad_medida || item.unidadMedida" severity="secondary" styleClass="text-xs"></p-tag>
                         </div>
                     </ng-template>
                 </p-select>
@@ -168,11 +168,11 @@
             <div class="modal-content-box mb-4 flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3">
                 <div class="flex flex-column">
                     <span class="text-xs text-secondary text-uppercase font-bold tracking-wider">Evaluación Seleccionada</span>
-                    <span class="text-xl font-bold text-main mt-1">{{evalLogistica.tipo_evaluacion?.nombre}}</span>
+                    <span class="text-xl font-bold text-main mt-1">{{evalLogistica.tipoEvaluacion?.nombre || evalLogistica.tipo_evaluacion?.nombre}}</span>
                 </div>
                 <div class="flex flex-column sm:align-items-end">
                     <span class="text-xs text-secondary text-uppercase font-bold tracking-wider mb-1">Grupo</span>
-                    <p-tag [value]="evalLogistica.grupos?.nombre" severity="info"></p-tag>
+                    <p-tag [value]="evalLogistica.grupo?.nombre || evalLogistica.grupos?.nombre" severity="info"></p-tag>
                 </div>
             </div>
 
@@ -182,7 +182,7 @@
                 <ng-template pTemplate="header">
                     <tr>
                         <th style="width: 30%">Estudiante</th>
-                        <th style="width: 25%">Resultado ({{evalLogistica.tipo_evaluacion?.unidad_medida}})</th>
+                        <th style="width: 25%">Resultado ({{evalLogistica.tipoEvaluacion?.unidad_medida || evalLogistica.tipo_evaluacion?.unidad_medida || evalLogistica.tipoEvaluacion?.unidadMedida}})</th>
                         <th style="width: 35%">Observación</th>
                         <th style="width: 10%" class="text-center">Borrar</th>
                     </tr>
@@ -229,7 +229,7 @@
                 <small class="text-secondary italic"><i class="pi pi-info-circle mr-1"></i> Se guardarán solo los registros que modifiques.</small>
                 <div class="flex gap-2 w-full sm:w-auto">
                     <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text p-button-secondary w-full sm:w-auto" (click)="displayGradesDialog = false"></button>
-                    <button pButton label="Guardar Todo" icon="pi pi-save" class="p-button-primary w-full sm:w-auto" (click)="guardarNotasFinales()"></button>
+                    <button pButton label="Guardar Todo" icon="pi pi-save" class="p-button-primary w-full sm:w-auto" (click)="guardarNotasFinales()" [loading]="loading"></button>
                 </div>
             </div>
         </ng-template>

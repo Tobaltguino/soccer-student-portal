@@ -1,6 +1,8 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+
+// PrimeNG
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
@@ -8,20 +10,29 @@ import { DialogModule } from 'primeng/dialog';
 import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 
-import { SupabaseService } from '../../../../../core/services/supabase.service';
+// Nuevo Servicio
+import { ResultadoEvaluacionService } from '../../../../core/domains/academico/evaluaciones/resultados/services/resultado.service';
 
 @Component({
   selector: 'app-estudiante-evaluaciones',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, TagModule, ButtonModule, 
-    DialogModule, DatePickerModule, SelectModule, TooltipModule
+    DialogModule, DatePickerModule, SelectModule, TooltipModule, ToastModule
   ],
+  providers: [MessageService],
   templateUrl: './evaluaciones.component.html',
   styleUrls: ['./evaluaciones.component.css']
 })
 export class EstudianteEvaluacionesComponent implements OnInit {
+  
+  private resultadoService = inject(ResultadoEvaluacionService);
+  private messageService = inject(MessageService);
+  private cdr = inject(ChangeDetectorRef);
+
   evaluaciones: any[] = [];
   evaluacionesOriginales: any[] = [];
   tiposTests: any[] = [];
@@ -35,43 +46,53 @@ export class EstudianteEvaluacionesComponent implements OnInit {
   displayDetalle: boolean = false;
   selectedEval: any = null;
 
-  constructor(private supabase: SupabaseService, private cdr: ChangeDetectorRef) {}
-
   ngOnInit() {
     this.cargarEvaluaciones();
   }
 
-  async cargarEvaluaciones() {
+  cargarEvaluaciones() {
     this.loading = true;
-    try {
-      const { data: { user } } = await this.supabase.getUser();
-      if (user) {
-        // Prevención de colapso: 6 meses
-        const seisMesesAtras = new Date();
-        seisMesesAtras.setMonth(seisMesesAtras.getMonth() - 6);
-        const fechaDesde = seisMesesAtras.toISOString().split('T')[0];
+    
+    // ✅ 1. Llamamos al endpoint que ya filtra por el JWT del estudiante
+    this.resultadoService.listarMisResultados().subscribe({
+      next: (data) => {
+        // ✅ 2. Mapeamos la data de NestJS al formato plano que tu HTML espera
+        this.evaluacionesOriginales = (data || []).map((r: any) => {
+            const sesion = r.sesion || r.sesion_evaluacion || {};
+            const tipo = sesion.tipoEvaluacion || sesion.tipo_evaluacion || {};
+            const rango = r.rango || {};
 
-        const { data, error } = await this.supabase.getEvaluacionesAlumno(user.id, fechaDesde);
-        if (error) throw error;
-
-        // Ordenamiento por timestamp nativo (created_at)
-        this.evaluacionesOriginales = (data || []).sort((a, b) => {
-          const tA = new Date(a.created_at).getTime();
-          const tB = new Date(b.created_at).getTime();
-          return tB - tA;
+            return {
+                fecha: sesion.fecha,
+                test_nombre: tipo.nombre || 'Evaluación',
+                edad_evaluacion: r.edadEvaluacion || r.edad_evaluacion || 0,
+                resultado: r.valorNumerico || r.valor_numerico,
+                unidad: tipo.unidadMedida || tipo.unidad_medida || '',
+                nivel: rango.nombreEtiqueta || rango.nombre_etiqueta || 'Registrado',
+                color: rango.colorSugerido || rango.color_sugerido || '#3b82f6', // Color por defecto (Azul)
+                test_descripcion: tipo.descripcion || '',
+                observacion: r.observacion || '',
+                created_at: r.createdAt || r.created_at || new Date().toISOString()
+            };
         });
 
-        // Extraer nombres únicos de los tests para el selector de filtros
+        // ✅ 3. Ordenamos desde la más reciente a la más antigua
+        this.evaluacionesOriginales.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+        // ✅ 4. Llenar selector de filtros
         const nombresUnicos = [...new Set(this.evaluacionesOriginales.map(e => e.test_nombre))];
         this.tiposTests = nombresUnicos.map(nombre => ({ nombre: nombre }));
 
         this.aplicarFiltros();
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar tus evaluaciones.' });
+        this.loading = false;
+        this.cdr.detectChanges();
       }
-    } catch (error) {
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
+    });
   }
 
   aplicarFiltros() {

@@ -74,11 +74,11 @@
                     </td>
                     <td>
                         <span class="p-column-title font-bold text-secondary hidden-desktop">Grupo:</span>
-                        <p-tag [value]="sesion.grupos?.nombre" severity="info"></p-tag>
+                        <p-tag [value]="sesion.grupo?.nombre || sesion.grupos?.nombre || 'Grupo'" severity="info"></p-tag>
                     </td>
                     <td>
                         <span class="p-column-title font-bold text-secondary hidden-desktop">Prueba:</span>
-                        <span class="font-bold text-900">{{ sesion.tipo_evaluacion?.nombre }}</span>
+                        <span class="font-bold text-900">{{ sesion.tipoEvaluacion?.nombre || sesion.tipo_evaluacion?.nombre || 'Test' }}</span>
                     </td>
                     <td>
                         <span class="p-column-title font-bold text-secondary hidden-desktop">Estado:</span>
@@ -99,6 +99,7 @@
         </p-table>
     </div>
 
+    <!-- MODAL DE TIPO DE EVALUACIÓN -->
     <p-dialog [(visible)]="displayTipoDialog" header="Configuración Maestra de Tests" [modal]="true" [style]="{width: '95vw', maxWidth: '1000px'}" [draggable]="false" [resizable]="false" styleClass="p-fluid">
         <ng-template pTemplate="content">
             <div class="grid pt-2">
@@ -189,14 +190,14 @@
                              <ng-template pTemplate="body" let-r let-i="rowIndex">
                                  <tr class="text-sm">
                                      <td class="font-bold text-primary py-1" style="width: 120px; white-space: nowrap;">
-                                         {{r.edad_min}} a {{r.edad_max}} años
+                                         {{r.edad_min || r.edadMin}} a {{r.edad_max || r.edadMax}} años
                                      </td>
-                                     <td class="font-bold py-1">{{r.nombre_etiqueta}}</td>
+                                     <td class="font-bold py-1">{{r.nombre_etiqueta || r.nombreEtiqueta}}</td>
                                      <td class="py-1 text-center text-600" style="white-space: nowrap;">
-                                         {{r.valor_min}} - {{r.valor_max}}
+                                         {{r.valor_min || r.valorMin}} - {{r.valor_max || r.valorMax}}
                                      </td>
                                      <td class="py-1 text-center" style="width: 50px;">
-                                         <span class="color-indicator" [style.background-color]="r.color_sugerido"></span>
+                                         <span class="color-indicator" [style.background-color]="r.color_sugerido || r.colorSugerido"></span>
                                      </td>
                                      <td class="text-right py-1" style="width: 40px;">
                                          <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm py-0 w-2rem h-2rem" (click)="quitarRangoDeLista(i)"></button>
@@ -210,6 +211,7 @@
                  <button pButton [label]="tipoForm.id ? 'Actualizar Test Completo' : 'Guardar Test Completo'" 
                          [icon]="tipoForm.id ? 'pi pi-refresh' : 'pi pi-save'" 
                          [class]="tipoForm.id ? 'mt-4 w-full p-button-info' : 'mt-4 w-full'" 
+                         [loading]="loading"
                          (click)="guardarNuevoTipo()"></button>
              </div>
 
@@ -231,7 +233,7 @@
                                      <span class="font-bold text-900 block">{{t.nombre}}</span>
                                      <span class="text-xs text-500 block mt-1 line-height-2" *ngIf="t.descripcion">{{t.descripcion}}</span>
                                  </td>
-                                 <td class="vertical-align-top pt-3"><p-tag [value]="t.unidad_medida" severity="secondary"></p-tag></td>
+                                 <td class="vertical-align-top pt-3"><p-tag [value]="t.unidad_medida || t.unidadMedida" severity="secondary"></p-tag></td>
                                  <td class="text-center vertical-align-top pt-2">
                                      <div class="flex gap-1 justify-content-center">
                                          <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-secondary p-button-sm" (click)="editarTipoTest(t)" pTooltip="Editar Test"></button>
@@ -251,6 +253,7 @@
         </ng-template>
     </p-dialog>
  
+    <!-- MODAL NUEVA SESION -->
     <p-dialog [(visible)]="displayMainDialog" [header]="evalLogistica.id ? 'Editar Sesión' : 'Nueva Sesión'" [modal]="true" [style]="{width: '450px'}" styleClass="p-fluid">
         <ng-template pTemplate="content">
          <div class="field mt-2">
@@ -267,7 +270,7 @@
                  <ng-template let-item pTemplate="item">
                      <div class="flex align-items-center gap-2">
                          <span>{{item.nombre}}</span>
-                         <p-tag [value]="item.unidad_medida" severity="secondary"></p-tag>
+                         <p-tag [value]="item.unidad_medida || item.unidadMedida" severity="secondary"></p-tag>
                      </div>
                  </ng-template>
              </p-select>
@@ -292,16 +295,17 @@
          </ng-template>
     </p-dialog>
  
+    <!-- MODAL DE CALIFICADOR -->
     <p-dialog [(visible)]="displayGradesDialog" header="Registro de Resultados" [modal]="true" [style]="{width: '90vw', maxWidth: '900px'}" [maximizable]="true" styleClass="p-fluid">
         <ng-template pTemplate="content">
             <div class="surface-100 p-3 border-round mb-3 flex justify-content-between align-items-center">
                 <div class="flex flex-column">
                     <span class="text-sm text-600">Evaluación Seleccionada</span>
-                    <span class="text-xl font-bold text-900">{{evalLogistica.tipo_evaluacion?.nombre}}</span>
+                    <span class="text-xl font-bold text-900">{{evalLogistica.tipoEvaluacion?.nombre || evalLogistica.tipo_evaluacion?.nombre}}</span>
                 </div>
                 <div class="text-right">
                     <span class="text-sm text-600 block">Grupo</span>
-                    <p-tag [value]="evalLogistica.grupos?.nombre" severity="info" styleClass="text-base"></p-tag>
+                    <p-tag [value]="evalLogistica.grupo?.nombre || evalLogistica.grupos?.nombre" severity="info" styleClass="text-base"></p-tag>
                 </div>
             </div>
             
@@ -309,7 +313,7 @@
                 <ng-template pTemplate="header">
                     <tr>
                         <th style="width: 30%">Estudiante</th>
-                        <th style="width: 25%">Resultado ({{evalLogistica.tipo_evaluacion?.unidad_medida}})</th>
+                        <th style="width: 25%">Resultado ({{evalLogistica.tipoEvaluacion?.unidad_medida || evalLogistica.tipo_evaluacion?.unidad_medida || evalLogistica.tipoEvaluacion?.unidadMedida}})</th>
                         <th style="width: 35%">Observación</th>
                         <th style="width: 10%" class="text-center"></th>
                     </tr>
