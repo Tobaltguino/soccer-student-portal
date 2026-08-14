@@ -23,7 +23,7 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 import { SupabaseService } from '../../../../../core/services/supabase.service';
 
 @Component({
-  selector: 'app-admin-evaluations',
+  selector: 'app-administrador-evaluaciones',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, ButtonModule, DialogModule,
@@ -32,10 +32,10 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
     CheckboxModule, ToggleButtonModule, RadioButtonModule, TextareaModule
   ],
   providers: [MessageService, ConfirmationService],
-  templateUrl: './admin-evaluations.html',
-  styleUrls: ['./admin-evaluations.css']
+  templateUrl: './evaluaciones.component.html',
+  styleUrls: ['./evaluaciones.component.css']
 })
-export class AdminEvaluationsComponent implements OnInit {
+export class AdministradorEvaluacionesComponent implements OnInit {
 
   // --- DATOS ---
   sesiones: any[] = [];            

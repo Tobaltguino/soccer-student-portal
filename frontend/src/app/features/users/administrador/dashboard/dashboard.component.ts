@@ -4,13 +4,13 @@ import { RouterModule, Router } from '@angular/router';
 import { SupabaseService } from '../../../../../core/services/supabase.service';
 
 @Component({
-  selector: 'app-admin-dashboard',
+  selector: 'app-administrador-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './admin-dashboard.html',
-  styleUrls: ['./admin-dashboard.css']
+  templateUrl: './dashboard.component.html',
+  styleUrls: ['./dashboard.component.css']
 })
-export class AdminDashboardComponent implements OnInit {
+export class AdministradorDashboardComponent implements OnInit {
   // Datos dinámicos
   userEmail: string | undefined;
   totalEstudiantes: number = 0;

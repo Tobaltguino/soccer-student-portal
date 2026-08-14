@@ -16,7 +16,7 @@ import { MessageService } from 'primeng/api';
 import { SupabaseService } from '../../../../../core/services/supabase.service';
 
 @Component({
-  selector: 'app-admin-attendance',
+  selector: 'app-administrador-asistencias',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, SelectModule, 
@@ -24,10 +24,10 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
     TooltipModule, ToastModule
   ],
   providers: [MessageService],
-  templateUrl: './admin-attendance.html',
-  styleUrls: ['./admin-attendance.css']
+  templateUrl: './asistencias.component.html',
+  styleUrls: ['./asistencias.component.css']
 })
-export class AdminAttendanceComponent implements OnInit {
+export class AdministradorAsistenciasComponent implements OnInit {
   
   // Datos principales
   grupos: any[] = [];

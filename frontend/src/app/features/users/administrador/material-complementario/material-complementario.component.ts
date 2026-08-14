@@ -18,7 +18,7 @@ import { TipoMaterial } from '../../../../shared/enums/tipo-material.enum';
 import { Material, CrearMaterialPayload, ActualizarMaterialPayload } from '../../../../core/domains/academico/material-complementario/models/material.interface';
 
 @Component({
-  selector: 'app-admin-guides-management',
+  selector: 'app-administrador-material-complementario',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, ButtonModule, 
@@ -26,10 +26,10 @@ import { Material, CrearMaterialPayload, ActualizarMaterialPayload } from '../..
     SelectModule, TextareaModule
   ],
   providers: [MessageService, ConfirmationService],
-  templateUrl: './admin-guides-management.html',
-  styleUrls: ['./admin-guides-management.css']
+  templateUrl: './material-complementario.component.html',
+  styleUrls: ['./material-complementario.component.css']
 })
-export class AdminGuidesManagementComponent implements OnInit {
+export class AdministradorMaterialComplementarioComponent implements OnInit {
   
   private materialService = inject(MaterialService);
   private messageService = inject(MessageService);

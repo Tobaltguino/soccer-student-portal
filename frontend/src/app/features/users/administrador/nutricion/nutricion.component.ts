@@ -16,7 +16,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 @Component({
-  selector: 'app-admin-nutri',
+  selector: 'app-administrador-nutricion',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, DialogModule, ButtonModule, 
@@ -24,10 +24,10 @@ import { MessageService, ConfirmationService } from 'primeng/api';
     ConfirmDialogModule, RadioButtonModule, TooltipModule
   ],
   providers: [MessageService, ConfirmationService],
-  templateUrl: './admin-nutri.html',
-  styleUrls: ['./admin-nutri.css']
+  templateUrl: './nutricion.component.html',
+  styleUrls: ['./nutricion.component.css']
 })
-export class AdminNutriComponent implements OnInit {
+export class AdministradorNutricionComponent implements OnInit {
   
   sesiones: any[] = [];
   sesionesFiltradas: any[] = [];

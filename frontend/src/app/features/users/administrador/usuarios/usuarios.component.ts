@@ -30,7 +30,7 @@ import { Rol, CrearUsuarioPayload, ActualizarUsuarioPayload } from '../../../../
 import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
 
 @Component({
-  selector: 'app-admin-users',
+  selector: 'app-administrador-usuarios',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, ButtonModule, DialogModule, 
@@ -39,10 +39,10 @@ import { GrupoService } from '../../../../core/domains/academico/grupos/services
     FileUploadModule, RutFormatDirective
   ],
   providers: [ConfirmationService, MessageService, FilterService],
-  templateUrl: './admin-users.html',
-  styleUrls: ['./admin-users.css']
+  templateUrl: './usuarios.component.html',
+  styleUrls: ['./usuarios.component.css']
 })
-export class AdminUsersComponent implements OnInit {
+export class AdministradorUsuariosComponent implements OnInit {
   @ViewChild('dt') dt: Table | undefined;
 
   // --- SERVICIOS ---

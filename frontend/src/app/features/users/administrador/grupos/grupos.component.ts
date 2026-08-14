@@ -17,7 +17,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
 
 @Component({
-  selector: 'app-admin-groups',
+  selector: 'app-administrador-grupos',
   standalone: true,
   imports: [
     CommonModule, 
@@ -32,10 +32,10 @@ import { GrupoService } from '../../../../core/domains/academico/grupos/services
     ToastModule
   ],
   providers: [ConfirmationService, MessageService],
-  templateUrl: './admin-groups.html',
-  styleUrls: ['./admin-groups.css']
+  templateUrl: './grupos.component.html',
+  styleUrls: ['./grupos.component.css']
 })
-export class AdminGroupsComponent implements OnInit {
+export class AdministradorGruposComponent implements OnInit {
 
   private grupoService = inject(GrupoService);
   private confirmationService = inject(ConfirmationService);
