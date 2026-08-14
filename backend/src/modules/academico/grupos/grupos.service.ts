@@ -31,7 +31,7 @@ export class GruposService {
     incluirEliminados: boolean = false,
     gruposPermitidos: number[] | null = null,
   ): Promise<GrupoRow[]> {
-    let query = this.supabase.client.from('grupos').select('*').order('nombre');
+    let query = this.supabase.client.from('grupos').select('*, estudiantes(count)').order('nombre');
 
     if (!incluirEliminados) {
       query = query.is('eliminado_at', null);

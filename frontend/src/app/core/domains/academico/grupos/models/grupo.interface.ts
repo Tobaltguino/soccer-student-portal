@@ -4,6 +4,9 @@ export interface Grupo {
   descripcion: string | null;
   eliminado_at: string | null;
   created_at: string;
+  
+  estudiantes?: { count: number }[]; // Así es como viene crudo desde Supabase
+  cantidad_alumnos?: number; // Así es como lo usamos en la tabla HTML
 }
 
 export interface CrearGrupoPayload {

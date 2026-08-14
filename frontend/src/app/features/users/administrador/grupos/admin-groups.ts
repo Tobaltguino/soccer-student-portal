@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -10,10 +10,11 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TagModule } from 'primeng/tag';
-import { ToastModule } from 'primeng/toast'; // <--- IMPORTANTE: Faltaba este módulo
-import { ConfirmationService, MessageService } from 'primeng/api'; // <--- Faltaba MessageService
+import { ToastModule } from 'primeng/toast';
+import { ConfirmationService, MessageService } from 'primeng/api';
 
-import { SupabaseService } from '../../../../../core/services/supabase.service';
+// Servicio de Angular (Conectado a NestJS)
+import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
 
 @Component({
   selector: 'app-admin-groups',
@@ -28,13 +29,18 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
     TextareaModule, 
     ConfirmDialogModule,
     TagModule,
-    ToastModule // <--- Agregado para que funcione <p-toast>
+    ToastModule
   ],
-  providers: [ConfirmationService, MessageService], // <--- Agregado MessageService
+  providers: [ConfirmationService, MessageService],
   templateUrl: './admin-groups.html',
   styleUrls: ['./admin-groups.css']
 })
 export class AdminGroupsComponent implements OnInit {
+
+  private grupoService = inject(GrupoService);
+  private confirmationService = inject(ConfirmationService);
+  private messageService = inject(MessageService);
+  private cdr = inject(ChangeDetectorRef);
 
   grupos: any[] = [];
   loading: boolean = true;
@@ -44,34 +50,30 @@ export class AdminGroupsComponent implements OnInit {
   // Objeto del formulario
   grupoForm: any = { id: null, nombre: '', descripcion: '' };
 
-  constructor(
-    private supabase: SupabaseService,
-    private confirmationService: ConfirmationService,
-    private messageService: MessageService, // <--- Inyectado para notificaciones
-    private cdr: ChangeDetectorRef
-  ) {}
-
   ngOnInit() {
     this.cargarGrupos();
   }
 
-  async cargarGrupos() {
+  cargarGrupos() {
     this.loading = true;
-    const { data, error } = await this.supabase.getGrupos();
     
-    if (data) {
-      // Mapeamos los datos para obtener la cantidad de alumnos de forma segura
-      this.grupos = data.map((g: any) => ({
-          ...g,
-          // Verifica si existe la propiedad y si es un array con elementos
-          cantidad_alumnos: (g.estudiantes && g.estudiantes.length > 0) ? g.estudiantes[0].count : 0
-      }));
-    } else {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los grupos.' });
-    }
-    
-    this.loading = false;
-    this.cdr.detectChanges();
+    this.grupoService.listarGrupos().subscribe({
+      next: (data) => {
+        // Mapeamos los datos asumiendo que agregaste 'estudiantes(count)' en tu NestJS
+        this.grupos = data.map((g: any) => ({
+            ...g,
+            cantidad_alumnos: (g.estudiantes && g.estudiantes.length > 0) ? g.estudiantes[0].count : 0
+        }));
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error(err);
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los grupos.' });
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   // --- ABRIR DIÁLOGOS ---
@@ -83,38 +85,46 @@ export class AdminGroupsComponent implements OnInit {
 
   abrirEditar(grupo: any) {
     this.tituloDialogo = 'Editar Grupo';
-    // Usamos spread operator (...) para crear una copia y no editar la tabla directamente
     this.grupoForm = { ...grupo }; 
     this.displayDialog = true;
   }
 
   // --- GUARDAR ---
-  async guardarGrupo() {
+  guardarGrupo() {
     if (!this.grupoForm.nombre || this.grupoForm.nombre.trim() === '') {
       this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'El nombre es obligatorio.' });
       return;
     }
 
-    const datos = { 
+    const payload = { 
       nombre: this.grupoForm.nombre,
       descripcion: this.grupoForm.descripcion
     };
 
-    let result;
     if (this.grupoForm.id) {
       // Actualizar
-      result = await this.supabase.updateGrupo(this.grupoForm.id, datos);
+      this.grupoService.actualizarGrupo(this.grupoForm.id, payload).subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Grupo actualizado correctamente.' });
+          this.displayDialog = false;
+          this.cargarGrupos();
+        },
+        error: (err) => {
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el grupo.' });
+        }
+      });
     } else {
       // Crear nuevo
-      result = await this.supabase.createGrupo(datos);
-    }
-
-    if (result.error) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: result.error.message });
-    } else {
-      this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Grupo guardado correctamente.' });
-      this.displayDialog = false;
-      this.cargarGrupos();
+      this.grupoService.crearGrupo(payload).subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Grupo creado correctamente.' });
+          this.displayDialog = false;
+          this.cargarGrupos();
+        },
+        error: (err) => {
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo crear el grupo.' });
+        }
+      });
     }
   }
 
@@ -127,14 +137,16 @@ export class AdminGroupsComponent implements OnInit {
       acceptLabel: 'Sí, eliminar',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-danger p-button-text',
-      accept: async () => {
-        const { error } = await this.supabase.deleteGrupo(id);
-        if (!error) {
+      accept: () => {
+        this.grupoService.eliminarGrupo(id).subscribe({
+          next: () => {
             this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Grupo eliminado correctamente.' });
             this.cargarGrupos();
-        } else {
+          },
+          error: (err) => {
             this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el grupo.' });
-        }
+          }
+        });
       }
     });
   }
