@@ -16,7 +16,7 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
 
 
 @Component({
-  selector: 'app-student-schedule',
+  selector: 'app-estudiante-horario',
   standalone: true,
   imports: [
     CommonModule, 
@@ -25,10 +25,10 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
     ButtonModule,
     TagModule
   ],
-  templateUrl: './student-schedule.html',
-  styleUrls: ['./student-schedule.css']
+  templateUrl: './horario.component.html',
+  styleUrls: ['./horario.component.css']
 })
-export class StudentScheduleComponent implements OnInit {
+export class EstudianteHorarioComponent implements OnInit {
   
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],

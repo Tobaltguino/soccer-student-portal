@@ -13,16 +13,16 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
 
 
 @Component({
-  selector: 'app-student-nutri',
+  selector: 'app-estudiante-nutricion',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, ButtonModule, 
     DatePickerModule, SelectModule, TooltipModule
   ],
-  templateUrl: './student-nutri.html',
-  styleUrls: ['./student-nutri.css'] // Utiliza el mismo CSS
+  templateUrl: './nutricion.component.html',
+  styleUrls: ['./nutricion.component.css'] // Utiliza el mismo CSS
 })
-export class StudentNutriComponent implements OnInit {
+export class EstudianteNutricionComponent implements OnInit {
   
   loading = false;
   estudianteId: string | null = null;

@@ -7,13 +7,13 @@ import { UsuarioPerfil } from '../../../../core/domains/usuarios/central/models/
 import { Rol } from '../../../../core/domains/usuarios/central/models/usuario.interface';
 
 @Component({
-  selector: 'app-view-teachers',
+  selector: 'app-estudiante-cuerpo-tecnico',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './view-teachers.html',
-  styleUrls: ['./view-teachers.css']
+  templateUrl: './cuerpo-tecnico.component.html',
+  styleUrls: ['./cuerpo-tecnico.component.css']
 })
-export class ViewTeachersComponent implements OnInit {
+export class EstudianteCuerpoTecnicoComponent implements OnInit {
   
   private usuarioService = inject(UsuarioService);
   private cdr = inject(ChangeDetectorRef);

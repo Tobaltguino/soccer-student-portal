@@ -18,7 +18,7 @@ import { TipoMaterial } from '../../../../shared/enums/tipo-material.enum';
 import { Material } from '../../../../core/domains/academico/material-complementario/models/material.interface';
 
 @Component({
-  selector: 'app-student-view-guides',
+  selector: 'app-estudiante-material-complementario',
   standalone: true,
   imports: [
     CommonModule, 
@@ -32,10 +32,10 @@ import { Material } from '../../../../core/domains/academico/material-complement
     SelectModule 
   ],
   providers: [MessageService],
-  templateUrl: './student-view-guides.html',
-  styleUrls: ['./student-view-guides.css']
+  templateUrl: './material-complementario.component.html',
+  styleUrls: ['./material-complementario.component.css']
 })
-export class StudentViewGuidesComponent implements OnInit {
+export class EstudianteMaterialcomplementarioComponent implements OnInit {
   
   private materialService = inject(MaterialService);
   private messageService = inject(MessageService);

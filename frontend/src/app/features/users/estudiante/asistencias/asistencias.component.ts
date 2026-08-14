@@ -11,7 +11,7 @@ import { ProgressBarModule } from 'primeng/progressbar';
 import { SupabaseService } from '../../../../../core/services/supabase.service';
 
 @Component({
-  selector: 'app-student-attendance',
+  selector: 'app-estudiante-asistencias',
   standalone: true,
   imports: [
     CommonModule,
@@ -21,10 +21,10 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
     ButtonModule,
     ProgressBarModule
   ],
-  templateUrl: './student-attendance.html',
-  styleUrl: './student-attendance.css',
+  templateUrl: './asistencias.component.html',
+  styleUrl: './asistencias.component.css',
 })
-export class StudentAttendanceComponent implements OnInit {
+export class EstudianteAsistenciasComponent implements OnInit {
   loading: boolean = false;
   hasData: boolean = false; // Control para el gráfico circular
   hasYearlyData: boolean = false; // Control para el gráfico de barras

@@ -5,13 +5,13 @@ import { RouterModule } from '@angular/router';
 import { SupabaseService } from '../../../../../core/services/supabase.service';
 
 @Component({
-  selector: 'app-student-dashboard',
+  selector: 'app-estudiante-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './student-dashboard.html',
-  styleUrl: './student-dashboard.css',
+  templateUrl: './dashboard.component.html',
+  styleUrl: './dashboard.component.css',
 })
-export class StudentDashboardComponent implements OnInit {
+export class EstudianteDashboardComponent implements OnInit {
   loading: boolean = true;
   supabaseStatus: string = 'online';
   

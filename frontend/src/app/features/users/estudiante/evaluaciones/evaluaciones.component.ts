@@ -12,16 +12,16 @@ import { TooltipModule } from 'primeng/tooltip';
 import { SupabaseService } from '../../../../../core/services/supabase.service';
 
 @Component({
-  selector: 'app-student-evaluations',
+  selector: 'app-estudiante-evaluaciones',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, TagModule, ButtonModule, 
     DialogModule, DatePickerModule, SelectModule, TooltipModule
   ],
-  templateUrl: './student-evaluations.html',
-  styleUrls: ['./student-evaluations.css']
+  templateUrl: './evaluaciones.component.html',
+  styleUrls: ['./evaluaciones.component.css']
 })
-export class StudentEvaluationsComponent implements OnInit {
+export class EstudianteEvaluacionesComponent implements OnInit {
   evaluaciones: any[] = [];
   evaluacionesOriginales: any[] = [];
   tiposTests: any[] = [];
