@@ -21,7 +21,7 @@
                     <th style="width: 30%">Título</th>
                     <th style="width: 45%">Descripción</th>
                     <th style="width: 15%" class="text-center">Fecha de Subida</th>
-                    <th style="width: 10%" class="text-center">Documento</th>
+                    <th style="width: 10%" class="text-center">Acciones</th>
                 </tr>
             </ng-template>
             
@@ -40,11 +40,14 @@
                         <span class="text-secondary"><i class="pi pi-calendar mr-1"></i> {{guia.created_at | date:'dd/MM/yyyy HH:mm'}}</span>
                     </td>
                     <td class="text-center">
-                        <span class="p-column-title hidden-desktop">Acción</span>
-                        <div class="action-buttons w-full">
-                            <a [href]="guia.archivo_url" target="_blank" class="no-underline w-full sm:w-auto">
-                                <button pButton icon="pi pi-download" class="p-button-outlined p-button-primary w-full" pTooltip="Descargar"></button>
+                        <span class="p-column-title hidden-desktop">Acciones</span>
+                        <div class="action-buttons w-full flex justify-content-center">
+                            <!-- Descargar -->
+                            <a [href]="guia.archivo_url" target="_blank" class="no-underline">
+                                <button pButton icon="pi pi-download" class="p-button-text p-button-primary" pTooltip="Descargar"></button>
                             </a>
+                            <!-- ✅ Editar (Siempre visible porque todo en esta tabla es de Nutrición) -->
+                            <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning" (click)="editarGuia(guia)" pTooltip="Editar"></button>
                         </div>
                     </td>
                 </tr>
@@ -61,7 +64,8 @@
         </p-table>
     </div>
 
-    <p-dialog [(visible)]="displayDialog" header="Subir Nuevo Material" [modal]="true" 
+    <!-- ✅ MODAL PARA SUBIR / EDITAR MATERIAL -->
+    <p-dialog [(visible)]="displayDialog" [header]="nuevaGuia.id ? 'Editar Material' : 'Subir Nuevo Material'" [modal]="true" 
               [style]="{width: '90vw', maxWidth: '500px'}" styleClass="p-fluid" [closable]="!subiendoArchivo">
         
         <ng-template pTemplate="content">
@@ -72,10 +76,11 @@
 
             <div class="field mb-4">
                 <label>Descripción (Opcional)</label>
-                <textarea pInputText [(ngModel)]="nuevaGuia.descripcion" rows="3" placeholder="Instrucciones breves sobre este material..." [disabled]="subiendoArchivo" class="w-full p-2"></textarea>
+                <textarea pTextarea [(ngModel)]="nuevaGuia.descripcion" rows="3" placeholder="Instrucciones breves sobre este material..." [disabled]="subiendoArchivo" class="w-full"></textarea>
             </div>
 
-            <div class="field">
+            <!-- ✅ Solo muestra para subir archivo al crear, no al editar -->
+            <div class="field" *ngIf="!nuevaGuia.id">
                 <label>Archivo <span class="text-red-500 font-bold ml-1">*</span></label>
                 
                 <div class="file-upload-container text-center cursor-pointer" 
@@ -90,7 +95,7 @@
                         <div class="text-main font-bold text-base">
                             Haz clic aquí para adjuntar el archivo
                         </div>
-                        <div class="text-secondary text-sm mt-1">PDF, Word o Imágenes (Máx. 5MB)</div>
+                        <div class="text-secondary text-sm mt-1">PDF, Word o Imágenes (Máx. 20MB)</div>
                     </div>
 
                     <div *ngIf="archivoSeleccionado" class="flex flex-column align-items-center">
@@ -105,7 +110,7 @@
         <ng-template pTemplate="footer">
             <div class="flex w-full justify-content-end gap-2">
                 <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text p-button-secondary w-full sm:w-auto" (click)="displayDialog=false" [disabled]="subiendoArchivo"></button>
-                <button pButton label="Publicar Documento" icon="pi pi-check" class="p-button-success w-full sm:w-auto" (click)="guardarGuia()" [loading]="subiendoArchivo"></button>
+                <button pButton [label]="nuevaGuia.id ? 'Guardar Cambios' : 'Publicar Documento'" icon="pi pi-check" class="p-button-success w-full sm:w-auto" (click)="guardarGuia()" [loading]="subiendoArchivo"></button>
             </div>
         </ng-template>
     </p-dialog>

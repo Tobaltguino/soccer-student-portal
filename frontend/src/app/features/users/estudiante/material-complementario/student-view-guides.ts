@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms'; 
 
@@ -9,9 +9,13 @@ import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { InputTextModule } from 'primeng/inputtext'; 
 import { DatePickerModule } from 'primeng/datepicker'; 
-import { SelectModule } from 'primeng/select'; // ✅ Importante para el selector de Área
+import { SelectModule } from 'primeng/select';
+import { MessageService } from 'primeng/api'; // ✅ Recomendado para manejo de errores
 
-import { SupabaseService } from '../../../../../core/services/supabase.service';
+// Servicios y Modelos unificados a NestJS
+import { MaterialService } from '../../../../core/domains/academico/material-complementario/services/material-complementario.service';
+import { TipoMaterial } from '../../../../shared/enums/tipo-material.enum';
+import { Material } from '../../../../core/domains/academico/material-complementario/models/material.interface';
 
 @Component({
   selector: 'app-student-view-guides',
@@ -25,60 +29,64 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
     TableModule,
     InputTextModule,
     DatePickerModule,
-    SelectModule // ✅ Añadido a los imports
+    SelectModule 
   ],
+  providers: [MessageService],
   templateUrl: './student-view-guides.html',
   styleUrls: ['./student-view-guides.css']
 })
 export class StudentViewGuidesComponent implements OnInit {
-  guias: any[] = [];
-  guiasFiltradas: any[] = []; 
+  
+  private materialService = inject(MaterialService);
+  private messageService = inject(MessageService);
+  private cdr = inject(ChangeDetectorRef);
+
+  guias: Material[] = [];
+  guiasFiltradas: Material[] = []; 
   loading: boolean = true;
 
   // --- FILTROS ---
   filtroTitulo: string = '';
   filtroFecha: Date | null = null;
-  filtroArea: string | null = null; // ✅ Nuevo estado para el filtro de área
+  filtroArea: TipoMaterial | null = null;
 
-  // ✅ Opciones exactas para la base de datos
+  // Opciones sincronizadas con tu TipoMaterial (Enum)
   tiposMaterial = [
-    { label: 'Técnico / Físico', value: 'TECNICO_FISICO' },
-    { label: 'Nutrición', value: 'NUTRICION' },
-    { label: 'Kinesiología', value: 'KINESIOLOGIA' }
+    { label: 'Técnico / Físico', value: TipoMaterial.FISICO },
+    { label: 'Nutrición', value: TipoMaterial.NUTRICION },
+    { label: 'Kinesiología', value: TipoMaterial.KINESIOLOGICO }
   ];
-
-  constructor(
-    private supabase: SupabaseService,
-    private cdr: ChangeDetectorRef
-  ) {}
 
   ngOnInit() {
     this.cargarGuias();
   }
 
-  async cargarGuias() {
+  cargarGuias() {
     this.loading = true;
     this.cdr.detectChanges(); 
 
-    try {
-      const { data, error } = await this.supabase.getGuias();
-      if (error) throw error;
-      
-      this.guias = data || [];
-      this.guiasFiltradas = [...this.guias]; 
-      
-    } catch (error) {
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges(); 
-    }
+    // ✅ Llamamos a la API de NestJS con límite alto para filtrar localmente
+    this.materialService.listarMaterial({ limite: 100 }).subscribe({
+      next: (response) => {
+        this.guias = response.registros || [];
+        this.guiasFiltradas = [...this.guias]; 
+        this.aplicarFiltros(); // Asegura que se apliquen filtros preexistentes al recargar
+        this.loading = false;
+        this.cdr.detectChanges(); 
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar las guías.' });
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   // --- LÓGICA DE FILTRADO MÚLTIPLE ---
   aplicarFiltros() {
     this.guiasFiltradas = this.guias.filter(guia => {
       // 1. Filtrar por Título
-      const coincideTitulo = guia.titulo.toLowerCase().includes(this.filtroTitulo.toLowerCase());
+      const coincideTitulo = (guia.titulo || '').toLowerCase().includes(this.filtroTitulo.toLowerCase());
       
       // 2. Filtrar por Fecha
       let coincideFecha = true;
@@ -91,7 +99,7 @@ export class StudentViewGuidesComponent implements OnInit {
                         fechaGuia.getDate() === fechaFiltro.getDate();
       }
 
-      // 3. ✅ Filtrar por Área (tipo_material)
+      // 3. Filtrar por Área (tipo_material)
       let coincideArea = true;
       if (this.filtroArea) {
         coincideArea = guia.tipo_material === this.filtroArea;
@@ -99,17 +107,18 @@ export class StudentViewGuidesComponent implements OnInit {
 
       return coincideTitulo && coincideFecha && coincideArea;
     });
+    this.cdr.detectChanges();
   }
 
   limpiarFiltros() {
     this.filtroTitulo = '';
     this.filtroFecha = null;
-    this.filtroArea = null; // ✅ Limpiamos el nuevo filtro
+    this.filtroArea = null; 
     this.guiasFiltradas = [...this.guias]; 
+    this.cdr.detectChanges();
   }
 
-  // ✅ Helper visual para mostrar el nombre del área en la tabla
-  getNombreArea(valor: string): string {
+  getNombreArea(valor: TipoMaterial): string {
     const area = this.tiposMaterial.find(t => t.value === valor);
     return area ? area.label : 'General';
   }

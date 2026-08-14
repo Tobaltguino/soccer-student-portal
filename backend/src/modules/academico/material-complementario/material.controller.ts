@@ -35,10 +35,10 @@ export class MaterialController {
   @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
   crear(
     @Body() dto: CrearMaterialDto,
-    @CurrentUser() user: RequestUser,
+    @CurrentUser() user: RequestUser, 
     @UploadedFile() archivo: Express.Multer.File,
   ) {
-    return this.materialService.crear(dto, user.id, archivo);
+    return this.materialService.crear(dto, user, archivo);
   }
 
   @Get()
@@ -55,12 +55,16 @@ export class MaterialController {
 
   @Patch(':id')
   @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.NUTRICIONISTA)
-  actualizar(@Param('id') id: string, @Body() dto: ActualizarMaterialDto) {
-    return this.materialService.actualizar(id, dto);
+  actualizar(
+    @Param('id') id: string, 
+    @Body() dto: ActualizarMaterialDto,
+    @CurrentUser() user: RequestUser
+  ) {
+    return this.materialService.actualizar(id, dto, user);
   }
 
   @Delete(':id')
-  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.NUTRICIONISTA)
+  @Roles(Rol.ADMINISTRADOR) 
   eliminar(@Param('id') id: string) {
     return this.materialService.eliminar(id);
   }
