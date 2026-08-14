@@ -26,6 +26,14 @@ export class GrupoService {
   }
 
   /**
+   * GET /grupos/mis-grupos
+   * Devuelve únicamente los grupos a los que el Staff (Profesor/Kine/Nutri) está asignado.
+   */
+  obtenerMisGrupos(): Observable<Grupo[]> {
+    return this.http.get<Grupo[]>(`${this.apiUrl}/mis-grupos`);
+  }
+
+  /**
    * GET /grupos/:id
    * Obtiene el detalle de un grupo específico.
    */

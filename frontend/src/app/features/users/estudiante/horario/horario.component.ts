@@ -1,5 +1,7 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { forkJoin } from 'rxjs'; // ✅ Importamos forkJoin
+
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { CalendarOptions } from '@fullcalendar/core/index.js';
 import dayGridPlugin from '@fullcalendar/daygrid/index.js';
@@ -11,9 +13,12 @@ import esLocale from '@fullcalendar/core/locales/es.js';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 
-import { SupabaseService } from '../../../../../core/services/supabase.service';
-
+// Nuevos Servicios de Dominio
+import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
+import { AsistenciaService } from '../../../../core/domains/academico/asistencias/services/asistencia.service';
 
 @Component({
   selector: 'app-estudiante-horario',
@@ -23,13 +28,20 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
     FullCalendarModule, 
     DialogModule, 
     ButtonModule,
-    TagModule
+    TagModule,
+    ToastModule
   ],
+  providers: [MessageService],
   templateUrl: './horario.component.html',
   styleUrls: ['./horario.component.css']
 })
 export class EstudianteHorarioComponent implements OnInit {
   
+  private claseService = inject(ClaseService);
+  private asistenciaService = inject(AsistenciaService);
+  private messageService = inject(MessageService);
+  private cdr = inject(ChangeDetectorRef);
+
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
     initialView: 'listWeek',
@@ -84,33 +96,34 @@ export class EstudianteHorarioComponent implements OnInit {
   claseSeleccionada: any = null;
   loading: boolean = true;
 
-  constructor(
-    private supabaseService: SupabaseService,
-    private cdr: ChangeDetectorRef
-  ) {}
-
   ngOnInit() {
     this.cargarClasesCalendario();
   }
 
-  async cargarClasesCalendario() {
+  cargarClasesCalendario() {
     this.loading = true;
-    try {
-      const { data: { user } } = await this.supabaseService.getUser();
-      if (user) {
-        const hoy = new Date();
-        const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
+
+    // 🔥 Cruzamos Mis Clases con Mis Asistencias
+    forkJoin({
+      clases: this.claseService.obtenerMisClases(),
+      asistencias: this.asistenciaService.obtenerMisAsistencias()
+    }).subscribe({
+      next: ({ clases, asistencias }) => {
         
-        const { data, error } = await this.supabaseService.getClasesAlumno(user.id, inicioMes);
+        // Creamos un diccionario rápido de la asistencia del estudiante
+        const asistenciasMap = new Map();
+        asistencias.forEach(a => asistenciasMap.set(a.clase_id, a.presente));
 
-        if (error) throw error;
+        // Mapeamos a formato FullCalendar
+        const eventos = clases.map((clase: any) => {
+            // Le inyectamos el "presente" para que la función de color funcione
+            clase.presente = asistenciasMap.has(clase.id) ? asistenciasMap.get(clase.id) : null;
 
-        const eventos = (data || []).map((clase: any) => {
             const start = new Date(`${clase.fecha}T${clase.hora}`);
-            const end = new Date(start.getTime() + 90 * 60000); 
+            const end = new Date(start.getTime() + 90 * 60000); // 90 min de duración
 
             return {
-              title: `${clase.lugar}`,
+              title: `${clase.lugar || 'Cancha'}`,
               start: start.toISOString(),
               end: end.toISOString(),
               extendedProps: { ...clase },
@@ -121,27 +134,29 @@ export class EstudianteHorarioComponent implements OnInit {
         });
 
         this.calendarOptions = { ...this.calendarOptions, events: eventos };
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el horario.' });
+        this.loading = false;
+        this.cdr.detectChanges();
       }
-    } catch (error) {
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
+    });
   }
 
   handleEventClick(arg: any) {
     this.claseSeleccionada = arg.event.extendedProps;
     this.displayDetalle = true;
-    this.cdr.detectChanges(); // ✅ IMPORTANTE: Fuerza a Angular a abrir el modal
+    this.cdr.detectChanges(); 
   }
 
   getColorEvento(clase: any): string {
-    if (clase.presente === true) return '#22c55e'; 
-    if (clase.presente === false) return '#ef4444'; 
-    return '#3b82f6'; 
+    if (clase.presente === true) return '#22c55e'; // Verde (Asistió)
+    if (clase.presente === false) return '#ef4444'; // Rojo (Faltó)
+    return '#3b82f6'; // Azul (Pendiente o Futuro)
   }
 
-  // ✅ NUEVA FUNCIÓN DE CANDADO
   puedeVerPlanificacion(clase: any): boolean {
     if (!clase || !clase.fecha || !clase.hora) return false;
     

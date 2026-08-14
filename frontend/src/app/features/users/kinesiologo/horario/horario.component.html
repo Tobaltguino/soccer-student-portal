@@ -1,4 +1,5 @@
 <div class="schedule-container fadein animation-duration-500">
+    <p-toast position="top-right"></p-toast>
     
     <header class="page-header">
         <div class="header-content">
@@ -7,7 +8,7 @@
         </div>
         <div class="header-actions">
             <button pButton icon="pi pi-sync" class="p-button-outlined p-button-secondary btn-create" 
-                    (click)="cargarClasesCalendario()" [loading]="loading" pTooltip="Actualizar Agenda"></button>
+                    (click)="cargarGruposYClases()" [loading]="loading" pTooltip="Actualizar Agenda"></button>
         </div>
     </header>
 
@@ -54,14 +55,15 @@
                 <div class="modal-content-box text-sm" style="white-space: pre-wrap;">{{ claseSeleccionada.calentamiento }}</div>
             </div>
              
-            <div class="field mb-3" *ngIf="claseSeleccionada.parte_principal && claseSeleccionada.parte_principal !== 'EMPTY'">
+            <!-- Soporte camelCase y snake_case -->
+            <div class="field mb-3" *ngIf="(claseSeleccionada.parte_principal || claseSeleccionada.partePrincipal) && (claseSeleccionada.parte_principal || claseSeleccionada.partePrincipal) !== 'EMPTY'">
                 <label class="modal-label"><span class="mr-2">⚽</span> Parte Principal</label>
-                <div class="modal-content-box text-sm" style="white-space: pre-wrap;">{{ claseSeleccionada.parte_principal }}</div>
+                <div class="modal-content-box text-sm" style="white-space: pre-wrap;">{{ claseSeleccionada.parte_principal || claseSeleccionada.partePrincipal }}</div>
             </div>
 
-            <div class="field mb-3" *ngIf="claseSeleccionada.vuelta_calma && claseSeleccionada.vuelta_calma !== 'EMPTY'">
+            <div class="field mb-3" *ngIf="(claseSeleccionada.vuelta_calma || claseSeleccionada.vueltaCalma) && (claseSeleccionada.vuelta_calma || claseSeleccionada.vueltaCalma) !== 'EMPTY'">
                 <label class="modal-label"><span class="mr-2">❄️</span> Vuelta a la Calma</label>
-                <div class="modal-content-box text-sm" style="white-space: pre-wrap;">{{ claseSeleccionada.vuelta_calma }}</div>
+                <div class="modal-content-box text-sm" style="white-space: pre-wrap;">{{ claseSeleccionada.vuelta_calma || claseSeleccionada.vueltaCalma }}</div>
             </div>
         </div>
 

@@ -1,5 +1,7 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+
+// FullCalendar
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { CalendarOptions } from '@fullcalendar/core/index.js';
 import dayGridPlugin from '@fullcalendar/daygrid/index.js';
@@ -8,12 +10,19 @@ import interactionPlugin from '@fullcalendar/interaction/index.js';
 import listPlugin from '@fullcalendar/list/index.js';
 import esLocale from '@fullcalendar/core/locales/es.js';
 
+// PrimeNG
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 
-import { SupabaseService } from '../../../../../core/services/supabase.service';
+// Servicios de Dominio
+import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
+import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
+import { Grupo } from '../../../../core/domains/academico/grupos/models/grupo.interface';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-kinesiologo-horario',
@@ -24,19 +33,26 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
     DialogModule, 
     ButtonModule,
     TagModule,
-    TooltipModule
+    TooltipModule,
+    ToastModule
   ],
+  providers: [MessageService],
   templateUrl: './horario.component.html',
   styleUrls: ['./horario.component.css']
 })
 export class KinesiologoHorarioComponent implements OnInit {
   
+  private grupoService = inject(GrupoService);
+  private claseService = inject(ClaseService);
+  private messageService = inject(MessageService);
+  private cdr = inject(ChangeDetectorRef);
+
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
     initialView: 'listWeek', 
     locale: esLocale,
     
-    // --- CONFIGURACIÓN DE HORAS (24 HORAS COMPLETAS) ---
+    // --- CONFIGURACIÓN DE HORAS ---
     slotMinTime: '06:00:00', 
     slotMaxTime: '23:00:00', 
     scrollTime: '15:00:00',  
@@ -86,78 +102,95 @@ export class KinesiologoHorarioComponent implements OnInit {
   displayDetalle: boolean = false;
   claseSeleccionada: any = null;
   loading: boolean = true;
-  grupos: any[] = [];
-
-  constructor(
-    private supabase: SupabaseService, 
-    private cdr: ChangeDetectorRef
-  ) {}
+  grupos: Grupo[] = [];
 
   ngOnInit() {
-    this.cargarClasesCalendario();
+    this.cargarGruposYClases();
   }
 
-  async cargarClasesCalendario() {
+  cargarGruposYClases() {
     this.loading = true;
-    try {
-      const { data: { user } } = await this.supabase.getUser();
-      if (!user?.email) return;
+    
+    // 1. Llamamos a nuestro nuevo endpoint
+    this.grupoService.obtenerMisGrupos().subscribe({
+      next: (gruposData) => {
+        this.grupos = gruposData || [];
+        const misGrupoIds = this.grupos.map(g => g.id).filter(id => id !== undefined) as number[];
 
-      const { data: kine } = await this.supabase.supabase
-          .from('kinesiologos')
-          .select('id')
-          .eq('email', user.email)
-          .maybeSingle();
-      if (!kine) return;
+        if (misGrupoIds.length === 0) {
+          this.loading = false;
+          this.calendarOptions = { ...this.calendarOptions, events: [] };
+          this.cdr.detectChanges();
+          return;
+        }
 
-      // ✅ Obtenemos los grupos asignados al Kinesiólogo
-      const { data: gruposData } = await this.supabase.getGruposDeKine(kine.id);
-      this.grupos = gruposData ? gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null) : [];
-      
-      const misGrupoIds = this.grupos.map(g => g.id);
-
-      if (misGrupoIds.length > 0) {
         const hoy = new Date();
-        const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
+        const inicioMesStr = `${hoy.getFullYear()}-${('0' + (hoy.getMonth() + 1)).slice(-2)}-01`;
 
-        const { data: clases, error } = await this.supabase.getClasesPorGrupos(misGrupoIds, inicioMes);
-        if (error) throw error;
+        // ✅ 2. Creamos un arreglo de peticiones HTTP (una por cada grupo)
+        const peticionesClases = misGrupoIds.map(id => 
+          this.claseService.listarClases({ grupoId: id, desde: inicioMesStr, limite: 100 })
+        );
 
-        const eventos = (clases || []).map((clase: any) => {
-            const grupoInfo = this.grupos.find(g => g.id === clase.grupo_id);
-            const nombreGrupo = grupoInfo ? grupoInfo.nombre : 'Grupo Desconocido';
+        // ✅ 3. Ejecutamos todas las peticiones en paralelo con forkJoin
+        forkJoin(peticionesClases).subscribe({
+          next: (respuestas) => {
             
-            const start = new Date(`${clase.fecha}T${clase.hora}`);
-            const end = new Date(start.getTime() + 90 * 60000); 
+            // respuestas es un arreglo de respuestas. Usamos flatMap para unir todos los 'registros' en un solo arreglo
+            const todasLasClases = respuestas.flatMap(res => res.registros);
 
-            return {
-              title: `${nombreGrupo} | ${clase.lugar}`,
-              start: start.toISOString(),
-              end: end.toISOString(),
-              extendedProps: { ...clase, grupoNombre: nombreGrupo },
-              backgroundColor: this.getColorPorGrupo(clase.grupo_id),
-              borderColor: this.getColorPorGrupo(clase.grupo_id),
-              textColor: '#ffffff'
-            };
+            const eventos = todasLasClases.map((clase: any) => {
+              const grupoInfo = this.grupos.find(g => g.id === clase.grupo_id);
+              const nombreGrupo = grupoInfo ? grupoInfo.nombre : 'Grupo Desconocido';
+              
+              const start = new Date(`${clase.fecha}T${clase.hora}`);
+              const end = new Date(start.getTime() + 90 * 60000); 
+
+              return {
+                title: `${nombreGrupo} | ${clase.lugar}`,
+                start: start.toISOString(),
+                end: end.toISOString(),
+                extendedProps: { ...clase, grupoNombre: nombreGrupo },
+                backgroundColor: this.getColorPorGrupo(clase.grupo_id),
+                borderColor: this.getColorPorGrupo(clase.grupo_id),
+                textColor: '#ffffff'
+              };
+            });
+
+            this.calendarOptions = { ...this.calendarOptions, events: eventos };
+            this.loading = false;
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.mostrarError('Error al cargar la agenda de clases');
+          }
         });
 
-        this.calendarOptions = { ...this.calendarOptions, events: eventos };
+      },
+      error: () => {
+        this.mostrarError('Error al cargar tus categorías asignadas');
       }
-    } catch (error) {
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
+    });
   }
 
   handleEventClick(arg: any) {
     this.claseSeleccionada = arg.event.extendedProps;
     this.displayDetalle = true;
+    this.cdr.detectChanges();
   }
 
   getColorPorGrupo(grupoId: number | string): string {
+    if (!grupoId) return '#3b82f6';
     const paleta = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'];
-    const index = String(grupoId).charCodeAt(0) % paleta.length;
+    
+    // Usamos el ID numérico para elegir un color consistente del array
+    const index = Number(grupoId) % paleta.length;
     return paleta[index];
+  }
+
+  private mostrarError(mensaje: string) {
+    this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
+    this.loading = false;
+    this.cdr.detectChanges();
   }
 }

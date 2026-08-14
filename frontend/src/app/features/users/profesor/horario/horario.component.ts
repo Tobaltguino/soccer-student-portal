@@ -1,5 +1,7 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { forkJoin } from 'rxjs';
+
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { CalendarOptions } from '@fullcalendar/core/index.js';
 import dayGridPlugin from '@fullcalendar/daygrid/index.js';
@@ -12,9 +14,13 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 
-import { SupabaseService } from '../../../../../core/services/supabase.service';
-
+// Servicios de Dominio
+import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
+import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
+import { Grupo } from '../../../../core/domains/academico/grupos/models/grupo.interface';
 
 @Component({
   selector: 'app-profesor-horario',
@@ -25,22 +31,29 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
     DialogModule, 
     ButtonModule,
     TagModule,
-    TooltipModule
+    TooltipModule,
+    ToastModule
   ],
+  providers: [MessageService],
   templateUrl: './horario.component.html',
   styleUrls: ['./horario.component.css']
 })
 export class ProfesorHorarioComponent implements OnInit {
   
+  private grupoService = inject(GrupoService);
+  private claseService = inject(ClaseService);
+  private messageService = inject(MessageService);
+  private cdr = inject(ChangeDetectorRef);
+
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
-    initialView: 'listWeek', // Para el profesor, ver la semana con bloques es mejor
+    initialView: 'listWeek',
     locale: esLocale,
     
-    // --- CONFIGURACIÓN DE HORAS (24 HORAS COMPLETAS) ---
-    slotMinTime: '06:00:00', // Mejor empezar a las 6 AM para ahorrar scroll
-    slotMaxTime: '23:00:00', // Termina a las 11 PM
-    scrollTime: '15:00:00',  // Se posiciona a las 3 PM al abrir (horario típico de canchas)
+    // --- CONFIGURACIÓN DE HORAS ---
+    slotMinTime: '06:00:00',
+    slotMaxTime: '23:00:00',
+    scrollTime: '15:00:00',
     allDaySlot: false,
     slotDuration: '00:30:00', 
     
@@ -87,80 +100,88 @@ export class ProfesorHorarioComponent implements OnInit {
   displayDetalle: boolean = false;
   claseSeleccionada: any = null;
   loading: boolean = true;
-  grupos: any[] = [];
-
-  constructor(
-    private supabase: SupabaseService, // <-- Nombre corto
-    private cdr: ChangeDetectorRef
-  ) {}
+  grupos: Grupo[] = [];
 
   ngOnInit() {
     this.cargarClasesCalendario();
   }
 
-  async cargarClasesCalendario() {
+  cargarClasesCalendario() {
     this.loading = true;
-    try {
-      // 1. Obtener usuario de Auth
-      const { data: { user } } = await this.supabase.getUser();
-      if (!user?.email) return;
+    
+    this.grupoService.obtenerMisGrupos().subscribe({
+      next: (gruposData) => {
+        this.grupos = gruposData || [];
+        const misGrupoIds = this.grupos.map(g => g.id).filter(id => id !== undefined) as number[];
 
-      // 2. Obtener perfil del profesor
-      const { data: prof } = await this.supabase.getProfesorPorEmail(user.email);
-      if (!prof) return;
+        if (misGrupoIds.length === 0) {
+          this.loading = false;
+          this.calendarOptions = { ...this.calendarOptions, events: [] };
+          this.cdr.detectChanges();
+          return;
+        }
 
-      // 3. Obtener sus grupos
-      const { data: gruposData } = await this.supabase.getGruposDeProfesor(prof.id);
-      this.grupos = gruposData ? gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null) : [];
-      
-      const misGrupoIds = this.grupos.map(g => g.id);
-
-      // 4. Obtener las clases si tiene grupos asignados
-      if (misGrupoIds.length > 0) {
         const hoy = new Date();
-        const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
+        const inicioMesStr = `${hoy.getFullYear()}-${('0' + (hoy.getMonth() + 1)).slice(-2)}-01`;
 
-        // Lllamada limpia al servicio
-        const { data: clases, error } = await this.supabase.getClasesPorGrupos(misGrupoIds, inicioMes);
-        if (error) throw error;
+        // Generamos peticiones paralelas para todos los grupos asignados al profe
+        const peticionesClases = misGrupoIds.map(id => 
+          this.claseService.listarClases({ grupoId: id, desde: inicioMesStr, limite: 100 })
+        );
 
-        // Mapear eventos
-        const eventos = (clases || []).map((clase: any) => {
-            const grupoInfo = this.grupos.find(g => g.id === clase.grupo_id);
-            const nombreGrupo = grupoInfo ? grupoInfo.nombre : 'Grupo Desconocido';
-            
-            const start = new Date(`${clase.fecha}T${clase.hora}`);
-            const end = new Date(start.getTime() + 90 * 60000); 
+        forkJoin(peticionesClases).subscribe({
+          next: (respuestas) => {
+            const todasLasClases = respuestas.flatMap(res => res.registros);
 
-            return {
-              title: `${clase.lugar}`,
-              start: start.toISOString(),
-              end: end.toISOString(),
-              extendedProps: { ...clase, grupoNombre: nombreGrupo },
-              backgroundColor: this.getColorPorGrupo(clase.grupo_id),
-              borderColor: this.getColorPorGrupo(clase.grupo_id),
-              textColor: '#ffffff'
-            };
+            const eventos = todasLasClases.map((clase: any) => {
+              const grupoInfo = this.grupos.find(g => g.id === clase.grupo_id);
+              const nombreGrupo = grupoInfo ? grupoInfo.nombre : 'Grupo Desconocido';
+              
+              const start = new Date(`${clase.fecha}T${clase.hora}`);
+              const end = new Date(start.getTime() + 90 * 60000); 
+
+              return {
+                title: `${clase.lugar}`,
+                start: start.toISOString(),
+                end: end.toISOString(),
+                extendedProps: { ...clase, grupoNombre: nombreGrupo },
+                backgroundColor: this.getColorPorGrupo(clase.grupo_id),
+                borderColor: this.getColorPorGrupo(clase.grupo_id),
+                textColor: '#ffffff'
+              };
+            });
+
+            this.calendarOptions = { ...this.calendarOptions, events: eventos };
+            this.loading = false;
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.mostrarError('Error al cargar la agenda de clases');
+          }
         });
-
-        this.calendarOptions = { ...this.calendarOptions, events: eventos };
+      },
+      error: () => {
+        this.mostrarError('Error al cargar tus grupos asignados');
       }
-    } catch (error) {
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
+    });
   }
 
   handleEventClick(arg: any) {
     this.claseSeleccionada = arg.event.extendedProps;
     this.displayDetalle = true;
+    this.cdr.detectChanges();
   }
 
-  // Asigna un color fijo basado en el ID del grupo para diferenciarlos visualmente
   getColorPorGrupo(grupoId: number | string): string {
+    if (!grupoId) return '#3b82f6';
     const paleta = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'];
-    const index = String(grupoId).charCodeAt(0) % paleta.length;
+    const index = Number(grupoId) % paleta.length;
     return paleta[index];
+  }
+
+  private mostrarError(mensaje: string) {
+    this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
+    this.loading = false;
+    this.cdr.detectChanges();
   }
 }
