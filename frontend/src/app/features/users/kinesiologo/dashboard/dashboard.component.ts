@@ -5,13 +5,13 @@ import { RouterModule, Router } from '@angular/router';
 import { SupabaseService } from '../../../../../core/services/supabase.service';
 
 @Component({
-  selector: 'app-kine-dashboard',
+  selector: 'app-kinesiologo-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './kine-dashboard.html',
-  styleUrls: ['./kine-dashboard.css']
+  templateUrl: './dashboard.component.html',
+  styleUrls: ['./dashboard.component.css']
 })
-export class KineDashboardComponent implements OnInit {
+export class KinesiologoDashboardComponent implements OnInit {
   
   // Datos KPIs
   misGrupos: any[] = [];

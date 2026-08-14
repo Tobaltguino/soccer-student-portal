@@ -18,7 +18,7 @@ import { MessageService } from 'primeng/api';
 import { SupabaseService } from '../../../../../core/services/supabase.service';
 
 @Component({
-  selector: 'app-kine-evaluation',
+  selector: 'app-kinesiologo-evaluaciones',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, ButtonModule, DialogModule,
@@ -26,10 +26,10 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
     TagModule, ToastModule, TooltipModule
   ],
   providers: [MessageService],
-  templateUrl: './kine-evaluation.html',
-  styleUrls: ['./kine-evaluation.css']
+  templateUrl: './evaluaciones.component.html',
+  styleUrls: ['./evaluaciones.component.css']
 })
-export class KineEvaluationComponent implements OnInit {
+export class KinesiologoEvaluacionesComponent implements OnInit {
 
   // --- DATOS ---
   sesiones: any[] = [];            

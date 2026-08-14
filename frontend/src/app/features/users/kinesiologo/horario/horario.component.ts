@@ -16,7 +16,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { SupabaseService } from '../../../../../core/services/supabase.service';
 
 @Component({
-  selector: 'app-kine-schedule',
+  selector: 'app-kinesiologo-horario',
   standalone: true,
   imports: [
     CommonModule, 
@@ -26,10 +26,10 @@ import { SupabaseService } from '../../../../../core/services/supabase.service';
     TagModule,
     TooltipModule
   ],
-  templateUrl: './kine-schedule.html',
-  styleUrls: ['./kine-schedule.css']
+  templateUrl: './horario.component.html',
+  styleUrls: ['./horario.component.css']
 })
-export class KineScheduleComponent implements OnInit {
+export class KinesiologoHorarioComponent implements OnInit {
   
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],

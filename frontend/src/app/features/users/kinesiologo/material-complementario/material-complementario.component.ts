@@ -21,7 +21,7 @@ import { TipoMaterial } from '../../../../shared/enums/tipo-material.enum';
 import { Material, CrearMaterialPayload, ActualizarMaterialPayload } from '../../../../core/domains/academico/material-complementario/models/material.interface';
 
 @Component({
-  selector: 'app-kine-view-guides',
+  selector: 'app-kinesiologo-material-complementario',
   standalone: true,
   imports: [
     CommonModule, 
@@ -38,10 +38,10 @@ import { Material, CrearMaterialPayload, ActualizarMaterialPayload } from '../..
     TextareaModule
   ],
   providers: [MessageService],
-  templateUrl: './kine-view-guides.html',
-  styleUrls: ['./kine-view-guides.css']
+  templateUrl: './material-complementario.component.html',
+  styleUrls: ['./material-complementario.component.css']
 })
-export class KineViewGuidesComponent implements OnInit {
+export class KinesiollogoMaterialComplementarioComponent implements OnInit {
   
   private materialService = inject(MaterialService);
   private messageService = inject(MessageService);

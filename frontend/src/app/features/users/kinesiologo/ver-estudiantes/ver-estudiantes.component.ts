@@ -22,7 +22,7 @@ import { Grupo } from '../../../../core/domains/academico/grupos/models/grupo.in
 import { HistorialClinico } from '../../../../core/domains/salud/kinesiologia/historial-clinico/models/historial-clinico.interface';
 
 @Component({
-  selector: 'app-kine-patients',
+  selector: 'app-kinesiologo-ver-estudiantes',
   standalone: true,
   imports: [
     CommonModule, 
@@ -37,10 +37,10 @@ import { HistorialClinico } from '../../../../core/domains/salud/kinesiologia/hi
     TooltipModule
   ],
   providers: [FilterService],
-  templateUrl: './kine-patients.html',
-  styleUrls: ['./kine-patients.css']
+  templateUrl: './ver-estudiantes.component.html',
+  styleUrls: ['./ver-estudiantes.component.css']
 })
-export class KinePatientsComponent implements OnInit {
+export class KinesiolgoVerEstudiantesComponent implements OnInit {
   @ViewChild('dt') dt: Table | undefined;
 
   // --- SERVICIOS INYECTADOS ---

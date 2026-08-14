@@ -16,17 +16,17 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
 @Component({
-  selector: 'app-kine-nutrition',
+  selector: 'app-kinesiologo-nutricion',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, DialogModule, ButtonModule, 
     SelectModule, DatePickerModule, TagModule, TooltipModule, ToastModule
   ],
   providers: [MessageService],
-  templateUrl: './kine-nutrition.html',
-  styleUrls: ['./kine-nutrition.css']
+  templateUrl: './nutricion.component.html',
+  styleUrls: ['./nutricion.component.css']
 })
-export class KineNutritionComponent implements OnInit {
+export class KinesiologoNutricionComponent implements OnInit {
   
   // Datos
   sesiones: any[] = [];
