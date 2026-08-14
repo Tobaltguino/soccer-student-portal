@@ -1,0 +1,96 @@
+<div class="evolution-record-container fadein animation-duration-500">
+    <p-toast position="top-right"></p-toast>
+    
+    <header class="page-header mb-5">
+        <div class="header-content">
+            <h1 class="m-0 text-main">Consulta de Historial Clínico</h1>
+            <p class="text-secondary m-0 mt-1">Revise el estado médico, patologías y alergias de los estudiantes de sus grupos.</p>
+        </div>
+    </header>
+
+    <div class="filter-bar mb-5">
+        <div class="filter-row">
+            <div class="filter-item flex-grow-1">
+                <label class="mb-2 text-xs font-bold text-secondary uppercase tracking-wider">MIS ALUMNOS ASIGNADOS</label>
+                <p-select [options]="listaAlumnos" [(ngModel)]="alumnoSeleccionado" optionLabel="nombreCompleto"
+                          [filter]="true" filterBy="nombreCompleto" [showClear]="true" 
+                          placeholder="Buscar estudiante en mis grupos..." 
+                          (onChange)="onAlumnoChange()"
+                          appendTo="body" styleClass="w-full shadow-none border-blue-100">
+                </p-select>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-table mt-4 text-center p-6 fadein" *ngIf="!alumnoSeleccionado">
+        <i class="pi pi-heart text-7xl text-300 mb-4"></i>
+        <h2 class="text-secondary m-0 mt-3" style="font-size: 1.35rem;">Seleccione un estudiante</h2>
+        <p class="text-500 mt-3 text-lg">Busque un alumno para visualizar su registro médico.</p>
+    </div>
+
+    <div *ngIf="alumnoSeleccionado" class="animation-fade-in">
+        <div class="card-table mt-4 fadein">
+            <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-5 border-bottom-1 surface-border pb-4 gap-4">
+                <div>
+                    <h2 class="m-0 text-main mb-2" style="font-size: 1.25rem; font-weight: 700;">Historial Clínico</h2>
+                    <p class="text-secondary m-0">Estudiante: <span class="font-bold text-main">{{alumnoSeleccionado.nombreCompleto}}</span></p>
+                </div>
+            </div>
+
+            <p-table [value]="listaLesiones" [paginator]="true" [rows]="10" styleClass="p-datatable-sm p-datatable-striped" [loading]="cargandoLesiones" [responsiveLayout]="'stack'" [breakpoint]="'960px'">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th class="py-3" style="width: 20%;">Fecha</th>
+                        <th class="py-3" style="width: 20%;">Tipo</th>
+                        <th class="py-3" style="width: 40%;">Diagnóstico / Detalle</th>
+                        <th class="py-3 text-center" style="width: 20%;">Estado Actual</th>
+                    </tr>
+                </ng-template>
+                
+                <ng-template pTemplate="body" let-l>
+                    <tr>
+                        <td class="py-3">
+                            <span class="p-column-title font-bold text-secondary hidden-desktop">Fecha: </span>
+                            <span>{{ l.fecha_evento | date:'dd/MM/yyyy' }}</span>
+                        </td>
+                        <td class="py-3 font-bold">
+                            <span class="p-column-title font-bold text-secondary hidden-desktop">Tipo: </span>
+                            <span class="text-primary">{{ getTipoLabel(l.tipo) }}</span>
+                        </td>
+                        <td class="py-3 text-sm">
+                            <span class="p-column-title font-bold text-secondary hidden-desktop">Diagnóstico: </span>
+                            <span *ngIf="l.diagnostico">{{ l.diagnostico }}</span>
+                            <span *ngIf="!l.diagnostico" class="text-400 italic">No especificado</span>
+                            
+                            <div *ngIf="l.observaciones" class="mt-2 text-xs text-500">
+                                <strong>Obs:</strong> {{ l.observaciones }}
+                            </div>
+                        </td>
+                        <td class="text-center py-3">
+                            <span class="p-column-title font-bold text-secondary hidden-desktop">Estado: </span>
+                            <span class="px-2 py-1 border-round text-xs font-bold" 
+                                  [ngClass]="{
+                                      'bg-red-100 text-red-700': l.estado === EstadoHistorialClinico.EN_OBSERVACION, 
+                                      'bg-orange-100 text-orange-700': l.estado === EstadoHistorialClinico.EN_TRATAMIENTO,
+                                      'bg-blue-100 text-blue-700': l.estado === EstadoHistorialClinico.EN_REINTEGRO_DEPORTIVO,
+                                      'bg-green-100 text-green-700': l.estado === EstadoHistorialClinico.RECUPERADO
+                                  }">
+                                {{ getEstadoLabel(l.estado) }}
+                            </span>
+                        </td>
+                    </tr>
+                </ng-template>
+                
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="4" class="text-center p-6 text-500">
+                            <i class="pi pi-check-circle text-5xl mb-3 text-green-300"></i><br>
+                            El estudiante no registra lesiones, alergias ni patologías médicas.
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </div>
+
+</div>
