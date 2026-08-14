@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs'; // ✅ Importamos forkJoin
 
 // PrimeNG
 import { TableModule } from 'primeng/table';
@@ -14,13 +15,15 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
-// Clases
+// Dominios: Clases y Grupos
 import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
 import { Clase, FiltrosClase } from '../../../../core/domains/academico/clases/models/clase.interface';
-
-// Grupos
 import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
 import { Grupo } from '../../../../core/domains/academico/grupos/models/grupo.interface';
+
+// Dominios: Asistencia y Estudiantes (NUEVO)
+import { AsistenciaService } from '../../../../core/domains/academico/asistencias/services/asistencia.service';
+import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
 
 @Component({
   selector: 'app-kinesiologo-clases',
@@ -37,12 +40,14 @@ import { Grupo } from '../../../../core/domains/academico/grupos/models/grupo.in
 export class KinesiologoClasesComponent implements OnInit {
   
   private claseService = inject(ClaseService);
-  private grupoService = inject(GrupoService); // ✅ Inyectado
+  private grupoService = inject(GrupoService);
+  private asistenciaService = inject(AsistenciaService); // ✅ Inyectado
+  private estudianteService = inject(EstudianteService); // ✅ Inyectado
   private cdr = inject(ChangeDetectorRef);
   private messageService = inject(MessageService);
 
   // Datos
-  grupos: Grupo[] = []; // ✅ Ahora usa la interfaz Grupo
+  grupos: Grupo[] = [];
   selectedGrupoId: number | null = null;
   clases: Clase[] = [];
   totalRegistros: number = 0;
@@ -58,19 +63,22 @@ export class KinesiologoClasesComponent implements OnInit {
   displayPlan: boolean = false;
   selectedClase: Clase | null = null;
 
+  // Asistencia (Vista Solo Lectura)
+  displayAttendanceDialog: boolean = false;
+  alumnosAsistencia: any[] = [];
+  loadingAsistencia: boolean = false;
+
   ngOnInit() {
     this.cargarGrupos();
   }
 
-  // --- CARGA DE DATOS ---
-  // ✅ Modificado para cargar los grupos reales desde el backend
   cargarGrupos() {
     this.loading = true;
     
     this.grupoService.listarGrupos().subscribe({
       next: (data) => {
         this.grupos = data;
-        this.cargarClases(); // Cargamos la agenda una vez que tenemos los grupos
+        this.cargarClases();
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar las categorías' });
@@ -87,7 +95,7 @@ export class KinesiologoClasesComponent implements OnInit {
       grupoId: this.selectedGrupoId || undefined,
       desde: this.filtroFecha ? this.formatearFecha(this.filtroFecha) : undefined,
       lugar: this.filtroLugar?.trim() || undefined,
-      limite: 100 // ✅ Obtenemos un buen bloque para delegar la paginación a PrimeNG
+      limite: 100 
     };
 
     this.claseService.listarClases(filtros).subscribe({
@@ -110,7 +118,6 @@ export class KinesiologoClasesComponent implements OnInit {
   }
 
   aplicarFiltros() {
-    // Al aplicar filtros, volvemos a consultar al backend con los nuevos parámetros
     this.cargarClases();
   }
 
@@ -121,10 +128,55 @@ export class KinesiologoClasesComponent implements OnInit {
     this.cargarClases();
   }
 
-  // --- UTILIDADES Y VISTAS ---
+  // --- VISTAS ---
   verPlanificacion(clase: Clase) {
     this.selectedClase = clase;
     this.displayPlan = true;
+  }
+
+  // ✅ Ver Asistencia (Solo Lectura)
+  verAsistencia(clase: Clase) {
+    this.selectedClase = clase; 
+    this.displayAttendanceDialog = true;
+    this.loadingAsistencia = true;
+    this.alumnosAsistencia = [];
+
+    if (!clase.grupo_id || !clase.id) {
+      this.loadingAsistencia = false;
+      return;
+    }
+
+    forkJoin({
+      estudiantes: this.estudianteService.listarEstudiantes({ grupoIds: [clase.grupo_id], limite: 1000, activo: true }),
+      asistenciasGuardadas: this.asistenciaService.listarPorClase(clase.id)
+    }).subscribe({
+      next: ({ estudiantes, asistenciasGuardadas }) => {
+        
+        const asistenciasMap = new Map();
+        asistenciasGuardadas.forEach(a => asistenciasMap.set(a.estudiante_id, a.presente));
+
+        this.alumnosAsistencia = estudiantes.registros.map(est => {
+          const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id;
+          const nombre = est.perfil ? est.perfil.nombre : (est as any).nombre;
+          const apellido = est.perfil ? est.perfil.apellido : (est as any).apellido;
+
+          return {
+            estudianteId: idUsuario,
+            nombre: nombre,
+            apellido: apellido,
+            presente: asistenciasMap.has(idUsuario) ? asistenciasMap.get(idUsuario) : false 
+          };
+        });
+
+        this.loadingAsistencia = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar la asistencia' });
+        this.loadingAsistencia = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   formatearFecha(date: Date): string {

@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs'; // ✅ Importamos forkJoin
 
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
@@ -16,6 +17,9 @@ import { MessageService } from 'primeng/api';
 import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
 import { Clase } from '../../../../core/domains/academico/clases/models/clase.interface';
 
+// ✅ Nuevo servicio de asistencia
+import { AsistenciaService } from '../../../../core/domains/academico/asistencias/services/asistencia.service';
+
 @Component({
   selector: 'app-estudiante-clases',
   standalone: true,
@@ -30,6 +34,7 @@ import { Clase } from '../../../../core/domains/academico/clases/models/clase.in
 export class EstudianteClasesComponent implements OnInit {
 
   private claseService = inject(ClaseService);
+  private asistenciaService = inject(AsistenciaService); // ✅ Inyectado
   private cdr = inject(ChangeDetectorRef);
   private messageService = inject(MessageService);
 
@@ -57,9 +62,26 @@ export class EstudianteClasesComponent implements OnInit {
   cargarClases() {
     this.loading = true;
 
-    this.claseService.obtenerMisClases().subscribe({
-      next: (data) => {
-        this.clasesOriginales = data.sort((a, b) => {
+    // ✅ Ejecutamos ambas peticiones en paralelo
+    forkJoin({
+      clases: this.claseService.obtenerMisClases(),
+      asistencias: this.asistenciaService.obtenerMisAsistencias()
+    }).subscribe({
+      next: ({ clases, asistencias }) => {
+        
+        // Creamos un diccionario rápido de la asistencia del estudiante
+        const asistenciasMap = new Map();
+        asistencias.forEach(a => asistenciasMap.set(a.clase_id, a.presente));
+
+        // Mapeamos las clases y les inyectamos su estado de asistencia
+        const clasesMapeadas = clases.map(clase => ({
+          ...clase,
+          // Si el profe ya pasó lista para esta clase_id, le ponemos true/false. Si no, queda en null.
+          presente: asistenciasMap.has(clase.id) ? asistenciasMap.get(clase.id) : null
+        }));
+
+        // Ordenamos las clases por fecha y hora (de más reciente a más antigua)
+        this.clasesOriginales = clasesMapeadas.sort((a, b) => {
           const tiempoA = new Date(`${a.fecha}T${a.hora}`).getTime();
           const tiempoB = new Date(`${b.fecha}T${b.hora}`).getTime();
           return tiempoB - tiempoA;
@@ -83,7 +105,6 @@ export class EstudianteClasesComponent implements OnInit {
       let cumpleLugar = true;
       let cumpleAsistencia = true;
 
-      // ✅ Filtrado de fecha ajustado para manejar correctamente Date objects vs Strings
       if (this.filtroFecha) {
         const fechaBusqueda = this.formatearFecha(this.filtroFecha);
         const fechaClase = clase.fecha ? clase.fecha.substring(0, 10) : '';
