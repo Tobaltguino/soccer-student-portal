@@ -1,0 +1,201 @@
+<div class="eval-container p-3 fadein animation-duration-500">
+    
+    <div *ngIf="loading" class="loading-overlay">
+        <div class="flex flex-column align-items-center">
+            <p-progressSpinner styleClass="w-4rem h-4rem" strokeWidth="4" animationDuration=".5s"></p-progressSpinner>
+            <span class="text-white font-bold mt-3">Sincronizando datos...</span>
+        </div>
+    </div>
+
+    <p-toast position="top-right"></p-toast>
+
+    <header class="flex justify-content-between align-items-center mb-4 page-header">
+        <div class="header-content">
+            <h1 class="text-2xl font-bold m-0 text-900">Evaluaciones Kinesiológicas</h1>
+            <p class="text-600 m-0 mt-1">Consulte los resultados de las pruebas físicas aplicadas a sus grupos.</p>
+        </div>
+    </header>
+
+    <div class="filter-bar card mb-4 p-3 surface-card border-round shadow-1">
+        <div class="filter-row">
+            
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-calendar mr-1"></i> Fecha</label>
+                <p-datepicker [(ngModel)]="filtroFecha" dateFormat="dd/mm/yy" [showIcon]="false" 
+                              placeholder="Filtrar por Fecha" (onSelect)="aplicarFiltros()" 
+                              [showClear]="true" (onClear)="aplicarFiltros()" styleClass="w-full" appendTo="body"></p-datepicker>
+            </div>
+
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-users mr-1"></i> Mis Grupos</label>
+                <p-select [options]="grupos" [(ngModel)]="filtroGrupo" optionLabel="nombre" 
+                          placeholder="Todos mis grupos" (onChange)="aplicarFiltros()" 
+                          [showClear]="true" styleClass="w-full" appendTo="body"></p-select>
+            </div>
+
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-heart mr-1"></i> Prueba</label>
+                <p-select [options]="tiposEvaluacion" [(ngModel)]="filtroPrueba" optionLabel="nombre" optionValue="id"
+                          placeholder="Todas las pruebas" (onChange)="aplicarFiltros()" 
+                          [showClear]="true" styleClass="w-full" appendTo="body"></p-select>
+            </div>
+
+            <div class="filter-item w-10rem">
+                <label><i class="pi pi-tag mr-1"></i> Estado</label>
+                <p-select [options]="opcionesEstadoFiltro" [(ngModel)]="filtroEstado" optionLabel="label" optionValue="value" 
+                          placeholder="Todos" (onChange)="aplicarFiltros()" [showClear]="true" styleClass="w-full" appendTo="body">
+                    <ng-template let-option pTemplate="item">
+                        <p-tag [value]="option.label" [severity]="option.value === EstadoSesion.PROGRAMADA ? 'warn' : 'success'"></p-tag>
+                    </ng-template>
+                </p-select>
+            </div>
+
+            <div class="filter-item-btn">
+                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary w-full" 
+                        (click)="limpiarFiltros()" pTooltip="Limpiar Filtros"></button>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="card shadow-2 border-round surface-card p-3 card-table">
+        <p-table [value]="sesionesFiltradas" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped w-full" responsiveLayout="scroll">    
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width: 25%">Fecha</th>
+                    <th style="width: 30%">Grupo</th>
+                    <th style="width: 25%">Prueba</th>
+                    <th style="width: 10%">Estado</th>
+                    <th style="width: 10%" class="text-center">Resultados</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-sesion>
+                <tr>
+                    <td>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Fecha:</span>
+                        <span class="font-bold text-900">{{ sesion.fecha | date:'dd/MM/yyyy' }}</span>
+                    </td>
+                    <td>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Grupo:</span>
+                        <p-tag [value]="sesion.grupoObj?.nombre" severity="info"></p-tag>
+                    </td>
+                    <td>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Prueba:</span>
+                        <span class="font-bold text-900">{{ sesion.tipoObj?.nombre }}</span>
+                    </td>
+                    <td>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Estado:</span>
+                        <p-tag [value]="sesion.estado === EstadoSesion.PROGRAMADA ? 'Pendiente' : 'Finalizado'" 
+                               [severity]="sesion.estado === EstadoSesion.PROGRAMADA ? 'warn' : 'success'"></p-tag>
+                    </td>
+                    <td class="text-center">
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Resultados:</span>
+                        <div class="action-buttons flex justify-content-center">
+                            <button pButton icon="pi pi-eye" class="p-button-rounded p-button-info p-button-text p-button-sm" (click)="verResultados(sesion)" pTooltip="Ver Resultados"></button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr><td colspan="5" class="text-center p-4 text-500">No se encontraron sesiones para sus grupos con estos filtros.</td></tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <p-dialog [(visible)]="displayViewDialog" header="Resultados de la Sesión" [modal]="true" [style]="{width: '90vw', maxWidth: '1200px'}" [maximizable]="true" styleClass="p-fluid">
+        <ng-template pTemplate="content">
+            
+            <div *ngIf="cargandoResultados" class="flex justify-content-center p-5">
+                <p-progressSpinner styleClass="w-3rem h-3rem" strokeWidth="4" animationDuration=".5s"></p-progressSpinner>
+            </div>
+
+            <div *ngIf="!cargandoResultados">
+                <div class="surface-100 p-3 border-round mb-3 flex justify-content-between align-items-center" *ngIf="sesionVista">
+                    <div class="flex flex-column">
+                        <span class="text-sm text-600">Evaluación</span>
+                        <span class="text-xl font-bold text-900">{{sesionVista.tipoObj?.nombre}}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-sm text-600 block">Grupo</span>
+                        <p-tag [value]="sesionVista.grupoObj?.nombre" severity="info" styleClass="text-base"></p-tag>
+                    </div>
+                </div>
+
+                <div class="split-layout">
+                    
+                    <div class="split-sidebar border-right-1 surface-border">
+                        <div class="sidebar-header">
+                            Evaluados ({{resultadosVista.length}})
+                        </div>
+
+                        <div *ngFor="let alumno of resultadosVista"
+                             (click)="estudianteVistaSeleccionado = alumno"
+                             class="student-item"
+                             [ngClass]="{'active': estudianteVistaSeleccionado?.id === alumno.id}">
+                            
+                            <div class="student-info">
+                                <span class="student-name">{{alumno.apellido}}</span>
+                                <span class="student-sub">{{alumno.nombre}}</span>
+                            </div>
+                            <i class="pi pi-angle-right" style="opacity: 0.6;"></i>
+                        </div>
+                    </div>
+
+                    <div class="split-content" style="flex: 1;">
+                        <div *ngIf="estudianteVistaSeleccionado">
+                            <div class="content-header">
+                                <h3 class="m-0 text-main">
+                                    Resultados de: <span style="color: var(--primary-color);">{{estudianteVistaSeleccionado.nombre}} {{estudianteVistaSeleccionado.apellido}}</span>
+                                </h3>
+                            </div>
+
+                            <div class="content-body">
+                                <p-table [value]="estudianteVistaSeleccionado.evaluaciones" styleClass="p-datatable-sm p-datatable-gridlines p-datatable-striped">
+                                    <ng-template pTemplate="header">
+                                        <tr>
+                                            <th style="width: 25%">Parámetro</th>
+                                            <th style="width: 15%" class="text-center">Único</th>
+                                            <th style="width: 15%" class="text-center">Izquierdo</th>
+                                            <th style="width: 15%" class="text-center">Derecho</th>
+                                            <th style="width: 30%">Observación</th>
+                                        </tr>
+                                    </ng-template>
+                                    <ng-template pTemplate="body" let-sub>
+                                        <tr>
+                                            <td class="font-medium text-sm">{{sub.nombre_parametro}}</td>
+                                            <td class="text-center">
+                                                <p-tag *ngIf="sub.resultado_unico !== null" [value]="sub.resultado_unico" [severity]="getSeverityPuntaje(sub.resultado_unico, sub.subevaluacion_id)"></p-tag>
+                                                <span *ngIf="sub.resultado_unico === null" class="text-400">-</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <p-tag *ngIf="sub.resultado_izquierdo !== null" [value]="sub.resultado_izquierdo" [severity]="getSeverityPuntaje(sub.resultado_izquierdo, sub.subevaluacion_id)"></p-tag>
+                                                <span *ngIf="sub.resultado_izquierdo === null" class="text-400">-</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <p-tag *ngIf="sub.resultado_derecho !== null" [value]="sub.resultado_derecho" [severity]="getSeverityPuntaje(sub.resultado_derecho, sub.subevaluacion_id)"></p-tag>
+                                                <span *ngIf="sub.resultado_derecho === null" class="text-400">-</span>
+                                            </td>
+                                            <td class="text-sm text-700 italic">{{sub.observacion || '-'}}</td>
+                                        </tr>
+                                    </ng-template>
+                                </p-table>
+                            </div>
+                        </div>
+                        
+                        <div *ngIf="!estudianteVistaSeleccionado" class="empty-state">
+                            <i class="pi pi-list" style="font-size: 3.5rem;"></i>
+                            <h2 class="m-0 text-center">Selecciona un estudiante</h2>
+                            <p class="m-0 text-center">Haga clic en la lista izquierda para ver sus notas.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </ng-template>
+        <ng-template pTemplate="footer">
+            <div style="padding-top: 1rem;">
+                <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="displayViewDialog = false"></button>
+            </div>
+        </ng-template>
+    </p-dialog>
+</div>

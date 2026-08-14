@@ -1,0 +1,107 @@
+<div class="animation-fade-in">
+    <p-toast position="top-right"></p-toast>
+    
+    <div class="card-table mt-4 fadein">
+        <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-5 border-bottom-1 surface-border pb-4 gap-4">
+            <div>
+                <h2 class="m-0 text-main mb-2" style="font-size: 1.25rem; font-weight: 700;">Mis Evaluaciones Físicas</h2>
+                <p class="text-secondary m-0">Revisa tus resultados de las pruebas kinesiológicas aplicadas a tu grupo.</p>
+            </div>
+        </div>
+
+        <p-table [value]="sesiones" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped" [responsiveLayout]="'stack'" [breakpoint]="'768px'">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width: 30%">Fecha</th>
+                    <th style="width: 50%">Prueba Kinesiológica</th>
+                    <th style="width: 20%" class="text-center">Resultados</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-sesion>
+                <tr>
+                    <td>
+                        <span class="p-column-title hidden-desktop font-bold text-secondary">Fecha</span>
+                        <span class="font-bold text-secondary">{{ sesion.fecha | date:'dd/MM/yyyy' }}</span>
+                    </td>
+                    <td>
+                        <span class="p-column-title hidden-desktop font-bold text-secondary">Prueba</span>
+                        <span class="font-bold text-main">{{ sesion.tipo_evaluacion?.nombre }}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="p-column-title hidden-desktop font-bold text-secondary">Resultados</span>
+                        <button pButton icon="pi pi-eye" class="p-button-text p-button-rounded p-button-info" 
+                                (click)="verResultados(sesion)" pTooltip="Ver mis notas"></button>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="3" class="text-center p-6 text-500">
+                        <i class="pi pi-chart-line text-5xl mb-3 text-300"></i><br>
+                        Aún no hay evaluaciones finalizadas registradas para tu grupo.
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <p-dialog [(visible)]="displayViewDialog" header="Mis Resultados" [modal]="true" [style]="{width: '90vw', maxWidth: '800px'}" styleClass="p-fluid">
+        
+        <div *ngIf="cargandoResultados" class="flex flex-column align-items-center p-5">
+            <p-progressSpinner styleClass="w-3rem h-3rem" strokeWidth="4" animationDuration=".5s"></p-progressSpinner>
+            <span class="text-secondary mt-3">Cargando notas...</span>
+        </div>
+
+        <div *ngIf="!cargandoResultados && sesionVista">
+            
+            <div class="mb-4 bg-gray-50 border-round p-3">
+                <span class="text-xs text-secondary text-uppercase font-bold tracking-wider">Prueba Evaluada</span>
+                <div class="text-xl font-bold text-main mt-1">{{sesionVista.tipo_evaluacion?.nombre}}</div>
+                <div class="text-sm text-secondary mt-1">
+                    <i class="pi pi-calendar mr-1"></i> Fecha: {{sesionVista.fecha | date:'dd/MM/yyyy'}}
+                </div>
+            </div>
+            
+            <p-table [value]="resultadosVista" styleClass="p-datatable-sm p-datatable-gridlines p-datatable-striped" responsiveLayout="scroll">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 35%">Parámetro</th>
+                        <th style="width: 15%" class="text-center">Único</th>
+                        <th style="width: 15%" class="text-center">Izquierdo</th>
+                        <th style="width: 15%" class="text-center">Derecho</th>
+                        <th style="width: 20%">Observación</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-sub>
+                    <tr>
+                        <td class="font-medium text-sm">{{sub.nombre_parametro}}</td>
+                        
+                        <td class="text-center">
+                            <p-tag *ngIf="sub.resultado_unico !== null" [value]="sub.resultado_unico" [severity]="getSeverityPuntaje(sub.resultado_unico, sub.subevaluacion_id)"></p-tag>
+                            <span *ngIf="sub.resultado_unico === null" class="text-400">-</span>
+                        </td>
+                        
+                        <td class="text-center">
+                            <p-tag *ngIf="sub.resultado_izquierdo !== null" [value]="sub.resultado_izquierdo" [severity]="getSeverityPuntaje(sub.resultado_izquierdo, sub.subevaluacion_id)"></p-tag>
+                            <span *ngIf="sub.resultado_izquierdo === null" class="text-400">-</span>
+                        </td>
+                        
+                        <td class="text-center">
+                            <p-tag *ngIf="sub.resultado_derecho !== null" [value]="sub.resultado_derecho" [severity]="getSeverityPuntaje(sub.resultado_derecho, sub.subevaluacion_id)"></p-tag>
+                            <span *ngIf="sub.resultado_derecho === null" class="text-400">-</span>
+                        </td>
+                        
+                        <td class="text-sm text-700 italic">{{sub.observacion || '-'}}</td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr><td colspan="5" class="text-center p-4">Aún no tienes notas registradas en los parámetros de esta evaluación.</td></tr>
+                </ng-template>
+            </p-table>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="displayViewDialog = false"></button>
+        </ng-template>
+    </p-dialog>
+</div>
