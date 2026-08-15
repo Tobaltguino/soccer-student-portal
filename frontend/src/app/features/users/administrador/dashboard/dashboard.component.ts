@@ -1,135 +1,174 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-import { SupabaseService } from '../../../../../core/services/supabase.service';
+import { firstValueFrom } from 'rxjs';
+
+// 🚀 SERVICIOS MODULARES (NestJS)
+import { AuthService } from '../../../../core/auth/services/auth.service';
+import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
+import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
+import { HistorialClinicoService } from '../../../../core/domains/salud/kinesiologia/historial-clinico/services/historial-clinico.service';
+import { EstadoHistorialClinico } from '../../../../core/domains/salud/kinesiologia/historial-clinico/models/historial-clinico.interface';
+
+// 🚀 TUS 4 SERVICIOS DE EVALUACIONES (Importamos los que necesitamos para el Dashboard)
+import { SesionEvaluacionService } from '../../../../core/domains/academico/evaluaciones/sesiones/services/sesion.service';
+import { ResultadoEvaluacionService } from '../../../../core/domains/academico/evaluaciones/resultados/services/resultado.service';
 
 @Component({
-  selector: 'app-administrador-dashboard',
+  selector: 'app-admin-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.css']
+  templateUrl: './admin-dashboard.component.html',
+  styleUrls: ['./admin-dashboard.component.css']
 })
 export class AdministradorDashboardComponent implements OnInit {
-  // Datos dinámicos
+  
+  private authService = inject(AuthService);
+  private estudianteService = inject(EstudianteService);
+  private clasesService = inject(ClaseService);
+  private historialClinicoService = inject(HistorialClinicoService);
+  
+  // Inyectamos tus servicios reales de Evaluaciones Físicas
+  private evaluacionSesionService = inject(SesionEvaluacionService);
+  private evaluacionResultadoService = inject(ResultadoEvaluacionService);
+  
+  private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
+
   userEmail: string | undefined;
   totalEstudiantes: number = 0;
   clasesHoy: any[] = [];
   
-  // Listas de datos
-  actividadReciente: any[] = []; // Para la tarjeta de arriba (Evaluaciones)
-  cumpleanosList: any[] = [];    // Para la lista de abajo (Cumpleaños)
-  
-  // Estados
-  loading: boolean = true;
-  supabaseStatus: 'online' | 'offline' | 'checking' = 'checking';
+  // 🔥 KPIs DE SALUD GLOBAL
+  pacientesEnTratamiento: number = 0;
+  pacientesEnObservacion: number = 0;
+  pacientesEnReintegro: number = 0;
 
-  constructor(
-    private supabaseService: SupabaseService,
-    private router: Router,
-    private cdr: ChangeDetectorRef
-  ) {}
+  actividadReciente: any[] = []; 
+  cumpleanosList: any[] = [];    
+  
+  loading: boolean = true;
+  apiStatus: 'online' | 'offline' | 'checking' = 'checking'; 
 
   async ngOnInit() {
     await this.verificarConexion();
-    await this.cargarDatos();
+    if (this.apiStatus === 'online') {
+      await this.cargarDatos();
+    }
   }
 
+  // ==========================================
+  // AUTENTICACIÓN Y ESTADO DE API
+  // ==========================================
   async verificarConexion() {
     try {
-      this.supabaseStatus = 'checking';
-      const { data: { user }, error } = await this.supabaseService.getUser();
-      
-      if (error || !user) {
-        this.supabaseStatus = 'offline';
+      this.apiStatus = 'checking';
+      const res = await firstValueFrom(this.authService.me());
+      const user = res?.data ? res.data : res;
+
+      if (!user || (!user.email && !user.nombre)) {
+        this.apiStatus = 'offline';
         this.router.navigate(['/login']);
       } else {
         this.userEmail = user.email;
-        this.supabaseStatus = 'online';
+        this.apiStatus = 'online';
       }
     } catch {
-      this.supabaseStatus = 'offline';
+      this.apiStatus = 'offline';
     }
-    this.cdr.detectChanges();
   }
 
+  // ==========================================
+  // CARGA DE DATOS (Múltiples Endpoints)
+  // ==========================================
   async cargarDatos() {
-    this.loading = true;
-    try {
-      // 1. Estudiantes: Traemos la lista completa
-      const { data: estudiantes, error } = await this.supabaseService.getEstudiantes();
-      
-      if (estudiantes) {
-        // Filtramos el arreglo para quedarnos solo con los que tienen activo === true
-        const estudiantesActivos = estudiantes.filter((est: any) => est.activo === true);
+    this.loading = true;
+    this.cdr.detectChanges();
 
-        // Ahora contamos solo el largo del arreglo de los activos
-        this.totalEstudiantes = estudiantesActivos.length;
-        
-        // Procesamos los cumpleaños usando la lista de estudiantes activos
-        this.cumpleanosList = this.filtrarProximosCumpleanos(estudiantesActivos);
-      } else {
-        this.totalEstudiantes = 0;
-      }
+    try {
+      // 1. Estudiantes Activos y Cumpleaños
+      const resEstudiantes = await firstValueFrom(this.estudianteService.listarEstudiantes({ limite: 2000, activo: true }));
+      const estudiantes = resEstudiantes.registros || [];
+      this.totalEstudiantes = estudiantes.length;
+      this.cumpleanosList = this.filtrarProximosCumpleanos(estudiantes);
 
-      // 2. Clases de Hoy
-      const { data: clases } = await this.supabaseService.getClasesHoy();
-      this.clasesHoy = clases || [];
+      // 2. Kinesiología: Historial Clínico Global
+      const historiales = await firstValueFrom(this.historialClinicoService.listarTodo());
+      
+      if (historiales) {
+        const setTratamiento = new Set();
+        const setObservacion = new Set();
+        const setReintegro = new Set();
 
-      // 3. Evaluaciones (Para la tarjeta morada)
-      const { data: actividad } = await this.supabaseService.getActividadReciente();
-      this.actividadReciente = actividad || [];
+        historiales.forEach((h: any) => {
+          const idAlumno = h.estudiante_id || h.estudianteId;
+          if (h.estado === EstadoHistorialClinico.EN_TRATAMIENTO) setTratamiento.add(idAlumno);
+          if (h.estado === EstadoHistorialClinico.EN_OBSERVACION) setObservacion.add(idAlumno);
+          if (h.estado === EstadoHistorialClinico.EN_REINTEGRO_DEPORTIVO) setReintegro.add(idAlumno);
+        });
 
-    } catch (error) {
-      // Si falla la carga, simplemente dejamos los valores iniciales (0 o vacíos)
-      // No necesitamos loguear esto para el usuario.
-    } finally {
-      this.loading = false;
-      this.cdr.detectChanges();
-    }
-  }
+        this.pacientesEnTratamiento = setTratamiento.size;
+        this.pacientesEnObservacion = setObservacion.size;
+        this.pacientesEnReintegro = setReintegro.size;
+      }
 
-  // Lógica para filtrar cumpleaños próximos (0 a 7 días)
+      // 3. Clases de Hoy
+      const resClases = await firstValueFrom(this.clasesService.getClasesHoy());
+      this.clasesHoy = resClases || [];
+
+      // 4. 🔥 Evaluaciones (Usando tu EvaluacionResultadoService)
+      // Buscamos los últimos resultados subidos a la plataforma
+      const resResultados = await firstValueFrom(this.evaluacionResultadoService.listarResultadosRecientes());
+      this.actividadReciente = resResultados || [];
+
+    } catch (error) {
+      console.error('Error Admin Dashboard:', error);
+    } finally {
+      this.loading = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  // ==========================================
+  // LÓGICA DE NEGOCIO (Cumpleaños)
+  // ==========================================
   filtrarProximosCumpleanos(estudiantes: any[]): any[] {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
-    const listaProcesada = estudiantes
+    return estudiantes
       .map(est => {
-        if (!est.fecha_nacimiento) return null;
+        const fechaNac = est.perfil?.fecha_nacimiento || est.fecha_nacimiento;
+        if (!fechaNac) return null;
 
-        // Asegurar formato fecha (YYYY-MM-DD T00:00:00) para evitar desfases
-        const nacimiento = new Date(est.fecha_nacimiento + 'T00:00:00');
-        
+        const nacimiento = new Date(fechaNac + 'T00:00:00');
         const cumpleEsteAno = new Date(hoy.getFullYear(), nacimiento.getMonth(), nacimiento.getDate());
         
-        let proximoCumple = cumpleEsteAno;
-        // Si ya pasó el cumpleaños este año, calculamos el del próximo
-        if (proximoCumple < hoy) {
-            proximoCumple = new Date(hoy.getFullYear() + 1, nacimiento.getMonth(), nacimiento.getDate());
-        }
+        let proximoCumple = cumpleEsteAno < hoy 
+            ? new Date(hoy.getFullYear() + 1, nacimiento.getMonth(), nacimiento.getDate()) 
+            : cumpleEsteAno;
+            
+        const diasRestantes = Math.ceil((proximoCumple.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+        
+        const nombre = est.perfil?.nombre || est.nombre;
+        const apellido = est.perfil?.apellido || est.apellido;
 
-        const diffTime = proximoCumple.getTime() - hoy.getTime();
-        const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        const nuevaEdad = proximoCumple.getFullYear() - nacimiento.getFullYear();
-
-        return {
-          ...est,
-          proximoCumple: proximoCumple,
-          diasRestantes: diasRestantes,
-          nuevaEdad: nuevaEdad
+        return { 
+            ...est, 
+            nombreCompleto: `${nombre} ${apellido}`,
+            proximoCumple, 
+            diasRestantes, 
+            nuevaEdad: proximoCumple.getFullYear() - nacimiento.getFullYear() 
         };
       })
-      // Filtramos solo los que son hoy o en los próximos 7 días
       .filter(item => item !== null && item.diasRestantes >= 0 && item.diasRestantes <= 7)
-      // Ordenamos del más cercano al más lejano
       .sort((a, b) => a.diasRestantes - b.diasRestantes);
-
-    return listaProcesada;
   }
 
   async refrescar() {
     await this.verificarConexion();
-    await this.cargarDatos();
+    if (this.apiStatus === 'online') {
+      await this.cargarDatos();
+    }
   } 
 }

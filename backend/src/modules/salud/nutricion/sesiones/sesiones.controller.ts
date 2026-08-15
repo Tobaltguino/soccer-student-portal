@@ -20,6 +20,7 @@ import { Rol } from '../../../../shared/enums/rol.enum';
 import { CurrentUser } from '../../../../core/auth/decorators/current-user.decorator';
 import type { RequestUser } from '../../../../core/auth/strategies/jwt.strategy';
 import { FiltrarSesionesDto } from './dto/filtrar-sesion.dto';
+import { ActualizarSesionDto } from './dto/actualizar-sesion.dto';
 
 @Controller('nutri-evaluacion-sesiones')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -44,6 +45,18 @@ export class SesionesController {
   buscarPorId(@Param('id') id: string, @CurrentUser() user: RequestUser) {
     const soloDeNutricionista = user.rol === Rol.ADMINISTRADOR ? null : user.id;
     return this.sesionesService.buscarPorId(id, soloDeNutricionista);
+  }
+
+  @Patch(':id')
+  @Roles(Rol.ADMINISTRADOR, Rol.NUTRICIONISTA)
+  actualizar(
+    @Param('id') id: string,
+    @Body() dto: ActualizarSesionDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    const soloDeNutricionista = user.rol === Rol.ADMINISTRADOR ? null : user.id;
+    const esAdmin = user.rol === Rol.ADMINISTRADOR;
+    return this.sesionesService.actualizar(id, dto, soloDeNutricionista, esAdmin);
   }
 
   @Patch(':id/estado')

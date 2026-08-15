@@ -5,6 +5,7 @@ import { CambiarEstadoSesionDto } from './dto/cambiar-estado-sesion.dto';
 import type { NutriSesionRow } from './interfaces/sesion.interface';
 import { lanzarErrorSupabaseConFk } from '../../../../shared/utils/supabase-error.util';
 import { FiltrarSesionesDto } from './dto/filtrar-sesion.dto';
+import { ActualizarSesionDto } from './dto/actualizar-sesion.dto';
 
 @Injectable()
 export class SesionesService {
@@ -97,6 +98,54 @@ export class SesionesService {
 
     if (soloDeNutricionista !== null && data.nutricionista_id !== soloDeNutricionista) {
       throw new NotFoundException('Sesión no encontrada');
+    }
+
+    return data;
+  }
+
+  async actualizar(
+    id: string,
+    dto: ActualizarSesionDto,
+    soloDeNutricionista: string | null,
+    esAdmin: boolean,
+  ): Promise<NutriSesionRow> {
+    
+    // Primero validamos que la sesión exista y que el nutricionista tenga permisos sobre ella
+    const sesionActual = await this.buscarPorId(id, soloDeNutricionista);
+
+    // Preparamos los datos a actualizar dinámicamente
+    const updates: Partial<NutriSesionRow> = {};
+
+    if (dto.tipoId) updates.tipo_id = dto.tipoId;
+    if (dto.fecha) updates.fecha = dto.fecha;
+    
+    // Solo permitimos cambiar el nutricionista_id si es Administrador
+    if (esAdmin && dto.nutricionistaId) {
+      updates.nutricionista_id = dto.nutricionistaId;
+    }
+
+    // Si no hay nada que actualizar, devolvemos la sesión como está
+    if (Object.keys(updates).length === 0) {
+      return sesionActual;
+    }
+
+    const { data, error } = await this.supabase.client
+      .from('nutri_evaluacion_sesiones')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single<NutriSesionRow>();
+
+    if (error) {
+      lanzarErrorSupabaseConFk(
+        error,
+        'No se pudo actualizar la sesión',
+        'El tipo de evaluación o nutricionista indicado no existe',
+      );
+    }
+
+    if (!data) {
+      throw new InternalServerErrorException('No se recibió la sesión actualizada');
     }
 
     return data;
