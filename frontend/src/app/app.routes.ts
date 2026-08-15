@@ -6,69 +6,85 @@ import { roleGuard } from './core/auth/guards/role.guard';
 import { Role } from './core/auth/models/role.enum';
 
 // --- HOME ---
-import { HomeComponent } from './features/components/home/home/home';
+import { HomeComponent } from './features/home/home/home.component';
 
 // --- AUTH ---
-import { LoginComponent } from './features/components/auth/login/login';
-import { UpdatePasswordComponent } from './features/components/auth/update-password/update-password';
-import { TerminosComponent } from './features/components/terminos/terminos';
+import { LoginComponent } from './features/auth/login/login';
+import { UpdatePasswordComponent } from './features/auth/update-password/update-password';
+import { TerminosComponent } from './features/terminos/terminos';
+// --- LAYOUT ---
+import { LayoutComponent } from './features/layout/layout.component'; 
 
-// --- ADMIN IMPORTS ---
-import { AdminLayoutComponent } from './features/components/users/admin/admin-layout/admin-layout';
-import { AdminDashboardComponent } from './features/components/users/admin/admin-dashboard/admin-dashboard';
-import { AdminUsersComponent } from './features/components/users/admin/admin-users/admin-users';
-import { AdminGroupsComponent } from './features/components/users/admin/admin-groups/admin-groups';
-import { AdminClassesComponent } from './features/components/users/admin/admin-classes/admin-classes';
-import { AdminEvaluationsComponent } from './features/components/users/admin/admin-evaluations/admin-evaluations';
-import { AdminKineComponent } from './features/components/users/admin/admin-kine/admin-kine'; 
-import { AdminNutriComponent } from './features/components/users/admin/admin-nutri/admin-nutri'; 
-import { AdminPaymentsComponent } from './features/components/users/admin/admin-payments/admin-payments';
-import { AdminGuidesManagementComponent } from './features/components/users/admin/admin-guides-management/admin-guides-management';
-import { AdminAttendanceComponent } from './features/components/users/admin/admin-attendance/admin-attendance';
-import { AdminHomeConfigComponent } from './features/components/users/admin/admin-home-config/admin-home-config';
+// ==========================================
+// IMPORTS: ADMINISTRADOR
+// ==========================================
+import { AdministradorDashboardComponent } from './features/users/administrador/dashboard/dashboard.component';
+import { AdministradorUsuariosComponent } from './features/users/administrador/usuarios/usuarios.component'; 
+import { AdministradorGruposComponent } from './features/users/administrador/grupos/grupos.component';
+import { AdministradorClasesComponent } from './features/users/administrador/clases/clases.component';
+import { AdministradorEvaluacionesComponent } from './features/users/administrador/evaluaciones/evaluaciones.component';
+import { AdministradorPagosComponent } from './features/users/administrador/pagos/pagos.component';
+import { AdministradorMaterialComplementarioComponent } from './features/users/administrador/material-complementario/material-complementario.component';
+import { AdministradorAsistenciasComponent } from './features/users/administrador/asistencias/asistencias.component';
+import { AdminHomeConfigComponent } from './features/users/administrador/configuracion-inicio/configuracion-inicio.component';
+// Módulos Salud (Admin)
+import { AdministradorEvaluacionesKineComponent } from './features/users/administrador/evaluaciones-kine/evaluaciones-kine.component';
+import { AdministradorHistorialClinicoComponent } from './features/users/administrador/historial-clinico/historial-clinico.component';
+import { AdminKineEvolutionComponent } from './features/users/administrador/ficha-evolutiva/ficha-evolutiva.component';
+import { AdminNutriComponent } from './features/users/administrador/nutricion/nutricion.component';
 
-// --- STUDENT IMPORTS (Portal Alumno) ---
-import { StudentLayoutComponent } from './features/components/users/student/student-layout/student-layout';
-import { StudentDashboardComponent } from './features/components/users/student/student-dashboard/student-dashboard';
-import { StudentScheduleComponent } from './features/components/users/student/student-schedule/student-schedule';
-import { StudentClassesComponent } from './features/components/users/student/student-classes/student-classes';
-import { StudentAttendanceComponent } from './features/components/users/student/student-attendance/student-attendance';
-import { StudentEvaluationsComponent } from './features/components/users/student/student-evaluations/student-evaluations';
-import { StudentKineComponent } from './features/components/users/student/student-kine/student-kine';
-import { StudentNutriComponent } from './features/components/users/student/student-nutri/student-nutri';
-import { StudentViewGuidesComponent } from './features/components/users/student/student-view-guides/student-view-guides';
-import { ViewTeachersComponent } from './features/components/users/student/view-teachers/view-teachers';
+// ==========================================
+// IMPORTS: ESTUDIANTE
+// ==========================================
+import { EstudianteDashboardComponent } from './features/users/estudiante/dashboard/dashboard.component';
+import { EstudianteHorarioComponent } from './features/users/estudiante/horario/horario.component';
+import { EstudianteClasesComponent } from './features/users/estudiante/clases/clases.component';
+import { EstudianteAsistenciasComponent } from './features/users/estudiante/asistencias/asistencias.component';
+import { EstudianteEvaluacionesComponent } from './features/users/estudiante/evaluaciones/evaluaciones.component';
+import { EstudianteMaterialcomplementarioComponent } from './features/users/estudiante/material-complementario/material-complementario.component';
+import { EstudianteCuerpoTecnicoComponent } from './features/users/estudiante/cuerpo-tecnico/cuerpo-tecnico.component';
+// Módulos Salud (Estudiante)
+import { StudentKineEvaluationComponent } from './features/users/estudiante/evaluaciones-kine/evaluaciones-kine.component';
+import { EstudianteHistorialClinicoComponent } from './features/users/estudiante/historial-clinico/historial-clinico.component';
+import { EstudianteFichaEvolutivaComponent } from './features/users/estudiante/ficha-evolutiva/ficha-evolutiva.component';
+import { StudentNutriComponent } from './features/users/estudiante/nutricion/nutricion.component';
 
-// --- PROFESSOR IMPORTS (Portal Profesor) ---
-import { ProfessorLayoutComponent } from './features/components/users/professor/professor-layout/professor-layout';
-import { ProfessorDashboardComponent } from './features/components/users/professor/professor-dashboard/professor-dashboard';
-import { ProfessorAttendanceComponent } from './features/components/users/professor/professor-attendance/professor-attendance';
-import { ProfessorClassesComponent } from './features/components/users/professor/professor-classes/professor-classes';
-import { ProfessorEvaluationsComponent } from './features/components/users/professor/professor-evaluations/professor-evaluations';
-import { ProfessorKinesiologyComponent } from './features/components/users/professor/professor-kinesiology/professor-kinesiology';
-import { ProfessorNutritionComponent } from './features/components/users/professor/professor-nutrition/professor-nutrition';
-import { ProfessorScheduleComponent } from './features/components/users/professor/professor-schedule/professor-schedule';
-import { ProfessorViewGuidesComponent } from './features/components/users/professor/professor-view-guides/professor-view-guides';
-import { ProfessorViewStudentsComponent } from './features/components/users/professor/professor-view-students/professor-view-students';
+// ==========================================
+// IMPORTS: PROFESOR
+// ==========================================
+import { ProfessorDashboardComponent } from './features/users/profesor/dashboard/dashboard.component';
+import { ProfesorAsistenciasComponent } from './features/users/profesor/asistencias/asistencias.component';
+import { ProfesorClasesComponent } from './features/users/profesor/clases/clases.component';
+import { ProfesorEvaluacionesComponent } from './features/users/profesor/evaluaciones/evaluaciones.component';
+import { ProfesorHorarioComponent } from './features/users/profesor/horario/horario.component';
+import { ProfesorMaterialComplementarioComponent } from './features/users/profesor/material-complementario/material-complementario.component';
+import { ProfesorVerEstudiantesComponent } from './features/users/profesor/ver-estudiantes/ver-estudiantes.component';
+// Módulos Salud (Profesor)
+import { ProfesorEvaluacionesKineComponent } from './features/users/profesor/evaluaciones-kine/evaluaciones-kine.component';
+import { ProfesorHistorialClinicoComponent } from './features/users/profesor/historial-clinico/historial-clinico.component';
+import { ProfesorFichaEvolutivaComponent } from './features/users/profesor/ficha-evolutiva/ficha-evolutiva.component';
+import { ProfessorNutritionComponent } from './features/users/profesor/nutricion/nutricion.component';
 
-// --- KINE IMPORTS ---
-import { KineLayoutComponent } from './features/components/users/kine/kine-layout/kine-layout';
-import { KineDashboardComponent } from './features/components/users/kine/kine-dashboard/kine-dashboard';
-import { KineClassesComponent } from './features/components/users/kine/kine-classes/kine-classes';
-import { KineEvaluationComponent } from './features/components/users/kine/kine-evaluation/kine-evaluation';
-import { KineScheduleComponent } from './features/components/users/kine/kine-schedule/kine-schedule';
-import { KineNutritionComponent } from './features/components/users/kine/kine-nutrition/kine-nutrition';
-import { KineViewGuidesComponent } from './features/components/users/kine/kine-view-guides/kine-view-guides';
-import { KineEvaluationsKineComponent } from './features/components/users/kine/kine-evaluations-kine/kine-evaluations-kine';
-import { KineInjuryTrackingComponent } from './features/components/users/kine/kine-injury-tracking/kine-injury-tracking';
-import { KinePatientsComponent } from './features/components/users/kine/kine-patients/kine-patients';
-import { KineStudentProfileComponent } from './features/components/users/kine/kine-student-profile/kine-student-profile';
+// ==========================================
+// IMPORTS: KINESIÓLOGO
+// ==========================================
+import { KinesiologoDashboardComponent } from './features/users/kinesiologo/dashboard/dashboard.component';
+import { KinesiologoClasesComponent } from './features/users/kinesiologo/clases/clases.component';
+import { KinesiologoHorarioComponent } from './features/users/kinesiologo/horario/horario.component';
+import { KinesiollogoMaterialComplementarioComponent } from './features/users/kinesiologo/material-complementario/material-complementario.component';
+import { KinesiolgoVerEstudiantesComponent } from './features/users/kinesiologo/ver-estudiantes/ver-estudiantes.component';
+// Módulos Salud (Kine)
+import { KinesiologoEvaluacionesKineComponent } from './features/users/kinesiologo/evaluaciones-kine/evaluaciones-kine.component';
+import { KinesiologoHistorialClinicoComponent } from './features/users/kinesiologo/historial-clinico/historial-clinico.component';
+import { KinesiologoFichaEvolutivaComponent } from './features/users/kinesiologo/ficha-evolutiva/ficha-evolutiva.component';
+import { KineNutritionComponent } from './features/users/kinesiologo/nutricion/nutricion.component';
 
-// --- NUTRI IMPORTS ---
-import { NutriLayoutComponent } from './features/components/users/nutri/nutri-layout/nutri-layout';
-import { NutriDashboardComponent } from './features/components/users/nutri/nutri-dashboard/nutri-dashboard';
-import { NutriEvaluationsComponent } from './features/components/users/nutri/nutri-evaluation/nutri-evaluation';
-import { NutriGuidesComponent } from './features/components/users/nutri/nutri-guides/nutri-guides';
+// ==========================================
+// IMPORTS: NUTRICIONISTA
+// ==========================================
+import { NutricionistaDashboardComponent } from './features/users/nutricionista/dashboard/dashboard.component';
+import { NutricionistaMaterialComplementarioComponent } from './features/users/nutricionista/material-complementario/material-complementario.component';
+import { NutriEvaluationsComponent } from './features/users/nutricionista/evaluacion-nutri/evaluaciones-nutri.component';
 
 export const routes: Routes = [
     // ==========================================
@@ -88,21 +104,24 @@ export const routes: Routes = [
     // ==========================================
     {
         path: 'admin',
-        component: AdminLayoutComponent,
-        canActivate: [jwtGuard, roleGuard], // <-- Aplicamos ambos guardias
-        data: { roles: [Role.ADMIN] },      // <-- Usamos el Enum estricto
+        component: LayoutComponent, // ✅ LAYOUT UNIFICADO
+        canActivate: [jwtGuard, roleGuard], 
+        data: { roles: [Role.ADMIN] },      
         children: [
-            { path: 'dashboard', component: AdminDashboardComponent },
-            { path: 'users', component: AdminUsersComponent },
-            { path: 'groups', component: AdminGroupsComponent },
-            { path: 'classes', component: AdminClassesComponent },
-            { path: 'evaluations', component: AdminEvaluationsComponent },
-            { path: 'kinesiology', component: AdminKineComponent },
-            { path: 'nutrition', component: AdminNutriComponent },
-            { path: 'payments', component: AdminPaymentsComponent },
-            { path: 'guides', component: AdminGuidesManagementComponent },
-            { path: 'attendance', component: AdminAttendanceComponent },
+            { path: 'dashboard', component: AdministradorDashboardComponent },
+            { path: 'users', component: AdministradorUsuariosComponent },
+            { path: 'groups', component: AdministradorGruposComponent },
+            { path: 'classes', component: AdministradorClasesComponent },
+            { path: 'evaluations', component: AdministradorEvaluacionesComponent },
+            { path: 'payments', component: AdministradorPagosComponent },
+            { path: 'guides', component: AdministradorMaterialComplementarioComponent },
+            { path: 'attendance', component: AdministradorAsistenciasComponent },
             { path: 'home-config', component: AdminHomeConfigComponent },
+            // Salud Deportiva
+            { path: 'kine-evaluaciones', component: AdministradorEvaluacionesKineComponent },
+            { path: 'kine-historial', component: AdministradorHistorialClinicoComponent },
+            { path: 'kine-fichas', component: AdminKineEvolutionComponent },
+            { path: 'nutricion', component: AdminNutriComponent },
         ]
     },
 
@@ -111,19 +130,22 @@ export const routes: Routes = [
     // ==========================================
     {
         path: 'student',
-        component: StudentLayoutComponent,
+        component: LayoutComponent, // ✅ LAYOUT UNIFICADO
         canActivate: [jwtGuard, roleGuard], 
         data: { roles: [Role.STUDENT] },
         children: [
-            { path: 'dashboard', component: StudentDashboardComponent },
-            { path: 'schedule', component: StudentScheduleComponent },
-            { path: 'classes', component: StudentClassesComponent },
-            { path: 'attendance', component: StudentAttendanceComponent },
-            { path: 'evaluations', component: StudentEvaluationsComponent },
-            { path: 'kine', component: StudentKineComponent },
-            { path: 'nutri', component: StudentNutriComponent },
-            { path: 'view-professor', component: ViewTeachersComponent },
-            { path: 'guides', component: StudentViewGuidesComponent },
+            { path: 'dashboard', component: EstudianteDashboardComponent },
+            { path: 'schedule', component: EstudianteHorarioComponent },
+            { path: 'classes', component: EstudianteClasesComponent },
+            { path: 'attendance', component: EstudianteAsistenciasComponent },
+            { path: 'evaluations', component: EstudianteEvaluacionesComponent },
+            { path: 'view-professor', component: EstudianteCuerpoTecnicoComponent },
+            { path: 'guides', component: EstudianteMaterialcomplementarioComponent },
+            // Salud Deportiva
+            { path: 'kine-evaluaciones', component: StudentKineEvaluationComponent },
+            { path: 'kine-historial', component: EstudianteHistorialClinicoComponent },
+            { path: 'kine-fichas', component: EstudianteFichaEvolutivaComponent },
+            { path: 'nutricion', component: StudentNutriComponent },
         ]
     },
 
@@ -132,19 +154,22 @@ export const routes: Routes = [
     // ==========================================
     {
         path: 'professor',
-        component: ProfessorLayoutComponent,
+        component: LayoutComponent, // ✅ LAYOUT UNIFICADO
         canActivate: [jwtGuard, roleGuard], 
         data: { roles: [Role.PROFESSOR] },
         children: [
             { path: 'dashboard', component: ProfessorDashboardComponent },
-            { path: 'attendance', component: ProfessorAttendanceComponent },
-            { path: 'classes', component: ProfessorClassesComponent },
-            { path: 'evaluations', component: ProfessorEvaluationsComponent },
-            { path: 'kinesiology', component: ProfessorKinesiologyComponent },
-            { path: 'nutrition', component: ProfessorNutritionComponent },
-            { path: 'schedule', component: ProfessorScheduleComponent },
-            { path: 'guides', component: ProfessorViewGuidesComponent },
-            { path: 'students', component: ProfessorViewStudentsComponent },
+            { path: 'attendance', component: ProfesorAsistenciasComponent },
+            { path: 'classes', component: ProfesorClasesComponent },
+            { path: 'evaluations', component: ProfesorEvaluacionesComponent },
+            { path: 'schedule', component: ProfesorHorarioComponent },
+            { path: 'guides', component: ProfesorMaterialComplementarioComponent },
+            { path: 'students', component: ProfesorVerEstudiantesComponent },
+            // Salud Deportiva
+            { path: 'kine-evaluaciones', component: ProfesorEvaluacionesKineComponent },
+            { path: 'kine-historial', component: ProfesorHistorialClinicoComponent },
+            { path: 'kine-fichas', component: ProfesorFichaEvolutivaComponent },
+            { path: 'nutricion', component: ProfessorNutritionComponent },
         ]
     },
 
@@ -153,20 +178,20 @@ export const routes: Routes = [
     // ==========================================
     {
         path: 'kine',
-        component: KineLayoutComponent,
+        component: LayoutComponent, // ✅ LAYOUT UNIFICADO
         canActivate: [jwtGuard, roleGuard], 
         data: { roles: [Role.KINE] },
         children: [
-            { path: 'dashboard', component: KineDashboardComponent },
-            { path: 'classes', component: KineClassesComponent },
-            { path: 'evaluations', component: KineEvaluationComponent },
-            { path: 'schedule', component: KineScheduleComponent },
-            { path: 'nutrition', component: KineNutritionComponent },
-            { path: 'guides', component: KineViewGuidesComponent },
-            { path: 'injury-tracking', component: KineInjuryTrackingComponent },
-            { path: 'patients', component: KinePatientsComponent },
-            { path: 'student-profile', component: KineStudentProfileComponent },
-            { path: 'evaluation-kine', component: KineEvaluationsKineComponent },
+            { path: 'dashboard', component: KinesiologoDashboardComponent },
+            { path: 'classes', component: KinesiologoClasesComponent },
+            { path: 'schedule', component: KinesiologoHorarioComponent },
+            { path: 'guides', component: KinesiollogoMaterialComplementarioComponent },
+            { path: 'patients', component: KinesiolgoVerEstudiantesComponent },
+            // Salud Deportiva
+            { path: 'kine-evaluaciones', component: KinesiologoEvaluacionesKineComponent },
+            { path: 'kine-historial', component: KinesiologoHistorialClinicoComponent },
+            { path: 'kine-fichas', component: KinesiologoFichaEvolutivaComponent },
+            { path: 'nutricion', component: KineNutritionComponent },
         ]
     },
 
@@ -175,19 +200,19 @@ export const routes: Routes = [
     // ==========================================
     {
         path: 'nutri',
-        component: NutriLayoutComponent,
+        component: LayoutComponent, // ✅ LAYOUT UNIFICADO
         canActivate: [jwtGuard, roleGuard], 
         data: { roles: [Role.NUTRI] },
         children: [
-            { path: 'dashboard', component: NutriDashboardComponent },
-            { path: 'evaluations', component: NutriEvaluationsComponent },
-            { path: 'guides', component: NutriGuidesComponent}
+            { path: 'dashboard', component: NutricionistaDashboardComponent },
+            { path: 'guides', component: NutricionistaMaterialComplementarioComponent},
+            // Salud Deportiva
+            { path: 'evaluations', component: NutriEvaluationsComponent }
         ]
-        
     },
 
     // ==========================================
-    // Ruta comodín (404)
+    // Ruta comodín (404 / Fallback)
     // ==========================================
     { path: '**', redirectTo: '' } 
 ];

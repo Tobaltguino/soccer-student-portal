@@ -1,0 +1,379 @@
+<div class="evolution-record-container fadein animation-duration-500">
+    <p-toast position="top-right"></p-toast>
+
+    <header class="page-header">
+        <div class="header-content">
+            <h1>Ficha Evolutiva Kinésica</h1>
+            <p>Busque un paciente para ver su historial o crear una nueva ficha.</p>
+        </div>
+    </header>
+
+    <div class="filter-bar animation-fade-in" *ngIf="!modoFormulario">
+        <div class="filter-row">
+            <div class="filter-item flex-grow-1">
+                <label>BUSCADOR GLOBAL DE PACIENTES</label>
+                <p-select [options]="listaAlumnos" [(ngModel)]="alumnoSeleccionado" optionLabel="nombreCompleto"
+                          [filter]="true" filterBy="nombreCompleto" [showClear]="true" 
+                          placeholder="Buscar por Nombre o RUT..." 
+                          (onChange)="onAlumnoChange()"
+                          appendTo="body"
+                          styleClass="w-full">
+                </p-select>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-table mt-3 text-center p-5 fadein" *ngIf="!alumnoSeleccionado && !modoFormulario">
+        <i class="pi pi-users text-6xl text-300 mb-3"></i>
+        <h2 class="text-secondary m-0 mt-3" style="font-size: 1.25rem;">Seleccione un paciente</h2>
+        <p class="text-500 mt-2">Utilice el buscador para comenzar a registrar.</p>
+    </div>
+
+    <div class="card-table mt-3 fadein" *ngIf="alumnoSeleccionado && !modoFormulario">
+        <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-4 border-bottom-1 surface-border pb-3 gap-3">
+            <div>
+                <h2 class="m-0 text-main" style="font-size: 1.15rem; font-weight: 700;">Historial Clínico</h2>
+                <p class="text-secondary m-0 mt-1">Paciente: <span class="font-bold text-main">{{alumnoSeleccionado.nombreCompleto}}</span></p>
+            </div>
+            <button pButton label="Nueva Ficha" icon="pi pi-plus" class="btn-create p-button-primary w-full md:w-auto" (click)="abrirNuevaFicha()"></button>
+        </div>
+
+        <p-table [value]="historialFichas" [paginator]="true" [rows]="10" styleClass="p-datatable-sm p-datatable-striped" [loading]="cargandoHistorial" [responsiveLayout]="'stack'" [breakpoint]="'960px'">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th>Fecha Evaluación</th>
+                    <th>Profesional Tratante</th>
+                    <th>Diagnóstico Principal</th>
+                    <th class="text-center" style="width: 100px">Acciones</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-h>
+                <tr>
+                    <td>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Fecha: </span>
+                        <span>{{ h.fecha_evaluacion | date:'dd/MM/yyyy' }}</span>
+                    </td>
+                    <td>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Profesional: </span>
+                        <span>{{ h.kinesiologoObj?.nombreCompleto }}</span>
+                    </td>
+                    <td>
+                        <span class="p-column-title font-bold text-secondary hidden-desktop">Diagnóstico: </span>
+                        <span>{{ h.diagnostico_medico || 'N/A' }}</span>
+                    </td>
+                    <td class="text-center">
+                        <div class="action-buttons justify-content-center">
+                            <button pButton icon="pi pi-eye" class="p-button-text p-button-rounded p-button-info" (click)="abrirVerFicha(h)" pTooltip="Ver Ficha"></button>
+                            <button pButton icon="pi pi-pencil" class="p-button-text p-button-rounded p-button-warning" (click)="abrirEditarFicha(h)" pTooltip="Editar Ficha"></button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="4" class="text-center p-5 text-500">
+                        <i class="pi pi-inbox text-4xl mb-3"></i><br>No hay fichas anteriores registradas para este alumno.
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <div class="card-table mt-3 animation-fade-in" *ngIf="modoFormulario">
+        
+        <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-4 border-bottom-1 surface-border pb-3 gap-3">
+            <div class="w-full md:w-auto">
+                <h2 class="m-0 text-primary" style="font-size: 1.15rem; font-weight: 700;">
+                    {{ modoSoloLectura ? 'Viendo Ficha' : (editandoId ? 'Editando Ficha' : 'Nueva Ficha') }}
+                </h2>
+                <p class="text-secondary m-0 mt-1">Paciente: <span class="font-bold text-main">{{alumnoSeleccionado.nombreCompleto}}</span></p>
+                
+                <div class="p-inputgroup shadow-1 border-round-lg overflow-hidden mt-3" *ngIf="!modoSoloLectura">
+                    <span class="p-inputgroup-addon bg-primary text-white border-none px-3"><i class="pi pi-user-plus"></i></span>
+                    <p-select [options]="listaKinesiologos" [(ngModel)]="ficha.kinesiologoId" 
+                              optionLabel="nombreCompleto" optionValue="id" 
+                              placeholder="Asignar Kinesiólogo Tratante..." 
+                              styleClass="w-full md:w-20rem border-none shadow-none py-1" appendTo="body" [filter]="true" filterBy="nombreCompleto">
+                    </p-select>
+                </div>
+            </div>
+            <div class="flex gap-2 w-full md:w-auto align-self-start md:align-self-end">
+                <button pButton label="Volver" icon="pi pi-arrow-left" class="p-button-outlined p-button-secondary flex-1 md:flex-none btn-create" (click)="volverAlHistorial()"></button>
+                <button *ngIf="!modoSoloLectura" pButton label="Guardar" icon="pi pi-save" class="p-button-primary flex-1 md:flex-none btn-create" (click)="guardarFicha()"></button>
+            </div>
+        </div>
+
+        <div class="flex justify-content-center mb-4 mt-3">
+            <p-selectButton [options]="opcionesVistaForm" [(ngModel)]="vistaFormulario" optionLabel="label" optionValue="value"></p-selectButton>
+        </div>
+
+        <fieldset [disabled]="modoSoloLectura" class="p-0 m-0 border-none">
+
+            <!-- VISTA: ANTECEDENTES -->
+            <div *ngIf="vistaFormulario === 'antecedentes'" class="animation-fade-in">
+                
+                <div class="kine-table-wrapper mb-4">
+                    <table class="kine-table">
+                        <thead><tr><th colspan="2" class="kine-header">1. Anamnesis Próxima</th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td class="kine-label-cell-fixed w-3">Mecanismo de Lesión</td>
+                                <td class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.antecedentesPersonales.mecanismoLesion" rows="2" [autoResize]="true"></textarea></td>
+                            </tr>
+                            <tr>
+                                <td class="kine-label-cell-fixed w-3">Tiempo de Evolución</td>
+                                <td class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.antecedentesPersonales.tiempoEvolucion" rows="1" [autoResize]="true"></textarea></td>
+                            </tr>
+                            <tr>
+                                <td class="kine-label-cell-fixed w-3">Tratamientos Recibidos</td>
+                                <td class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.antecedentesPersonales.tratamientosRecibidos" rows="2" [autoResize]="true"></textarea></td>
+                            </tr>
+                            <tr>
+                                <td class="kine-label-cell-fixed w-3">Exámenes Complementarios</td>
+                                <td class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.antecedentesPersonales.examenesComplementarios" rows="2" [autoResize]="true"></textarea></td>
+                            </tr>
+                            <tr>
+                                <td class="kine-label-cell-fixed w-3">Principales Síntomas</td>
+                                <td class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.antecedentesPersonales.sintomasActuales" rows="2" [autoResize]="true"></textarea></td>
+                            </tr>
+                            <tr>
+                                <td class="kine-label-cell-fixed w-3">Dolor</td>
+                                <td class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.antecedentesPersonales.dolor" rows="1" [autoResize]="true" placeholder="Ej: EVA 6/10"></textarea></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="kine-table-wrapper mb-4">
+                    <table class="kine-table">
+                        <thead><tr><th colspan="2" class="kine-header">2. Anamnesis Remota</th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td class="kine-label-cell-fixed w-3">Antecedentes Mórbidos</td>
+                                <td class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.antecedentesRemotos.antecedentesSecundarios" rows="2" [autoResize]="true"></textarea></td>
+                            </tr>
+                            <tr>
+                                <td class="kine-label-cell-fixed w-3">Ant. Quirúrgicos</td>
+                                <td class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.antecedentesRemotos.antecedentesQuirurgicos" rows="2" [autoResize]="true"></textarea></td>
+                            </tr>
+                            <tr>
+                                <td class="kine-label-cell-fixed w-3">Hábitos</td>
+                                <td class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.antecedentesRemotos.habitos" rows="2" [autoResize]="true"></textarea></td>
+                            </tr>
+                            <tr>
+                                <td class="kine-label-cell-fixed w-3">Medicamentos</td>
+                                <td class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.antecedentesRemotos.medicamentos" rows="2" [autoResize]="true"></textarea></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="kine-table-wrapper mb-4">
+                    <table class="kine-table">
+                        <thead><tr><th class="kine-header">3. Diagnóstico Médico</th></tr></thead>
+                        <tbody>
+                            <tr><td class="p-0"><textarea pTextarea [(ngModel)]="ficha.diagnosticoMedico" class="kine-input" rows="3" [autoResize]="true" placeholder="Escriba el diagnóstico..."></textarea></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VISTA: EVALUACIÓN CLÍNICA -->
+            <div *ngIf="vistaFormulario === 'evaluacion'" class="animation-fade-in">
+                
+                <div class="kine-table-wrapper mb-4">
+                    <table class="kine-table">
+                        <thead><tr><th colspan="4" class="kine-header">1. Inspección</th></tr></thead>
+                        <tbody>
+                            <tr><td colspan="4" class="kine-subheader">Estática</td></tr>
+                            <tr>
+                                <td class="kine-label-cell-fixed w-2">Anterior:</td>
+                                <td class="p-0 w-4"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.inspeccionEstatica.anterior" rows="1" [autoResize]="true"></textarea></td>
+                                <td class="kine-label-cell-fixed w-2">Posterior:</td>
+                                <td class="p-0 w-4"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.inspeccionEstatica.posterior" rows="1" [autoResize]="true"></textarea></td>
+                            </tr>
+                            <tr>
+                                <td class="kine-label-cell-fixed w-2">Sagital Der:</td>
+                                <td class="p-0 w-4"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.inspeccionEstatica.sagitalDer" rows="1" [autoResize]="true"></textarea></td>
+                                <td class="kine-label-cell-fixed w-2">Sagital Izq:</td>
+                                <td class="p-0 w-4"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.inspeccionEstatica.sagitalIzq" rows="1" [autoResize]="true"></textarea></td>
+                            </tr>
+                            
+                            <tr><td colspan="4" class="kine-subheader border-top-1 surface-border">Dinámica</td></tr>
+                            <tr>
+                                <td class="kine-label-cell-fixed w-3">Disfunción:</td>
+                                <td colspan="3" class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.inspeccionDinamica.disfuncion" rows="1" [autoResize]="true"></textarea></td>
+                            </tr>
+                            <tr>
+                                <td class="kine-label-cell-fixed w-3">Grupos Musculares:</td>
+                                <td colspan="3" class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.inspeccionDinamica.gruposMusc" rows="1" [autoResize]="true"></textarea></td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="p-3">
+                                    <div class="flex flex-column md:flex-row gap-4">
+                                        <div class="flex align-items-center"><p-checkbox [(ngModel)]="ficha.inspeccionDinamica.sinCompensacion" [binary]="true"></p-checkbox><span class="ml-2 text-sm text-main">Sin compensaciones</span></div>
+                                        <div class="flex align-items-center"><p-checkbox [(ngModel)]="ficha.inspeccionDinamica.conCompensacion" [binary]="true"></p-checkbox><span class="ml-2 text-sm text-main">Con compensaciones</span></div>
+                                        <div class="flex align-items-center"><p-checkbox [(ngModel)]="ficha.inspeccionDinamica.noLograMov" [binary]="true"></p-checkbox><span class="ml-2 text-sm text-main">No logra movimiento</span></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="kine-table-wrapper mb-4">
+                    <table class="kine-table text-center">
+                        <thead>
+                            <tr>
+                                <th colspan="5" class="kine-header border-none border-bottom-1 surface-border">
+                                    <div class="flex justify-content-between align-items-center">
+                                        <span>2. Rango de movimiento</span>
+                                    </div>
+                                </th>
+                            </tr>
+                            <tr>
+                                <th rowspan="2" class="kine-label-cell">Articulación</th>
+                                <th colspan="2" class="kine-label-cell">Derecho</th>
+                                <th colspan="2" class="kine-label-cell">Izquierdo</th>
+                            </tr>
+                            <tr>
+                                <th class="kine-label-cell">Pasivo</th><th class="kine-label-cell">Activo</th>
+                                <th class="kine-label-cell">Pasivo</th><th class="kine-label-cell">Activo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let art of listaArticulaciones">
+                                <td class="font-bold bg-paper-head text-secondary text-xs">{{art.nombre}}</td>
+                                <td class="p-0"><p-select [options]="opcionesROM" [(ngModel)]="art.derPasivo" appendTo="body" styleClass="w-full border-none shadow-none bg-transparent text-center"></p-select></td>
+                                <td class="p-0"><p-select [options]="opcionesROM" [(ngModel)]="art.derActivo" appendTo="body" styleClass="w-full border-none shadow-none bg-transparent text-center"></p-select></td>
+                                <td class="p-0"><p-select [options]="opcionesROM" [(ngModel)]="art.izqPasivo" appendTo="body" styleClass="w-full border-none shadow-none bg-transparent text-center"></p-select></td>
+                                <td class="p-0"><p-select [options]="opcionesROM" [(ngModel)]="art.izqActivo" appendTo="body" styleClass="w-full border-none shadow-none bg-transparent text-center"></p-select></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="kine-table-wrapper mb-4">
+                    <table class="kine-table">
+                        <thead>
+                            <tr>
+                                <th colspan="3" class="kine-header">
+                                    <div class="flex justify-content-between align-items-center">
+                                        <span>3. Fuerza (Daniels)</span>
+                                        <div class="flex align-items-center gap-4">
+                                            <button *ngIf="!modoSoloLectura" pButton icon="pi pi-plus" class="p-button-sm p-button-success h-2rem w-2rem p-0" (click)="agregarFuerza()"></button>
+                                        </div>
+                                    </div>
+                                </th>
+                            </tr>
+                            <tr *ngIf="listaFuerzas.length > 0">
+                                <th class="kine-label-cell w-6 text-center">Movimiento</th>
+                                <th class="kine-label-cell w-5 text-center">Grado</th>
+                                <th class="kine-label-cell w-1"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let f of listaFuerzas; let i = index">
+                                <td class="p-0"><textarea pTextarea [(ngModel)]="f.movimiento" class="kine-input" rows="1" [autoResize]="true"></textarea></td>
+                                <td class="p-0"><textarea pTextarea [(ngModel)]="f.escala" class="kine-input text-center" rows="1" [autoResize]="true"></textarea></td>
+                                <td class="text-center p-3 sm:p-0 bg-red-50" (click)="eliminarFuerza(i)">
+                                    <i *ngIf="!modoSoloLectura" class="pi pi-trash text-red-500 cursor-pointer text-xl sm:text-base"></i>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="kine-table-wrapper mb-4">
+                    <table class="kine-table">
+                        <thead><tr><th colspan="2" class="kine-header">4. Patrones de postura</th></tr></thead>
+                        <tbody>
+                            <tr><td class="kine-label-cell-fixed w-3">Actitud postural</td><td class="p-0"><textarea pTextarea [(ngModel)]="ficha.postura.actitud" class="kine-input" rows="2" [autoResize]="true"></textarea></td></tr>
+                            <tr><td class="kine-label-cell-fixed w-3">Patrón EESS</td><td class="p-0"><textarea pTextarea [(ngModel)]="ficha.postura.eess" class="kine-input" rows="2" [autoResize]="true"></textarea></td></tr>
+                            <tr><td class="kine-label-cell-fixed w-3">Patrón EEII</td><td class="p-0"><textarea pTextarea [(ngModel)]="ficha.postura.eeii" class="kine-input" rows="2" [autoResize]="true"></textarea></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="kine-table-wrapper mb-4">
+                    <table class="kine-table text-center">
+                        <thead>
+                            <tr><th colspan="5" class="kine-header border-none border-bottom-1 surface-border">5. Evaluación sensibilidad (Dermatomas / Raíz nerviosa)</th></tr>
+                            <tr>
+                                <th class="kine-label-cell w-20">Anestesia</th>
+                                <th class="kine-label-cell w-20">Hipoestesia</th>
+                                <th class="kine-label-cell w-20">Disestesia</th>
+                                <th class="kine-label-cell w-20">Hiperestesia</th>
+                                <th class="kine-label-cell w-20">Parestesia</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="p-0"><textarea pTextarea [(ngModel)]="ficha.sensibilidad.anestesia" class="kine-input text-center" rows="2" [autoResize]="true"></textarea></td>
+                                <td class="p-0"><textarea pTextarea [(ngModel)]="ficha.sensibilidad.hipoestesia" class="kine-input text-center" rows="2" [autoResize]="true"></textarea></td>
+                                <td class="p-0"><textarea pTextarea [(ngModel)]="ficha.sensibilidad.disestesia" class="kine-input text-center" rows="2" [autoResize]="true"></textarea></td>
+                                <td class="p-0"><textarea pTextarea [(ngModel)]="ficha.sensibilidad.hiperestesia" class="kine-input text-center" rows="2" [autoResize]="true"></textarea></td>
+                                <td class="p-0"><textarea pTextarea [(ngModel)]="ficha.sensibilidad.parestesia" class="kine-input text-center" rows="2" [autoResize]="true"></textarea></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="kine-table-wrapper mb-4">
+                    <table class="kine-table">
+                        <thead><tr><th class="kine-header">6. Marcha</th></tr></thead>
+                        <tbody>
+                            <tr><td class="p-0"><textarea pTextarea [(ngModel)]="ficha.marcha" class="kine-input" rows="2" [autoResize]="true" placeholder="Describa la marcha..."></textarea></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="kine-table-wrapper mb-4">
+                    <table class="kine-table">
+                        <thead>
+                            <tr>
+                                <th colspan="4" class="kine-header">
+                                    <div class="flex justify-content-between align-items-center">
+                                        <span>7. Balance y Coordinación</span>
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="kine-label-cell-fixed w-3">Coordinación</td>
+                                <td colspan="3" class="p-3">
+                                    <div class="flex flex-column md:flex-row gap-3">
+                                        <div class="flex align-items-center"><p-checkbox [(ngModel)]="ficha.coordinacion.dedoNariz" [binary]="true"></p-checkbox><span class="ml-2 text-xs text-main font-bold">1. Prueba Dedo-Nariz</span></div>
+                                        <div class="flex align-items-center"><p-checkbox [(ngModel)]="ficha.coordinacion.pinzaPulgarIndice" [binary]="true"></p-checkbox><span class="ml-2 text-xs text-main font-bold">2. Pinza Pulgar</span></div>
+                                        <div class="flex align-items-center"><p-checkbox [(ngModel)]="ficha.coordinacion.talonRodilla" [binary]="true"></p-checkbox><span class="ml-2 text-xs text-main font-bold">3. Talón-Rodilla</span></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="kine-label-cell-fixed w-3">Balance</td>
+                                <td colspan="3" class="p-3">
+                                    <div class="flex align-items-center flex-wrap gap-2 text-sm text-main">
+                                        <span class="font-bold">Estático:</span>
+                                        <span>Romberg</span>
+                                        <input pInputText [(ngModel)]="ficha.balanceRomberg" class="kine-input-inline w-4rem text-center" placeholder="---" />
+                                        <span>seg.</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="kine-table-wrapper mb-4">
+                    <table class="kine-table">
+                        <thead><tr><th class="kine-header">Observaciones Finales</th></tr></thead>
+                        <tbody><tr><td class="p-0"><textarea pTextarea [(ngModel)]="ficha.observacion" class="kine-input" rows="4" [autoResize]="true"></textarea></td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </fieldset>
+
+    </div>
+</div>
