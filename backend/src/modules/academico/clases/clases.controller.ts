@@ -53,6 +53,12 @@ export class ClasesController {
     return this.clasesService.listarPorGrupoDeEstudiante(user.id);
   }
 
+  @Get('hoy')
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.ESTUDIANTE, Rol.KINESIOLOGO)
+  obtenerClasesHoy() {
+    return this.clasesService.obtenerClasesHoy();
+  }
+
   @Get(':id')
   @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO)
   async buscarPorId(

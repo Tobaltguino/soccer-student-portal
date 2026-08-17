@@ -125,4 +125,14 @@ export class UsuarioService {
   eliminarFoto(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}/foto`);
   }
+
+  /**
+   * GET /usuarios/cumpleanos?dias=7
+   * Obtiene los próximos cumpleaños a nivel academia
+   */
+  obtenerCumpleanosGlobales(dias: number = 7): Observable<any[]> {
+    const params = new HttpParams().set('dias', dias.toString());
+    // Ajusta la URL base según corresponda
+    return this.http.get<any[]>(`${this.apiUrl}/cumpleanos`, { params });
+  }
 }

@@ -3,7 +3,7 @@ import { SupabaseService } from '../../../core/supabase/supabase.service';
 import { CrearClaseDto } from './dto/crear-clase.dto';
 import { ActualizarClaseDto } from './dto/actualizar-clase.dto';
 import type { ClaseRow } from './interfaces/clase.interface';
-import { lanzarErrorSupabaseConFk } from '../../../shared/utils/supabase-error.util';
+import { lanzarErrorSupabase, lanzarErrorSupabaseConFk } from '../../../shared/utils/supabase-error.util';
 import { FiltrarClasesDto } from './dto/filtrar-clases.dto';
 
 @Injectable()
@@ -154,6 +154,32 @@ import { FiltrarClasesDto } from './dto/filtrar-clases.dto';
       ...clase,
       presente: mapaAsistencia.has(clase.id) ? mapaAsistencia.get(clase.id)! : null,
     }));
+  }
+
+  async obtenerClasesHoy(): Promise<any[]> {
+    // 1. Obtenemos la fecha de hoy en formato YYYY-MM-DD
+    // Usamos el timezone de Chile para evitar desfases de horario del servidor
+    const hoyDate = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Santiago"}));
+    const hoyStr = hoyDate.getFullYear() + '-' + 
+                   String(hoyDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                   String(hoyDate.getDate()).padStart(2, '0');
+
+    // 2. Buscamos las clases que coincidan con la fecha de hoy
+    // Nota: Agregamos relaciones comunes como grupos, ajusta el select según tu BD
+    const { data, error } = await this.supabase.client
+      .from('clases')
+      .select(`
+        *,
+        grupos ( nombre )
+      `)
+      .eq('fecha', hoyStr)
+      .order('hora_inicio', { ascending: true }); // Ordenamos de más temprano a más tarde
+
+    if (error) {
+      lanzarErrorSupabase(error, 'No se pudieron obtener las clases de hoy');
+    }
+
+    return data ?? [];
   }
 
   async buscarPorId(id: number, gruposPermitidos: number[] | null = null): Promise<ClaseRow> {

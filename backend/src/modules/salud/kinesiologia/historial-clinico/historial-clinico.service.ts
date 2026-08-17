@@ -4,7 +4,7 @@ import { SupabaseService } from '../../../../core/supabase/supabase.service';
 import { CrearHistorialDto } from './dto/crear-historial.dto';
 import { ActualizarHistorialDto } from './dto/actualizar-historial.dto';
 import type { HistorialClinicoRow } from './interfaces/historial-clinico.interface';
-import { lanzarErrorSupabaseConFk } from '../../../../shared/utils/supabase-error.util';
+import { lanzarErrorSupabase, lanzarErrorSupabaseConFk } from '../../../../shared/utils/supabase-error.util';
 
 @Injectable()
 export class HistorialClinicoService {
@@ -91,6 +91,46 @@ export class HistorialClinicoService {
     }
 
     return data;
+  }
+
+  async obtenerEstadisticasDashboard() {
+    // 1. Traemos solo el estado y a quién pertenece
+    // Omitimos los que dicen 'RECUPERADO' porque no van en las métricas de alerta
+    const { data, error } = await this.supabase.client
+      .from('kine_historial_clinico')
+      .select('estudiante_id, estado')
+      .in('estado', ['EN_TRATAMIENTO', 'EN_OBSERVACION', 'EN_REINTEGRO_DEPORTIVO']);
+
+    if (error) {
+      lanzarErrorSupabase(error, 'No se pudieron obtener las estadísticas clínicas');
+    }
+
+    const stats = {
+      enTratamiento: 0,
+      enObservacion: 0,
+      enReintegro: 0,
+    };
+
+    if (data) {
+      // 2. Usamos Set para evitar contar dos veces a la misma persona 
+      // si tiene 2 lesiones distintas en el mismo estado
+      const setTratamiento = new Set<string>();
+      const setObservacion = new Set<string>();
+      const setReintegro = new Set<string>();
+
+      data.forEach((h: any) => {
+        if (h.estado === 'EN_TRATAMIENTO') setTratamiento.add(h.estudiante_id);
+        if (h.estado === 'EN_OBSERVACION') setObservacion.add(h.estudiante_id);
+        if (h.estado === 'EN_REINTEGRO_DEPORTIVO') setReintegro.add(h.estudiante_id);
+      });
+
+      // 3. Asignamos los totales
+      stats.enTratamiento = setTratamiento.size;
+      stats.enObservacion = setObservacion.size;
+      stats.enReintegro = setReintegro.size;
+    }
+
+    return stats;
   }
 
   async actualizar(

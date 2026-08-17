@@ -4,7 +4,7 @@ import { CrearSesionDto } from './dto/crear-sesion.dto';
 import { ActualizarSesionDto } from './dto/actualizar-sesion.dto';
 import { CambiarEstadoSesionDto } from './dto/cambiar-estado-sesion.dto';
 import type { SesionRow } from './interfaces/sesion.interface';
-import { lanzarErrorSupabaseConFk } from '../../../../shared/utils/supabase-error.util';
+import { lanzarErrorSupabase, lanzarErrorSupabaseConFk } from '../../../../shared/utils/supabase-error.util';
 import { FiltrarSesionesDto } from './dto/filtrar-sesiones.dto';
 
 @Injectable()
@@ -212,4 +212,39 @@ export class SesionesService {
 
     return data;
   }  
+
+  async obtenerUltimaFinalizada(): Promise<any> {
+    // Buscamos la sesión más reciente que esté FINALIZADA
+    // Y pedimos a Supabase que nos traiga también el conteo de sus resultados
+    const { data, error } = await this.supabase.client
+      .from('evaluaciones_sesiones')
+      .select(`
+        id,
+        fecha,
+        estado,
+        tipo_evaluacion:tipos_evaluacion ( nombre ),
+        grupo:grupos ( nombre ),
+        resultados:evaluaciones_resultados ( count )
+      `)
+      .eq('estado', 'FINALIZADA')
+      .order('fecha', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      lanzarErrorSupabase(error, 'No se pudo obtener la última sesión finalizada');
+    }
+
+    if (!data) return null; // Si no hay sesiones finalizadas aún
+
+    // Formateamos la respuesta para que el frontend la consuma fácil
+    return {
+      id: data.id,
+      fecha: data.fecha,
+      // Le agregamos ( ... as any) para calmar a TypeScript
+      tipoEvaluacion: (data.tipo_evaluacion as any)?.nombre || 'Evaluación',
+      grupo: (data.grupo as any)?.nombre || 'Sin Grupo',
+      totalResultados: (data.resultados as any)?.[0]?.count || 0 
+    };
+  }
 }

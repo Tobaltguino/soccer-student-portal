@@ -44,6 +44,12 @@ export class SesionesController {
     return this.sesionesService.listar(filtros, gruposPermitidos);
   }
 
+  @Get('ultima-finalizada')
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO)
+  obtenerUltima() {
+    return this.sesionesService.obtenerUltimaFinalizada();
+  }
+
   @Get(':id')
   @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO)
   async buscarPorId(@Param('id') id: string, @CurrentUser() user: RequestUser) {

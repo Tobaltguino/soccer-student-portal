@@ -61,4 +61,14 @@ export class EstudianteService {
   actualizarEstudiante(id: string, payload: ActualizarEstudiantePayload): Observable<Estudiante> {
     return this.http.patch<Estudiante>(`${this.apiUrl}/${id}`, payload);
   }
+
+  /**
+   * GET /estudiantes/count
+   * Obtiene el total de estudiantes activos
+   */
+  contarEstudiantesActivos(): Observable<{ total: number }> {
+    // Si tu apiUrl base ya termina en '/estudiantes', pon solo '/count'
+    // Si no, ajusta a `${this.apiUrl}/estudiantes/count`
+    return this.http.get<{ total: number }>(`${this.apiUrl}/count`);
+  }
 }

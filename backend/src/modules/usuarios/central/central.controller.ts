@@ -43,6 +43,13 @@ export class CentralController {
     return this.centralService.miEquipoTecnico(user.id);
   }
 
+  @Get('cumpleanos')
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
+  obtenerCumpleanos() {
+    // Le pasamos 7 como parámetro fijo porque así lo solicitaste
+    return this.centralService.obtenerProximosCumpleanos(7);
+  }
+
   @Get(':id')
   @Roles(Rol.ADMINISTRADOR)
   buscarPerfilCompletoPorId(@Param('id') id: string) {

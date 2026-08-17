@@ -31,6 +31,13 @@ export class EstudiantesController {
     return this.estudiantesService.listarPorGrupos(gruposPermitidos);
   }
 
+  @Get('count')
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
+  async contarEstudiantesActivos() {
+    const total = await this.estudiantesService.contarActivos();
+    return { total };
+  }
+
   @Get(':id')
   @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.NUTRICIONISTA)
   buscarPorId(@Param('id') id: string) {

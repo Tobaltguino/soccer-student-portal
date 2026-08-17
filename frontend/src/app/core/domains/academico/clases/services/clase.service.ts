@@ -79,4 +79,12 @@ export class ClaseService {
   restaurarClase(id: number): Observable<Clase> {
     return this.http.patch<Clase>(`${this.apiUrl}/${id}/restaurar`, {});
   }
+
+  /**
+   * GET /clases/hoy
+   * Trae las clases correspondientes al día actual
+   */
+  getClasesHoy(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/hoy`);
+  }
 }

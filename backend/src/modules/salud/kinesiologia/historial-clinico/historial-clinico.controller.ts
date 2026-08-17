@@ -42,6 +42,12 @@ export class HistorialClinicoController {
     return this.historialService.listarPorEstudiante(user.id, null);
   }
 
+  @Get('stats')
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO)
+  obtenerEstadisticas() {
+    return this.historialService.obtenerEstadisticasDashboard();
+  }
+
   @Get('estudiantes/:estudianteId/historial-clinico')
   @Roles(Rol.ADMINISTRADOR, Rol.KINESIOLOGO)
   async listarPorEstudiante(

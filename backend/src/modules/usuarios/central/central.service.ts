@@ -179,6 +179,55 @@ export class CentralService {
     return { registros, total: count ?? 0, pagina, limite };
   }
 
+  async obtenerProximosCumpleanos(dias: number = 7): Promise<any[]> {
+    // 1. Traemos solo a los usuarios activos que tienen fecha de nacimiento
+    const { data, error } = await this.supabase.client
+      .from('usuarios_perfiles')
+      .select('id_usuario, nombre, apellido, fecha_nacimiento, rol')
+      .eq('activo', true)
+      .not('fecha_nacimiento', 'is', null);
+
+    if (error) {
+      lanzarErrorSupabase(error, 'No se pudieron obtener los cumpleaños');
+    }
+
+    const usuarios = data ?? [];
+    
+    // 2. Calculamos las fechas en el servidor
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0); // Normalizamos a la medianoche
+
+    const proximos = usuarios
+      .map((u) => {
+        // Añadimos T00:00:00 para evitar desajustes por zona horaria
+        const nacimiento = new Date(u.fecha_nacimiento + 'T00:00:00'); 
+        const cumpleEsteAno = new Date(hoy.getFullYear(), nacimiento.getMonth(), nacimiento.getDate());
+        
+        // Si ya pasó su cumple este año, calculamos para el próximo año
+        let proximoCumple = cumpleEsteAno < hoy 
+            ? new Date(hoy.getFullYear() + 1, nacimiento.getMonth(), nacimiento.getDate()) 
+            : cumpleEsteAno;
+            
+        // Diferencia en días
+        const diasRestantes = Math.ceil((proximoCumple.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+        
+        return { 
+            id: u.id_usuario,
+            nombreCompleto: `${u.nombre} ${u.apellido}`,
+            rol: u.rol, 
+            proximoCumple, 
+            diasRestantes, 
+            nuevaEdad: proximoCumple.getFullYear() - nacimiento.getFullYear() 
+        };
+      })
+      // 3. Filtramos solo los que cumplen en los próximos X días (7 por defecto)
+      .filter((item) => item.diasRestantes >= 0 && item.diasRestantes <= dias)
+      // 4. Ordenamos para que el que cumple más pronto salga primero
+      .sort((a, b) => a.diasRestantes - b.diasRestantes);
+
+    return proximos;
+  }
+
   async actualizarUsuario(
     usuarioId: string,
     dto: ActualizarUsuarioDto,

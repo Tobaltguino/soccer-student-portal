@@ -141,6 +141,20 @@ export class EstudiantesService {
     return (data ?? []).map((row: any) => row.usuario_id);
   }
 
+  async contarActivos(): Promise<number> {
+    const { count, error } = await this.supabase.client
+      .from('usuarios_perfiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('rol', 'estudiante')
+      .eq('activo', true);
+
+    if (error) {
+      lanzarErrorSupabase(error, 'No se pudo contar los estudiantes activos');
+    }
+
+    return count ?? 0;
+  }
+
   async listarConFiltros(filtros: FiltrarEstudiantesDto): Promise<{
     registros: (EstudianteRow & { perfil: UsuarioPerfilRow })[];
     total: number;

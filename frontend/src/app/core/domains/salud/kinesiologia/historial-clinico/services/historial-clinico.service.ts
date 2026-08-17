@@ -70,4 +70,12 @@ export class HistorialClinicoService {
   eliminarHistorial(id: number): Observable<HistorialClinico> {
     return this.http.delete<HistorialClinico>(`${this.baseUrl}/kine-historial-clinico/${id}`);
   }
+
+  /**
+   * GET /kine-historial-clinico/stats
+   * Obtiene la cantidad de pacientes en tratamiento, observación y reintegro
+   */
+  obtenerEstadisticasDashboard(): Observable<{enTratamiento: number, enObservacion: number, enReintegro: number}> {
+    return this.http.get<any>(`${this.baseUrl}/stats`);
+  }
 }
