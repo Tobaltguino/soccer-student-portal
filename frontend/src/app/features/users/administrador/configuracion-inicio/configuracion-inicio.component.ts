@@ -25,7 +25,7 @@ import { WebBeneficioService } from '../../../../core/domains/administracion/web
 import { WebAuspiciadorService } from '../../../../core/domains/administracion/web/web-auspiciadores/services/web-auspiciador.service';
 
 @Component({
-  selector: 'app-admin-home-config',
+  selector: 'app-administrador-configuracion-inicio',
   standalone: true,
   imports: [
     CommonModule, FormsModule, CardModule, ButtonModule, InputTextModule, 
@@ -33,8 +33,8 @@ import { WebAuspiciadorService } from '../../../../core/domains/administracion/w
     ConfirmDialogModule, SelectModule, FileUploadModule
   ],
   providers: [MessageService, ConfirmationService],
-  templateUrl: './admin-home-config.html',
-  styleUrls: ['./admin-home-config.css']
+  templateUrl: './configuracion-inicio.component.html',
+  styleUrls: ['./configuracion-inicio.component.css']
 })
 export class AdminHomeConfigComponent implements OnInit {
 

@@ -34,8 +34,8 @@ import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes
     ProgressSpinnerModule
   ],
   providers: [MessageService],
-  templateUrl: './evaluaciones-nutri.component.html',
-  styleUrls: ['./evaluaciones-nutri.component.css'] 
+  templateUrl: './nutricion.component.html',
+  styleUrls: ['./nutricion.component.css'] 
 })
 export class ProfessorNutritionComponent implements OnInit {
   

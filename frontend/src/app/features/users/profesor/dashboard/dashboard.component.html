@@ -7,9 +7,9 @@
     </div>
 
     <div class="header-tools">
-      <div class="status-indicator" (click)="cargarDatosProfe()" title="Refrescar Datos">
-        <span class="status-dot" [ngClass]="supabaseStatus"></span>
-        <span class="status-text">{{ supabaseStatus === 'online' ? 'Sincronizado' : 'Offline' }}</span>
+      <div class="status-indicator" (click)="refrescar()" title="Refrescar Datos">
+        <span class="status-dot" [ngClass]="apiStatus"></span>
+        <span class="status-text">{{ apiStatus === 'online' ? 'Sincronizado' : (apiStatus === 'checking' ? 'Conectando...' : 'Offline') }}</span>
       </div>
     </div>
   </header>
@@ -20,7 +20,8 @@
       <div class="card-content">
         <span class="card-label">Grupos a Cargo</span>
         <div class="card-value-wrapper">
-            <h3 class="card-value">{{ misGrupos.length }}</h3>
+            <!-- 🔥 Se usa el KPI directo -->
+            <h3 class="card-value">{{ misGrupos }}</h3>
             <div class="card-icon icon-blue">
                 <i class="pi pi-users"></i>
             </div>
@@ -41,8 +42,8 @@
             </div>
         </div>
         <p class="card-subtext" *ngIf="proximaClase">
-          <span class="font-bold text-900">Próx:</span> {{ proximaClase.grupos?.nombre }} 
-          <span class="ml-1 text-primary">({{ proximaClase.hora | slice:0:5 }})</span>
+          <span class="font-bold text-900">Próx:</span> {{ proximaClase.grupos?.nombre || 'Clase' }} 
+          <span class="ml-1 text-primary">({{ (proximaClase.hora_inicio || proximaClase.hora) | slice:0:5 }})</span>
         </p>
         <p class="card-subtext text-muted" *ngIf="!proximaClase">
           Sin entrenamientos pendientes
@@ -50,20 +51,22 @@
       </div>
     </div>
 
+    <!-- 🔥 Tarjeta de Evaluaciones Actualizada -->
     <div class="card card-purple">
       <div class="card-content">
-        <span class="card-label">Evaluaciones</span>
+        <span class="card-label">Última Evaluación</span>
         <div class="card-value-wrapper">
-            <h3 class="card-value">{{ ultimaEvaluacion ? '1' : '0' }}</h3>
+            <!-- Muestra la cantidad de resultados de la última sesión (Igual que el Admin) -->
+            <h3 class="card-value">{{ ultimaEvaluacion?.totalResultados || 0 }}</h3>
             <div class="card-icon icon-purple">
                 <i class="pi pi-chart-bar"></i>
             </div>
         </div>
         <p class="card-subtext" *ngIf="ultimaEvaluacion">
-          <span class="font-bold">Última:</span> {{ ultimaEvaluacion.tipo_evaluacion?.nombre }}
+          <span class="font-bold">Test:</span> {{ ultimaEvaluacion.tipoEvaluacion }}
           <small class="block text-500">{{ ultimaEvaluacion.fecha | date:'dd/MM/yy' }}</small>
         </p>
-        <p class="card-subtext" *ngIf="!ultimaEvaluacion">No hay tests registrados</p>
+        <p class="card-subtext text-muted" *ngIf="!ultimaEvaluacion">No hay tests registrados</p>
       </div>
     </div>
   </div>
@@ -73,7 +76,7 @@
       <div class="flex align-items-center gap-2">
           <h3 class="m-0"><i class="pi pi-gift mr-2 text-orange-500"></i>Próximos Cumpleaños</h3>
       </div>
-      <button class="p-button-rounded p-button-text" (click)="cargarDatosProfe()" [disabled]="loading">
+      <button class="p-button-rounded p-button-text" (click)="refrescar()" [disabled]="loading">
         <i class="pi pi-refresh" [ngClass]="{'pi-spin': loading}"></i>
       </button>
     </div>
@@ -85,8 +88,9 @@
         </div>
         
         <div class="item-info">
-          <p class="item-title text-900 font-bold">{{ est.nombre }} {{ est.apellido }}</p>
-          <span class="item-meta">{{ est.grupos?.nombre }} • {{ est.proximoCumple | date:'d \'de\' MMMM' }}</span>
+          <!-- 🔥 Usamos nombreCompleto y Rol -->
+          <p class="item-title text-900 font-bold">{{ est.nombreCompleto }}</p>
+          <span class="item-meta">{{ est.rol | titlecase }} • {{ est.proximoCumple | date:'d \'de\' MMMM' }}</span>
         </div>
 
         <div class="flex flex-column align-items-end">
@@ -99,7 +103,7 @@
 
       <div class="empty-state" *ngIf="cumpleanosList.length === 0 && !loading">
         <i class="pi pi-calendar-times" style="font-size: 2rem; color: var(--text-secondary); margin-bottom: 1rem;"></i>
-        <p class="text-secondary m-0">No hay cumpleaños esta semana en tus grupos.</p>
+        <p class="text-secondary m-0">No hay cumpleaños en los próximos 7 días.</p>
       </div>
     </div>
   </section>

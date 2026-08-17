@@ -5,7 +5,6 @@ import { ToastModule } from 'primeng/toast'; // <-- 1. IMPORTAMOS EL MÓDULO VIS
 import { MessageService } from 'primeng/api';
 
 import { IdleService } from './core/services/idle.service'; 
-import { SupabaseService } from './core/services/supabase.service';
 
 @Component({
   selector: 'app-root',
@@ -20,21 +19,11 @@ export class App implements OnInit, OnDestroy {
 
   constructor(
     private idleService: IdleService,
-    private supabaseService: SupabaseService,
     private messageService: MessageService
   ) {}
 
   ngOnInit() {
     this.checkThemePreference();
-
-    // 1. Vigilar el estado de la sesión en Supabase
-    this.supabaseService.supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        this.idleService.iniciarMonitoreo();
-      } else {
-        this.idleService.detenerMonitoreo();
-      }
-    });
 
     // 2. Mostrar la alerta cuando expira la sesión
     this.idleService.onIdleTimeout.subscribe(() => {

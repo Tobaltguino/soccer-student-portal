@@ -40,6 +40,12 @@ export class SesionesController {
     return this.sesionesService.listar(soloDeNutricionista, filtros);
   }
 
+  @Get('ultima-finalizada')
+  @Roles(Rol.ADMINISTRADOR, Rol.NUTRICIONISTA)
+  obtenerUltima() {
+    return this.sesionesService.obtenerUltimaFinalizada();
+  }
+
   @Get(':id')
   @Roles(Rol.ADMINISTRADOR, Rol.NUTRICIONISTA)
   buscarPorId(@Param('id') id: string, @CurrentUser() user: RequestUser) {

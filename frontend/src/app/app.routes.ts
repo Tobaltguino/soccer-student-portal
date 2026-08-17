@@ -9,8 +9,8 @@ import { Role } from './core/auth/models/role.enum';
 import { HomeComponent } from './features/home/home/home.component';
 
 // --- AUTH ---
-import { LoginComponent } from './features/auth/login/login';
-import { UpdatePasswordComponent } from './features/auth/update-password/update-password';
+import { LoginComponent } from './features/auth/login/login.component';
+import { UpdatePasswordComponent } from './features/auth/update-password/update-password.component';
 import { TerminosComponent } from './features/terminos/terminos';
 // --- LAYOUT ---
 import { LayoutComponent } from './features/layout/layout.component'; 

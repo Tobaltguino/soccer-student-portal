@@ -1,4 +1,4 @@
-<div class="main-content fadein">
+<div class="main-content fadein animation-duration-500">
   
   <header class="top-bar">
     <div class="welcome-text">
@@ -8,9 +8,9 @@
 
     <div class="header-tools">
       <div class="status-indicator" (click)="refrescar()" title="Actualizar datos">
-        <span class="status-dot" [ngClass]="supabaseStatus"></span>
+        <span class="status-dot" [ngClass]="apiStatus"></span>
         <span class="status-text">
-          {{ supabaseStatus === 'online' ? 'Online' : 'Offline' }}
+          {{ apiStatus === 'online' ? 'Servidor Online' : (apiStatus === 'checking' ? 'Conectando...' : 'Servidor Offline') }}
         </span>
       </div>
     </div>
@@ -20,7 +20,7 @@
     
     <div class="card card-blue">
       <div class="card-content">
-        <span class="card-label">Total Estudiantes Activos</span>
+        <span class="card-label">Total Estudiantes</span>
         <div class="card-value-wrapper mb-2">
             <h3 class="card-value">{{ totalEstudiantes }}</h3>
             <div class="card-icon icon-blue">
@@ -37,8 +37,9 @@
       <div class="card-content">
         <span class="card-label">Última Evaluación Finalizada</span>
         <div class="card-value-wrapper">
+            <!-- 🔥 Usamos el campo tipoEvaluacion que formatea el backend -->
             <h3 class="card-value" *ngIf="ultimaEvaluacionGlobal" style="font-size: 1.5rem;">
-                {{ ultimaEvaluacionGlobal.tipo_evaluacion_nutri?.nombre || (ultimaEvaluacionGlobal.fecha | date:'dd/MM/yyyy') }}
+                {{ ultimaEvaluacionGlobal.tipoEvaluacion || (ultimaEvaluacionGlobal.fecha | date:'dd/MM/yyyy') }}
             </h3>
             <h3 class="card-value" style="font-size: 1.2rem;" *ngIf="!ultimaEvaluacionGlobal">Sin registros</h3>
             <div class="card-icon icon-green">
@@ -56,41 +57,46 @@
 
   </div>
 
-  <section class="recent-activity-card">
+  <section class="recent-activity-card shadow-1">
       <div class="activity-header">
           <div class="flex align-items-center gap-2">
               <h3 class="m-0"><i class="pi pi-gift mr-2 text-pink-500"></i>Próximos Cumpleaños (7 días)</h3>
           </div>
+          <button class="p-button-rounded p-button-text" (click)="refrescar()" [disabled]="loading">
+            <i class="pi pi-refresh" [ngClass]="{'pi-spin': loading}"></i>
+          </button>
       </div>
   
       <div class="activity-list">
           <div class="activity-item" *ngFor="let alumno of proximosCumpleanos">
+              
               <div class="item-icon-wrapper" style="background: rgba(236, 72, 153, 0.1); color: #ec4899;">
-                  <i class="pi pi-star-fill" *ngIf="alumno.diasFaltantes === 0"></i>
-                  <i class="pi pi-user" *ngIf="alumno.diasFaltantes > 0"></i>
+                  <i class="pi pi-star-fill" *ngIf="alumno.diasRestantes === 0"></i>
+                  <i class="pi pi-user" *ngIf="alumno.diasRestantes > 0"></i>
               </div>
               
               <div class="item-info">
                   <p class="item-title text-900 font-bold">
-                      {{ alumno.nombre }} {{ alumno.apellido }}
-                      <span *ngIf="alumno.diasFaltantes === 0" class="text-pink-500 ml-1">🎉 ¡ES HOY!</span>
+                      <!-- 🔥 Usamos nombreCompleto -->
+                      {{ alumno.nombreCompleto }}
+                      <span *ngIf="alumno.diasRestantes === 0" class="text-pink-500 ml-1">🎉 ¡ES HOY!</span>
                   </p>
                   <span class="item-meta">
-                      {{ alumno.proximoCumple | date:'d \'de\' MMMM' }} 
-                      • Cumplirá {{ alumno.edadACumplir }} años
+                      {{ alumno.rol | titlecase }} • {{ alumno.proximoCumple | date:'d \'de\' MMMM' }} 
                   </span>
               </div>
   
               <div class="flex flex-column align-items-end">
-                  <span class="badge" [ngStyle]="{'background': alumno.diasFaltantes === 0 ? '#ec4899' : 'var(--bg-main)', 'color': alumno.diasFaltantes === 0 ? '#fff' : 'var(--text-secondary)'}">
-                      <span *ngIf="alumno.diasFaltantes === 0">Felicítalo</span>
-                      <span *ngIf="alumno.diasFaltantes === 1">Mañana</span>
-                      <span *ngIf="alumno.diasFaltantes > 1">En {{ alumno.diasFaltantes }} días</span>
+                  <span class="badge" [ngStyle]="{'background': alumno.diasRestantes === 0 ? '#ec4899' : 'var(--bg-main)', 'color': alumno.diasRestantes === 0 ? '#fff' : 'var(--text-secondary)'}">
+                      <span *ngIf="alumno.diasRestantes === 0">Felicítalo</span>
+                      <span *ngIf="alumno.diasRestantes === 1">Mañana</span>
+                      <span *ngIf="alumno.diasRestantes > 1">En {{ alumno.diasRestantes }} días</span>
                   </span>
+                  <small class="text-secondary text-xs mt-1">Cumplirá {{ alumno.nuevaEdad }} años</small>
               </div>
           </div>
   
-          <div class="empty-state py-5 text-center" *ngIf="proximosCumpleanos.length === 0">
+          <div class="empty-state py-5 text-center" *ngIf="proximosCumpleanos.length === 0 && !loading">
               <div class="icon-circle bg-pink-50 m-auto mb-3" style="width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                   <i class="pi pi-calendar-times text-pink-500" style="font-size: 1.5rem;"></i>
               </div>

@@ -28,7 +28,7 @@ import { NutriResultadoService } from '../../../../core/domains/salud/nutricion/
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
 
 @Component({
-  selector: 'app-nutri-evaluation',
+  selector: 'app-nutri-evaluaciones-nutri',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, DialogModule, ButtonModule, 

@@ -38,6 +38,27 @@ export class EstudiantesController {
     return { total };
   }
 
+  @Get('mis-estadisticas')
+  @Roles(Rol.PROFESOR, Rol.KINESIOLOGO, Rol.NUTRICIONISTA)
+  async misEstadisticas(@CurrentUser() user: RequestUser) {
+    // 1. Vemos a qué grupos tiene acceso este usuario
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
+    
+    // Si no tiene grupos asignados, devolvemos 0 de inmediato
+    if (!gruposPermitidos || gruposPermitidos.length === 0) {
+      return { totalGrupos: 0, totalAlumnos: 0 };
+    }
+
+    // 2. Contamos cuántos alumnos hay en esos grupos en total
+    const totalAlumnos = await this.estudiantesService.contarPorGrupos(gruposPermitidos);
+
+    // 3. Devolvemos el KPI listo para el Dashboard
+    return {
+      totalGrupos: gruposPermitidos.length,
+      totalAlumnos: totalAlumnos
+    };
+  }
+
   @Get(':id')
   @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.NUTRICIONISTA)
   buscarPorId(@Param('id') id: string) {

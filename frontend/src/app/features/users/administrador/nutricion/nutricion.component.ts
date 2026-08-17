@@ -29,7 +29,7 @@ import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes
 import { UsuarioService } from '../../../../core/domains/usuarios/central/services/usuario.service';
 
 @Component({
-  selector: 'app-admin-nutri',
+  selector: 'app-administrador-nutricion',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, DialogModule, ButtonModule, 
@@ -37,8 +37,8 @@ import { UsuarioService } from '../../../../core/domains/usuarios/central/servic
     ConfirmDialogModule, RadioButtonModule, TooltipModule, ProgressSpinnerModule
   ],
   providers: [MessageService, ConfirmationService],
-  templateUrl: './admin-nutri.html',
-  styleUrls: ['./admin-nutri.css']
+  templateUrl: './nutricion.component.html',
+  styleUrls: ['./nutricion.component.css']
 })
 export class AdminNutriComponent implements OnInit {
   

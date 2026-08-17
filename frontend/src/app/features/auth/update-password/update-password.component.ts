@@ -24,8 +24,8 @@ import { AuthService } from '../../../core/auth/services/auth.service';
     ToastModule
   ],
   providers: [MessageService],
-  templateUrl: './update-password.html',
-  styleUrls: ['./update-password.css']
+  templateUrl: './update-password.component.html',
+  styleUrls: ['./update-password.component.css']
 })
 export class UpdatePasswordComponent {
   

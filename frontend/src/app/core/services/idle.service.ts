@@ -1,8 +1,10 @@
 import { Injectable, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
-import { fromEvent, merge, Subscription, timer, Subject } from 'rxjs';
+import { fromEvent, merge, Subscription, timer, Subject, firstValueFrom } from 'rxjs';
 import { switchMap, startWith } from 'rxjs/operators';
-import { SupabaseService } from './supabase.service';
+
+// 🚀 Importamos tu nuevo servicio de autenticación conectado a NestJS
+import { AuthService } from '../auth/services/auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -20,8 +22,8 @@ export class IdleService {
 
   constructor(
     private router: Router,
-    private supabaseService: SupabaseService,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private authService: AuthService // 🔥 Inyectamos el AuthService real
   ) {}
 
   iniciarMonitoreo() {
@@ -69,15 +71,20 @@ export class IdleService {
   }
 
   private async verificarSesionAlDespertar() {
-    // Al pedir getSession(), Supabase intentará renovar el token si está vencido
-    const { data, error } = await this.supabaseService.supabase.auth.getSession();
-
-    if (error || !data.session) {
+    try {
+      // Le preguntamos a NestJS si nuestro JWT sigue siendo válido
+      const res = await firstValueFrom(this.authService.me());
+      
+      if (!res || (!res.data && !res.email)) {
+        this.ngZone.run(() => {
+          this.cerrarSesionPorInactividad();
+        });
+      }
+    } catch (error) {
+      // Si NestJS responde con un 401 Unauthorized (token vencido), caerá aquí
       this.ngZone.run(() => {
-        // Aquí podrías mostrar un alert o Toast indicando que la sesión expiró
         this.cerrarSesionPorInactividad();
       });
-    } else {
     }
   }
   // ==========================================
@@ -98,11 +105,16 @@ export class IdleService {
     this.onIdleTimeout.next(true);
 
     try {
-      await this.supabaseService.supabase.auth.signOut();
+      // Llamamos a tu endpoint de logout en NestJS (si lo tienes)
+      if (this.authService.logout) {
+        await firstValueFrom(this.authService.logout());
+      }
+    } catch (error) {
+      // Ignoramos los errores aquí, lo importante es limpiar todo en el frontend
+    } finally {
+      // Limpiamos localStorage, sessionStorage y redirigimos
       localStorage.clear();
       sessionStorage.clear();
-      this.router.navigate(['/login']);
-    } catch (error) {
       this.router.navigate(['/login']);
     }
   }

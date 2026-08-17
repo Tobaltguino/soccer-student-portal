@@ -52,6 +52,15 @@ export class NutriSesionService {
   }
 
   /**
+   * GET /nutri-evaluacion-sesiones/ultima-finalizada
+   * Retorna la última sesión nutricional que haya concluido.
+   */
+  obtenerUltimaFinalizada(): Observable<any> {
+    // Asegúrate de que apiUrl apunte a '.../nutri-evaluacion-sesiones'
+    return this.http.get<any>(`${this.apiUrl}/ultima-finalizada`);
+  }
+
+  /**
    * PATCH /nutri-evaluacion-sesiones/:id
    * Actualiza los datos logísticos de la sesión
    */

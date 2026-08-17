@@ -6,31 +6,26 @@ import { firstValueFrom } from 'rxjs';
 // 🚀 SERVICIOS MODULARES (NestJS)
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
+import { UsuarioService } from '../../../../core/domains/usuarios/central/services/usuario.service';
 import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
 import { HistorialClinicoService } from '../../../../core/domains/salud/kinesiologia/historial-clinico/services/historial-clinico.service';
-import { EstadoHistorialClinico } from '../../../../core/domains/salud/kinesiologia/historial-clinico/models/historial-clinico.interface';
-
-// 🚀 TUS 4 SERVICIOS DE EVALUACIONES (Importamos los que necesitamos para el Dashboard)
 import { SesionEvaluacionService } from '../../../../core/domains/academico/evaluaciones/sesiones/services/sesion.service';
-import { ResultadoEvaluacionService } from '../../../../core/domains/academico/evaluaciones/resultados/services/resultado.service';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './admin-dashboard.component.html',
-  styleUrls: ['./admin-dashboard.component.css']
+  templateUrl: './dashboard.component.html',
+  styleUrls: ['./dashboard.component.css']
 })
 export class AdministradorDashboardComponent implements OnInit {
   
   private authService = inject(AuthService);
   private estudianteService = inject(EstudianteService);
+  private usuarioService = inject(UsuarioService); // Para cumpleaños
   private clasesService = inject(ClaseService);
   private historialClinicoService = inject(HistorialClinicoService);
-  
-  // Inyectamos tus servicios reales de Evaluaciones Físicas
   private evaluacionSesionService = inject(SesionEvaluacionService);
-  private evaluacionResultadoService = inject(ResultadoEvaluacionService);
   
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
@@ -44,7 +39,7 @@ export class AdministradorDashboardComponent implements OnInit {
   pacientesEnObservacion: number = 0;
   pacientesEnReintegro: number = 0;
 
-  actividadReciente: any[] = []; 
+  ultimaEvaluacion: any = null; // 🔥 Reemplaza actividadReciente
   cumpleanosList: any[] = [];    
   
   loading: boolean = true;
@@ -79,47 +74,36 @@ export class AdministradorDashboardComponent implements OnInit {
   }
 
   // ==========================================
-  // CARGA DE DATOS (Múltiples Endpoints)
+  // CARGA DE DATOS (Ultra Optimizada)
   // ==========================================
   async cargarDatos() {
     this.loading = true;
     this.cdr.detectChanges();
 
     try {
-      // 1. Estudiantes Activos y Cumpleaños
-      const resEstudiantes = await firstValueFrom(this.estudianteService.listarEstudiantes({ limite: 2000, activo: true }));
-      const estudiantes = resEstudiantes.registros || [];
-      this.totalEstudiantes = estudiantes.length;
-      this.cumpleanosList = this.filtrarProximosCumpleanos(estudiantes);
+      // 1. Total Estudiantes Activos (ultra rápido)
+      const resCount = await firstValueFrom(this.estudianteService.contarEstudiantesActivos());
+      this.totalEstudiantes = resCount?.total || 0;
 
-      // 2. Kinesiología: Historial Clínico Global
-      const historiales = await firstValueFrom(this.historialClinicoService.listarTodo());
-      
-      if (historiales) {
-        const setTratamiento = new Set();
-        const setObservacion = new Set();
-        const setReintegro = new Set();
+      // 2. Cumpleaños Globales (el backend procesa las fechas y roles)
+      const resCumples = await firstValueFrom(this.usuarioService.obtenerCumpleanosGlobales(7));
+      this.cumpleanosList = resCumples || [];
 
-        historiales.forEach((h: any) => {
-          const idAlumno = h.estudiante_id || h.estudianteId;
-          if (h.estado === EstadoHistorialClinico.EN_TRATAMIENTO) setTratamiento.add(idAlumno);
-          if (h.estado === EstadoHistorialClinico.EN_OBSERVACION) setObservacion.add(idAlumno);
-          if (h.estado === EstadoHistorialClinico.EN_REINTEGRO_DEPORTIVO) setReintegro.add(idAlumno);
-        });
-
-        this.pacientesEnTratamiento = setTratamiento.size;
-        this.pacientesEnObservacion = setObservacion.size;
-        this.pacientesEnReintegro = setReintegro.size;
+      // 3. Kinesiología: Stats ya calculadas desde NestJS
+      const statsKine = await firstValueFrom(this.historialClinicoService.obtenerEstadisticasDashboard());
+      if (statsKine) {
+        this.pacientesEnTratamiento = statsKine.enTratamiento || 0;
+        this.pacientesEnObservacion = statsKine.enObservacion || 0;
+        this.pacientesEnReintegro = statsKine.enReintegro || 0;
       }
 
-      // 3. Clases de Hoy
+      // 4. Clases de Hoy
       const resClases = await firstValueFrom(this.clasesService.getClasesHoy());
       this.clasesHoy = resClases || [];
 
-      // 4. 🔥 Evaluaciones (Usando tu EvaluacionResultadoService)
-      // Buscamos los últimos resultados subidos a la plataforma
-      const resResultados = await firstValueFrom(this.evaluacionResultadoService.listarResultadosRecientes());
-      this.actividadReciente = resResultados || [];
+      // 5. Última Sesión de Evaluación Finalizada
+      const resUltimaEval = await firstValueFrom(this.evaluacionSesionService.obtenerUltimaSesionFinalizada());
+      this.ultimaEvaluacion = resUltimaEval || null;
 
     } catch (error) {
       console.error('Error Admin Dashboard:', error);
@@ -127,42 +111,6 @@ export class AdministradorDashboardComponent implements OnInit {
       this.loading = false;
       this.cdr.detectChanges();
     }
-  }
-
-  // ==========================================
-  // LÓGICA DE NEGOCIO (Cumpleaños)
-  // ==========================================
-  filtrarProximosCumpleanos(estudiantes: any[]): any[] {
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-
-    return estudiantes
-      .map(est => {
-        const fechaNac = est.perfil?.fecha_nacimiento || est.fecha_nacimiento;
-        if (!fechaNac) return null;
-
-        const nacimiento = new Date(fechaNac + 'T00:00:00');
-        const cumpleEsteAno = new Date(hoy.getFullYear(), nacimiento.getMonth(), nacimiento.getDate());
-        
-        let proximoCumple = cumpleEsteAno < hoy 
-            ? new Date(hoy.getFullYear() + 1, nacimiento.getMonth(), nacimiento.getDate()) 
-            : cumpleEsteAno;
-            
-        const diasRestantes = Math.ceil((proximoCumple.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
-        
-        const nombre = est.perfil?.nombre || est.nombre;
-        const apellido = est.perfil?.apellido || est.apellido;
-
-        return { 
-            ...est, 
-            nombreCompleto: `${nombre} ${apellido}`,
-            proximoCumple, 
-            diasRestantes, 
-            nuevaEdad: proximoCumple.getFullYear() - nacimiento.getFullYear() 
-        };
-      })
-      .filter(item => item !== null && item.diasRestantes >= 0 && item.diasRestantes <= 7)
-      .sort((a, b) => a.diasRestantes - b.diasRestantes);
   }
 
   async refrescar() {

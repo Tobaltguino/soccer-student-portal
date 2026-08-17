@@ -84,4 +84,12 @@ export class SesionEvaluacionService {
   restaurarSesion(id: string): Observable<SesionEvaluacion> {
     return this.http.patch<SesionEvaluacion>(`${this.apiUrl}/${id}/restaurar`, {});
   }
+
+  /**
+   * GET /evaluaciones-sesiones/ultima-finalizada
+   * Obtiene el resumen de la última sesión de evaluación completada
+   */
+  obtenerUltimaSesionFinalizada(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/ultima-finalizada`);
+  }
 }

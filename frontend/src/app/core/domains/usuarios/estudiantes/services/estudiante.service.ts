@@ -71,4 +71,12 @@ export class EstudianteService {
     // Si no, ajusta a `${this.apiUrl}/estudiantes/count`
     return this.http.get<{ total: number }>(`${this.apiUrl}/count`);
   }
+
+  /**
+   * GET /estudiantes/mis-estadisticas
+   * Retorna los KPIs de grupos y alumnos asignados al usuario (Profe, Kine, Nutri)
+   */
+  obtenerMisEstadisticas(): Observable<{totalGrupos: number, totalAlumnos: number}> {
+    return this.http.get<{totalGrupos: number, totalAlumnos: number}>(`${this.apiUrl}/mis-estadisticas`);
+  }
 }

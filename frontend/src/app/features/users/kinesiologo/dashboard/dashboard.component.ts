@@ -1,130 +1,128 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 
-import { SupabaseService } from '../../../../../core/services/supabase.service';
+// 🚀 SERVICIOS MODULARES (NestJS)
+import { AuthService } from '../../../../core/auth/services/auth.service';
+import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
+import { UsuarioService } from '../../../../core/domains/usuarios/central/services/usuario.service';
+import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
+import { HistorialClinicoService } from '../../../../core/domains/salud/kinesiologia/historial-clinico/services/historial-clinico.service';
 
 @Component({
   selector: 'app-kinesiologo-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.css']
+  templateUrl: './dashboard.component.html', // Ajusta si tu archivo se llama dashboard.component.html
+  styleUrls: ['./dashboard.component.css']   // Ajusta si tu archivo se llama dashboard.component.css
 })
 export class KinesiologoDashboardComponent implements OnInit {
   
-  // Datos KPIs
-  misGrupos: any[] = [];
+  private authService = inject(AuthService);
+  private estudianteService = inject(EstudianteService);
+  private usuarioService = inject(UsuarioService);
+  private clasesService = inject(ClaseService);
+  private historialClinicoService = inject(HistorialClinicoService);
+  
+  private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
+
+  // 🔥 KPIs ultra-optimizados (Números directos)
+  misGrupos: number = 0;
+  totalAlumnos: number = 0;
   clasesHoy: any[] = [];
   proximaClase: any = null;
-  totalAlumnos: number = 0;
+
+  // 🔥 KPIs Clínicos Reales
+  pacientesEnTratamiento: number = 0;
+  pacientesEnObservacion: number = 0;
+  pacientesEnReintegro: number = 0;
 
   // Listas
   cumpleanosList: any[] = [];
   
   // Estados
   loading: boolean = true;
-  supabaseStatus: 'online' | 'offline' | 'checking' = 'checking';
-
-  constructor(
-    private supabase: SupabaseService,
-    private router: Router,
-    private cdr: ChangeDetectorRef
-  ) {}
+  apiStatus: 'online' | 'offline' | 'checking' = 'checking';
 
   async ngOnInit() {
     await this.verificarConexion();
-    await this.cargarDatosKine();
+    if (this.apiStatus === 'online') {
+      await this.cargarDatosKine();
+    }
   }
 
   async verificarConexion() {
     try {
-      this.supabaseStatus = 'checking';
-      const { data: { user } } = await this.supabase.getUser();
+      this.apiStatus = 'checking';
+      const res = await firstValueFrom(this.authService.me());
+      const user = res?.data ? res.data : res;
+
       if (!user) {
-        this.supabaseStatus = 'offline';
+        this.apiStatus = 'offline';
         this.router.navigate(['/login']);
       } else {
-        this.supabaseStatus = 'online';
+        this.apiStatus = 'online';
       }
     } catch {
-      this.supabaseStatus = 'offline';
+      this.apiStatus = 'offline';
     }
   }
 
   async cargarDatosKine() {
     this.loading = true;
+    this.cdr.detectChanges();
+
     try {
-      const { data: { user } } = await this.supabase.getUser();
-      if (!user?.email) return;
+      // 1. Grupos y Alumnos del Kinesiólogo (¡El nuevo endpoint súper rápido!)
+      const stats = await firstValueFrom(this.estudianteService.obtenerMisEstadisticas());
+      if (stats) {
+        this.misGrupos = stats.totalGrupos;
+        this.totalAlumnos = stats.totalAlumnos;
+      }
 
-      // 1. Obtener ID del Kinesiólogo
-      const { data: kine } = await this.supabase.supabase
-          .from('kinesiologos')
-          .select('id')
-          .eq('email', user.email)
-          .maybeSingle();
+      // 2. Clases de Hoy y Próxima Clase
+      const resClases = await firstValueFrom(this.clasesService.getClasesHoy());
+      this.clasesHoy = resClases || [];
+      
+      if (this.clasesHoy.length > 0) {
+        const ahora = new Date();
+        const futuras = this.clasesHoy.filter((c: any) => {
+          const horaStr = c.hora_inicio || c.hora || '00:00';
+          const [h, m] = horaStr.split(':');
+          const horaClase = new Date();
+          horaClase.setHours(parseInt(h, 10), parseInt(m, 10), 0);
+          return horaClase >= ahora;
+        });
+        // Si hay clases en el futuro, toma la más próxima. Si no, muestra la última del día.
+        this.proximaClase = futuras.length > 0 ? futuras[0] : this.clasesHoy[this.clasesHoy.length - 1];
+      }
 
-      if (!kine) return;
+      // 3. Cumpleaños Globales (Procesados en el Backend)
+      const resCumples = await firstValueFrom(this.usuarioService.obtenerCumpleanosGlobales(7));
+      this.cumpleanosList = resCumples || [];
 
-      // 2. Obtener sus Grupos Asignados
-      const { data: gruposData } = await this.supabase.getGruposDeKine(kine.id);
-      this.misGrupos = gruposData ? gruposData.map((g: any) => g.grupos).filter((g: any) => g !== null) : [];
-      const misGrupoIds = this.misGrupos.map(g => g.id);
-
-      if (misGrupoIds.length > 0) {
-        // 3. Clases de Hoy y Próxima Clase (Para saber qué entrenan sus alumnos)
-        const hoyStr = new Date().toISOString().split('T')[0];
-        const { data: clases } = await this.supabase.supabase
-          .from('clases')
-          .select('*, grupos(nombre)')
-          .in('grupo_id', misGrupoIds)
-          .gte('fecha', hoyStr)
-          .order('fecha', { ascending: true })
-          .order('hora', { ascending: true });
-
-        const todasClases = clases || [];
-        this.clasesHoy = todasClases.filter(c => c.fecha === hoyStr);
-        this.proximaClase = todasClases.length > 0 ? todasClases[0] : null;
-
-        // 4. Alumnos y Cumpleaños (Solo de sus grupos)
-        const { data: alumnos } = await this.supabase.supabase
-          .from('estudiantes')
-          .select('*, grupos(nombre)')
-          .in('grupo_id', misGrupoIds)
-          .eq('activo', true);
-
-        if (alumnos) {
-          this.totalAlumnos = alumnos.length;
-          this.cumpleanosList = this.filtrarProximosCumpleanos(alumnos);
-        }
+      // 4. Estadísticas Clínicas Reales
+      const statsKine = await firstValueFrom(this.historialClinicoService.obtenerEstadisticasDashboard());
+      if (statsKine) {
+        this.pacientesEnTratamiento = statsKine.enTratamiento || 0;
+        this.pacientesEnObservacion = statsKine.enObservacion || 0;
+        this.pacientesEnReintegro = statsKine.enReintegro || 0;
       }
 
     } catch (error) {
+      console.error('Error Kine Dashboard:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
     }
   }
 
-  filtrarProximosCumpleanos(estudiantes: any[]): any[] {
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-
-    return estudiantes
-      .map(est => {
-        if (!est.fecha_nacimiento) return null;
-        const nacimiento = new Date(est.fecha_nacimiento + 'T00:00:00');
-        const cumpleEsteAno = new Date(hoy.getFullYear(), nacimiento.getMonth(), nacimiento.getDate());
-        let proximoCumple = cumpleEsteAno;
-        if (proximoCumple < hoy) proximoCumple = new Date(hoy.getFullYear() + 1, nacimiento.getMonth(), nacimiento.getDate());
-        
-        const diffTime = proximoCumple.getTime() - hoy.getTime();
-        const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        return { ...est, proximoCumple, diasRestantes, nuevaEdad: proximoCumple.getFullYear() - nacimiento.getFullYear() };
-      })
-      .filter(item => item !== null && item.diasRestantes >= 0 && item.diasRestantes <= 7)
-      .sort((a, b) => a.diasRestantes - b.diasRestantes);
+  async refrescar() {
+    await this.verificarConexion();
+    if (this.apiStatus === 'online') {
+      await this.cargarDatosKine();
+    }
   }
 }

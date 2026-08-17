@@ -6,21 +6,21 @@ import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 
-// Servicios de Dominio
+// Servicios de Dominio (Ajusta la ruta según tu proyecto)
 import { WebConfiguracionService } from '../../../core/domains/administracion/web/web-configuracion/services/web-configuracion.service';
 
 @Component({
   selector: 'app-home',
   standalone: true,
   imports: [CommonModule, ButtonModule, TooltipModule],
-  templateUrl: './home.html',
-  styleUrls: ['./home.css']
+  templateUrl: './home.component.html',
+  styleUrls: ['./home.component.css']
 })
 export class HomeComponent implements OnInit {
 
   isDarkMode: boolean = false;
+  isScrolled: boolean = false;
 
-  // --- Inyección de dependencias moderna ---
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
   private webConfigService = inject(WebConfiguracionService);
@@ -43,18 +43,18 @@ export class HomeComponent implements OnInit {
   heroSubtitulo = 'Trabajamos con un grupo de profesionales expertos en el área para mejorar tu rendimiento deportivo de manera integral.';
 
   // ==========================================
-  // LISTAS POR DEFECTO
+  // LISTAS POR DEFECTO (Con Colores Hexadecimales)
   // ==========================================
   metodologias: any[] = [
-    { icono: 'pi-star-fill', titulo: 'Formación Técnica', descripcion: 'Entrenamientos planificados enfocados en el desarrollo técnico, táctico y cognitivo del jugador moderno.' },
-    { icono: 'pi-heart-fill', titulo: 'Área Médica', descripcion: 'Acompañamiento constante de kinesiólogos y nutricionistas para prevenir lesiones y optimizar el rendimiento.' },
-    { icono: 'pi-desktop', titulo: 'Tecnología ProFutbol', descripcion: 'Portal exclusivo donde jugadores y apoderados pueden ver estadísticas, evaluaciones e historial de asistencia.' }
+    { icono: 'pi-star-fill', color: '#3B82F6', titulo: 'Formación Técnica', descripcion: 'Entrenamientos planificados enfocados en el desarrollo técnico, táctico y cognitivo del jugador moderno.' },
+    { icono: 'pi-heart-fill', color: '#EF4444', titulo: 'Área Médica', descripcion: 'Acompañamiento constante de kinesiólogos y nutricionistas para prevenir lesiones y optimizar el rendimiento.' },
+    { icono: 'pi-desktop', color: '#8B5CF6', titulo: 'Tecnología ProFutbol', descripcion: 'Portal exclusivo donde jugadores y apoderados pueden ver estadísticas, evaluaciones e historial de asistencia.' }
   ];
 
   programas: any[] = [
-    { icono: 'pi-bolt', color_fondo: 'bg-blue-100', color_texto: 'text-blue-500', titulo: 'Iniciación (5 a 9 años)', descripcion: 'Enfoque en la psicomotricidad, el juego lúdico y los fundamentos básicos del fútbol. ¡Aprender jugando!' },
-    { icono: 'pi-directions', color_fondo: 'bg-green-100', color_texto: 'text-green-500', titulo: 'Formación (10 a 14 años)', descripcion: 'Desarrollo técnico específico, comprensión táctica y preparación física orientada al crecimiento.' },
-    { icono: 'pi-shield', color_fondo: 'bg-orange-100', color_texto: 'text-orange-500', titulo: 'Proyección (15 a 18 años)', descripcion: 'Alto rendimiento, exigencia física, apoyo nutricional y preparación para competencias exigentes.' }
+    { icono: 'pi-bolt', color: '#3B82F6', titulo: 'Iniciación (5 a 9 años)', descripcion: 'Enfoque en la psicomotricidad, el juego lúdico y los fundamentos básicos del fútbol. ¡Aprender jugando!' },
+    { icono: 'pi-directions', color: '#10B981', titulo: 'Formación (10 a 14 años)', descripcion: 'Desarrollo técnico específico, comprensión táctica y preparación física orientada al crecimiento.' },
+    { icono: 'pi-shield', color: '#F59E0B', titulo: 'Proyección (15 a 18 años)', descripcion: 'Alto rendimiento, exigencia física, apoyo nutricional y preparación para competencias exigentes.' }
   ];
 
   auspiciadores: any[] = [
@@ -69,13 +69,13 @@ export class HomeComponent implements OnInit {
   ngOnInit() {
     this.checkThemePreference();
     this.cargarDatosDinamicos();
+    this.detectScroll();
   }
 
-  // --- OBTENER DATOS DESDE EL ENDPOINT UNIFICADO ---
+  // --- OBTENER DATOS DESDE EL ENDPOINT ---
   cargarDatosDinamicos() {
     this.webConfigService.obtenerDatosLanding().subscribe({
       next: (res) => {
-        // Mapeo de la configuración central
         if (res.configuracion) {
           this.telefonoAcademia = res.configuracion.telefono || this.telefonoAcademia;
           this.correoAcademia = res.configuracion.correo || this.correoAcademia;
@@ -88,17 +88,15 @@ export class HomeComponent implements OnInit {
           this.heroSubtitulo = res.configuracion.hero_subtitulo || this.heroSubtitulo;
         }
 
-        // Mapeo de las listas dinámicas (solo si traen datos)
         if (res.metodologias && res.metodologias.length > 0) this.metodologias = res.metodologias;
         if (res.programas && res.programas.length > 0) this.programas = res.programas;
         if (res.auspiciadores && res.auspiciadores.length > 0) this.auspiciadores = res.auspiciadores;
         if (res.beneficios && res.beneficios.length > 0) this.alianzas = res.beneficios;
       },
       error: (err) => {
-        console.error('Error cargando datos de la landing, se usarán los valores por defecto', err);
+        console.error('Error cargando datos de la landing', err);
       },
       complete: () => {
-        // Forzamos la detección de cambios para actualizar la vista
         this.cdr.detectChanges(); 
       }
     });
@@ -108,6 +106,13 @@ export class HomeComponent implements OnInit {
     const numeroLimpio = this.telefonoAcademia.replace(/\D/g, ''); 
     const mensajeEncodeado = encodeURIComponent(this.mensajeWhatsApp);
     return `https://wa.me/${numeroLimpio}?text=${mensajeEncodeado}`;
+  }
+
+  // --- EVENTO DE SCROLL PARA NAVBAR GLASSMORPHISM ---
+  detectScroll() {
+    window.addEventListener('scroll', () => {
+      this.isScrolled = window.scrollY > 50;
+    });
   }
 
   // --- MANEJO DE TEMA (DARK/LIGHT MODE) ---
@@ -150,7 +155,9 @@ export class HomeComponent implements OnInit {
   scrollTo(sectionId: string) {
     const element = document.getElementById(sectionId);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const navHeight = 80; // Compensación por la navbar fija
+      const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top: elementPosition - navHeight, behavior: 'smooth' });
     }
   }
 

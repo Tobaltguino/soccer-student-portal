@@ -1,7 +1,9 @@
 <div class="home-wrapper fadein animation-duration-500">
-    <nav class="navbar">
+    
+    <!-- NAVBAR -->
+    <nav class="navbar" [ngClass]="{'is-scrolled': isScrolled}">
         <div class="nav-container">
-            <div class="logo-container">
+            <div class="logo-container cursor-pointer" (click)="scrollTo('top')">
                 <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="Logo ProFutbol" class="logo-img logo-dark-mode">
                 <img src="assets/images/ProFutbol_Transparentenegro.png" alt="Logo ProFutbol" class="logo-img logo-light-mode">
                 <span class="brand-text">ProFutbol</span>
@@ -21,37 +23,42 @@
                         (click)="toggleTheme()"
                         aria-label="Cambiar tema">
                 </button>
-                <button pButton label="Portal Profutbol" icon="pi pi-user" class="p-button-outlined p-button-sm md:p-button-md btn-portal" (click)="irAlLogin()"></button>
+                <button pButton label="Portal Profutbol" icon="pi pi-user" class="p-button-outlined btn-portal" (click)="irAlLogin()"></button>
             </div>
         </div>
     </nav>
 
-    <header class="hero-section">
+    <!-- HERO SECTION -->
+    <header id="top" class="hero-section">
         <div class="hero-overlay"></div> 
+        <div class="hero-bg-pattern"></div>
         
         <div class="hero-content fade-in-up">
-            <span class="badge">Academia de Fútbol de Alto Rendimiento</span>
+            <span class="badge">Evolución Deportiva Integral</span>
             <h1 class="hero-title text-wrap" [innerHTML]="heroTitulo"></h1>
             <p class="hero-subtitle text-wrap">{{heroSubtitulo}}</p>
             
             <div class="hero-buttons">
-                <button pButton label="Únete a Nosotros" icon="pi pi-whatsapp" class="p-button-primary shadow-4 btn-hero" (click)="irA(linkWhatsApp)"></button>
-                <button pButton label="Conocer Más" icon="pi pi-arrow-down" class="p-button-outlined p-button-secondary btn-hero bg-white-alpha-10 text-white border-white hover:bg-white-alpha-20" (click)="scrollTo('nosotros')"></button>
+                <button pButton label="Únete a Nosotros" icon="pi pi-whatsapp" class="btn-hero btn-hero-primary" (click)="irA(linkWhatsApp)"></button>
+                <button pButton label="Descubre Más" icon="pi pi-arrow-down" class="btn-hero btn-hero-secondary" (click)="scrollTo('nosotros')"></button>
             </div>
         </div>
     </header>
 
+    <!-- METODOLOGÍA -->
     <section id="nosotros" class="info-section">
         <div class="section-container">
-            <div class="section-header text-center mb-5">
-                <h2 class="section-title text-wrap">Nuestra Metodología</h2>
-                <div class="title-divider"></div>
-                <p class="section-desc text-wrap">No solo formamos jugadores, formamos atletas integrales apoyados por un equipo de profesionales de primer nivel.</p>
+            <div class="section-header mb-6">
+                <span class="section-eyebrow">Nuestro Enfoque</span>
+                <h2 class="section-title text-wrap">Metodología de Alto Rendimiento</h2>
+                <p class="section-desc text-wrap">No solo formamos jugadores, construimos atletas integrales respaldados por ciencia, tecnología y profesionales de élite.</p>
             </div>
 
-            <div class="features-grid">
-                <div class="feature-card main-card" *ngFor="let m of metodologias">
-                    <div class="icon-wrapper"><i class="pi {{ m.icono }}"></i></div>
+            <div class="universal-grid">
+                <div class="feature-card main-card" *ngFor="let m of metodologias" [style.--dynamic-color]="m.color || '#3B82F6'">
+                    <div class="icon-wrapper" [style.color]="m.color || '#3B82F6'" [style.backgroundColor]="(m.color || '#3B82F6') + '26'">
+                        <i class="pi {{ m.icono }}"></i>
+                    </div>
                     <h3 class="text-wrap">{{ m.titulo }}</h3>
                     <p class="text-wrap">{{ m.descripcion }}</p>
                 </div>
@@ -59,43 +66,44 @@
         </div>
     </section>
 
+    <!-- CATEGORÍAS (Programas unificados al mismo estilo) -->
     <section id="programas" class="programs-section">
         <div class="section-container">
-            <div class="section-header text-center mb-5">
+            <div class="section-header mb-6">
+                <span class="section-eyebrow">Formación por Etapas</span>
                 <h2 class="section-title text-wrap">Nuestras Categorías</h2>
-                <div class="title-divider"></div>
+                <p class="section-desc text-wrap">Adaptamos nuestra metodología a las diferentes etapas del desarrollo físico, cognitivo y técnico de cada jugador.</p>
             </div>
 
-            <div class="programs-grid">
-                <div class="program-card main-card p-0" *ngFor="let p of programas">
-                    <div class="program-img {{ p.color_fondo }} flex align-items-center justify-content-center h-10rem border-round-top">
-                        <i class="pi {{ p.icono }} text-5xl {{ p.color_texto }}"></i>
+            <div class="universal-grid">
+                <!-- Usamos la misma clase feature-card de metodología -->
+                <div class="feature-card main-card flex flex-column" *ngFor="let p of programas" [style.--dynamic-color]="p.color || '#3B82F6'">
+                    <div class="icon-wrapper" [style.color]="p.color || '#3B82F6'" [style.backgroundColor]="(p.color || '#3B82F6') + '26'">
+                        <i class="pi {{ p.icono }}"></i>
                     </div>
-                    <div class="program-content">
-                        <h3 class="text-wrap">{{ p.titulo }}</h3>
-                        <p class="text-wrap">{{ p.descripcion }}</p>
-                    </div>
+                    <h3 class="text-wrap">{{ p.titulo }}</h3>
+                    <p class="text-wrap flex-grow-1">{{ p.descripcion }}</p>
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- AUSPICIADORES (Unificados al mismo estilo) -->
     <section id="auspiciadores" class="info-section">
         <div class="section-container">
-            <div class="section-header text-center mb-5">
+            <div class="section-header mb-6">
+                <span class="section-eyebrow">Quienes Confían en Nosotros</span>
                 <h2 class="section-title text-wrap">Nuestros Auspiciadores</h2>
-                <div class="title-divider"></div>
-                <p class="section-desc text-wrap">Gracias al constante apoyo de estas grandes marcas e instituciones, seguimos impulsando el talento deportivo en nuestra academia.</p>
+                <p class="section-desc text-wrap">Gracias al constante apoyo de estas grandes marcas e instituciones, seguimos impulsando el talento deportivo.</p>
             </div>
 
-            <div class="sponsors-grid">
-                <div class="sponsor-card main-card flex flex-column h-full" *ngFor="let au of auspiciadores">
-                    
+            <div class="universal-grid">
+                <!-- Usamos feature-card para mantener la misma caja -->
+                <div class="feature-card main-card flex flex-column h-full" *ngFor="let au of auspiciadores">
                     <div class="sponsor-logo-wrapper mb-4 mt-2">
-                        <img [src]="au.imagen_url || 'assets/images/default-sponsor.png'" [alt]="au.nombre" class="sponsor-logo">
+                        <img [src]="au.imagen_url || 'assets/images/default-sponsor.png'" [alt]="au.nombre" class="sponsor-logo bw-filter">
                     </div>
                     <h3 class="text-wrap">{{ au.nombre }}</h3>
-                    
                     <p class="text-wrap flex-grow-1">{{ au.descripcion }}</p>
                     
                     <div class="mt-4" *ngIf="au.instagram_url">
@@ -104,24 +112,24 @@
                                 (click)="irA(au.instagram_url)">
                         </button>
                     </div>
-
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- BENEFICIOS / ALIANZAS (Unificados al mismo estilo) -->
     <section id="beneficios" class="programs-section">
         <div class="section-container">
-            <div class="section-header text-center mb-5">
+            <div class="section-header mb-6">
+                <span class="section-eyebrow">Ventajas Exclusivas</span>
                 <h2 class="section-title text-wrap">Alianzas y Beneficios</h2>
-                <div class="title-divider"></div>
-                <p class="section-desc text-wrap">Trabajamos con las mejores instituciones para ofrecer beneficios exclusivos de salud, equipamiento y bienestar a todos nuestros jugadores y sus familias.</p>
+                <p class="section-desc text-wrap">Trabajamos con las mejores instituciones para ofrecer beneficios de salud, equipamiento y bienestar a nuestras familias.</p>
             </div>
 
-            <div class="sponsors-grid">
-                <div class="sponsor-card main-card flex flex-column h-full" *ngFor="let a of alianzas">
+            <div class="universal-grid">
+                <div class="feature-card main-card flex flex-column h-full" *ngFor="let a of alianzas">
                     <div class="sponsor-logo-wrapper mb-4 mt-2">
-                        <img [src]="a.imagen_url || 'assets/images/default-sponsor.png'" [alt]="a.nombre" class="sponsor-logo">
+                        <img [src]="a.imagen_url || 'assets/images/default-sponsor.png'" [alt]="a.nombre" class="sponsor-logo bw-filter">
                     </div>
                     <h3 class="text-wrap">{{ a.nombre }}</h3>
                     <p class="text-wrap flex-grow-1">{{ a.descripcion }}</p>
@@ -130,21 +138,22 @@
         </div>
     </section>
 
+    <!-- FOOTER -->
     <footer id="contacto" class="footer-section">
         <div class="section-container footer-container">
             <div class="footer-brand">
                 <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="Logo" class="footer-logo mb-3">
-                <p class="text-wrap">Cambiando la forma de vivir el fútbol formativo. Únete a la evolución deportiva.</p>
+                <p class="text-wrap">Cambiando la forma de vivir el fútbol formativo. Únete a la evolución deportiva y alcanza tu máximo potencial.</p>
             </div>
             
             <div class="footer-links">
                 <h4>Contacto</h4>
-                <p class="text-wrap"><i class="pi pi-whatsapp mr-3 text-xl"></i> {{telefonoAcademia}}</p>
-                <p class="text-wrap"><i class="pi pi-envelope mr-3 text-xl"></i> {{correoAcademia}}</p>
+                <p class="text-wrap"><i class="pi pi-whatsapp mr-3 text-xl text-primary"></i> {{telefonoAcademia}}</p>
+                <p class="text-wrap"><i class="pi pi-envelope mr-3 text-xl text-primary"></i> {{correoAcademia}}</p>
             </div>
 
             <div class="footer-links social-column">
-                <h4>Síguenos</h4>
+                <h4>Comunidad</h4>
                 <p class="mb-3 text-sm text-400">Descubre nuestro día a día</p>
                 
                 <div class="social-list mt-3">

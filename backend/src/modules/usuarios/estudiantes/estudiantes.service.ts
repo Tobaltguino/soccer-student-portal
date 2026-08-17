@@ -155,6 +155,23 @@ export class EstudiantesService {
     return count ?? 0;
   }
 
+  async contarPorGrupos(grupoIds: number[]): Promise<number> {
+    if (!grupoIds || grupoIds.length === 0) return 0;
+
+    const { count, error } = await this.supabase.client
+      // Si el campo de activo está en perfiles, ajusta esto a tu tabla real
+      .from('estudiantes') 
+      .select('*', { count: 'exact', head: true })
+      .in('grupo_id', grupoIds);
+      // .eq('activo', true); // Descomenta esto si manejas el 'activo' directo en estudiantes
+
+    if (error) {
+      lanzarErrorSupabase(error, 'No se pudo contar los estudiantes por grupo');
+    }
+
+    return count ?? 0;
+  }
+
   async listarConFiltros(filtros: FiltrarEstudiantesDto): Promise<{
     registros: (EstudianteRow & { perfil: UsuarioPerfilRow })[];
     total: number;

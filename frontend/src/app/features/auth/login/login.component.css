@@ -45,7 +45,7 @@
 /* --- LOGO Y TÍTULOS --- */
 .logo-section {
     text-align: center;
-    margin-bottom: 1.5rem; /* Margen inferior reducido */
+    margin-bottom: 1.5rem; 
 }
 
 /* Escudo más pequeño */
@@ -53,7 +53,7 @@
     height: 65px; 
     width: auto;
     object-fit: contain;
-    margin-bottom: 0.5rem; /* Margen inferior reducido */
+    margin-bottom: 0.5rem; 
     filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
     transition: all 0.3s ease;
 }
@@ -61,11 +61,9 @@
 /* =========================================
    🔥 LÓGICA DE DOBLE LOGO 🔥
    ========================================= */
-/* 1. POR DEFECTO (Modo Claro): */
 .logo-light { display: block; margin: 0 auto 1rem auto; }
 .logo-dark { display: none; }
 
-/* 2. SI EL BODY TIENE DARK-MODE: */
 :host-context(body.dark-mode) .logo-light {
     display: none !important;
 }
@@ -96,13 +94,13 @@
 .form-section {
     display: flex; 
     flex-direction: column; 
-    gap: 1rem; /* Espacio general entre campos reducido */
+    gap: 1.25rem; 
 }
 
 .field {
     display: flex; 
     flex-direction: column; 
-    gap: 0.25rem; /* Espacio entre Label e Input reducido */
+    gap: 0.4rem; 
 }
 
 .field label {
@@ -112,10 +110,10 @@
     margin-left: 4px;
 }
 
-/* Input Group */
+/* Input Group: Ajustado para alinear perfectamente los íconos */
 .input-group {
     display: flex; 
-    align-items: stretch;
+    align-items: center; 
     border-radius: 12px;
     border: 1px solid var(--border-color);
     background: var(--bg-main);
@@ -141,41 +139,68 @@
     color: var(--primary-color);
 }
 
-/* Inputs más delgados */
-:host ::ng-deep .custom-input,
+/* Inputs de texto estándar (RUT) */
+:host ::ng-deep .custom-input {
+    border: none !important; 
+    background: transparent !important;
+    box-shadow: none !important; 
+    width: 100%; 
+    padding: 0.8rem 0.8rem 0.8rem 0 !important; 
+    color: var(--text-main); 
+    font-weight: 500;
+    flex-grow: 1;
+}
+
+/* 🔥 FIX CONTRASEÑA Y EL OJITO 🔥 */
+:host ::ng-deep .p-password {
+    display: inline-flex;
+    flex-grow: 1;
+    width: 100%;
+}
+
 :host ::ng-deep .custom-input-password {
     border: none !important; 
     background: transparent !important;
     box-shadow: none !important; 
     width: 100%; 
-    padding: 0.7rem; /* Relleno reducido */
+    padding: 0.8rem 2.5rem 0.8rem 0 !important; 
     color: var(--text-main); 
     font-weight: 500;
 }
 
-:host ::ng-deep .p-password, 
-:host ::ng-deep .p-password-input { 
-    width: 100%; 
+/* Forzamos a que el ojito se posicione correctamente a la derecha */
+:host ::ng-deep .p-password i {
+    right: 1rem;
+    color: var(--text-secondary);
+    transition: color 0.2s;
 }
 
-/* --- BOTÓN --- */
-/* Botón ligeramente más delgado */
+:host ::ng-deep .p-password i:hover {
+    color: var(--primary-color);
+}
+
+/* --- BOTÓN INICIAR SESIÓN --- */
 :host ::ng-deep .btn-login {
     width: 100%; 
-    padding: 0.8rem; /* Relleno reducido */
+    padding: 0.85rem; 
     font-size: 1rem; 
     font-weight: 700;
     border-radius: 12px; 
     background: var(--primary-color);
     border: none; 
-    box-shadow: 0 4px 14px 0 rgba(0,0,0,0.15);
+    box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.25); 
     color: white; 
-    transition: transform 0.2s;
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem; 
 }
 
+/* 🔥 FIX HOVER: Se ilumina en vez de oscurecerse 🔥 */
 :host ::ng-deep .btn-login:hover {
     transform: translateY(-2px); 
-    filter: brightness(0.9);
+    filter: brightness(1.15); 
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.45); 
 }
 
 /* --- LINK RECUPERAR --- */
@@ -232,7 +257,7 @@
     /* Inputs en móvil un poco más compactos pero amigables al tacto */
     :host ::ng-deep .custom-input, 
     :host ::ng-deep .custom-input-password {
-        padding: 0.85rem; 
+        padding: 0.85rem 2.5rem 0.85rem 0 !important; 
         font-size: 16px;
     }
 }

@@ -38,21 +38,28 @@
                 <i class="pi pi-calendar"></i>
             </div>
         </div>
-        <p class="card-subtext" *ngIf="clasesHoy.length > 0">Próx: {{ clasesHoy[0].hora | slice:0:5 }}</p>
+        <!-- Ajustado a hora_inicio -->
+        <p class="card-subtext" *ngIf="clasesHoy.length > 0">Próx: {{ clasesHoy[0].hora_inicio | slice:0:5 }}</p>
         <p class="card-subtext text-muted" *ngIf="clasesHoy.length === 0">Sin actividad</p>
       </div>
     </div>
 
+    <!-- 🔥 TARJETA DE EVALUACIONES ACTUALIZADA -->
     <div class="card card-indigo">
       <div class="card-content">
-        <span class="card-label">Evaluaciones</span>
+        <span class="card-label">Última Evaluación</span>
         <div class="card-value-wrapper">
-            <h3 class="card-value">{{ actividadReciente.length }}</h3>
+            <h3 class="card-value">{{ ultimaEvaluacion?.totalResultados || 0 }}</h3>
             <div class="card-icon icon-indigo">
                 <i class="pi pi-chart-bar"></i>
             </div>
         </div>
-        <p class="card-subtext">Registros técnicos</p>
+        <p class="card-subtext" *ngIf="ultimaEvaluacion">
+          {{ ultimaEvaluacion.tipoEvaluacion }} ({{ ultimaEvaluacion.grupo }})
+        </p>
+        <p class="card-subtext text-muted" *ngIf="!ultimaEvaluacion">
+          Sin registros
+        </p>
       </div>
     </div>
 
@@ -114,7 +121,8 @@
         </div>
         <div class="item-info">
           <p class="item-title text-900 font-bold">{{ est.nombreCompleto }}</p>
-          <span class="item-meta">{{ est.grupos?.nombre || 'Sin Grupo' }} • {{ est.proximoCumple | date:'d \'de\' MMMM' }}</span>
+          <!-- 🔥 AHORA MUESTRA EL ROL EN LUGAR DEL GRUPO -->
+          <span class="item-meta">{{ est.rol | titlecase }} • {{ est.proximoCumple | date:'d \'de\' MMMM' }}</span>
         </div>
         <div class="flex flex-column align-items-end">
             <span class="badge" [ngClass]="{'badge-success': est.diasRestantes === 0, 'badge-score': est.diasRestantes > 0}">

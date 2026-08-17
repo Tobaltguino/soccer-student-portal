@@ -213,4 +213,33 @@ export class SesionesService {
 
     return data;
   }
+
+  async obtenerUltimaFinalizada(): Promise<any> {
+    const { data, error } = await this.supabase.client
+      .from('nutri_evaluacion_sesiones')
+      .select(`
+        id,
+        fecha,
+        estado,
+        tipo_evaluacion:tipo_id ( nombre ) 
+      `)
+      .eq('estado', 'FINALIZADO') // Asegúrate de que el estado coincida con tu BD (puede ser 'FINALIZADA')
+      .is('eliminado_at', null)
+      .order('fecha', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      lanzarErrorSupabaseConFk(error, 'No se pudo obtener la última evaluación', '');
+    }
+
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      fecha: data.fecha,
+      // Usamos as any para evitar el error de TypeScript si Supabase lo detecta como Array
+      tipoEvaluacion: (data.tipo_evaluacion as any)?.nombre || 'Evaluación Nutricional'
+    };
+  }
 }

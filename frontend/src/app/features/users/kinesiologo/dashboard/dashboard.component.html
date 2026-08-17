@@ -7,9 +7,9 @@
     </div>
 
     <div class="header-tools">
-      <div class="status-indicator" (click)="cargarDatosKine()" title="Refrescar Datos">
-        <span class="status-dot" [ngClass]="supabaseStatus"></span>
-        <span class="status-text">{{ supabaseStatus === 'online' ? 'Sincronizado' : 'Offline' }}</span>
+      <div class="status-indicator" (click)="refrescar()" title="Refrescar Datos">
+        <span class="status-dot" [ngClass]="apiStatus"></span>
+        <span class="status-text">{{ apiStatus === 'online' ? 'Sincronizado' : (apiStatus === 'checking' ? 'Conectando...' : 'Offline') }}</span>
       </div>
     </div>
   </header>
@@ -20,7 +20,8 @@
       <div class="card-content">
         <span class="card-label">Categorías Asignadas</span>
         <div class="card-value-wrapper">
-            <h3 class="card-value">{{ misGrupos.length }}</h3>
+            <!-- 🔥 Utilizamos el número directo traído del nuevo endpoint -->
+            <h3 class="card-value">{{ misGrupos }}</h3>
             <div class="card-icon icon-blue">
                 <i class="pi pi-users"></i>
             </div>
@@ -41,8 +42,8 @@
             </div>
         </div>
         <p class="card-subtext" *ngIf="proximaClase">
-          <span class="font-bold text-900">Próx:</span> {{ proximaClase.grupos?.nombre }} 
-          <span class="ml-1 text-primary">({{ proximaClase.hora | slice:0:5 }})</span>
+          <span class="font-bold text-900">Próx:</span> {{ proximaClase.grupos?.nombre || 'Clase' }} 
+          <span class="ml-1 text-primary">({{ (proximaClase.hora_inicio || proximaClase.hora) | slice:0:5 }})</span>
         </p>
         <p class="card-subtext text-muted" *ngIf="!proximaClase">
           Sin actividad física hoy
@@ -50,32 +51,34 @@
       </div>
     </div>
 
-    <div class="card card-purple">
+    <!-- 🔥 DATOS CLÍNICOS REALES DE KINESIOLOGÍA -->
+    <div class="card card-orange">
       <div class="card-content">
-        <span class="card-label">Evaluaciones Kine.</span>
+        <span class="card-label">Pacientes Agudos</span>
         <div class="card-value-wrapper">
-            <h3 class="card-value" style="opacity: 0.5;">-</h3>
-            <div class="card-icon icon-purple">
-                <i class="pi pi-file-edit"></i>
+            <h3 class="card-value">{{ pacientesEnTratamiento }}</h3>
+            <div class="card-icon icon-orange">
+                <i class="pi pi-exclamation-triangle"></i>
             </div>
         </div>
-        <p class="card-subtext" style="color: #8b5cf6; font-weight: 600;">
-          <i class="pi pi-cog pi-spin mr-1"></i> Módulo en construcción
+        <p class="card-subtext" style="color: #f97316; font-weight: 600;">
+          En Tratamiento Activo
         </p>
       </div>
     </div>
 
-    <div class="card card-orange">
+    <div class="card card-purple">
       <div class="card-content">
-        <span class="card-label">Pacientes en Terapia</span>
+        <span class="card-label">Pacientes en Seguimiento</span>
         <div class="card-value-wrapper">
-            <h3 class="card-value" style="opacity: 0.5;">-</h3>
-            <div class="card-icon icon-orange">
+            <!-- Sumamos los que están en observación y en reintegro -->
+            <h3 class="card-value">{{ pacientesEnObservacion + pacientesEnReintegro }}</h3>
+            <div class="card-icon icon-purple">
                 <i class="pi pi-heart-fill"></i>
             </div>
         </div>
-        <p class="card-subtext" style="color: #f97316; font-weight: 600;">
-          <i class="pi pi-cog pi-spin mr-1"></i> Módulo en construcción
+        <p class="card-subtext" style="color: #8b5cf6; font-weight: 600;">
+          Observación y Reintegro
         </p>
       </div>
     </div>
@@ -87,7 +90,7 @@
       <div class="flex align-items-center gap-2">
           <h3 class="m-0"><i class="pi pi-gift mr-2 text-orange-500"></i>Próximos Cumpleaños</h3>
       </div>
-      <button class="p-button-rounded p-button-text" (click)="cargarDatosKine()" [disabled]="loading">
+      <button class="p-button-rounded p-button-text" (click)="refrescar()" [disabled]="loading">
         <i class="pi pi-refresh" [ngClass]="{'pi-spin': loading}"></i>
       </button>
     </div>
@@ -99,8 +102,8 @@
         </div>
         
         <div class="item-info">
-          <p class="item-title text-900 font-bold">{{ est.nombre }} {{ est.apellido }}</p>
-          <span class="item-meta">{{ est.grupos?.nombre }} • {{ est.proximoCumple | date:'d \'de\' MMMM' }}</span>
+          <p class="item-title text-900 font-bold">{{ est.nombreCompleto }}</p>
+          <span class="item-meta">{{ est.rol | titlecase }} • {{ est.proximoCumple | date:'d \'de\' MMMM' }}</span>
         </div>
 
         <div class="flex flex-column align-items-end">
@@ -113,7 +116,7 @@
 
       <div class="empty-state" *ngIf="cumpleanosList.length === 0 && !loading">
         <i class="pi pi-calendar-times" style="font-size: 2rem; color: var(--text-secondary); margin-bottom: 1rem;"></i>
-        <p class="text-secondary m-0">No hay cumpleaños esta semana en tus categorías.</p>
+        <p class="text-secondary m-0">No hay cumpleaños en los próximos 7 días.</p>
       </div>
     </div>
   </section>

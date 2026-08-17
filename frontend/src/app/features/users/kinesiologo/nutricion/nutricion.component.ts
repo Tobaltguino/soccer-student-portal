@@ -25,7 +25,7 @@ import { NutriResultadoService } from '../../../../core/domains/salud/nutricion/
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
 
 @Component({
-  selector: 'app-kine-nutrition',
+  selector: 'app-kine-nutricion',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, DialogModule, ButtonModule, 
@@ -33,8 +33,8 @@ import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes
     ProgressSpinnerModule
   ],
   providers: [MessageService],
-  templateUrl: './kine-nutrition.html',
-  styleUrls: ['./kine-nutrition.css']
+  templateUrl: './nutricion.component.html',
+  styleUrls: ['./nutricion.component.css']
 })
 export class KineNutritionComponent implements OnInit {
   

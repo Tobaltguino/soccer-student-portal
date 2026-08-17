@@ -8,9 +8,9 @@
 
     <div class="header-tools">
       <div class="status-indicator" (click)="refrescar()" title="Actualizar datos">
-        <span class="status-dot" [ngClass]="supabaseStatus"></span>
+        <span class="status-dot" [ngClass]="apiStatus"></span>
         <span class="status-text">
-          {{ supabaseStatus === 'online' ? 'Online' : 'Offline' }}
+          {{ apiStatus === 'online' ? 'Servidor Online' : (apiStatus === 'checking' ? 'Conectando...' : 'Servidor Offline') }}
         </span>
       </div>
     </div>
@@ -33,7 +33,8 @@
         
         <div *ngIf="proximaClase" class="flex flex-column gap-1">
           <p class="card-subtext flex align-items-center gap-2">
-            <i class="pi pi-clock text-blue-500"></i> {{ proximaClase.hora | slice:0:5 }} hrs
+            <!-- Soporta c.hora_inicio o c.hora dependiendo de tu BD -->
+            <i class="pi pi-clock text-blue-500"></i> {{ (proximaClase.hora_inicio || proximaClase.hora) | slice:0:5 }} hrs
           </p>
           <p class="card-subtext flex align-items-center gap-2">
             <i class="pi pi-map-marker text-blue-500"></i> {{ proximaClase.lugar || 'Cancha Principal' }}
@@ -64,34 +65,38 @@
         <span class="card-label">Último Rendimiento</span>
         <div class="card-value-wrapper">
             <h3 class="card-value" *ngIf="ultimaEvaluacion">
-                {{ ultimaEvaluacion.resultado }} <small style="font-size: 0.9rem; opacity: 0.7;">{{ ultimaEvaluacion.unidad }}</small>
+                <!-- Ajusta los campos si tu backend los llama distinto (ej: ultimaEvaluacion.valor) -->
+                {{ ultimaEvaluacion.resultado || ultimaEvaluacion.valor }} 
+                <small style="font-size: 0.9rem; opacity: 0.7;">{{ ultimaEvaluacion.unidad || '' }}</small>
             </h3>
             <h3 class="card-value" style="font-size: 1.2rem;" *ngIf="!ultimaEvaluacion">Sin registros</h3>
             
             <div class="card-icon" 
-                 [style.background]="ultimaEvaluacion ? ultimaEvaluacion.color + '20' : 'rgba(139,92,246,0.1)'" 
-                 [style.color]="ultimaEvaluacion ? ultimaEvaluacion.color : '#8b5cf6'">
+                 [style.background]="ultimaEvaluacion?.color ? ultimaEvaluacion.color + '20' : 'rgba(139,92,246,0.1)'" 
+                 [style.color]="ultimaEvaluacion?.color ? ultimaEvaluacion.color : '#8b5cf6'">
                 <i class="pi pi-chart-bar"></i>
             </div>
         </div>
         
         <div *ngIf="ultimaEvaluacion" class="mt-1">
-            <p class="card-subtext font-bold" [style.color]="ultimaEvaluacion.color">
-                Nivel: {{ ultimaEvaluacion.nivel }}
+            <p class="card-subtext font-bold" [style.color]="ultimaEvaluacion.color || '#8b5cf6'">
+                Nivel: {{ ultimaEvaluacion.nivel || 'Registrado' }}
             </p>
-            <p class="card-subtext text-xs text-muted">Test: {{ ultimaEvaluacion.test_nombre }}</p>
+            <!-- Ajusta según el nombre real de tu relación en NestJS (ej: tipo_evaluacion.nombre) -->
+            <p class="card-subtext text-xs text-muted">Test: {{ ultimaEvaluacion.test_nombre || ultimaEvaluacion.tipo_evaluacion?.nombre }}</p>
         </div>
         <p class="card-subtext" *ngIf="!ultimaEvaluacion">Pendiente de evaluación</p>
       </div>
     </div>
   </div>
 
+  <!-- Eventos (Mantenemos la maqueta estática tal cual la tenías) -->
   <section class="recent-activity-card">
     <div class="activity-header">
       <div class="flex align-items-center gap-2">
           <h3 class="m-0">Próximos Eventos</h3>
       </div>
-      <button class="p-button-rounded p-button-text" (click)="cargarDatosDashboard()" [disabled]="loading">
+      <button class="p-button-rounded p-button-text" (click)="refrescar()" [disabled]="loading">
         <i class="pi pi-refresh" [ngClass]="{'pi-spin': loading}"></i>
       </button>
     </div>

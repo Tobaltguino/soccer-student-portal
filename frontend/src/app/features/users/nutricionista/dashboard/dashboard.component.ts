@@ -1,109 +1,94 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import { SupabaseService } from '../../../../../core/services/supabase.service';
+import { RouterModule, Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+
+// 🚀 SERVICIOS MODULARES (NestJS)
+import { AuthService } from '../../../../core/auth/services/auth.service';
+import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
+import { UsuarioService } from '../../../../core/domains/usuarios/central/services/usuario.service';
+// 👇 Importamos el servicio específico de SESIONES de Nutrición
+import { NutriSesionService } from '../../../../core/domains/salud/nutricion/sesiones/services/sesion.service';
 
 @Component({
-  selector: 'app-nutricionista-dashboard',
+  selector: 'app-nutri-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.css',
+  templateUrl: './dashboard.component.html', 
+  styleUrls: ['./dashboard.component.css'],
 })
 export class NutricionistaDashboardComponent implements OnInit {
-  loading: boolean = true;
-  supabaseStatus: string = 'online';
   
+  private authService = inject(AuthService);
+  private estudianteService = inject(EstudianteService);
+  private usuarioService = inject(UsuarioService);
+  private nutriSesionService = inject(NutriSesionService); // 👈 Tu servicio específico de sesiones
+  
+  private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
+
+  // Estados
+  loading: boolean = true;
+  apiStatus: 'online' | 'offline' | 'checking' = 'checking'; 
+  
+  // KPIs
   totalEstudiantes: number = 0;
   ultimaEvaluacionGlobal: any = null;
   proximosCumpleanos: any[] = [];
+  
+  async ngOnInit() {
+    await this.verificarConexion();
+    if (this.apiStatus === 'online') {
+      await this.cargarDatosDashboard();
+    }
+  }
 
-  constructor(
-    private supabaseService: SupabaseService,
-    private cdr: ChangeDetectorRef
-  ) {}
+  async verificarConexion() {
+    try {
+      this.apiStatus = 'checking';
+      const res = await firstValueFrom(this.authService.me());
+      const user = res?.data ? res.data : res;
 
-  ngOnInit() {
-    this.cargarDatosDashboard();
+      if (!user) {
+        this.apiStatus = 'offline';
+        this.router.navigate(['/login']);
+      } else {
+        this.apiStatus = 'online';
+      }
+    } catch {
+      this.apiStatus = 'offline';
+    }
   }
 
   async cargarDatosDashboard() {
     this.loading = true;
+    this.cdr.detectChanges();
+
     try {
-      // 1. Cargar Estudiantes para el total y los cumpleaños
-      const { data: estudiantes, error: errEst } = await this.supabaseService.supabase
-        .from('estudiantes')
-        .select('id, nombre, apellido, fecha_nacimiento, activo')
-        .eq('activo', true);
+      // 1. Total de Estudiantes Activos (Toda la academia)
+      const resCount = await firstValueFrom(this.estudianteService.contarEstudiantesActivos());
+      this.totalEstudiantes = resCount?.total || 0;
 
-      if (estudiantes) {
-        this.totalEstudiantes = estudiantes.length;
-        this.procesarCumpleanos(estudiantes);
-      }
+      // 2. Última Evaluación Nutricional Finalizada (Llamando a tu servicio de Sesiones)
+      const resUltimaEval = await firstValueFrom(this.nutriSesionService.obtenerUltimaFinalizada());
+      this.ultimaEvaluacionGlobal = resUltimaEval || null;
 
-      // 2. Cargar ÚLTIMA Evaluación Nutricional (Solo FINALIZADAS)
-      const { data: evaluaciones, error: errEval } = await this.supabaseService.supabase
-        .from('evaluacion_nutri') 
-        .select(`
-          id, 
-          fecha, 
-          tipo_evaluacion_nutri(nombre) 
-        `)
-        .eq('estado', 'FINALIZADO')
-        .order('fecha', { ascending: false })
-        .limit(1);
-
-      if (errEval) {
-      }
-
-      if (evaluaciones && evaluaciones.length > 0) {
-        this.ultimaEvaluacionGlobal = evaluaciones[0];
-      } else {
-        this.ultimaEvaluacionGlobal = null;
-      }
+      // 3. Cumpleaños Globales procesados por NestJS
+      const resCumples = await firstValueFrom(this.usuarioService.obtenerCumpleanosGlobales(7));
+      this.proximosCumpleanos = resCumples || [];
 
     } catch (error) {
-      this.supabaseStatus = 'offline';
+      console.error('Error Nutri Dashboard:', error);
     } finally {
       this.loading = false;
       this.cdr.detectChanges();
     }
   }
 
-  procesarCumpleanos(estudiantes: any[]) {
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-
-    const cumplesCalculados = estudiantes
-      .filter(e => e.fecha_nacimiento)
-      .map(e => {
-        const [year, month, day] = e.fecha_nacimiento.split('-');
-        const fechaNac = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-        
-        let proximoCumple = new Date(hoy.getFullYear(), fechaNac.getMonth(), fechaNac.getDate());
-        
-        if (proximoCumple < hoy) {
-          proximoCumple.setFullYear(hoy.getFullYear() + 1);
-        }
-        
-        const diasFaltantes = Math.ceil((proximoCumple.getTime() - hoy.getTime()) / (1000 * 3600 * 24));
-        const edadACumplir = proximoCumple.getFullYear() - fechaNac.getFullYear();
-
-        return {
-          ...e,
-          proximoCumple,
-          diasFaltantes,
-          edadACumplir
-        };
-      })
-      .filter(e => e.diasFaltantes <= 7) // <-- Filtro de 7 días
-      .sort((a, b) => a.diasFaltantes - b.diasFaltantes)
-      .slice(0, 10);
-
-    this.proximosCumpleanos = cumplesCalculados;
-  }
-
-  refrescar() {
-    this.cargarDatosDashboard();
+  async refrescar() {
+    await this.verificarConexion();
+    if (this.apiStatus === 'online') {
+      await this.cargarDatosDashboard();
+    }
   }
 }

@@ -16,15 +16,15 @@ import { MessageService } from 'primeng/api';
 import { NutriResultadoService } from '../../../../core/domains/salud/nutricion/resultados/services/resultado.service';
 
 @Component({
-  selector: 'app-student-nutri',
+  selector: 'app-estudiante-nutricion',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, ButtonModule, 
     DatePickerModule, SelectModule, TooltipModule, ToastModule, ProgressSpinnerModule
   ],
   providers: [MessageService],
-  templateUrl: './evaluaciones-nutri.component.html',
-  styleUrls: ['./evaluaciones-nutri.component.css']
+  templateUrl: './nutricion.component.html',
+  styleUrls: ['./nutricion.component.css']
 })
 export class StudentNutriComponent implements OnInit {
   
