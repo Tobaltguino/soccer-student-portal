@@ -52,19 +52,22 @@ export class AuthService {
     }
 
     // ✨ 3. VERIFICACIÓN DE TÉRMINOS Y CONDICIONES
-    // Nota: A futuro puedes mover esto al .env (ej. process.env.VERSION_TERMINOS)
     const VERSION_ACTUAL_TERMINOS = '1.0';
     const VERSION_ACTUAL_POLITICA = '1.0';
 
-    const { data: aceptacion } = await this.supabaseAdmin
-      .from('aceptaciones_legales') // Ajusta el nombre si tu tabla se llama distinto
-      .select('id')
+    const { data: aceptaciones, error: errorAceptacion } = await this.supabaseAdmin
+      .from('aceptaciones_legales')
+      .select('usuario_id') // 🔥 AQUÍ ESTÁ EL CAMBIO: Pedimos usuario_id en vez de id
       .eq('usuario_id', data.user.id)
       .eq('version_terminos', VERSION_ACTUAL_TERMINOS)
       .eq('version_politica', VERSION_ACTUAL_POLITICA)
-      .maybeSingle(); // maybeSingle retorna null si no existe, en lugar de error
+      .limit(1);
 
-    const necesitaAceptarTerminos = !aceptacion;
+    if (errorAceptacion) {
+      console.error('== ERROR BUSCANDO TÉRMINOS ==', errorAceptacion);
+    }
+
+    const necesitaAceptarTerminos = !aceptaciones || aceptaciones.length === 0;
 
     // 4. Retornar el token y los datos consolidados
     return {

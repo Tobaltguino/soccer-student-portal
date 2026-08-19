@@ -1,0 +1,205 @@
+:host { display: block; }
+
+/* Utilidades básicas */
+.cursor-pointer { cursor: pointer; }
+.w-full { width: 100%; }
+.mt-4 { margin-top: 1rem; }
+.mr-1 { margin-right: 0.25rem; }
+.mr-2 { margin-right: 0.5rem; }
+.text-center { text-align: center; }
+
+/* Tipografías */
+.pf-anton { font-family: var(--pf-font-display, 'Anton', sans-serif); letter-spacing: 0.01em; text-transform: uppercase; }
+.pf-oswald { font-family: var(--pf-font-label, 'Oswald', sans-serif); }
+
+.pf-login {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr; /* Proporción para darle peso a la marca */
+}
+
+/* Panel izquierdo */
+.pf-login__side {
+  position: relative;
+  overflow: hidden;
+  background: var(--pf-black, #0a0f0e);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px 52px;
+}
+
+.pf-login__ring { position: absolute; border-radius: 50%; pointer-events: none;}
+.pf-login__ring--outer { left: -18%; bottom: -22%; width: 520px; height: 520px; border: 1px solid rgba(15, 140, 130, 0.4); }
+.pf-login__ring--inner { left: -4%; bottom: -2%; width: 340px; height: 340px; border: 1px solid rgba(15, 140, 130, 0.6); }
+
+.pf-login__brand {
+  display: flex; align-items: center; gap: 10px; position: relative; color: var(--pf-chalk, #eaf2f0);
+  img { height: 40px; width: 40px; object-fit: contain;}
+  span { font-size: 19px; }
+}
+
+.pf-login__pitch { position: relative; max-width: 440px; }
+.pf-login__pitch-eyebrow { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--pf-teal, #0f8c82); margin-bottom: 16px; }
+.pf-login__pitch-title { font-size: clamp(32px, 3.4vw, 44px); line-height: 1.02; margin: 0; color: var(--pf-chalk, #eaf2f0);}
+.pf-login__pitch-desc { margin-top: 18px; color: rgba(234, 242, 240, 0.7); line-height: 1.6; font-size: 15px; }
+
+.pf-login__help { position: relative; font-size: 13.5px; color: var(--pf-steel, #7c8b88); transition: color 0.2s;}
+.pf-login__help a:hover { color: var(--pf-lime, #c6ff3d) !important; }
+
+/* Panel derecho (Formulario) */
+.pf-login__form-side {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  background: rgba(234, 242, 240, 0.02); /* Fondo ligeramente tintado */
+}
+
+.pf-login__form-wrap { width: 100%; max-width: 380px; }
+.pf-login__title { font-size: 27px; margin: 0 0 6px; color: var(--pf-chalk, #eaf2f0);}
+.pf-login__subtitle { color: var(--pf-steel, #7c8b88); font-size: 14px; margin: 0 0 32px; }
+
+.pf-login__form { display: flex; flex-direction: column; gap: 20px; }
+
+.pf-field { display: flex; flex-direction: column; gap: 7px; }
+.pf-field__label { font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--pf-steel, #7c8b88); }
+.pf-field__input {
+  background: rgba(234, 242, 240, 0.04);
+  border: 1px solid rgba(234, 242, 240, 0.16);
+  border-radius: 10px;
+  padding: 13px 14px;
+  color: var(--pf-chalk, #eaf2f0);
+  font-size: 14.5px;
+  font-family: var(--pf-font-body, 'Inter', sans-serif);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+
+  &::placeholder { color: rgba(234, 242, 240, 0.35); }
+  &:focus {
+    border-color: var(--pf-teal, #0f8c82);
+    box-shadow: 0 0 0 2px rgba(15, 140, 130, 0.2);
+  }
+}
+
+/* 🔥 FIX: Contenedor del Password y el Ojito 🔥 */
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrapper .pf-field__input {
+  padding-right: 40px; /* Deja espacio para que el texto no pise el ojito */
+}
+
+.eye-btn {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: var(--pf-steel, #7c8b88);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+.eye-btn:hover { color: var(--pf-teal, #0f8c82); }
+.eye-btn i { font-size: 1.1rem; }
+
+/* Links y Footer */
+.pf-login__forgot { display: flex; justify-content: flex-end; }
+.pf-login__forgot a { font-size: 12.5px; color: var(--pf-teal, #0f8c82); text-decoration: none; transition: color 0.2s;}
+.pf-login__forgot a:hover { color: var(--pf-lime, #c6ff3d); }
+
+.pf-login__submit { width: 100%; padding: 14px 0; margin-top: 8px; font-size: 14px;}
+
+.pf-login__footnote { margin-top: 26px; font-size: 12.5px; color: var(--pf-steel, #7c8b88); text-align: center; }
+
+/* ==========================================================
+   🔥 FIX: ESTILOS DE BOTONES DEPORTIVOS RESTAURADOS 🔥
+   ========================================================== */
+
+.pf-btn-primary {
+  background: var(--pf-lime, #c6ff3d); /* Verde neón deportivo */
+  color: var(--pf-black, #0a0f0e);
+  font-family: var(--pf-font-label, 'Oswald', sans-serif);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 14px;
+  padding: 14px 26px;
+  border-radius: 999px; /* Botones estilo píldora/redondos */
+  border: none;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease, opacity 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pf-btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(198, 255, 61, 0.25); /* Resplandor verde */
+}
+
+/* Estilo para cuando el botón está cargando (disabled) */
+.pf-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pf-btn-ghost {
+  background: transparent;
+  color: var(--pf-chalk, #eaf2f0);
+  font-family: var(--pf-font-label, 'Oswald', sans-serif);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 13px;
+  padding: 13px 24px;
+  border-radius: 999px; /* Botones estilo píldora/redondos */
+  border: 1px solid rgba(234, 242, 240, 0.3);
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pf-btn-ghost:hover {
+  border-color: var(--pf-chalk, #eaf2f0);
+  background: rgba(234, 242, 240, 0.06);
+}
+
+/* 🔥 ESTILO PARA EL LOGO EN MÓVIL 🔥 */
+.pf-login__brand-mobile {
+  display: flex; 
+  align-items: center; 
+  gap: 10px; 
+  margin-bottom: 24px;
+  color: var(--pf-chalk, #eaf2f0);
+}
+.pf-login__brand-mobile img { 
+  height: 38px; 
+  width: 38px; 
+  object-fit: contain;
+}
+.pf-login__brand-mobile span { 
+  font-size: 18px; 
+}
+
+/* Responsive */
+@media (min-width: 821px) {
+  .pf-hide-desktop { display: none !important; }
+}
+
+@media (max-width: 820px) {
+  .pf-hide-mobile { display: none !important; }
+  .pf-login { grid-template-columns: 1fr; }
+  .pf-login__form-side { padding: 32px 20px; background: var(--pf-black, #0a0f0e);}
+}

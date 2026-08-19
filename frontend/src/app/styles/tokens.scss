@@ -1,0 +1,86 @@
+/* ============================================================
+   Pro Fútbol — Design tokens
+   Importar UNA VEZ en styles.scss global:
+     @use 'app/styles/tokens';
+   ============================================================ */
+
+:root {
+  /* Paleta — nace del uniforme (teal) y del logo (negro/blanco) */
+  --pf-black: #0a0f0e;       /* Negro Cancha */
+  --pf-teal: #0f8c82;        /* Teal Pro (color real del jersey) */
+  --pf-teal-deep: #0b4038;   /* Teal Profundo, para secciones oscuras */
+  --pf-chalk: #eaf2f0;       /* Blanco Tiza, texto sobre fondo oscuro */
+  --pf-lime: #c6ff3d;        /* Verde Silbato, acento — usar con moderación */
+  --pf-steel: #7c8b88;       /* Gris Acero, texto secundario */
+
+  /* Tipografía */
+  --pf-font-display: 'Anton', sans-serif;
+  --pf-font-label: 'Oswald', sans-serif;
+  --pf-font-body: 'Inter', sans-serif;
+  --pf-font-mono: 'JetBrains Mono', monospace;
+}
+
+/* Agregar en index.html <head>, o importar en styles.scss:
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+*/
+
+body {
+  margin: 0;
+  background: var(--pf-black);
+  color: var(--pf-chalk);
+  font-family: var(--pf-font-body);
+}
+
+.pf-btn-primary {
+  background: var(--pf-lime);
+  color: var(--pf-black);
+  font-family: var(--pf-font-label);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 13px;
+  padding: 14px 26px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(198, 255, 61, 0.25);
+  }
+}
+
+.pf-btn-ghost {
+  background: transparent;
+  color: var(--pf-chalk);
+  font-family: var(--pf-font-label);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 13px;
+  padding: 13px 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(234, 242, 240, 0.3);
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+
+  &:hover {
+    border-color: var(--pf-chalk);
+    background: rgba(234, 242, 240, 0.06);
+  }
+}
+
+.pf-card {
+  background: rgba(234, 242, 240, 0.03);
+  border: 1px solid rgba(234, 242, 240, 0.09);
+  border-radius: 18px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--pf-lime);
+  outline-offset: 3px;
+}

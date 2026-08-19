@@ -1,0 +1,25 @@
+.pf-ring {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.pf-ring__progress {
+  transition: stroke-dashoffset 700ms ease;
+}
+
+.pf-ring__value {
+  font-family: var(--pf-font-mono);
+  fill: var(--pf-chalk);
+  font-weight: 600;
+}
+
+.pf-ring__label {
+  font-family: var(--pf-font-label);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pf-steel);
+  max-width: 110px;
+  line-height: 1.3;
+}

@@ -1,67 +1,96 @@
 <p-toast position="top-right"></p-toast>
 
-<div class="terminos-wrapper fadein animation-duration-500">
-  <div class="terminos-container">
-    
-    <div class="terminos-header">
-      <h2>Políticas de Privacidad y Términos de Uso</h2>
-      <p>Plataforma de Gestión Deportiva e Integral - ProFutbol</p>
+<div class="pf-login">
+
+  <!-- Panel izquierdo — Identidad y Confianza -->
+  <div class="pf-login__side pf-hide-mobile">
+    <div class="pf-login__ring pf-login__ring--outer"></div>
+    <div class="pf-login__ring pf-login__ring--inner"></div>
+
+    <div class="pf-login__brand">
+      <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="Pro Fútbol" />
+      <span class="pf-anton">PRO FÚTBOL</span>
     </div>
 
-    <div class="terminos-content-box custom-scrollbar">
+    <div class="pf-login__pitch">
+      <div class="pf-oswald pf-login__pitch-eyebrow">Marco Legal Pro Fútbol</div>
+      <h1 class="pf-anton pf-login__pitch-title">Transparencia y Privacidad.</h1>
+      <p class="pf-login__pitch-desc">
+        Nos tomamos muy en serio la seguridad de tu información médica, física y deportiva. Por favor, revisa nuestras políticas para acceder de forma segura al ecosistema de la academia.
+      </p>
+    </div>
+
+    <div class="pf-login__help">
+      <a (click)="rechazar()" class="cursor-pointer" style="color: var(--pf-teal); text-decoration: none; transition: color 0.2s;">
+        <i class="pi pi-arrow-left mr-2"></i> Volver e iniciar sesión con otra cuenta
+      </a>
+    </div>
+  </div>
+
+  <!-- Panel derecho — Documento Legal -->
+  <div class="pf-login__form-side">
+    <!-- Hacemos este contenedor más ancho (max-width: 580px) para leer cómodamente -->
+    <div class="pf-login__form-wrap" style="max-width: 580px; width: 100%;">
       
-      <h3>1. Aceptación y Objeto</h3>
-      <p>Al acceder y utilizar la plataforma ProFutbol, usted (en adelante, el "Usuario") acepta expresamente los presentes Términos, Condiciones y Políticas de Privacidad. La plataforma tiene como objetivo principal la gestión académica, deportiva, nutricional y kinesiológica de los estudiantes inscritos en la academia.</p>
+      <!-- Logo visible solo en celulares -->
+      <div class="pf-login__brand-mobile pf-hide-desktop">
+        <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="Pro Fútbol" />
+        <span class="pf-anton">PRO FÚTBOL</span>
+      </div>
 
-      <h3>2. Uso de Cuentas y Responsabilidad</h3>
-      <p>El acceso a la plataforma es estrictamente personal e intransferible. El Usuario es el único responsable de mantener la confidencialidad de sus credenciales de acceso (RUT y Contraseña). Cualquier actividad realizada bajo su cuenta será de su exclusiva responsabilidad.</p>
+      <h2 class="pf-anton pf-login__title">Políticas de Privacidad</h2>
+      <p class="pf-login__subtitle">Plataforma de Gestión Deportiva e Integral - ProFutbol</p>
 
-      <h3>3. Política de Privacidad y Tratamiento de Datos (Ley N° 19.628)</h3>
-      <p>En cumplimiento de la Ley N° 19.628 sobre Protección de la Vida Privada de Chile, ProFutbol declara que:</p>
-      <ul>
-        <li><strong>Datos Recopilados:</strong> Se recopilarán datos personales básicos (nombre, RUT, contacto) y datos sensibles (mediciones físicas, antecedentes médicos, evaluaciones kinesiológicas y pautas nutricionales).</li>
-        <li><strong>Finalidad:</strong> La información será utilizada exclusivamente para el desarrollo deportivo, prevención de lesiones y optimización del rendimiento del estudiante.</li>
-        <li><strong>Confidencialidad:</strong> Los datos sensibles solo serán accesibles por los profesionales de salud autorizados (Kinesiólogos y Nutricionistas), el cuerpo técnico directo y la administración. No serán compartidos, vendidos ni cedidos a terceros ajenos a la institución sin consentimiento expreso.</li>
-      </ul>
+      <!-- Caja scrolleable con los términos -->
+      <div class="pf-terms-box custom-scrollbar">
+        <h3>1. Aceptación y Objeto</h3>
+        <p>Al acceder y utilizar la plataforma ProFutbol, usted (en adelante, el "Usuario") acepta expresamente los presentes Términos, Condiciones y Políticas de Privacidad. La plataforma tiene como objetivo principal la gestión académica, deportiva, nutricional y kinesiológica de los estudiantes inscritos en la academia.</p>
 
-      <h3>4. Consentimiento para Menores de Edad</h3>
-      <p>En caso de que el estudiante sea menor de edad, el apoderado o tutor legal declara, al aceptar este documento, otorgar su consentimiento expreso para que el cuerpo médico y técnico de ProFutbol realice evaluaciones físicas y procese los datos de salud del menor con fines puramente formativos y deportivos.</p>
+        <h3>2. Uso de Cuentas y Responsabilidad</h3>
+        <p>El acceso a la plataforma es estrictamente personal e intransferible. El Usuario es el único responsable de mantener la confidencialidad de sus credenciales de acceso (RUT y Contraseña). Cualquier actividad realizada bajo su cuenta será de su exclusiva responsabilidad.</p>
 
-      <h3>5. Propiedad Intelectual</h3>
-      <p>Todos los contenidos, metodologías de entrenamiento, diseños de pautas, logotipos y software alojados en la plataforma son propiedad exclusiva de ProFutbol. Queda estrictamente prohibida su copia, reproducción, distribución o uso para fines comerciales externos.</p>
+        <h3>3. Política de Privacidad y Tratamiento de Datos</h3>
+        <p>En cumplimiento de la Ley N° 19.628 sobre Protección de la Vida Privada de Chile, ProFutbol declara que:</p>
+        <ul>
+          <li><strong>Datos Recopilados:</strong> Se recopilarán datos personales básicos y datos sensibles (mediciones físicas, antecedentes médicos, evaluaciones kinesiológicas y pautas nutricionales).</li>
+          <li><strong>Finalidad:</strong> La información será utilizada exclusivamente para el desarrollo deportivo, prevención de lesiones y optimización del rendimiento del estudiante.</li>
+          <li><strong>Confidencialidad:</strong> Los datos sensibles solo serán accesibles por los profesionales de salud autorizados, cuerpo técnico y administración. No serán compartidos a terceros.</li>
+        </ul>
 
-      <h3>6. Derechos ARCO</h3>
-      <p>El Usuario, o su representante legal, podrá ejercer en cualquier momento sus derechos de <strong>Acceso, Rectificación, Cancelación y Oposición</strong> respecto a sus datos personales, enviando una solicitud formal a la administración de la academia mediante los canales oficiales de contacto.</p>
+        <h3>4. Consentimiento para Menores de Edad</h3>
+        <p>En caso de que el estudiante sea menor de edad, el apoderado o tutor legal declara, al aceptar este documento, otorgar su consentimiento expreso para que el cuerpo médico y técnico de ProFutbol realice evaluaciones físicas y procese los datos de salud del menor.</p>
 
-      <h3>7. Modificaciones a los Términos</h3>
-      <p>ProFutbol se reserva el derecho de actualizar o modificar este documento en cualquier momento para adaptarlo a novedades legislativas o mejoras operativas. Los usuarios serán requeridos de otorgar nuevamente su consentimiento si los cambios son sustanciales.</p>
-    </div>
+        <h3>5. Propiedad Intelectual</h3>
+        <p>Todos los contenidos, metodologías de entrenamiento, diseños de pautas, logotipos y software alojados en la plataforma son propiedad exclusiva de ProFutbol. Queda estrictamente prohibida su copia o uso comercial externo.</p>
 
-    <div class="terminos-footer">
-      <div class="checkbox-area">
+        <h3>6. Derechos ARCO</h3>
+        <p>El Usuario podrá ejercer en cualquier momento sus derechos de Acceso, Rectificación, Cancelación y Oposición respecto a sus datos personales mediante los canales oficiales de contacto.</p>
+
+        <h3>7. Modificaciones a los Términos</h3>
+        <p>ProFutbol se reserva el derecho de actualizar este documento en cualquier momento para adaptarlo a novedades legislativas o mejoras operativas.</p>
+      </div>
+
+      <!-- Zona de Checkbox -->
+      <div class="pf-checkbox-area mt-4">
         <p-checkbox [(ngModel)]="acepto" binary="true" inputId="aceptoTyc"></p-checkbox>
-        <label for="aceptoTyc" class="cursor-pointer font-medium text-primary">
+        <label for="aceptoTyc" class="cursor-pointer">
           Declaro haber leído, comprendido y acepto integralmente las Políticas de Privacidad y Términos de Uso.
         </label>
       </div>
 
-      <div class="actions">
-        <button pButton 
-                label="Rechazar y Salir" 
-                icon="pi pi-times" 
-                class="p-button-secondary p-button-outlined" 
-                (click)="rechazar()">
+      <!-- Botones de Acción -->
+      <div class="pf-terms-actions mt-4">
+        <button class="pf-btn-ghost w-full-mobile" (click)="rechazar()">
+          <i class="pi pi-times mr-2"></i> Rechazar y Salir
         </button>
-        <button pButton 
-                label="Aceptar y Continuar" 
-                icon="pi pi-check" 
-                class="p-button-primary"
-                [disabled]="!acepto" 
-                [loading]="guardando" 
-                (click)="confirmarAceptacion()">
+        <button class="pf-btn-primary w-full-mobile" [disabled]="!acepto" (click)="confirmarAceptacion()">
+          <i class="pi pi-check mr-2" *ngIf="!guardando"></i>
+          <i class="pi pi-spin pi-spinner mr-2" *ngIf="guardando"></i>
+          Aceptar y Continuar
         </button>
       </div>
-    </div>
 
+    </div>
   </div>
+
 </div>

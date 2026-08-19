@@ -1,0 +1,34 @@
+<div class="pf-ring">
+  <svg [attr.width]="size" [attr.height]="size" [attr.viewBox]="'0 0 ' + size + ' ' + size">
+    <circle
+      [attr.cx]="center"
+      [attr.cy]="center"
+      [attr.r]="radius"
+      [attr.stroke]="track"
+      [attr.stroke-width]="stroke"
+      fill="none"
+    ></circle>
+    <circle
+      class="pf-ring__progress"
+      [attr.cx]="center"
+      [attr.cy]="center"
+      [attr.r]="radius"
+      [attr.stroke]="color"
+      [attr.stroke-width]="stroke"
+      fill="none"
+      stroke-linecap="round"
+      [attr.stroke-dasharray]="circumference"
+      [attr.stroke-dashoffset]="offset"
+      [attr.transform]="'rotate(-90 ' + center + ' ' + center + ')'"
+    ></circle>
+    <text
+      x="50%"
+      y="53%"
+      text-anchor="middle"
+      class="pf-ring__value"
+      [attr.font-size]="size * 0.24"
+    >{{ displayValue }}</text>
+  </svg>
+
+  <div class="pf-ring__label" *ngIf="label">{{ label }}</div>
+</div>

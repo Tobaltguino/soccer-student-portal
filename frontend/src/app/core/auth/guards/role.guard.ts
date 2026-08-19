@@ -1,15 +1,15 @@
 import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
 import { AuthService } from '../services/auth.service';
-import { Role } from '../models/role.enum';
+import { Rol } from '../../../shared/enums/rol.enum';
 
 export const roleGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
   // Obtenemos los roles permitidos para esta ruta desde la configuración
-  const expectedRoles = route.data['roles'] as Array<Role>;
-  const userRole = authService.getUserRole() as Role;
+  const expectedRoles = route.data['roles'] as Array<Rol>;
+  const userRole = authService.getUserRole() as Rol;
 
   // Si el usuario no tiene un rol válido para esta vista, lo devolvemos al login
   if (!userRole || !expectedRoles.includes(userRole)) {

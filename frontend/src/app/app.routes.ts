@@ -3,7 +3,7 @@ import { Routes } from '@angular/router';
 // --- NUEVOS IMPORTS DE SEGURIDAD ---
 import { jwtGuard } from './core/auth/guards/jwt.guard';
 import { roleGuard } from './core/auth/guards/role.guard';
-import { Role } from './core/auth/models/role.enum';
+import { Rol } from './shared/enums/rol.enum';
 
 // --- HOME ---
 import { HomeComponent } from './features/home/home/home.component';
@@ -106,7 +106,7 @@ export const routes: Routes = [
         path: 'admin',
         component: LayoutComponent, // ✅ LAYOUT UNIFICADO
         canActivate: [jwtGuard, roleGuard], 
-        data: { roles: [Role.ADMIN] },      
+        data: { roles: [Rol.ADMINISTRADOR] },      
         children: [
             { path: 'dashboard', component: AdministradorDashboardComponent },
             { path: 'users', component: AdministradorUsuariosComponent },
@@ -132,7 +132,7 @@ export const routes: Routes = [
         path: 'student',
         component: LayoutComponent, // ✅ LAYOUT UNIFICADO
         canActivate: [jwtGuard, roleGuard], 
-        data: { roles: [Role.STUDENT] },
+        data: { roles: [Rol.ESTUDIANTE] },
         children: [
             { path: 'dashboard', component: EstudianteDashboardComponent },
             { path: 'schedule', component: EstudianteHorarioComponent },
@@ -156,7 +156,7 @@ export const routes: Routes = [
         path: 'professor',
         component: LayoutComponent, // ✅ LAYOUT UNIFICADO
         canActivate: [jwtGuard, roleGuard], 
-        data: { roles: [Role.PROFESSOR] },
+        data: { roles: [Rol.PROFESOR] },
         children: [
             { path: 'dashboard', component: ProfessorDashboardComponent },
             { path: 'attendance', component: ProfesorAsistenciasComponent },
@@ -180,7 +180,7 @@ export const routes: Routes = [
         path: 'kine',
         component: LayoutComponent, // ✅ LAYOUT UNIFICADO
         canActivate: [jwtGuard, roleGuard], 
-        data: { roles: [Role.KINE] },
+        data: { roles: [Rol.KINESIOLOGO] },
         children: [
             { path: 'dashboard', component: KinesiologoDashboardComponent },
             { path: 'classes', component: KinesiologoClasesComponent },
@@ -202,7 +202,7 @@ export const routes: Routes = [
         path: 'nutri',
         component: LayoutComponent, // ✅ LAYOUT UNIFICADO
         canActivate: [jwtGuard, roleGuard], 
-        data: { roles: [Role.NUTRI] },
+        data: { roles: [Rol.NUTRICIONISTA] },
         children: [
             { path: 'dashboard', component: NutricionistaDashboardComponent },
             { path: 'guides', component: NutricionistaMaterialComplementarioComponent},

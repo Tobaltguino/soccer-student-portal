@@ -5,28 +5,26 @@ import { Router } from '@angular/router';
 
 // PrimeNG
 import { CheckboxModule } from 'primeng/checkbox';
-import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
 // Servicios
 import { AuthService } from '../../core/auth/services/auth.service';
-// 👇 Importamos tu servicio dedicado (Ajusta la ruta según tu estructura de carpetas)
 import { AceptacionLegalService } from '../../core/domains/administracion/aceptaciones-legales/services/aceptaacion-legal.service';
 import { Rol } from '../../shared/enums/rol.enum';
 
 @Component({
   selector: 'app-terminos',
   standalone: true,
-  imports: [CommonModule, FormsModule, CheckboxModule, ButtonModule, ToastModule],
+  imports: [CommonModule, FormsModule, CheckboxModule, ToastModule],
   providers: [MessageService],
   templateUrl: './terminos.html',
-  styleUrls: ['./terminos.css']
+  styleUrls: ['./terminos.scss']
 })
 export class TerminosComponent implements OnInit {
   
   private authService = inject(AuthService);
-  private aceptacionLegalService = inject(AceptacionLegalService); // Inyectamos el servicio
+  private aceptacionLegalService = inject(AceptacionLegalService);
   private router = inject(Router);
   private messageService = inject(MessageService);
 
@@ -35,10 +33,13 @@ export class TerminosComponent implements OnInit {
   userRole: string | null = null;
 
   ngOnInit() {
-    // Obtenemos el perfil del usuario logueado para saber a dónde redirigirlo después
     this.authService.me().subscribe({
-      next: (user: any) => {
-        this.userRole = user.role; // O user.rol, según tu backend
+      next: (res: any) => {
+        // 🔥 SOLUCIÓN: Buscamos el rol en todas las formas posibles que tu backend pueda enviarlo
+        this.userRole = res.role || res.rol || res.user?.role || res.user?.rol; 
+        
+        // Imprimimos en consola para que puedas verificar que sí llegó
+        console.log('Rol detectado en Términos:', this.userRole);
       },
       error: () => {
         this.router.navigate(['/login']);
@@ -47,57 +48,85 @@ export class TerminosComponent implements OnInit {
   }
 
   confirmarAceptacion() {
-    if (!this.acepto || !this.userRole) return;
+    // Si no marcó la casilla, no hace nada (aunque el HTML ya bloquea el botón)
+    if (!this.acepto) return;
+
+    // 🔥 NUEVO: Si no detectó el rol, ya no falla en silencio, te avisa en pantalla.
+    if (!this.userRole) {
+      this.messageService.add({ 
+        severity: 'error', 
+        summary: 'Error de Perfil', 
+        detail: 'No pudimos detectar tu rol. Por favor, recarga la página o inicia sesión nuevamente.' 
+      });
+      return;
+    }
 
     this.guardando = true;
     
     const payload = {
-      versionTerminos: '1.0', // Puedes cambiar esto si en el futuro actualizas los términos
+      versionTerminos: '1.0', 
       versionPolitica: '1.0' 
     };
     
-    // Llamamos a tu servicio dedicado de aceptaciones legales
     this.aceptacionLegalService.aceptarTerminos(payload).subscribe({
       next: () => {
         this.messageService.add({ severity: 'success', summary: '¡Éxito!', detail: 'Términos aceptados correctamente.' });
         
-        // Esperamos 1 segundo para que el usuario vea el mensaje verde y redirigimos
         setTimeout(() => {
           this.redirigirPorRol(this.userRole!);
         }, 1000);
       },
       error: (err) => {
         this.guardando = false;
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo registrar la aceptación. Intente nuevamente.' });
-        console.error(err);
+        // Si el backend (NestJS/Supabase) falla, entrará aquí y verás el error
+        const mensajeError = err.error?.message || 'No se pudo registrar la aceptación. Intente nuevamente.';
+        this.messageService.add({ severity: 'error', summary: 'Error de Servidor', detail: mensajeError });
+        console.error('Error de BD:', err);
       }
     });
   }
 
   redirigirPorRol(rol: string) {
-    switch (rol) {
-      case Rol.ESTUDIANTE:
-        this.router.navigate(['/estudiante']); 
+    // Normalizamos a minúsculas por si el backend lo envía con mayúsculas
+    const rolNormalizado = rol ? rol.toLowerCase() : '';
+
+    switch (rolNormalizado) {
+      case Rol.ESTUDIANTE: // O 'student' según como evalúes tu enum
+      case 'student':
+      case 'estudiante':
+        this.router.navigate(['/student/dashboard']); 
         break;
+
       case Rol.PROFESOR:
-        this.router.navigate(['/profesor']);
+      case 'professor':
+      case 'profesor':
+        this.router.navigate(['/professor/dashboard']);
         break;
+
       case Rol.KINESIOLOGO:
-        this.router.navigate(['/salud/kinesiologia']);
+      case 'kine':
+      case 'kinesiologo':
+        this.router.navigate(['/kine/dashboard']);
         break;
+
       case Rol.NUTRICIONISTA:
-        this.router.navigate(['/salud/nutricion']);
+      case 'nutri':
+      case 'nutricionista':
+        this.router.navigate(['/nutri/dashboard']);
         break;
+
       case Rol.ADMINISTRADOR:
-        this.router.navigate(['/admin']);
+      case 'admin':
+      case 'administrador':
+        this.router.navigate(['/admin/dashboard']);
         break;
+
       default:
         this.router.navigate(['/']);
     }
   }
 
   rechazar() {
-    // Si rechaza, cerramos sesión y lo devolvemos al login
     this.authService.logout().subscribe(() => {
       this.router.navigate(['/login']);
     });

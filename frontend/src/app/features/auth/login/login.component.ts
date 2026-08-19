@@ -3,11 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
-// PrimeNG
-import { CardModule } from 'primeng/card';
-import { InputTextModule } from 'primeng/inputtext';
-import { PasswordModule } from 'primeng/password';
-import { ButtonModule } from 'primeng/button';
+// PrimeNG 
 import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
 import { MessageService } from 'primeng/api';
@@ -23,24 +19,18 @@ import { Rol } from '../../../shared/enums/rol.enum';
     CommonModule, 
     ReactiveFormsModule, 
     FormsModule,
-    CardModule, 
-    InputTextModule, 
-    PasswordModule, 
-    ButtonModule, 
     ToastModule, 
     DialogModule
   ],
   providers: [MessageService],
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  styleUrls: ['./login.component.scss']
 })
 export class LoginComponent implements OnInit {
   private fb = inject(FormBuilder);
-  private authService = inject(AuthService); // Conectado 100% a NestJS
+  private authService = inject(AuthService);
   private router = inject(Router);
   private messageService = inject(MessageService);
-
-  logoUrl: string = 'assets/images/ProFutbol_Transparentenegro.png';
 
   // Configuración del formulario
   loginForm: FormGroup = this.fb.group({
@@ -49,21 +39,17 @@ export class LoginComponent implements OnInit {
   });
 
   loading: boolean = false;
+  showPassword = false;
   
   // Variables para el modal de recuperación
   displayResetDialog: boolean = false;
   rutRecuperacion: string = '';
   loadingReset: boolean = false;
 
-  ngOnInit() {
-    this.checkTheme();
-  }
+  ngOnInit() {}
 
-  checkTheme() {
-    const isDark = document.body.classList.contains('dark-mode') || localStorage.getItem('theme') === 'dark';
-    this.logoUrl = isDark 
-      ? 'assets/images/ProFutbol_Transparenteblanco.png' 
-      : 'assets/images/ProFutbol_Transparentenegro.png';
+  togglePassword() {
+    this.showPassword = !this.showPassword;
   }
 
   ingresar() {
@@ -79,7 +65,6 @@ export class LoginComponent implements OnInit {
       next: (response) => {
         this.loading = false;
         
-        // ✨ EL GRAN CAMBIO: Evaluamos si necesita ir a términos o al dashboard
         if (response.user.necesitaAceptarTerminos) {
           this.router.navigate(['/terminos']);
         } else {
@@ -100,24 +85,43 @@ export class LoginComponent implements OnInit {
     });
   }
 
+  // 🔥 AQUÍ ESTÁ LA CORRECCIÓN: Rutas actualizadas a la versión en inglés con /dashboard 🔥
   private redirectByRole(rol: string): void {
-    switch (rol) {
+    const rolNormalizado = rol ? rol.toLowerCase() : '';
+
+    switch (rolNormalizado) {
       case Rol.ESTUDIANTE:
-        this.router.navigate(['/estudiante']); 
+      case 'student':
+      case 'estudiante':
+        this.router.navigate(['/student/dashboard']); 
         break;
+
       case Rol.PROFESOR:
-        this.router.navigate(['/profesor']);
+      case 'professor':
+      case 'profesor':
+        this.router.navigate(['/professor/dashboard']);
         break;
+
       case Rol.KINESIOLOGO:
-        this.router.navigate(['/salud/kinesiologia']);
+      case 'kine':
+      case 'kinesiologo':
+        this.router.navigate(['/kine/dashboard']);
         break;
+
       case Rol.NUTRICIONISTA:
-        this.router.navigate(['/salud/nutricion']);
+      case 'nutri':
+      case 'nutricionista':
+        this.router.navigate(['/nutri/dashboard']);
         break;
+
       case Rol.ADMINISTRADOR:
-        this.router.navigate(['/admin']);
+      case 'admin':
+      case 'administrador':
+        this.router.navigate(['/admin/dashboard']);
         break;
+
       default:
+        console.warn('Rol no reconocido en el login:', rol);
         this.router.navigate(['/']);
     }
   }
@@ -139,7 +143,6 @@ export class LoginComponent implements OnInit {
 
     this.loadingReset = true;
     
-    // Llamamos a nuestro backend en NestJS para gestionar la recuperación
     this.authService.recuperarPassword(this.rutRecuperacion).subscribe({
       next: (response) => {
         this.loadingReset = false;

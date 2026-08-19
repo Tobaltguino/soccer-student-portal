@@ -25,7 +25,7 @@ import { AuthService } from '../../../core/auth/services/auth.service';
   ],
   providers: [MessageService],
   templateUrl: './update-password.component.html',
-  styleUrls: ['./update-password.component.css']
+  styleUrls: ['./update-password.component.scss']
 })
 export class UpdatePasswordComponent {
   

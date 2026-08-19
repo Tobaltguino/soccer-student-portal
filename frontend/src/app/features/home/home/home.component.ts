@@ -2,25 +2,22 @@ import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
-// PrimeNG
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
+// Asegúrate de que estas rutas coincidan con tus componentes
+import { SplatterComponent } from '../../../shared/splatter/splatter.component';
 
-// Servicios de Dominio (Ajusta la ruta según tu proyecto)
+// Servicios de Dominio
 import { WebConfiguracionService } from '../../../core/domains/administracion/web/web-configuracion/services/web-configuracion.service';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, ButtonModule, TooltipModule],
+  imports: [CommonModule, SplatterComponent],
   templateUrl: './home.component.html',
-  styleUrls: ['./home.component.css']
+  styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
 
-  isDarkMode: boolean = false;
-  isScrolled: boolean = false;
-
+  // --- Inyección de dependencias ---
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
   private webConfigService = inject(WebConfiguracionService);
@@ -31,7 +28,7 @@ export class HomeComponent implements OnInit {
   telefonoAcademia = '+56 9 2372 1673';
   correoAcademia = 'profutbol@gmail.com';
 
-  linkInstagram = 'https://www.instagram.com/pro_futbol2026?igsh=ZWN2aDVvMW50dW15';
+  linkInstagram = 'https://www.instagram.com/pro_futbol2026';
   nombreInstagram = 'ProFutbol'; 
 
   linkFacebook = 'https://www.facebook.com/share/1BG7rABUks/';
@@ -39,37 +36,32 @@ export class HomeComponent implements OnInit {
 
   mensajeWhatsApp = 'Hola, vengo desde la página web y quiero información sobre la academia.';
   
-  heroTitulo = 'TU MEJOR VERSIÓN COMIENZA AQUÍ';
-  heroSubtitulo = 'Trabajamos con un grupo de profesionales expertos en el área para mejorar tu rendimiento deportivo de manera integral.';
+  heroTitulo = 'Se entrena el cuerpo.<br />Se entrena la <span class="pf-hero__accent">cabeza</span>.';
+  heroSubtitulo = 'Formamos niños y jóvenes de 8 a 16 años con un método que combina fútbol, acondicionamiento físico y trabajo cognitivo — respaldado por profesionales.';
 
   // ==========================================
-  // LISTAS POR DEFECTO (Con Colores Hexadecimales)
+  // LISTAS DINÁMICAS (Se llenarán con la BD)
   // ==========================================
   metodologias: any[] = [
-    { icono: 'pi-star-fill', color: '#3B82F6', titulo: 'Formación Técnica', descripcion: 'Entrenamientos planificados enfocados en el desarrollo técnico, táctico y cognitivo del jugador moderno.' },
-    { icono: 'pi-heart-fill', color: '#EF4444', titulo: 'Área Médica', descripcion: 'Acompañamiento constante de kinesiólogos y nutricionistas para prevenir lesiones y optimizar el rendimiento.' },
-    { icono: 'pi-desktop', color: '#8B5CF6', titulo: 'Tecnología ProFutbol', descripcion: 'Portal exclusivo donde jugadores y apoderados pueden ver estadísticas, evaluaciones e historial de asistencia.' }
+    { icono: 'pi-star-fill', titulo: 'Formación Técnica', descripcion: 'Entrenamientos planificados enfocados en el desarrollo técnico, táctico y cognitivo del jugador moderno.' },
+    { icono: 'pi-heart-fill', titulo: 'Área Médica', descripcion: 'Acompañamiento constante de kinesiólogos y nutricionistas para prevenir lesiones y optimizar el rendimiento.' },
+    { icono: 'pi-desktop', titulo: 'Tecnología ProFutbol', descripcion: 'Portal exclusivo donde jugadores y apoderados pueden ver estadísticas, evaluaciones e historial de asistencia.' }
   ];
 
   programas: any[] = [
-    { icono: 'pi-bolt', color: '#3B82F6', titulo: 'Iniciación (5 a 9 años)', descripcion: 'Enfoque en la psicomotricidad, el juego lúdico y los fundamentos básicos del fútbol. ¡Aprender jugando!' },
-    { icono: 'pi-directions', color: '#10B981', titulo: 'Formación (10 a 14 años)', descripcion: 'Desarrollo técnico específico, comprensión táctica y preparación física orientada al crecimiento.' },
-    { icono: 'pi-shield', color: '#F59E0B', titulo: 'Proyección (15 a 18 años)', descripcion: 'Alto rendimiento, exigencia física, apoyo nutricional y preparación para competencias exigentes.' }
+    { titulo: 'Iniciación (5 a 9 años)', descripcion: 'Enfoque en la psicomotricidad, el juego lúdico y los fundamentos básicos del fútbol.' },
+    { titulo: 'Formación (10 a 14 años)', descripcion: 'Desarrollo técnico específico, comprensión táctica y preparación física orientada al crecimiento.' },
+    { titulo: 'Proyección (15 a 18 años)', descripcion: 'Alto rendimiento, exigencia física, apoyo nutricional y preparación para competencias.' }
   ];
 
-  auspiciadores: any[] = [
-    { imagen_url: 'assets/images/default-sponsor.png', nombre: 'Barbería & Tattoo', descripcion: 'Descuentos en cortes para jugadores.', instagram_url: 'https://instagram.com' }
-  ];
+  auspiciadores: any[] = [];
+  alianzas: any[] = [];
 
-  alianzas: any[] = [
-    { imagen_url: 'assets/images/default-sponsor.png', nombre: 'SportFit Store', descripcion: '20% de descuento en zapatos de fútbol, canilleras e indumentaria deportiva para todos nuestros alumnos activos.' },
-    { imagen_url: 'assets/images/default-sponsor.png', nombre: 'Clínica Traumatológica', descripcion: 'Convenio con atención preferencial, urgencias sin costo de ingreso y descuentos en Rayos X y Resonancias.' }
-  ];
+  readonly navLinks = ['Metodología', 'Categorías', 'Auspiciadores', 'Beneficios'];
+  readonly currentYear = new Date().getFullYear();
 
   ngOnInit() {
-    this.checkThemePreference();
     this.cargarDatosDinamicos();
-    this.detectScroll();
   }
 
   // --- OBTENER DATOS DESDE EL ENDPOINT ---
@@ -88,17 +80,13 @@ export class HomeComponent implements OnInit {
           this.heroSubtitulo = res.configuracion.hero_subtitulo || this.heroSubtitulo;
         }
 
-        if (res.metodologias && res.metodologias.length > 0) this.metodologias = res.metodologias;
-        if (res.programas && res.programas.length > 0) this.programas = res.programas;
-        if (res.auspiciadores && res.auspiciadores.length > 0) this.auspiciadores = res.auspiciadores;
-        if (res.beneficios && res.beneficios.length > 0) this.alianzas = res.beneficios;
+        if (res.metodologias?.length > 0) this.metodologias = res.metodologias;
+        if (res.programas?.length > 0) this.programas = res.programas;
+        if (res.auspiciadores?.length > 0) this.auspiciadores = res.auspiciadores;
+        if (res.beneficios?.length > 0) this.alianzas = res.beneficios;
       },
-      error: (err) => {
-        console.error('Error cargando datos de la landing', err);
-      },
-      complete: () => {
-        this.cdr.detectChanges(); 
-      }
+      error: (err) => console.error('Error cargando datos de la landing', err),
+      complete: () => this.cdr.detectChanges()
     });
   }
 
@@ -108,60 +96,17 @@ export class HomeComponent implements OnInit {
     return `https://wa.me/${numeroLimpio}?text=${mensajeEncodeado}`;
   }
 
-  // --- EVENTO DE SCROLL PARA NAVBAR GLASSMORPHISM ---
-  detectScroll() {
-    window.addEventListener('scroll', () => {
-      this.isScrolled = window.scrollY > 50;
-    });
-  }
-
-  // --- MANEJO DE TEMA (DARK/LIGHT MODE) ---
-  checkThemePreference() {
-    const savedTheme = localStorage.getItem('theme');
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
-      this.enableDarkMode();
-    } else {
-      this.disableDarkMode();
-    }
-  }
-
-  toggleTheme() {
-    if (this.isDarkMode) {
-      this.disableDarkMode();
-    } else {
-      this.enableDarkMode();
-    }
-  }
-
-  enableDarkMode() {
-    this.isDarkMode = true;
-    document.body.classList.add('dark-mode'); 
-    localStorage.setItem('theme', 'dark');
-  }
-
-  disableDarkMode() {
-    this.isDarkMode = false;
-    document.body.classList.remove('dark-mode'); 
-    localStorage.setItem('theme', 'light');
-  }
-
-  // --- NAVEGACIÓN Y UTILIDADES ---
-  irAlLogin() {
-    this.router.navigate(['/login']);
-  }
-
-  scrollTo(sectionId: string) {
-    const element = document.getElementById(sectionId);
+  irAlLogin() { this.router.navigate(['/login']); }
+  irA(url: string) { if(url) window.open(url, '_blank'); }
+  
+  scrollTo(index: number) {
+    // Mapeo simple de los navLinks a los IDs de las secciones
+    const sections = ['metodologia', 'categorias', 'auspiciadores', 'beneficios'];
+    const element = document.getElementById(sections[index]);
     if (element) {
-      const navHeight = 80; // Compensación por la navbar fija
+      const navHeight = 80; 
       const elementPosition = element.getBoundingClientRect().top + window.scrollY;
       window.scrollTo({ top: elementPosition - navHeight, behavior: 'smooth' });
     }
-  }
-
-  irA(url: string) {
-    if(url) window.open(url, '_blank'); 
   }
 }

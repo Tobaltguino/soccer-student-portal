@@ -1,177 +1,243 @@
-<div class="home-wrapper fadein animation-duration-500">
-    
-    <!-- NAVBAR -->
-    <nav class="navbar" [ngClass]="{'is-scrolled': isScrolled}">
-        <div class="nav-container">
-            <div class="logo-container cursor-pointer" (click)="scrollTo('top')">
-                <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="Logo ProFutbol" class="logo-img logo-dark-mode">
-                <img src="assets/images/ProFutbol_Transparentenegro.png" alt="Logo ProFutbol" class="logo-img logo-light-mode">
-                <span class="brand-text">ProFutbol</span>
-            </div>
-            
-            <div class="nav-links hidden-mobile">
-                <a (click)="scrollTo('nosotros')">Metodología</a>
-                <a (click)="scrollTo('programas')">Categorías</a>
-                <a (click)="scrollTo('auspiciadores')">Auspiciadores</a>
-                <a (click)="scrollTo('beneficios')">Beneficios</a>
-            </div>
+<div class="pf-home">
 
-            <div class="nav-actions flex align-items-center gap-3">
-                <button pButton 
-                        [icon]="isDarkMode ? 'pi pi-sun' : 'pi pi-moon'" 
-                        class="p-button-rounded p-button-text p-button-secondary theme-toggle-btn" 
-                        (click)="toggleTheme()"
-                        aria-label="Cambiar tema">
-                </button>
-                <button pButton label="Portal Profutbol" icon="pi pi-user" class="p-button-outlined btn-portal" (click)="irAlLogin()"></button>
-            </div>
-        </div>
-    </nav>
+  <!-- NAV -->
+  <header class="pf-nav">
+    <div class="pf-container pf-nav__row">
+      <div class="pf-nav__brand">
+        <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="Pro Fútbol" class="pf-nav__logo" />
+        <span class="pf-anton pf-nav__title">PRO FÚTBOL</span>
+      </div>
 
-    <!-- HERO SECTION -->
-    <header id="top" class="hero-section">
-        <div class="hero-overlay"></div> 
-        <div class="hero-bg-pattern"></div>
+      <nav class="pf-nav__links pf-hide-mobile">
+        <a *ngFor="let l of navLinks; let i = index" (click)="scrollTo(i)" class="pf-oswald cursor-pointer">{{ l }}</a>
+      </nav>
+
+      <div class="pf-nav__actions">
+        <!-- 1. Texto de Portal (Solo visible en PC) -->
+        <a (click)="irAlLogin()" class="pf-oswald pf-hide-mobile pf-nav__portal-link cursor-pointer">Portal ProFútbol</a>
         
-        <div class="hero-content fade-in-up">
-            <span class="badge">Evolución Deportiva Integral</span>
-            <h1 class="hero-title text-wrap" [innerHTML]="heroTitulo"></h1>
-            <p class="hero-subtitle text-wrap">{{heroSubtitulo}}</p>
-            
-            <div class="hero-buttons">
-                <button pButton label="Únete a Nosotros" icon="pi pi-whatsapp" class="btn-hero btn-hero-primary" (click)="irA(linkWhatsApp)"></button>
-                <button pButton label="Descubre Más" icon="pi pi-arrow-down" class="btn-hero btn-hero-secondary" (click)="scrollTo('nosotros')"></button>
-            </div>
+        <!-- 2. Botón Contáctanos (Solo visible en PC) -->
+        <button class="pf-btn-primary pf-nav__cta pf-hide-mobile" (click)="irA(linkWhatsApp)">Contáctanos</button>
+
+        <!-- 3. Botón de Portal (Solo visible en Celular) -->
+        <button class="pf-btn-primary pf-nav__cta pf-hide-desktop" (click)="irAlLogin()">
+          <i class="pi pi-user mr-2"></i> Portal
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="pf-hero">
+    <div class="pf-hero__ring-bg pf-hero__ring-bg--outer"></div>
+    <div class="pf-hero__ring-bg pf-hero__ring-bg--inner"></div>
+
+    <div class="pf-container pf-hero__grid">
+      <div>
+        <div class="pf-eyebrow pf-oswald">
+          <span class="pf-eyebrow__line"></span>
+           Pro Fútbol — Arica
         </div>
-    </header>
 
-    <!-- METODOLOGÍA -->
-    <section id="nosotros" class="info-section">
-        <div class="section-container">
-            <div class="section-header mb-6">
-                <span class="section-eyebrow">Nuestro Enfoque</span>
-                <h2 class="section-title text-wrap">Metodología de Alto Rendimiento</h2>
-                <p class="section-desc text-wrap">No solo formamos jugadores, construimos atletas integrales respaldados por ciencia, tecnología y profesionales de élite.</p>
-            </div>
+        <h1 class="pf-anton pf-hero__title" [innerHTML]="heroTitulo"></h1>
+        <p class="pf-hero__lead">{{ heroSubtitulo }}</p>
 
-            <div class="universal-grid">
-                <div class="feature-card main-card" *ngFor="let m of metodologias" [style.--dynamic-color]="m.color || '#3B82F6'">
-                    <div class="icon-wrapper" [style.color]="m.color || '#3B82F6'" [style.backgroundColor]="(m.color || '#3B82F6') + '26'">
-                        <i class="pi {{ m.icono }}"></i>
-                    </div>
-                    <h3 class="text-wrap">{{ m.titulo }}</h3>
-                    <p class="text-wrap">{{ m.descripcion }}</p>
-                </div>
-            </div>
+        <div class="pf-hero__actions">
+          <button class="pf-btn-primary" (click)="irA(linkWhatsApp)">Agendar clase de prueba</button>
+          <button class="pf-btn-ghost" (click)="scrollTo(1)">Ver programas por edad</button>
         </div>
-    </section>
 
-    <!-- CATEGORÍAS (Programas unificados al mismo estilo) -->
-    <section id="programas" class="programs-section">
-        <div class="section-container">
-            <div class="section-header mb-6">
-                <span class="section-eyebrow">Formación por Etapas</span>
-                <h2 class="section-title text-wrap">Nuestras Categorías</h2>
-                <p class="section-desc text-wrap">Adaptamos nuestra metodología a las diferentes etapas del desarrollo físico, cognitivo y técnico de cada jugador.</p>
-            </div>
-
-            <div class="universal-grid">
-                <!-- Usamos la misma clase feature-card de metodología -->
-                <div class="feature-card main-card flex flex-column" *ngFor="let p of programas" [style.--dynamic-color]="p.color || '#3B82F6'">
-                    <div class="icon-wrapper" [style.color]="p.color || '#3B82F6'" [style.backgroundColor]="(p.color || '#3B82F6') + '26'">
-                        <i class="pi {{ p.icono }}"></i>
-                    </div>
-                    <h3 class="text-wrap">{{ p.titulo }}</h3>
-                    <p class="text-wrap flex-grow-1">{{ p.descripcion }}</p>
-                </div>
-            </div>
+        <div class="pf-hero__stats">
+          <div>
+            <div class="pf-anton pf-hero__stat-value">9 – +18</div>
+            <div class="pf-oswald pf-hero__stat-label">años, tres categorías</div>
+          </div>
+          <div>
+            <div class="pf-anton pf-hero__stat-value">2</div>
+            <div class="pf-oswald pf-hero__stat-label">áreas: física y cognitiva</div>
+          </div>
+          <div>
+            <div class="pf-anton pf-hero__stat-value">3</div>
+            <div class="pf-oswald pf-hero__stat-label">tipos de profesional en cancha</div>
+          </div>
         </div>
-    </section>
+      </div>
 
-    <!-- AUSPICIADORES (Unificados al mismo estilo) -->
-    <section id="auspiciadores" class="info-section">
-        <div class="section-container">
-            <div class="section-header mb-6">
-                <span class="section-eyebrow">Quienes Confían en Nosotros</span>
-                <h2 class="section-title text-wrap">Nuestros Auspiciadores</h2>
-                <p class="section-desc text-wrap">Gracias al constante apoyo de estas grandes marcas e instituciones, seguimos impulsando el talento deportivo.</p>
-            </div>
-
-            <div class="universal-grid">
-                <!-- Usamos feature-card para mantener la misma caja -->
-                <div class="feature-card main-card flex flex-column h-full" *ngFor="let au of auspiciadores">
-                    <div class="sponsor-logo-wrapper mb-4 mt-2">
-                        <img [src]="au.imagen_url || 'assets/images/default-sponsor.png'" [alt]="au.nombre" class="sponsor-logo bw-filter">
-                    </div>
-                    <h3 class="text-wrap">{{ au.nombre }}</h3>
-                    <p class="text-wrap flex-grow-1">{{ au.descripcion }}</p>
-                    
-                    <div class="mt-4" *ngIf="au.instagram_url">
-                        <button pButton label="Ver Instagram" icon="pi pi-instagram" 
-                                class="btn-instagram w-full justify-content-center" 
-                                (click)="irA(au.instagram_url)">
-                        </button>
-                    </div>
-                </div>
-            </div>
+      <div class="pf-hero__badge-wrap">
+        <div class="pf-hero__badge">
+          <div class="pf-hero__badge-glow"></div>
+          <svg class="pf-hero__badge-ring" width="320" height="320" viewBox="0 0 320 320">
+            <circle cx="160" cy="160" r="150" fill="none" stroke="rgba(234,242,240,0.14)" stroke-width="1" />
+            <circle
+              cx="160" cy="160" r="150" fill="none"
+              stroke="var(--pf-teal)" stroke-width="2"
+              stroke-dasharray="6 10" stroke-linecap="round"
+              class="pf-hero__badge-ring-anim"
+            />
+          </svg>
+          <div class="pf-hero__badge-center">
+            <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="Pro Fútbol" />
+          </div>
         </div>
-    </section>
+      </div>
+    </div>
+  </section>
 
-    <!-- BENEFICIOS / ALIANZAS (Unificados al mismo estilo) -->
-    <section id="beneficios" class="programs-section">
-        <div class="section-container">
-            <div class="section-header mb-6">
-                <span class="section-eyebrow">Ventajas Exclusivas</span>
-                <h2 class="section-title text-wrap">Alianzas y Beneficios</h2>
-                <p class="section-desc text-wrap">Trabajamos con las mejores instituciones para ofrecer beneficios de salud, equipamiento y bienestar a nuestras familias.</p>
-            </div>
+  <!-- 🔥 METODOLOGÍA: PILARES FÍSICO / COGNITIVO RESTAURADOS 🔥 -->
+  <section id="metodologia" class="pf-section pf-section--bordered">
+    <div class="pf-container">
+      <div class="pf-section__head">
+        <h2 class="pf-anton">Nuestro Enfoque y Metodología</h2>
+        <p class="pf-section__lead">Entrenamiento integral respaldado por ciencia, tecnología y profesionales de élite en cada etapa de tu formación.</p>
+      </div>
 
-            <div class="universal-grid">
-                <div class="feature-card main-card flex flex-column h-full" *ngFor="let a of alianzas">
-                    <div class="sponsor-logo-wrapper mb-4 mt-2">
-                        <img [src]="a.imagen_url || 'assets/images/default-sponsor.png'" [alt]="a.nombre" class="sponsor-logo bw-filter">
-                    </div>
-                    <h3 class="text-wrap">{{ a.nombre }}</h3>
-                    <p class="text-wrap flex-grow-1">{{ a.descripcion }}</p>
-                </div>
-            </div>
+      <div class="pf-pillars">
+        <div class="pf-card pf-pillar" *ngFor="let m of metodologias; let i = index">
+          
+          <pf-splatter class="pf-pillar__splatter" 
+                       [ngClass]="i % 2 === 0 ? 'pf-pillar__splatter--teal' : 'pf-pillar__splatter--lime'" 
+                       [opacityValue]="i % 2 === 0 ? 0.5 : 0.35">
+          </pf-splatter>
+          
+          <span class="pf-oswald pf-pillar__eyebrow" 
+                [ngClass]="i % 2 === 0 ? 'pf-pillar__eyebrow--teal' : 'pf-pillar__eyebrow--lime'">
+            Pilar {{ i + 1 }}
+          </span>
+          
+          <h3 class="pf-anton pf-pillar__title">{{ m.titulo }}</h3>
+          <p class="pf-pillar__desc">{{ m.descripcion }}</p>
+          
+          <ul class="pf-pillar__list" style="margin-top: 24px;">
+            <li>
+              <span class="pf-pillar__dot" [ngClass]="i % 2 === 0 ? 'pf-pillar__dot--teal' : 'pf-pillar__dot--lime'">●</span>
+              <i class="pi {{ m.icono }} mr-2"></i> Integrado a nuestro ecosistema
+            </li>
+          </ul>
+
         </div>
-    </section>
+      </div>
+    </div>
+  </section>
 
-    <!-- FOOTER -->
-    <footer id="contacto" class="footer-section">
-        <div class="section-container footer-container">
-            <div class="footer-brand">
-                <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="Logo" class="footer-logo mb-3">
-                <p class="text-wrap">Cambiando la forma de vivir el fútbol formativo. Únete a la evolución deportiva y alcanza tu máximo potencial.</p>
-            </div>
-            
-            <div class="footer-links">
-                <h4>Contacto</h4>
-                <p class="text-wrap"><i class="pi pi-whatsapp mr-3 text-xl text-primary"></i> {{telefonoAcademia}}</p>
-                <p class="text-wrap"><i class="pi pi-envelope mr-3 text-xl text-primary"></i> {{correoAcademia}}</p>
-            </div>
+  <!-- PROGRAMAS POR EDAD (Dinámicos) -->
+  <section id="categorias" class="pf-section pf-section--bordered pf-section--tint">
+    <div class="pf-container">
+      <h2 class="pf-anton pf-section__title-standalone">Categorías por edad</h2>
 
-            <div class="footer-links social-column">
-                <h4>Comunidad</h4>
-                <p class="mb-3 text-sm text-400">Descubre nuestro día a día</p>
-                
-                <div class="social-list mt-3">
-                    <div class="social-item cursor-pointer" (click)="irA(linkInstagram)">
-                        <div class="icon-circle"><i class="pi pi-instagram text-xl"></i></div>
-                        <span class="social-name text-wrap">{{nombreInstagram}}</span>
-                    </div>
-
-                    <div class="social-item cursor-pointer" (click)="irA(linkFacebook)">
-                        <div class="icon-circle"><i class="pi pi-facebook text-xl"></i></div>
-                        <span class="social-name text-wrap">{{nombreFacebook}}</span>
-                    </div>
-                </div>
-            </div>
+      <div class="pf-grid-3">
+        <div class="pf-card pf-program" *ngFor="let p of programas">
+          <div class="pf-mono pf-program__cat">Categoría Formativa</div>
+          <h3 class="pf-anton pf-program__foco">{{ p.titulo }}</h3>
+          <p class="pf-program__detalle">{{ p.descripcion }}</p>
         </div>
-        
-        <div class="footer-bottom">
-            <p>&copy; 2026 ProFutbol. Todos los derechos reservados.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- AUSPICIADORES -->
+  <section id="auspiciadores" class="pf-section pf-section--bordered" *ngIf="auspiciadores.length > 0">
+    <div class="pf-container">
+      <div class="pf-section__head">
+        <h2 class="pf-anton">Nuestros Auspiciadores</h2>
+        <p class="pf-section__lead">Gracias al constante apoyo de estas grandes marcas e instituciones, seguimos impulsando el talento deportivo.</p>
+      </div>
+
+      <div class="pf-grid-3">
+        <div class="pf-card pf-staff h-full flex flex-column" *ngFor="let au of auspiciadores">
+          <img [src]="au.imagen_url || 'assets/images/default-sponsor.png'" [alt]="au.nombre" style="height: 50px; object-fit: contain; filter: grayscale(1) invert(1); opacity: 0.8; margin-bottom: 1rem; align-self: flex-start;">
+          
+          <div class="flex-grow-1">
+            <h3 class="pf-anton pf-staff__title">{{ au.nombre }}</h3>
+            <p class="pf-staff__desc">{{ au.descripcion }}</p>
+          </div>
+
+          <div class="mt-4" *ngIf="au.instagram_url">
+            <button class="pf-btn-instagram" (click)="irA(au.instagram_url)">
+              <i class="pi pi-instagram"></i> Ver Instagram
+            </button>
+          </div>
         </div>
-    </footer>
+      </div>
+    </div>
+  </section>
+
+  <!-- BENEFICIOS / ALIANZAS -->
+  <section id="beneficios" class="pf-section pf-section--bordered pf-section--tint" *ngIf="alianzas.length > 0">
+    <div class="pf-container">
+      <div class="pf-section__head">
+        <h2 class="pf-anton">Alianzas y Beneficios</h2>
+        <p class="pf-section__lead">Ventajas exclusivas en equipamiento, salud y bienestar para todos nuestros alumnos activos.</p>
+      </div>
+
+      <div class="pf-grid-3">
+        <div class="pf-card pf-staff h-full flex flex-column" *ngFor="let a of alianzas">
+          <div class="flex-grow-1">
+            <h3 class="pf-anton pf-staff__title" style="color: var(--pf-lime);">{{ a.nombre }}</h3>
+            <p class="pf-staff__desc">{{ a.descripcion }}</p>
+          </div>
+
+          <div class="mt-4" *ngIf="a.instagram_url">
+            <button class="pf-btn-instagram" (click)="irA(a.instagram_url)">
+              <i class="pi pi-instagram"></i> Ver Instagram
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FRANJA TEAL -->
+  <section class="pf-cta">
+    <pf-splatter class="pf-cta__splatter" [opacityValue]="0.5"></pf-splatter>
+    <div class="pf-container pf-cta__row">
+      <h2 class="pf-anton pf-cta__title">¿Quieres entrenar con nosotros?</h2>
+      <button class="pf-btn-primary" style="background: var(--pf-black); color: var(--pf-chalk);" (click)="irA(linkWhatsApp)">Contáctanos ahora</button>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="pf-footer">
+    <div class="pf-container">
+      <div class="pf-footer__grid">
+        <div>
+          <div class="pf-footer__brand">
+            <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="Pro Fútbol" />
+            <span class="pf-anton">PRO FÚTBOL</span>
+          </div>
+          <p class="pf-footer__tagline">Entrenamiento físico y cognitivo integral. Arica.</p>
+        </div>
+
+        <div>
+          <div class="pf-oswald pf-footer__col-title">Academia</div>
+          <ul class="pf-footer__list">
+            <li><a (click)="scrollTo(0)" class="cursor-pointer">Metodología</a></li>
+            <li><a (click)="scrollTo(1)" class="cursor-pointer">Categorías por edad</a></li>
+            <li><a (click)="irA(linkWhatsApp)" class="cursor-pointer">Clase de prueba</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="pf-oswald pf-footer__col-title">Portal</div>
+          <ul class="pf-footer__list">
+            <li><a (click)="irAlLogin()" class="cursor-pointer">Iniciar sesión</a></li>
+            <li><a class="cursor-pointer">Profesores y Staff Médico</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="pf-oswald pf-footer__col-title">Contacto</div>
+          <ul class="pf-footer__list">
+            <li><a (click)="irA(linkWhatsApp)" class="cursor-pointer"><i class="pi pi-whatsapp mr-2"></i>{{ telefonoAcademia }}</a></li>
+            <li><a (click)="irA(linkInstagram)" class="cursor-pointer"><i class="pi pi-instagram mr-2"></i>{{ nombreInstagram }}</a></li>
+            <li><a (click)="irA(linkFacebook)" class="cursor-pointer"><i class="pi pi-facebook mr-2"></i>{{ nombreFacebook }}</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pf-footer__bottom">
+        © {{ currentYear }} Pro Fútbol — Evolución Deportiva.
+      </div>
+    </div>
+  </footer>
+
 </div>

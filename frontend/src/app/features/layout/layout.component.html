@@ -8,8 +8,8 @@
                     <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="ProFutbol Logo" style="width: 100%; height: 100%; object-fit: contain;">
                 </div>
                 <div class="brand-text">
-                    <h2>ProFutbol</h2>
-                    <span>{{ userRole | uppercase }} PANEL</span>
+                    <h2 class="pf-anton">PRO FÚTBOL</h2>
+                    <span class="pf-oswald">{{ userRole | uppercase }} PANEL</span>
                 </div>
             </div>
             <button class="toggle-btn desktop-only" (click)="toggleSidebar()">
@@ -21,10 +21,10 @@
         </div>
 
         <!-- ✅ MENÚ DINÁMICO -->
-        <nav class="menu">
+        <nav class="menu custom-scrollbar">
             <ng-container *ngFor="let group of menuGroups">
-                <!-- Título del grupo de menú (Oculto para "PRINCIPAL" si lo deseas, o mostrado siempre) -->
-                <div class="menu-label system" [class.mt-4]="group.label !== 'PRINCIPAL'">{{ group.label }}</div>
+                <!-- Título del grupo de menú -->
+                <div class="menu-label system pf-oswald" [class.mt-4]="group.label !== 'PRINCIPAL'">{{ group.label }}</div>
                 
                 <!-- Items del menú -->
                 <a *ngFor="let item of group.items" class="menu-item" [routerLink]="item.route" routerLinkActive="active-link" (click)="closeMobileMenu()">
@@ -37,7 +37,7 @@
         <div class="sidebar-footer">
             <button class="logout-btn" (click)="logout()">
                 <i class="pi pi-sign-out"></i>
-                <span>Cerrar Sesión</span>
+                <span class="pf-oswald">CERRAR SESIÓN</span>
             </button>
         </div>
     </aside>
@@ -47,13 +47,14 @@
             <button class="mobile-menu-btn" (click)="toggleMobileMenu()">
                 <i class="pi pi-bars"></i>
             </button>
+            
             <div class="header-right">
                 <button class="theme-toggle-btn" (click)="toggleTheme()" [title]="isDarkMode ? 'Modo Claro' : 'Modo Oscuro'">
                     <i class="pi" [class.pi-moon]="!isDarkMode" [class.pi-sun]="isDarkMode"></i>
                 </button>
                 <div class="user-profile">
                     <div class="user-info">
-                        <span class="name">{{ userName }}</span>
+                        <span class="name pf-oswald">{{ userName }}</span>
                         <span class="role">{{ userRole | titlecase }}</span>
                     </div>
 
@@ -63,7 +64,7 @@
                             alt="Perfil" 
                             class="avatar-img">
 
-                        <div *ngIf="!userPhotoUrl" class="avatar-initials">
+                        <div *ngIf="!userPhotoUrl" class="avatar-initials pf-anton">
                             {{ userInitial }}
                         </div>
                     </div>
@@ -71,7 +72,7 @@
             </div>
         </header>
 
-        <div class="page-content">
+        <div class="page-content custom-scrollbar">
             <!-- AQUÍ RENDERIZAN LOS COMPONENTES HIJOS -->
             <router-outlet></router-outlet>
         </div>

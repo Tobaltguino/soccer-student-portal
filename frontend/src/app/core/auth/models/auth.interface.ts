@@ -1,4 +1,4 @@
-import { Role } from './role.enum'; // Importamos el enum
+import { Rol } from "../../../shared/enums/rol.enum";
 
 export interface LoginCredentials {
   rut: string;
@@ -13,7 +13,7 @@ export interface AuthResponse {
     id: string;
     email: string;
     rut: string;
-    role: Role;
+    role: Rol;
     necesitaAceptarTerminos: boolean; 
   };
 }
