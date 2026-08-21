@@ -13,7 +13,7 @@
         <button pButton label="Nuevo Grupo" icon="pi pi-plus" class="pf-btn-primary" (click)="abrirNuevo()"></button>
     </header>
 
-    <div class="pf-admin-card table-responsive">
+    <div class="pf-admin-card table-responsive p-0">
         <p-table [value]="grupos" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm pf-table">
             <ng-template pTemplate="header">
                 <tr>
@@ -27,20 +27,18 @@
                 <tr>
                     <td>
                         <span class="pf-anton text-chalk" style="font-size: 16px; letter-spacing: 1px;">{{ grupo.nombre }}</span>
-                        <div class="mobile-desc visible-mobile" *ngIf="grupo.descripcion">{{ grupo.descripcion }}</div>
+                        <div class="mobile-desc visible-mobile text-steel text-sm mt-1" *ngIf="grupo.descripcion">{{ grupo.descripcion }}</div>
                     </td>
                     
                     <td class="text-center">
-                        <span class="pf-badge" [ngClass]="grupo.cantidad_alumnos > 0 ? 'badge-success' : 'badge-normal'">
-                            {{ grupo.cantidad_alumnos }} {{ grupo.cantidad_alumnos === 1 ? 'Alumno' : 'Alumnos' }}
-                        </span>
+                        <p-tag [severity]="grupo.cantidad_alumnos > 0 ? 'success' : 'secondary'" 
+                               [value]="grupo.cantidad_alumnos + (grupo.cantidad_alumnos === 1 ? ' Alumno' : ' Alumnos')"></p-tag>
                     </td>
 
                     <td class="hidden-mobile text-steel">{{ grupo.descripcion || 'Sin descripción' }}</td>
                     
                     <td class="text-center">
                         <div class="pf-table-actions">
-                            <!-- 🔥 Tooltips agregados aquí 🔥 -->
                             <button pButton icon="pi pi-pencil" class="p-button-warning" 
                                     (click)="abrirEditar(grupo)" pTooltip="Editar Grupo"></button>
                             <button pButton icon="pi pi-trash" class="p-button-danger" 
@@ -61,23 +59,30 @@
     </div>
 
     <!-- MODAL DE FORMULARIO -->
-    <p-dialog [(visible)]="displayDialog" [header]="tituloDialogo" [modal]="true" [style]="{width: '90vw', maxWidth: '450px'}" styleClass="p-fluid pf-dialog">
+    <!-- 🔥 Se bloquea la X de cerrar si está guardando 🔥 -->
+    <p-dialog [(visible)]="displayDialog" [header]="tituloDialogo" [modal]="true" [style]="{width: '90vw', maxWidth: '450px'}" styleClass="p-fluid pf-dialog" [closable]="!guardando">
         <ng-template pTemplate="content">
             <div class="flex flex-column pt-3">
                 <div class="pf-field-group">
                     <label class="pf-oswald">Nombre del Grupo <span class="text-pink-500 font-bold">*</span></label>
-                    <input pInputText [(ngModel)]="grupoForm.nombre" placeholder="Ej: Sub-17 A" />
+                    <input pInputText [(ngModel)]="grupoForm.nombre" placeholder="Ej: Sub-17 A" [disabled]="guardando" />
                 </div>
                 <div class="pf-field-group">
                     <label class="pf-oswald">Descripción</label>
-                    <textarea pTextarea [(ngModel)]="grupoForm.descripcion" rows="4" placeholder="Detalles opcionales..."></textarea>
+                    <textarea pTextarea [(ngModel)]="grupoForm.descripcion" rows="4" placeholder="Detalles opcionales..." [disabled]="guardando"></textarea>
                 </div>
             </div>
         </ng-template>
         <ng-template pTemplate="footer">
-            <button pButton label="Cancelar" icon="pi pi-times" class="pf-btn-ghost" (click)="displayDialog = false"></button>
-            <button pButton label="Guardar" icon="pi pi-check" class="pf-btn-primary ml-2" (click)="guardarGrupo()"></button>
+            <button pButton label="Cancelar" icon="pi pi-times" class="pf-btn-ghost" (click)="displayDialog = false" [disabled]="guardando"></button>
+            <button pButton label="Guardar" icon="pi pi-check" class="pf-btn-primary ml-2" (click)="guardarGrupo()" [loading]="guardando"></button>
         </ng-template>
     </p-dialog>
+
+    <!-- 🔥 OVERLAY DE CARGA GLOBAL DE PANTALLA COMPLETA 🔥 -->
+    <div class="pf-loading-overlay fadein" *ngIf="guardando">
+        <div class="pf-spinner"></div>
+        <div class="pf-loading-text">Guardando...</div>
+    </div>
 
 </div>

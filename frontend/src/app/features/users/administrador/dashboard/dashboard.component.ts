@@ -22,7 +22,7 @@ export class AdministradorDashboardComponent implements OnInit {
   
   private authService = inject(AuthService);
   private estudianteService = inject(EstudianteService);
-  private usuarioService = inject(UsuarioService); // Para cumpleaños
+  private usuarioService = inject(UsuarioService); 
   private clasesService = inject(ClaseService);
   private historialClinicoService = inject(HistorialClinicoService);
   private evaluacionSesionService = inject(SesionEvaluacionService);
@@ -39,9 +39,10 @@ export class AdministradorDashboardComponent implements OnInit {
   pacientesEnObservacion: number = 0;
   pacientesEnReintegro: number = 0;
 
-  ultimaEvaluacion: any = null; // 🔥 Reemplaza actividadReciente
+  ultimaEvaluacion: any = null; 
   cumpleanosList: any[] = [];    
   
+  // 🔥 Variable que controlará el bloqueo de pantalla
   loading: boolean = true;
   apiStatus: 'online' | 'offline' | 'checking' = 'checking'; 
 
@@ -77,19 +78,20 @@ export class AdministradorDashboardComponent implements OnInit {
   // CARGA DE DATOS (Ultra Optimizada)
   // ==========================================
   async cargarDatos() {
+    // Activa el overlay de carga
     this.loading = true;
     this.cdr.detectChanges();
 
     try {
-      // 1. Total Estudiantes Activos (ultra rápido)
+      // 1. Total Estudiantes Activos 
       const resCount = await firstValueFrom(this.estudianteService.contarEstudiantesActivos());
       this.totalEstudiantes = resCount?.total || 0;
 
-      // 2. Cumpleaños Globales (el backend procesa las fechas y roles)
+      // 2. Cumpleaños Globales 
       const resCumples = await firstValueFrom(this.usuarioService.obtenerCumpleanosGlobales(7));
       this.cumpleanosList = resCumples || [];
 
-      // 3. Kinesiología: Stats ya calculadas desde NestJS
+      // 3. Kinesiología
       const statsKine = await firstValueFrom(this.historialClinicoService.obtenerEstadisticasDashboard());
       if (statsKine) {
         this.pacientesEnTratamiento = statsKine.enTratamiento || 0;
@@ -108,12 +110,15 @@ export class AdministradorDashboardComponent implements OnInit {
     } catch (error) {
       console.error('Error Admin Dashboard:', error);
     } finally {
+      // Pase lo que pase (éxito o error), quita el bloqueo
       this.loading = false;
       this.cdr.detectChanges();
     }
   }
 
   async refrescar() {
+    if (this.loading) return; // Evitar doble recarga
+
     await this.verificarConexion();
     if (this.apiStatus === 'online') {
       await this.cargarDatos();

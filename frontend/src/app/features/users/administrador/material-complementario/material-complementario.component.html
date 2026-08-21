@@ -48,7 +48,6 @@
                     <td class="text-center">
                         <span class="p-column-title pf-oswald text-steel hidden-desktop">Acciones:</span>
                         <div class="pf-table-actions">
-                            <!-- Botón Azul para Descargar -->
                             <a [href]="guia.archivo_url" target="_blank" class="no-underline">
                                 <button pButton icon="pi pi-download" class="p-button-info" pTooltip="Descargar"></button>
                             </a>
@@ -106,27 +105,30 @@
                     </div>
                 </div>
 
-                <!-- Caja de Upload Customizada -->
-                <div class="pf-file-upload-container text-center cursor-pointer" 
+                <!-- 🔥 CAJA DE UPLOAD ARREGLADA 🔥 -->
+                <div class="pf-file-upload-container text-center cursor-pointer flex flex-column align-items-center justify-content-center" 
                      (click)="fileInput.click()" 
                      [class.opacity-50]="subiendoArchivo"
                      [class.pointer-events-none]="subiendoArchivo"
                      [ngClass]="{'mt-2': nuevaGuia.id && nuevaGuia.archivo_url}">
                     
-                    <input type="file" #fileInput class="hidden" (click)="$event.stopPropagation()" (change)="onFileSelect($event)" accept=".pdf,.doc,.docx,.jpg,.png" [disabled]="subiendoArchivo">
+                    <!-- Ocultamos el input nativo con style en lugar de class -->
+                    <input type="file" #fileInput style="display: none;" (click)="$event.stopPropagation()" (change)="onFileSelect($event)" accept=".pdf,.doc,.docx,.jpg,.png" [disabled]="subiendoArchivo">
                     
-                    <div *ngIf="!archivoSeleccionado">
-                        <i class="pi" [ngClass]="nuevaGuia.id ? 'pi-cloud-upload text-blue-400' : 'pi-cloud-upload text-teal'" class="text-4xl mb-2"></i>
-                        <div class="text-chalk font-medium">
-                            {{ nuevaGuia.id ? 'Haz clic para seleccionar un archivo nuevo y reemplazar el actual' : 'Haz clic aquí para seleccionar un archivo' }}
+                    <div *ngIf="!archivoSeleccionado" class="flex flex-column align-items-center">
+                        <!-- Clases del icono unificadas -->
+                        <i class="pi text-5xl mb-3" [ngClass]="nuevaGuia.id ? 'pi-cloud-upload text-blue-400' : 'pi-cloud-upload text-teal'"></i>
+                        <div class="text-chalk font-bold text-lg mb-1">
+                            {{ nuevaGuia.id ? 'Reemplazar archivo actual' : 'Haz clic para seleccionar un archivo' }}
                         </div>
-                        <div class="text-steel text-sm mt-1">PDF, Word o Imágenes (Máximo 20MB)</div>
+                        <div class="text-steel text-sm font-medium">PDF, Word o Imágenes (Máximo 20MB)</div>
                     </div>
 
                     <div *ngIf="archivoSeleccionado" class="flex flex-column align-items-center">
-                        <i class="pi pi-check-circle text-4xl text-lime mb-2"></i>
-                        <div class="text-chalk font-bold text-sm w-full white-space-nowrap overflow-hidden text-overflow-ellipsis px-2">{{archivoSeleccionado.name}}</div>
-                        <div class="text-steel text-xs mt-1 font-bold">{{ (archivoSeleccionado.size / 1024 / 1024) | number:'1.2-2' }} MB - Listo para subir</div>
+                        <i class="pi pi-check-circle text-5xl text-lime mb-3"></i>
+                        <!-- Evitamos que el nombre de un archivo muy largo rompa la caja -->
+                        <div class="text-chalk font-bold text-lg w-full px-2" style="word-break: break-word;">{{archivoSeleccionado.name}}</div>
+                        <div class="text-steel text-sm mt-2 font-bold">{{ (archivoSeleccionado.size / 1024 / 1024) | number:'1.2-2' }} MB - Listo para subir</div>
                     </div>
                 </div>
             </div>
@@ -137,4 +139,10 @@
             <button pButton [label]="nuevaGuia.id ? 'Guardar Cambios' : 'Publicar Guía'" icon="pi pi-check" class="pf-btn-primary ml-2" (click)="guardarGuia()" [loading]="subiendoArchivo"></button>
         </ng-template>
     </p-dialog>
+
+    <!-- OVERLAY DE CARGA -->
+    <div class="pf-loading-overlay fadein" *ngIf="subiendoArchivo">
+        <div class="pf-spinner"></div>
+        <div class="pf-loading-text">Guardando...</div>
+    </div>
 </div>

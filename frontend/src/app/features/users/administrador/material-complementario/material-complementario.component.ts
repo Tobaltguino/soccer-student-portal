@@ -12,6 +12,9 @@ import { SelectModule } from 'primeng/select';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { TextareaModule } from 'primeng/textarea';
 
+// 🔥 IMPORTANTE: Faltaba importar el TagModule para que funcione el <p-tag> 🔥
+import { TagModule } from 'primeng/tag';
+
 // Servicios y Modelos unificados a NestJS
 import { MaterialService } from '../../../../core/domains/academico/material-complementario/services/material-complementario.service';
 import { TipoMaterial } from '../../../../shared/enums/tipo-material.enum';
@@ -23,7 +26,7 @@ import { Material, CrearMaterialPayload, ActualizarMaterialPayload } from '../..
   imports: [
     CommonModule, FormsModule, TableModule, ButtonModule, 
     DialogModule, InputTextModule, ToastModule, ConfirmDialogModule, TooltipModule,
-    SelectModule, TextareaModule
+    SelectModule, TextareaModule, TagModule // 🔥 Se agregó aquí también 🔥
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './material-complementario.component.html',
@@ -97,6 +100,9 @@ export class AdministradorMaterialComplementarioComponent implements OnInit {
   }
 
   guardarGuia() {
+    // Protección doble clic (usando tu variable subiendoArchivo como flag de bloqueo)
+    if (this.subiendoArchivo) return;
+
     if (!this.nuevaGuia.titulo || !this.nuevaGuia.tipo_material || (!this.nuevaGuia.id && !this.archivoSeleccionado)) {
       this.messageService.add({ severity: 'warn', summary: 'Incompleto', detail: 'Debe ingresar un título, seleccionar el área y adjuntar un archivo.' });
       return;

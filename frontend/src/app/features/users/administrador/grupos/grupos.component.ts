@@ -49,6 +49,9 @@ export class AdministradorGruposComponent implements OnInit {
   displayDialog: boolean = false;
   tituloDialogo: string = '';
   
+  // 🔥 Variable para controlar el bloqueo de pantalla
+  guardando: boolean = false; 
+  
   // Objeto del formulario
   grupoForm: any = { id: null, nombre: '', descripcion: '' };
 
@@ -93,10 +96,16 @@ export class AdministradorGruposComponent implements OnInit {
 
   // --- GUARDAR ---
   guardarGrupo() {
+    // Si ya se está guardando, ignorar nuevos clics
+    if (this.guardando) return;
+
     if (!this.grupoForm.nombre || this.grupoForm.nombre.trim() === '') {
       this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'El nombre es obligatorio.' });
       return;
     }
+
+    // 🔥 Activar animación y bloqueo de pantalla
+    this.guardando = true;
 
     const payload = { 
       nombre: this.grupoForm.nombre,
@@ -109,10 +118,12 @@ export class AdministradorGruposComponent implements OnInit {
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Grupo actualizado correctamente.' });
           this.displayDialog = false;
+          this.guardando = false; // 🔥 Desbloquear
           this.cargarGrupos();
         },
         error: (err) => {
           this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el grupo.' });
+          this.guardando = false; // 🔥 Desbloquear incluso si hay error
         }
       });
     } else {
@@ -121,10 +132,12 @@ export class AdministradorGruposComponent implements OnInit {
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Grupo creado correctamente.' });
           this.displayDialog = false;
+          this.guardando = false; // 🔥 Desbloquear
           this.cargarGrupos();
         },
         error: (err) => {
           this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo crear el grupo.' });
+          this.guardando = false; // 🔥 Desbloquear incluso si hay error
         }
       });
     }

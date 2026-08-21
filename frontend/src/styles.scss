@@ -78,7 +78,40 @@ body {
 }
 
 /* ==========================================================
-   5. BOTONES, PESTAÑAS, TABLAS Y MODALES
+   🔥 5. ESTRUCTURA MAESTRA (HEADERS, TARJETAS Y WRAPPERS) 🔥
+   ========================================================== */
+.pf-admin-wrapper {
+    padding: 1.5rem;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+.pf-admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.pf-admin-card {
+    background: var(--bg-card) !important;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    padding: 1.25rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+@media screen and (max-width: 768px) {
+    .pf-admin-wrapper { padding: 1rem; }
+    .pf-admin-header { flex-direction: column; align-items: flex-start; }
+    .pf-admin-header button { width: 100%; justify-content: center; }
+    .pf-admin-card { padding: 1rem; }
+}
+
+/* ==========================================================
+   6. BOTONES, PESTAÑAS, TABLAS Y MODALES
    ========================================================== */
 .pf-btn-primary {
   background: var(--pf-lime) !important;
@@ -90,7 +123,7 @@ body {
   border: none !important;
   border-radius: 8px !important;
   padding: 12px 24px !important;
-  min-height: 44px !important; /* 🔥 FIX: Altura idéntica */
+  min-height: 44px !important; 
   transition: transform 0.2s, box-shadow 0.2s !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -113,7 +146,7 @@ body {
   border: 1px solid var(--border-color) !important;
   border-radius: 8px !important;
   padding: 12px 24px !important;
-  min-height: 44px !important; /* 🔥 FIX: Altura idéntica */
+  min-height: 44px !important; 
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -201,7 +234,7 @@ body {
 }
 
 /* =========================================
-   🔥 ACCIONES DE LA TABLA (BOTONES CIRCULARES) 🔥
+   7. ACCIONES DE LA TABLA (BOTONES CIRCULARES)
    ========================================= */
 .pf-table-actions { display: flex; justify-content: center; align-items: center; gap: 12px; }
 .pf-table-actions .p-button {
@@ -224,13 +257,12 @@ body {
 .pf-table-actions .p-button-success:hover { background: rgba(34, 197, 94, 0.3) !important; transform: translateY(-2px); }
 
 /* ==========================================================
-   🔥 6. FIX PRIMENG V21: SELECTS Y MULTISELECTS 🔥
+   8. FIX PRIMENG V21: SELECTS Y MULTISELECTS
    ========================================================== */
 
-/* Contenedor principal de los inputs y selects */
 .p-inputtext, .p-textarea, .p-select, .p-multiselect, .p-dropdown, .p-datepicker-input {
     width: 100% !important;
-    min-height: 44px !important; /* 🔥 FIX: Altura idéntica y forzada para todos los campos 🔥 */
+    min-height: 44px !important; 
     background: var(--input-bg) !important;
     border: 1px solid var(--border-color) !important;
     border-radius: 8px !important;
@@ -240,7 +272,6 @@ body {
     box-sizing: border-box !important;
 }
 
-/* Evitar dobles paddings en los contenedores Flex de PrimeNG */
 .p-select, .p-multiselect, .p-dropdown {
     display: flex !important;
     flex-direction: row !important; 
@@ -248,7 +279,6 @@ body {
     padding: 0 !important; 
 }
 
-/* 🟢 TEXTO INTERNO (LABEL) - Select Simple */
 .p-select-label, 
 .p-dropdown-label {
     flex: 1 1 auto !important; 
@@ -264,7 +294,6 @@ body {
     text-overflow: ellipsis !important;
 }
 
-/* 🟢 TEXTO INTERNO - MultiSelect (Para que los Chips se vean bien) */
 .p-multiselect-label {
     flex: 1 1 auto !important; 
     min-width: 0 !important; 
@@ -281,13 +310,11 @@ body {
     overflow: hidden !important;
 }
 
-/* Padding a Inputs de texto normales */
 .p-inputtext, .p-textarea, .p-datepicker-input {
     padding: 12px 14px !important;
     color: var(--text-main) !important;
 }
 
-/* Flechita (Trigger) con ancho inamovible */
 .p-select-dropdown, .p-multiselect-dropdown, .p-dropdown-trigger {
     flex: 0 0 auto !important; 
     width: 40px !important;
@@ -299,7 +326,6 @@ body {
     color: var(--text-muted) !important;
 }
 
-/* Focus/Hover global */
 .p-inputtext:focus, .p-textarea:focus, 
 .p-select.p-focus, .p-multiselect.p-focus, 
 .p-select:hover, .p-multiselect:hover {
@@ -309,10 +335,9 @@ body {
 }
 
 /* ==========================================================
-   🔥 7. FIX PRIMENG V21: PANELES FLOTANTES (LISTAS) 🔥
+   9. FIX PRIMENG V21: PANELES FLOTANTES (LISTAS)
    ========================================================== */
 
-/* Caja flotante general */
 .p-select-panel, .p-select-overlay, .p-multiselect-overlay, .p-dropdown-panel {
     background-color: var(--bg-card) !important;
     border: 1px solid var(--border-color) !important;
@@ -322,13 +347,11 @@ body {
     padding: 0.5rem !important; 
 }
 
-/* Envolturas de las listas */
 .p-select-list, .p-select-list-container, .p-multiselect-list, .p-multiselect-list-container {
     background-color: transparent !important;
     padding: 0 !important;
 }
 
-/* Opciones Individuales (Items) */
 .p-select-option, .p-multiselect-option {
     color: var(--text-main) !important;
     padding: 12px 16px !important;
@@ -343,13 +366,11 @@ body {
     align-items: center;
 }
 
-/* Hover de Opciones (Luz Turquesa) */
 .p-select-option:hover, .p-multiselect-option:hover {
     background-color: rgba(15, 140, 130, 0.15) !important;
     color: var(--pf-teal) !important;
 }
 
-/* Opción Seleccionada (Fondo Sólido) */
 .p-select-option[data-p-selected="true"], 
 .p-select-option[data-p-highlight="true"],
 .p-multiselect-option[data-p-selected="true"],
@@ -360,10 +381,9 @@ body {
 }
 
 /* ==========================================================
-   🔥 8. FIX PRIMENG V21: CALENDARIO (DATEPICKER) 🔥
+   10. FIX PRIMENG V21: CALENDARIO (DATEPICKER)
    ========================================================== */
 
-/* Panel del calendario */
 .p-datepicker, .p-datepicker-panel, .p-datepicker-overlay {
     background-color: var(--bg-card) !important; 
     border: 1px solid var(--border-color) !important;
@@ -374,7 +394,6 @@ body {
     padding: 1rem !important;
 }
 
-/* Cabecera del calendario */
 .p-datepicker-header {
     background-color: transparent !important; 
     border-bottom: 1px solid var(--border-color) !important;
@@ -382,7 +401,6 @@ body {
     margin-bottom: 0.5rem !important; 
 }
 
-/* Títulos y Flechas */
 .p-datepicker-title, .p-datepicker-prev, .p-datepicker-next {
     color: var(--text-main) !important;
     transition: color 0.2s !important;
@@ -393,7 +411,6 @@ body {
     border-radius: 50%;
 }
 
-/* Días de la semana (Th) */
 .p-datepicker table th {
     color: var(--text-muted) !important;
     font-family: var(--pf-font-label) !important;
@@ -402,13 +419,11 @@ body {
     background-color: transparent !important;
 }
 
-/* Celdas generales */
 .p-datepicker table td {
     padding: 0.25rem !important;
     background-color: transparent !important;
 }
 
-/* Números de los días */
 .p-datepicker-day {
     color: var(--text-main) !important;
     border-radius: 50% !important;
@@ -424,14 +439,12 @@ body {
     border: 1px solid transparent !important; 
 }
 
-/* Hover de Días (Luz Turquesa) */
 .p-datepicker table td:not([data-p-disabled="true"]) .p-datepicker-day:hover {
     background-color: rgba(15, 140, 130, 0.25) !important;
     color: var(--pf-teal) !important;
     font-weight: bold !important;
 }
 
-/* Día Seleccionado (Fondo Sólido) */
 .p-datepicker-day[data-p-selected="true"],
 .p-datepicker-day[data-p-highlight="true"] {
     background-color: var(--pf-teal) !important;
@@ -440,13 +453,11 @@ body {
     box-shadow: 0 0 10px rgba(15, 140, 130, 0.5) !important;
 }
 
-/* Día actual (Hoy) */
 .p-datepicker-day.p-datepicker-today:not([data-p-selected="true"]) {
     border-color: var(--pf-teal) !important;
     color: var(--pf-teal) !important;
 }
 
-/* Días deshabilitados */
 .p-datepicker table td[data-p-disabled="true"] .p-datepicker-day,
 .p-datepicker-day.p-disabled {
     color: var(--text-muted) !important;
@@ -455,17 +466,16 @@ body {
 }
 
 /* ==========================================================
-   🔥 9. TOOLTIPS (MENSAJES AL PASAR EL MOUSE) 🔥
+   11. TOOLTIPS (MENSAJES AL PASAR EL MOUSE)
    ========================================================== */
 .p-tooltip {
     max-width: 250px;
-    z-index: 2000 !important; /* Para que siempre quede por encima de todo */
+    z-index: 2000 !important; 
 }
 
-/* La cajita del texto */
 .p-tooltip .p-tooltip-text {
-    background-color: var(--pf-teal) !important; /* Fondo color de tu marca */
-    color: #ffffff !important; /* Texto blanco */
+    background-color: var(--pf-teal) !important; 
+    color: #ffffff !important; 
     font-family: var(--pf-font-body) !important;
     font-size: 12.5px !important;
     font-weight: 600 !important;
@@ -476,17 +486,14 @@ body {
     text-align: center;
 }
 
-/* La flechita que apunta al botón (según de dónde salga el tooltip) */
 .p-tooltip-top .p-tooltip-arrow { border-top-color: var(--pf-teal) !important; }
 .p-tooltip-bottom .p-tooltip-arrow { border-bottom-color: var(--pf-teal) !important; }
 .p-tooltip-left .p-tooltip-arrow { border-left-color: var(--pf-teal) !important; }
 .p-tooltip-right .p-tooltip-arrow { border-right-color: var(--pf-teal) !important; }
 
 /* ==========================================================
-   🔥 10. FIX PRIMENG V21: PAGINADOR DE TABLAS 🔥
+   12. FIX PRIMENG V21: PAGINADOR DE TABLAS
    ========================================================== */
-
-/* Contenedor del paginador */
 .p-paginator {
     background: var(--bg-card) !important;
     border: none !important;
@@ -495,7 +502,6 @@ body {
     border-radius: 0 0 8px 8px !important;
 }
 
-/* Botones del paginador (Números y Flechas) */
 .p-paginator-page,
 .p-paginator-next,
 .p-paginator-prev,
@@ -514,7 +520,6 @@ body {
     justify-content: center !important;
 }
 
-/* Hover de los botones (Luz Turquesa) */
 .p-paginator-page:hover:not(.p-highlight):not([data-p-highlight="true"]),
 .p-paginator-next:hover:not([data-p-disabled="true"]):not(.p-disabled),
 .p-paginator-prev:hover:not([data-p-disabled="true"]):not(.p-disabled),
@@ -524,7 +529,6 @@ body {
     color: var(--pf-teal) !important;
 }
 
-/* Página Activa / Seleccionada (Fondo Turquesa Sólido) */
 .p-paginator-page.p-highlight,
 .p-paginator-page[data-p-highlight="true"] {
     background: var(--pf-teal) !important;
@@ -533,7 +537,6 @@ body {
     box-shadow: 0 4px 10px rgba(15, 140, 130, 0.4) !important;
 }
 
-/* Flechas Deshabilitadas (Principio o Final) */
 .p-paginator-next.p-disabled,
 .p-paginator-prev.p-disabled,
 .p-paginator-first.p-disabled,
@@ -545,16 +548,13 @@ body {
 }
 
 /* ==========================================================
-   🔥 11. FIX PRIMENG V21: TOASTS (NOTIFICACIONES) 🔥
+   13. FIX PRIMENG V21: TOASTS (NOTIFICACIONES)
    ========================================================== */
-
-/* Contenedor flotante */
 .p-toast {
     opacity: 0.95;
     z-index: 2500 !important;
 }
 
-/* La tarjeta del Toast */
 .p-toast-message,
 .p-toast .p-toast-message {
     background: var(--bg-card) !important;
@@ -563,10 +563,9 @@ body {
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7) !important;
     color: var(--text-main) !important;
     margin-bottom: 1rem !important;
-    overflow: hidden !important; /* Para que la línea de color no se salga del borde redondeado */
+    overflow: hidden !important; 
 }
 
-/* Contenido interno */
 .p-toast-message-content {
     padding: 1rem 1.5rem !important;
     display: flex !important;
@@ -574,7 +573,6 @@ body {
     gap: 1rem !important;
 }
 
-/* Título de la notificación */
 .p-toast-summary {
     font-family: var(--pf-font-display) !important;
     font-size: 1.15rem !important;
@@ -584,14 +582,12 @@ body {
     text-transform: uppercase !important;
 }
 
-/* Detalle (El mensaje) */
 .p-toast-detail {
     font-family: var(--pf-font-body) !important;
     font-size: 0.9rem !important;
     color: var(--text-muted) !important;
 }
 
-/* Botón de cerrar (X) */
 .p-toast-icon-close {
     color: var(--text-muted) !important;
     background: transparent !important;
@@ -605,48 +601,169 @@ body {
     color: var(--text-main) !important;
 }
 
-/* 🟢 COLORES POR SEVERIDAD (Borde izquierdo grueso e Icono) 🟢 */
-
-/* Éxito (Verde) */
 .p-toast-message-success,
-.p-toast-message[data-p-severity="success"] {
-    border-left: 6px solid #22c55e !important;
-}
+.p-toast-message[data-p-severity="success"] { border-left: 6px solid #22c55e !important; }
 .p-toast-message-success .p-toast-message-icon,
-.p-toast-message[data-p-severity="success"] .p-toast-message-icon {
-    color: #22c55e !important;
-    font-size: 1.8rem !important;
-}
+.p-toast-message[data-p-severity="success"] .p-toast-message-icon { color: #22c55e !important; font-size: 1.8rem !important; }
 
-/* Error (Rojo) */
 .p-toast-message-error,
-.p-toast-message[data-p-severity="error"] {
-    border-left: 6px solid #ef4444 !important;
-}
+.p-toast-message[data-p-severity="error"] { border-left: 6px solid #ef4444 !important; }
 .p-toast-message-error .p-toast-message-icon,
-.p-toast-message[data-p-severity="error"] .p-toast-message-icon {
-    color: #ef4444 !important;
-    font-size: 1.8rem !important;
-}
+.p-toast-message[data-p-severity="error"] .p-toast-message-icon { color: #ef4444 !important; font-size: 1.8rem !important; }
 
-/* Información (Azul) */
 .p-toast-message-info,
-.p-toast-message[data-p-severity="info"] {
-    border-left: 6px solid #3b82f6 !important;
-}
+.p-toast-message[data-p-severity="info"] { border-left: 6px solid #3b82f6 !important; }
 .p-toast-message-info .p-toast-message-icon,
-.p-toast-message[data-p-severity="info"] .p-toast-message-icon {
-    color: #3b82f6 !important;
-    font-size: 1.8rem !important;
+.p-toast-message[data-p-severity="info"] .p-toast-message-icon { color: #3b82f6 !important; font-size: 1.8rem !important; }
+
+.p-toast-message-warn,
+.p-toast-message[data-p-severity="warn"] { border-left: 6px solid #f59e0b !important; }
+.p-toast-message-warn .p-toast-message-icon,
+.p-toast-message[data-p-severity="warn"] .p-toast-message-icon { color: #f59e0b !important; font-size: 1.8rem !important; }
+
+/* ==========================================================
+   🔥 14. ANIMACIONES DE CARGA (SPINNERS Y OVERLAYS) 🔥
+   ========================================================== */
+
+/* 1. Cargador integrado en las Tablas de PrimeNG */
+.p-datatable .p-datatable-loading-overlay {
+    background: rgba(10, 15, 14, 0.7) !important; 
+    backdrop-filter: blur(4px) !important; 
+    z-index: 2 !important;
 }
 
-/* Advertencia (Amarillo/Naranja) */
-.p-toast-message-warn,
-.p-toast-message[data-p-severity="warn"] {
-    border-left: 6px solid #f59e0b !important;
+.p-datatable .p-datatable-loading-icon {
+    color: var(--pf-lime) !important; 
+    width: 3rem !important;
+    height: 3rem !important;
+    animation: pf-spin 1s linear infinite !important;
 }
-.p-toast-message-warn .p-toast-message-icon,
-.p-toast-message[data-p-severity="warn"] .p-toast-message-icon {
-    color: #f59e0b !important;
-    font-size: 1.8rem !important;
+
+/* 2. Cargador de Pantalla Completa */
+.pf-loading-overlay {
+    position: fixed;
+    top: 0; 
+    left: 0; 
+    width: 100vw; 
+    height: 100vh;
+    background: rgba(10, 15, 14, 0.85); 
+    backdrop-filter: blur(5px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; 
+}
+
+.pf-spinner {
+    width: 60px;
+    height: 60px;
+    border: 5px solid rgba(198, 255, 61, 0.15); 
+    border-top-color: var(--pf-lime); 
+    border-radius: 50%;
+    animation: pf-spin 1s ease-in-out infinite;
+    box-shadow: 0 0 20px rgba(198, 255, 61, 0.2);
+}
+
+.pf-loading-text {
+    margin-top: 1.5rem;
+    color: var(--text-main);
+    font-family: var(--pf-font-label); 
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    animation: pf-pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pf-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes pf-pulse {
+    0%, 100% { opacity: 1; text-shadow: 0 0 10px rgba(234, 242, 240, 0.5); }
+    50% { opacity: 0.4; text-shadow: none; }
+}
+
+/* ==========================================================
+   🔥 15. FIX PRIMENG V21: BOTÓN DE SUBIR ARCHIVO Y PREVIEW 🔥
+   ========================================================== */
+
+/* 1. La caja de previsualización (Cuadrado perfecto y centrado) */
+.sponsor-preview-container {
+    border: 2px dashed var(--border-color);
+    background-color: var(--input-bg);
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 200px !important;
+    height: 200px !important;
+    margin: 0 auto 1.5rem auto !important;
+    transition: all 0.2s ease;
+    overflow: hidden;
+}
+
+.sponsor-preview-container:hover {
+    border-color: var(--pf-teal);
+    background-color: var(--hover-bg);
+}
+
+/* 2. La imagen dentro del previsualizador */
+.pf-img-preview {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+/* 3. Centrar el componente de PrimeNG */
+p-fileupload {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* 4. Forzar el estilo Primary (Verde Limón) en el botón interno de PrimeNG */
+.p-fileupload-choose,
+.p-fileupload-basic {
+    background: var(--pf-lime) !important;
+    color: #0a0f0e !important; 
+    font-family: var(--pf-font-label) !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 12px 24px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    min-height: 44px !important;
+    transition: transform 0.2s, box-shadow 0.2s !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+}
+
+/* Hover (Elevación y resplandor) */
+.p-fileupload-choose:hover:not(.p-disabled),
+.p-fileupload-basic:hover:not(.p-disabled) {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(198, 255, 61, 0.2) !important;
+    background: var(--pf-lime) !important;
+    color: #0a0f0e !important;
+}
+
+/* 5. Asegurar que el icono de subir se ponga negro y se alinee bien */
+.p-fileupload-choose .p-icon,
+.p-fileupload-choose .pi,
+.p-fileupload-basic .p-icon,
+.p-fileupload-basic .pi {
+    color: #0a0f0e !important;
+    font-weight: bold !important;
+    font-size: 1.1rem !important;
+    margin-right: 4px !important;
 }

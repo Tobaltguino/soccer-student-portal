@@ -50,7 +50,9 @@ export class AdminHomeConfigComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
 
   loading = false;
-  saving = false;
+  
+  // 🔥 Variable Maestra de Bloqueo
+  guardando = false;
 
   // Datos Generales
   config: any = {};
@@ -71,7 +73,7 @@ export class AdminHomeConfigComponent implements OnInit {
   itemForm: any = {};
   isEditing = false;
 
-  // Variables para imágenes (AHORA SE GUARDAN PARA ENVIAR CON EL FORMULARIO)
+  // Variables para imágenes
   archivoSeleccionado: File | null = null;
   previewUrl: string | null = null;
 
@@ -131,16 +133,18 @@ export class AdminHomeConfigComponent implements OnInit {
 
   // --- GUARDAR CONFIGURACIÓN GENERAL ---
   guardarConfigGeneral() {
-    this.loading = true;
+    if (this.guardando) return; // Protección doble clic
+    this.guardando = true;
+    
     this.webConfigService.actualizarConfiguracion(this.config).subscribe({
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Configuración actualizada' });
-        this.loading = false;
+        this.guardando = false;
         this.cdr.detectChanges();
       },
       error: () => {
         this.mostrarError('No se pudo actualizar la configuración');
-        this.loading = false;
+        this.guardando = false;
         this.cdr.detectChanges();
       }
     });
@@ -163,9 +167,7 @@ export class AdminHomeConfigComponent implements OnInit {
     this.itemForm = { ...item };
     this.limpiarImagen();
     
-    // Si editamos un item con imagen, la previsualizamos
     if (item.imagenUrl) this.previewUrl = item.imagenUrl;
-    // Si viene de Supabase (Legacy), quizás se llame imagen_url
     if (item.imagen_url) this.previewUrl = item.imagen_url;
 
     if (tipo === 'metodologia') this.displayDialogMetodologia = true;
@@ -182,13 +184,11 @@ export class AdminHomeConfigComponent implements OnInit {
     this.limpiarImagen();
   }
 
-  // --- SUBIDA DE IMAGEN (Adaptada a NestJS FormData) ---
+  // --- SUBIDA DE IMAGEN ---
   onFileSelected(event: any) {
     const file: File = event.files[0];
     if (file) {
-      this.archivoSeleccionado = file; // Lo guardamos para enviarlo al hacer clic en "Guardar"
-      
-      // Mostramos preview inmediato
+      this.archivoSeleccionado = file; 
       const reader = new FileReader();
       reader.onload = (e: any) => this.previewUrl = e.target.result;
       reader.readAsDataURL(file);
@@ -202,7 +202,10 @@ export class AdminHomeConfigComponent implements OnInit {
 
   // --- GUARDADO DE METODOLOGIAS ---
   guardarMetodologia() {
-    this.saving = true;
+    if (this.guardando) return;
+    if (!this.itemForm.titulo) { this.mostrarError('El título es obligatorio'); return; }
+    
+    this.guardando = true;
     const obs$ = this.isEditing 
       ? this.webMetodologiaService.actualizarMetodologia(this.itemForm.id, this.itemForm)
       : this.webMetodologiaService.crearMetodologia(this.itemForm);
@@ -212,15 +215,18 @@ export class AdminHomeConfigComponent implements OnInit {
         this.cerrarModales();
         this.cargarTodo();
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Metodología guardada' });
-        this.saving = false;
+        this.guardando = false;
       },
-      error: () => { this.mostrarError('Error al guardar'); this.saving = false; }
+      error: () => { this.mostrarError('Error al guardar'); this.guardando = false; }
     });
   }
 
   // --- GUARDADO DE PROGRAMAS (CATEGORÍAS) ---
   guardarPrograma() {
-    this.saving = true;
+    if (this.guardando) return;
+    if (!this.itemForm.titulo) { this.mostrarError('El título es obligatorio'); return; }
+
+    this.guardando = true;
     const obs$ = this.isEditing 
       ? this.webProgramaService.actualizarPrograma(this.itemForm.id, this.itemForm)
       : this.webProgramaService.crearPrograma(this.itemForm);
@@ -230,16 +236,18 @@ export class AdminHomeConfigComponent implements OnInit {
         this.cerrarModales();
         this.cargarTodo();
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Categoría guardada' });
-        this.saving = false;
+        this.guardando = false;
       },
-      error: () => { this.mostrarError('Error al guardar'); this.saving = false; }
+      error: () => { this.mostrarError('Error al guardar'); this.guardando = false; }
     });
   }
 
   // --- GUARDADO DE ALIANZAS (BENEFICIOS) ---
   guardarAlianza() {
-    this.saving = true;
-    // Si hay un archivoSeleccionado, lo pasamos al servicio para que arme el FormData
+    if (this.guardando) return;
+    if (!this.itemForm.nombre) { this.mostrarError('El nombre de la marca es obligatorio'); return; }
+
+    this.guardando = true;
     const file = this.archivoSeleccionado || undefined;
 
     const obs$ = this.isEditing 
@@ -251,15 +259,18 @@ export class AdminHomeConfigComponent implements OnInit {
         this.cerrarModales();
         this.cargarTodo();
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Alianza guardada' });
-        this.saving = false;
+        this.guardando = false;
       },
-      error: () => { this.mostrarError('Error al guardar'); this.saving = false; }
+      error: () => { this.mostrarError('Error al guardar'); this.guardando = false; }
     });
   }
 
   // --- GUARDADO DE AUSPICIADORES ---
   guardarAuspiciador() {
-    this.saving = true;
+    if (this.guardando) return;
+    if (!this.itemForm.nombre) { this.mostrarError('El nombre del auspiciador es obligatorio'); return; }
+
+    this.guardando = true;
     const file = this.archivoSeleccionado || undefined;
 
     const obs$ = this.isEditing 
@@ -271,9 +282,9 @@ export class AdminHomeConfigComponent implements OnInit {
         this.cerrarModales();
         this.cargarTodo();
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Auspiciador guardado' });
-        this.saving = false;
+        this.guardando = false;
       },
-      error: () => { this.mostrarError('Error al guardar'); this.saving = false; }
+      error: () => { this.mostrarError('Error al guardar'); this.guardando = false; }
     });
   }
 

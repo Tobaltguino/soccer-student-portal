@@ -89,6 +89,7 @@ export class AdministradorUsuariosComponent implements OnInit {
 
   // --- ESTADOS UI ---
   loading: boolean = false;
+  guardando: boolean = false; // 🔥 Variable Maestra de Bloqueo
   displayDialog: boolean = false;
   isEditing: boolean = false;
   tituloDialogo: string = '';
@@ -171,7 +172,6 @@ export class AdministradorUsuariosComponent implements OnInit {
     const file = event.files[0];
     if (file) {
       this.archivoSeleccionado = file;
-      // Mostrar la vista previa inmediatamente
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.previewUrl = e.target.result;
@@ -184,7 +184,6 @@ export class AdministradorUsuariosComponent implements OnInit {
   clearFoto() {
     this.archivoSeleccionado = null;
     this.previewUrl = null;
-    // Al dejar previewUrl en null, le indicamos al backend que debe eliminar la foto al guardar.
   }
 
   // --- LÓGICA DE FORMULARIO ---
@@ -218,7 +217,6 @@ export class AdministradorUsuariosComponent implements OnInit {
       posicionesIds: usuario.posiciones || []
     };
     
-    // ✅ Cargamos la foto actual si existe
     this.previewUrl = usuario.foto_url || null; 
     this.displayDialog = true;
   }
@@ -238,6 +236,9 @@ export class AdministradorUsuariosComponent implements OnInit {
   }
 
   guardar() {
+    // 🔥 Protección de doble clic
+    if (this.guardando) return;
+
     if (this.isEditing && this.userForm.rut === '1-1') return;
     
     if (!this.userForm.nombre || !this.userForm.apellido || !this.userForm.email || !this.userForm.rut) {
@@ -254,7 +255,8 @@ export class AdministradorUsuariosComponent implements OnInit {
         this.messageService.add({ severity: 'error', summary: 'RUT Inválido', detail: 'El RUT ingresado no es válido.' }); return;
     }
 
-    this.loading = true;
+    // 🔥 Activamos el bloqueo
+    this.guardando = true;
 
     // 1. Armamos el Payload de Datos
     const payload: Partial<CrearUsuarioPayload> = {
@@ -292,29 +294,27 @@ export class AdministradorUsuariosComponent implements OnInit {
     }
   }
 
-  // ✅ 3. Flujo Secuencial: Sube/Elimina foto después de guardar el usuario
+  // 3. Flujo Secuencial: Sube/Elimina foto después de guardar el usuario
   private procesarFotoYFinalizar(userId: string, mensaje: string) {
     if (this.archivoSeleccionado) {
-      // El usuario eligió una foto nueva
       this.uploadingFoto = true;
       this.usuarioService.actualizarFoto(userId, this.archivoSeleccionado).subscribe({
         next: () => this.finalizarGuardado(mensaje),
         error: () => this.finalizarGuardado(mensaje + ' (Pero no se pudo subir la foto)')
       });
     } else if (this.isEditing && !this.previewUrl) {
-      // El usuario estaba editando y borró la foto (click en el basurero)
       this.usuarioService.eliminarFoto(userId).subscribe({
         next: () => this.finalizarGuardado(mensaje),
         error: () => this.finalizarGuardado(mensaje + ' (Pero no se pudo eliminar la foto anterior)')
       });
     } else {
-      // No hubo cambios en la foto
       this.finalizarGuardado(mensaje);
     }
   }
 
   private finalizarGuardado(mensaje: string) {
-    this.loading = false;
+    // 🔥 Desactivamos el bloqueo
+    this.guardando = false;
     this.uploadingFoto = false;
     this.displayDialog = false;
     this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
@@ -322,7 +322,8 @@ export class AdministradorUsuariosComponent implements OnInit {
   }
 
   private mostrarErrorGuardado(err: any) {
-    this.loading = false;
+    // 🔥 Desactivamos el bloqueo
+    this.guardando = false;
     this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Error al procesar la solicitud' });
     this.cdr.detectChanges();
   }
@@ -411,13 +412,13 @@ export class AdministradorUsuariosComponent implements OnInit {
   getSeveridadHistorial(tipo: string): any { 
     if (tipo === 'LESION') return 'danger';
     if (tipo === 'ALERGIA') return 'warning';
-    return 'info'; // PATOLOGIA u otros
+    return 'info'; 
   }
   
   getSeveridadEstado(estado: string): any { 
     if (estado === 'RECUPERADO') return 'success';
     if (estado === 'EN_OBSERVACION') return 'warning';
     if (estado === 'EN_REINTEGRO_DEPORTIVO') return 'info';
-    return 'danger'; // EN_TRATAMIENTO
+    return 'danger'; 
   }
 }

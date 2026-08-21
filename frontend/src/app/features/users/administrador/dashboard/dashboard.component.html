@@ -7,7 +7,7 @@
     </div>
 
     <div class="header-tools">
-      <div class="status-indicator pf-oswald" (click)="refrescar()" title="Refrescar Datos">
+      <div class="status-indicator pf-oswald" (click)="refrescar()" title="Refrescar Datos" [class.pointer-events-none]="loading">
         <span class="status-dot" [ngClass]="apiStatus"></span>
         <span class="status-text">{{ apiStatus === 'online' ? 'SERVIDOR ONLINE' : (apiStatus === 'checking' ? 'CONECTANDO...' : 'SERVIDOR OFFLINE') }}</span>
       </div>
@@ -113,7 +113,7 @@
       <div class="flex align-items-center gap-2">
           <h3 class="pf-anton text-chalk m-0 text-2xl">Próximos Cumpleaños (7 días)</h3>
       </div>
-      <button class="pf-btn-ghost-icon" (click)="cargarDatos()" [disabled]="loading">
+      <button class="pf-btn-ghost-icon" (click)="refrescar()" [disabled]="loading">
         <i class="pi pi-refresh" [ngClass]="{'pi-spin text-lime': loading}"></i>
       </button>
     </div>
@@ -143,4 +143,11 @@
 
     </div>
   </section>
+
+  <!-- 🔥 OVERLAY DE CARGA GLOBAL DE PANTALLA COMPLETA 🔥 -->
+  <div class="pf-loading-overlay fadein" *ngIf="loading">
+      <div class="pf-spinner"></div>
+      <div class="pf-loading-text">Actualizando...</div>
+  </div>
+
 </div>
