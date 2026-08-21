@@ -8,7 +8,9 @@
     <div class="pf-login__ring pf-login__ring--inner"></div>
 
     <div class="pf-login__brand">
-      <img src="assets/logo-blanco.png" alt="Pro Fútbol" />
+      <!-- 🔥 Intercambio de logos (Modo Oscuro vs Claro) 🔥 -->
+      <img src="assets/logo-blanco.png" alt="Pro Fútbol" class="logo-dark" />
+      <img src="assets/logo-negro.png" alt="Pro Fútbol" class="logo-light" />
       <span class="pf-anton">PRO FÚTBOL</span>
     </div>
 
@@ -32,7 +34,9 @@
   <div class="pf-login__form-side">
     <div class="pf-login__form-wrap">
       <div class="pf-login__brand-mobile pf-hide-desktop">
-        <img src="assets/logo-blanco.png" alt="Pro Fútbol" />
+        <!-- 🔥 Intercambio de logos (Modo Oscuro vs Claro) 🔥 -->
+        <img src="assets/logo-blanco.png" alt="Pro Fútbol" class="logo-dark" />
+        <img src="assets/logo-negro.png" alt="Pro Fútbol" class="logo-light" />
         <span class="pf-anton">PRO FÚTBOL</span>
       </div>
 
@@ -69,7 +73,7 @@
 
         <!-- Botón volver (Solo visible en móviles) -->
         <div class="pf-login__mobile-home pf-hide-desktop mt-4 text-center">
-          <a (click)="volverAlHome()" class="cursor-pointer" style="color: var(--pf-steel); font-size: 13px; text-decoration: none;">
+          <a (click)="volverAlHome()" class="cursor-pointer text-steel" style="font-size: 13px; text-decoration: none;">
             <i class="pi pi-arrow-left mr-1"></i> Volver al Inicio
           </a>
         </div>
@@ -82,16 +86,16 @@
 
 </div>
 
-<!-- Diálogo de Recuperación (Adaptado a los colores del tema) -->
+<!-- Diálogo de Recuperación -->
 <p-dialog 
     header="Recuperar Contraseña" 
     [(visible)]="displayResetDialog" 
     [modal]="true" 
     [style]="{ width: '90vw', maxWidth: '400px' }" 
-    styleClass="p-fluid">
+    styleClass="p-fluid pf-dialog">
     
     <div class="flex flex-column gap-3 pt-2">
-        <p style="color: var(--pf-steel); font-size: 14px; margin-bottom: 1rem; line-height: 1.5;">
+        <p class="text-steel" style="font-size: 14px; margin-bottom: 1rem; line-height: 1.5;">
             Ingresa tu <b>RUT</b>. Buscaremos el correo electrónico asociado a tu cuenta y te enviaremos instrucciones.
         </p>
         

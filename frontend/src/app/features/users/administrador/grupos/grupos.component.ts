@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 // PrimeNG Imports
+import { TooltipModule } from 'primeng/tooltip';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -22,6 +23,7 @@ import { GrupoService } from '../../../../core/domains/academico/grupos/services
   imports: [
     CommonModule, 
     FormsModule,
+    TooltipModule,
     TableModule, 
     ButtonModule, 
     DialogModule, 
@@ -33,7 +35,7 @@ import { GrupoService } from '../../../../core/domains/academico/grupos/services
   ],
   providers: [ConfirmationService, MessageService],
   templateUrl: './grupos.component.html',
-  styleUrls: ['./grupos.component.css']
+  styleUrls: ['./grupos.component.scss']
 })
 export class AdministradorGruposComponent implements OnInit {
 

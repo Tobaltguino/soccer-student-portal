@@ -40,7 +40,7 @@ import { GrupoService } from '../../../../core/domains/academico/grupos/services
   ],
   providers: [ConfirmationService, MessageService, FilterService],
   templateUrl: './usuarios.component.html',
-  styleUrls: ['./usuarios.component.css']
+  styleUrls: ['./usuarios.component.scss']
 })
 export class AdministradorUsuariosComponent implements OnInit {
   @ViewChild('dt') dt: Table | undefined;

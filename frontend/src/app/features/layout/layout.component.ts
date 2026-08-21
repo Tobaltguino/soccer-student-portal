@@ -32,7 +32,7 @@ export class LayoutComponent implements OnInit {
 
   isCollapsed: boolean = false;      
   isMobileMenuOpen: boolean = false; 
-  isDarkMode: boolean = false;
+  isDarkMode: boolean = true; // 🔥 Empezamos asumiendo oscuro
 
   userName: string = 'Cargando...';
   userRole: string = ''; 
@@ -51,7 +51,6 @@ export class LayoutComponent implements OnInit {
   // CONSTRUCCIÓN DINÁMICA DEL MENÚ
   // ==========================================
   determinarRolYMenu() {
-    // Usamos el método de tu AuthService
     const rolActual = (this.authService.getUserRole() || '').toUpperCase();
 
     if (rolActual.includes('ADMIN')) {
@@ -85,10 +84,7 @@ export class LayoutComponent implements OnInit {
   // ==========================================
   async cargarUsuario() {
     try {
-      // Llamamos a tu método me() y lo convertimos a Promesa
       const userRes = await firstValueFrom(this.authService.me());
-      
-      // Dependiendo de cómo envíe NestJS, puede estar en userRes o userRes.data
       const user = userRes?.data ? userRes.data : userRes;
       
       if (!user || (!user.email && !user.nombre)) {
@@ -110,15 +106,17 @@ export class LayoutComponent implements OnInit {
   }
 
   // ==========================================
-  // GESTIÓN DE TEMA
+  // GESTIÓN DE TEMA (Actualizado para Global CSS)
   // ==========================================
   checkThemePreference() {
     const savedTheme = localStorage.getItem('theme');
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
-      this.enableDarkMode();
-    } else {
+    
+    // Si guardó 'light' explícitamente, o si no hay nada y el sistema prefiere claro
+    if (savedTheme === 'light' || (!savedTheme && !systemPrefersDark)) {
       this.disableDarkMode();
+    } else {
+      this.enableDarkMode();
     }
   }
 
@@ -129,13 +127,13 @@ export class LayoutComponent implements OnInit {
 
   enableDarkMode() {
     this.isDarkMode = true;
-    document.body.classList.add('dark-mode');
+    document.body.classList.remove('light-mode'); // Quitamos la clase de luz (queda el oscuro por defecto)
     localStorage.setItem('theme', 'dark');
   }
 
   disableDarkMode() {
     this.isDarkMode = false;
-    document.body.classList.remove('dark-mode');
+    document.body.classList.add('light-mode'); // Añadimos la clase de luz
     localStorage.setItem('theme', 'light');
   }
 
@@ -147,13 +145,11 @@ export class LayoutComponent implements OnInit {
   closeMobileMenu() { this.isMobileMenuOpen = false; }
 
   logout() {
-    // Usamos el Observable de logout de tu AuthService
     this.authService.logout().subscribe({
       next: () => {
         this.router.navigate(['/login']);
       },
       error: () => {
-        // Por si el servidor falla, forzamos salida local igual
         localStorage.clear();
         this.router.navigate(['/login']);
       }

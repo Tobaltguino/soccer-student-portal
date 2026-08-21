@@ -27,7 +27,7 @@ import { Material, CrearMaterialPayload, ActualizarMaterialPayload } from '../..
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './material-complementario.component.html',
-  styleUrls: ['./material-complementario.component.css']
+  styleUrls: ['./material-complementario.component.scss']
 })
 export class AdministradorMaterialComplementarioComponent implements OnInit {
   

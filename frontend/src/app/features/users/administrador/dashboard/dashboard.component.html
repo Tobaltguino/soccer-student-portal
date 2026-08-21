@@ -2,139 +2,143 @@
   
   <header class="top-bar">
     <div class="welcome-text">
-      <h1>Panel de Control</h1>
-      <p>Gestión integral de la academia y salud deportiva.</p>
+      <h1 class="pf-anton text-chalk">Panel de Control</h1>
+      <p class="pf-oswald text-teal">Gestión integral de la academia y salud deportiva.</p>
     </div>
 
     <div class="header-tools">
-      <div class="status-indicator" (click)="refrescar()" title="Refrescar Datos">
+      <div class="status-indicator pf-oswald" (click)="refrescar()" title="Refrescar Datos">
         <span class="status-dot" [ngClass]="apiStatus"></span>
-        <span class="status-text">{{ apiStatus === 'online' ? 'Servidor Online' : (apiStatus === 'checking' ? 'Conectando...' : 'Servidor Offline') }}</span>
+        <span class="status-text">{{ apiStatus === 'online' ? 'SERVIDOR ONLINE' : (apiStatus === 'checking' ? 'CONECTANDO...' : 'SERVIDOR OFFLINE') }}</span>
       </div>
     </div>
   </header>
 
   <div class="stats-grid">
     
-    <div class="card card-blue">
+    <!-- TARJETA 1: ESTUDIANTES -->
+    <div class="pf-card pf-card-teal">
       <div class="card-content">
-        <span class="card-label">Estudiantes</span>
+        <span class="card-label pf-oswald">Estudiantes</span>
         <div class="card-value-wrapper">
-            <h3 class="card-value">{{ totalEstudiantes }}</h3>
-            <div class="card-icon icon-blue">
+            <h3 class="card-value pf-anton">{{ totalEstudiantes }}</h3>
+            <div class="card-icon icon-teal">
                 <i class="pi pi-users"></i>
             </div>
         </div>
-        <p class="card-subtext positive"><i class="pi pi-check-circle"></i> Activos</p>
+        <p class="card-subtext pf-oswald positive"><i class="pi pi-check-circle"></i> Activos</p>
       </div>
     </div>
 
-    <div class="card card-green">
+    <!-- TARJETA 2: CLASES -->
+    <div class="pf-card pf-card-lime">
       <div class="card-content">
-        <span class="card-label">Clases Hoy</span>
+        <span class="card-label pf-oswald">Clases Hoy</span>
         <div class="card-value-wrapper">
-            <h3 class="card-value">{{ clasesHoy.length }}</h3>
-            <div class="card-icon icon-green">
+            <h3 class="card-value pf-anton">{{ clasesHoy.length }}</h3>
+            <div class="card-icon icon-lime">
                 <i class="pi pi-calendar"></i>
             </div>
         </div>
-        <!-- Ajustado a hora_inicio -->
-        <p class="card-subtext" *ngIf="clasesHoy.length > 0">Próx: {{ clasesHoy[0].hora_inicio | slice:0:5 }}</p>
-        <p class="card-subtext text-muted" *ngIf="clasesHoy.length === 0">Sin actividad</p>
+        <p class="card-subtext pf-oswald text-chalk" *ngIf="clasesHoy.length > 0">Próx: {{ clasesHoy[0].hora_inicio | slice:0:5 }}</p>
+        <p class="card-subtext pf-oswald text-steel" *ngIf="clasesHoy.length === 0">Sin actividad</p>
       </div>
     </div>
 
-    <!-- 🔥 TARJETA DE EVALUACIONES ACTUALIZADA -->
-    <div class="card card-indigo">
+    <!-- TARJETA 3: EVALUACIONES -->
+    <div class="pf-card pf-card-blue">
       <div class="card-content">
-        <span class="card-label">Última Evaluación</span>
+        <span class="card-label pf-oswald">Última Evaluación</span>
         <div class="card-value-wrapper">
-            <h3 class="card-value">{{ ultimaEvaluacion?.totalResultados || 0 }}</h3>
-            <div class="card-icon icon-indigo">
+            <h3 class="card-value pf-anton">{{ ultimaEvaluacion?.totalResultados || 0 }}</h3>
+            <div class="card-icon icon-blue">
                 <i class="pi pi-chart-bar"></i>
             </div>
         </div>
-        <p class="card-subtext" *ngIf="ultimaEvaluacion">
+        <p class="card-subtext pf-oswald text-chalk" *ngIf="ultimaEvaluacion">
           {{ ultimaEvaluacion.tipoEvaluacion }} ({{ ultimaEvaluacion.grupo }})
         </p>
-        <p class="card-subtext text-muted" *ngIf="!ultimaEvaluacion">
+        <p class="card-subtext pf-oswald text-steel" *ngIf="!ultimaEvaluacion">
           Sin registros
         </p>
       </div>
     </div>
 
-    <div class="card card-red">
+    <!-- TARJETA 4: LESIONES AGUDAS -->
+    <div class="pf-card pf-card-red">
       <div class="card-content">
-        <span class="card-label">En Tratamiento</span>
+        <span class="card-label pf-oswald">En Tratamiento</span>
         <div class="card-value-wrapper">
-            <h3 class="card-value">{{ pacientesEnTratamiento }}</h3>
+            <h3 class="card-value pf-anton">{{ pacientesEnTratamiento }}</h3>
             <div class="card-icon icon-red">
                 <i class="pi pi-exclamation-triangle"></i>
             </div>
         </div>
-        <p class="card-subtext" style="color: #ef4444; font-weight: 600;">Lesiones agudas</p>
+        <p class="card-subtext pf-oswald alert-red">Lesiones agudas</p>
       </div>
     </div>
 
-    <div class="card card-orange">
+    <!-- TARJETA 5: OBSERVACIÓN -->
+    <div class="pf-card pf-card-orange">
       <div class="card-content">
-        <span class="card-label">En Observación</span>
+        <span class="card-label pf-oswald">En Observación</span>
         <div class="card-value-wrapper">
-            <h3 class="card-value">{{ pacientesEnObservacion }}</h3>
+            <h3 class="card-value pf-anton">{{ pacientesEnObservacion }}</h3>
             <div class="card-icon icon-orange">
                 <i class="pi pi-eye"></i>
             </div>
         </div>
-        <p class="card-subtext" style="color: #f97316; font-weight: 600;">Seguimiento médico</p>
+        <p class="card-subtext pf-oswald alert-orange">Seguimiento médico</p>
       </div>
     </div>
 
-    <div class="card card-purple">
+    <!-- TARJETA 6: REINTEGRO -->
+    <div class="pf-card pf-card-purple">
       <div class="card-content">
-        <span class="card-label">En Reintegro</span>
+        <span class="card-label pf-oswald">En Reintegro</span>
         <div class="card-value-wrapper">
-            <h3 class="card-value">{{ pacientesEnReintegro }}</h3>
+            <h3 class="card-value pf-anton">{{ pacientesEnReintegro }}</h3>
             <div class="card-icon icon-purple">
                 <i class="pi pi-directions"></i>
             </div>
         </div>
-        <p class="card-subtext" style="color: #8b5cf6; font-weight: 600;">Fase final terapia</p>
+        <p class="card-subtext pf-oswald alert-purple">Fase final terapia</p>
       </div>
     </div>
 
   </div>
 
-  <section class="recent-activity-card shadow-1">
+  <section class="recent-activity-card">
     <div class="activity-header">
       <div class="flex align-items-center gap-2">
-          <h3 class="m-0">Próximos Cumpleaños (7 días)</h3>
+          <h3 class="pf-anton text-chalk m-0 text-2xl">Próximos Cumpleaños (7 días)</h3>
       </div>
-      <button class="p-button-rounded p-button-text" (click)="cargarDatos()" [disabled]="loading">
-        <i class="pi pi-refresh" [ngClass]="{'pi-spin': loading}"></i>
+      <button class="pf-btn-ghost-icon" (click)="cargarDatos()" [disabled]="loading">
+        <i class="pi pi-refresh" [ngClass]="{'pi-spin text-lime': loading}"></i>
       </button>
     </div>
+    
     <div class="activity-list">
       
       <div class="activity-item" *ngFor="let est of cumpleanosList">
-        <div class="item-icon-wrapper" [ngClass]="est.diasRestantes === 0 ? 'icon-orange' : 'icon-blue'">
+        <div class="item-icon-wrapper" [ngClass]="est.diasRestantes === 0 ? 'icon-orange' : 'icon-teal'">
           <i class="pi pi-user"></i>
         </div>
         <div class="item-info">
-          <p class="item-title text-900 font-bold">{{ est.nombreCompleto }}</p>
-          <!-- 🔥 AHORA MUESTRA EL ROL EN LUGAR DEL GRUPO -->
-          <span class="item-meta">{{ est.rol | titlecase }} • {{ est.proximoCumple | date:'d \'de\' MMMM' }}</span>
+          <p class="item-title pf-oswald text-chalk">{{ est.nombreCompleto }}</p>
+          <span class="item-meta pf-oswald text-steel">{{ est.rol | uppercase }} • {{ est.proximoCumple | date:'d \'de\' MMMM' }}</span>
         </div>
         <div class="flex flex-column align-items-end">
-            <span class="badge" [ngClass]="{'badge-success': est.diasRestantes === 0, 'badge-score': est.diasRestantes > 0}">
+            <span class="pf-badge" [ngClass]="{'badge-success': est.diasRestantes === 0, 'badge-normal': est.diasRestantes > 0}">
                 {{ est.diasRestantes === 0 ? '¡ES HOY!' : 'En ' + est.diasRestantes + ' días' }}
             </span>
-            <small class="text-secondary text-xs mt-1">Cumplirá {{ est.nuevaEdad }} años</small>
+            <small class="text-teal pf-oswald mt-1" style="font-size: 10px; letter-spacing: 0.05em;">CUMPLIRÁ {{ est.nuevaEdad }} AÑOS</small>
         </div>
       </div>
 
-      <div *ngIf="cumpleanosList.length === 0 && !loading" class="text-center p-4 text-500">
-          <i class="pi pi-calendar-times text-4xl mb-2"></i>
-          <p>No hay cumpleaños en los próximos 7 días.</p>
+      <div *ngIf="cumpleanosList.length === 0 && !loading" class="empty-state">
+          <i class="pi pi-calendar-times text-steel mb-3"></i>
+          <p class="pf-oswald text-steel" style="letter-spacing: 0.05em;">NO HAY CUMPLEAÑOS EN LOS PRÓXIMOS 7 DÍAS.</p>
       </div>
 
     </div>

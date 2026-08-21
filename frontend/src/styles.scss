@@ -1,0 +1,652 @@
+/* ==========================================================
+   1. VARIABLES GLOBALES (PALETA BASE Y ACENTOS)
+   ========================================================== */
+:root {
+  --pf-teal: #0f8c82;
+  --pf-lime: #c6ff3d;
+  --neon-red: #ff5c5c;
+  --neon-orange: #f59e0b;
+  --neon-purple: #c084fc;
+  --neon-blue: #3b82f6;
+  
+  /* Fuentes por defecto */
+  --pf-font-display: 'Anton', sans-serif;
+  --pf-font-label: 'Oswald', sans-serif;
+  --pf-font-body: 'Inter', sans-serif;
+}
+
+/* ==========================================================
+   2. MODO OSCURO (Por defecto)
+   ========================================================== */
+:root {
+  --bg-main: #0a0f0e;           
+  --bg-card: #111816;           
+  --text-main: #eaf2f0;         
+  --text-muted: #7c8b88;        
+  --border-color: rgba(234, 242, 240, 0.08); 
+  --input-bg: #060908;          
+  
+  --hover-bg: rgba(234, 242, 240, 0.03);
+  --table-header-bg: #0d1412;
+  --logo-filter: grayscale(1) invert(1) brightness(1.5); 
+}
+
+/* ==========================================================
+   3. MODO CLARO (.light-mode en el <body>)
+   ========================================================== */
+body.light-mode {
+  --bg-main: #f4f7f6;           
+  --bg-card: #ffffff;           
+  --text-main: #111827;         
+  --text-muted: #64748b;        
+  --border-color: rgba(0, 0, 0, 0.1); 
+  --input-bg: #ffffff;          
+  
+  --hover-bg: rgba(0, 0, 0, 0.02);
+  --table-header-bg: #f8fafc;
+  --logo-filter: none; 
+  --pf-lime: #9ecf20; 
+}
+
+/* ==========================================================
+   4. ESTILOS BASE Y TIPOGRAFÍAS
+   ========================================================== */
+body {
+  margin: 0;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: var(--pf-font-body);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.pf-anton { font-family: var(--pf-font-display); letter-spacing: 0.02em; text-transform: uppercase; }
+.pf-oswald { font-family: var(--pf-font-label); letter-spacing: 0.05em; text-transform: uppercase; }
+
+.text-teal { color: var(--pf-teal) !important; }
+.text-chalk { color: var(--text-main) !important; }
+.text-steel { color: var(--text-muted) !important; }
+.text-lime { color: var(--pf-lime) !important; }
+
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--pf-teal); }
+
+.pf-img-invert {
+  filter: var(--logo-filter);
+  transition: filter 0.3s ease;
+}
+
+/* ==========================================================
+   5. BOTONES, PESTAÑAS, TABLAS Y MODALES
+   ========================================================== */
+.pf-btn-primary {
+  background: var(--pf-lime) !important;
+  color: #0a0f0e !important; 
+  font-family: var(--pf-font-label) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 12px 24px !important;
+  min-height: 44px !important; /* 🔥 FIX: Altura idéntica */
+  transition: transform 0.2s, box-shadow 0.2s !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  cursor: pointer;
+}
+.pf-btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(198, 255, 61, 0.2) !important;
+}
+
+.pf-btn-ghost {
+  background: transparent !important;
+  color: var(--text-main) !important;
+  font-family: var(--pf-font-label) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  padding: 12px 24px !important;
+  min-height: 44px !important; /* 🔥 FIX: Altura idéntica */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  cursor: pointer;
+}
+.pf-btn-ghost:hover:not(:disabled) {
+  background: var(--hover-bg) !important;
+  border-color: var(--text-main) !important;
+}
+
+.p-tablist-tab-list {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 0.5rem !important;
+  padding: 0 0 1.5rem 0 !important;
+  margin: 0 !important;
+  list-style: none !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  background: transparent !important;
+}
+.p-tab {
+  background: var(--hover-bg) !important;
+  border: 1px solid transparent !important;
+  color: var(--text-muted) !important;
+  font-family: var(--pf-font-label) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  padding: 0.75rem 1.25rem !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+.p-tab:hover {
+  background: rgba(15, 140, 130, 0.1) !important;
+  color: var(--pf-teal) !important;
+}
+.p-tab-active {
+  background: var(--pf-teal) !important;
+  color: #ffffff !important;
+  border-color: var(--pf-teal) !important;
+  box-shadow: 0 4px 15px rgba(15, 140, 130, 0.3) !important;
+}
+.p-tabpanels { padding: 2rem 0 0 0 !important; background: transparent !important; }
+
+.pf-table .p-datatable-wrapper { border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; }
+.pf-table .p-datatable-thead > tr > th {
+  background: var(--table-header-bg) !important; 
+  color: var(--pf-teal) !important;
+  font-family: var(--pf-font-label);
+  font-size: 13px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: none !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  padding: 1rem !important;
+}
+.pf-table .p-datatable-tbody > tr > td {
+  background: var(--bg-card) !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  color: var(--text-main) !important;
+  padding: 1rem !important;
+  vertical-align: middle;
+}
+.pf-table .p-datatable-tbody > tr:hover > td { background: var(--hover-bg) !important; }
+
+.pf-dialog .p-dialog-header {
+  background: var(--bg-card) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  color: var(--text-main) !important;
+  padding: 1.5rem !important;
+}
+.pf-dialog .p-dialog-title { font-family: var(--pf-font-display); font-size: 1.6rem; text-transform: uppercase; letter-spacing: 0.02em; }
+.pf-dialog .p-dialog-content { background: var(--bg-card) !important; color: var(--text-main) !important; padding: 1.5rem !important; }
+.pf-dialog .p-dialog-footer {
+  background: var(--bg-card) !important;
+  border-top: 1px solid var(--border-color) !important;
+  padding: 1.5rem !important;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* =========================================
+   🔥 ACCIONES DE LA TABLA (BOTONES CIRCULARES) 🔥
+   ========================================= */
+.pf-table-actions { display: flex; justify-content: center; align-items: center; gap: 12px; }
+.pf-table-actions .p-button {
+  width: 36px !important; height: 36px !important; min-height: 36px !important; border-radius: 50% !important; padding: 0 !important;
+  display: inline-flex !important; justify-content: center !important; align-items: center !important;
+  transition: all 0.2s ease !important; border: none !important;
+}
+.pf-table-actions .p-button .p-button-icon { font-size: 0.95rem !important; }
+
+.pf-table-actions .p-button-warning { background: rgba(250, 204, 21, 0.15) !important; color: #facc15 !important; }
+.pf-table-actions .p-button-warning:hover { background: rgba(250, 204, 21, 0.3) !important; transform: translateY(-2px); }
+
+.pf-table-actions .p-button-danger { background: rgba(244, 114, 182, 0.15) !important; color: #f472b6 !important; }
+.pf-table-actions .p-button-danger:hover { background: rgba(244, 114, 182, 0.3) !important; transform: translateY(-2px); }
+
+.pf-table-actions .p-button-info { background: rgba(59, 130, 246, 0.15) !important; color: #3b82f6 !important; }
+.pf-table-actions .p-button-info:hover { background: rgba(59, 130, 246, 0.3) !important; transform: translateY(-2px); }
+
+.pf-table-actions .p-button-success { background: rgba(34, 197, 94, 0.15) !important; color: #22c55e !important; }
+.pf-table-actions .p-button-success:hover { background: rgba(34, 197, 94, 0.3) !important; transform: translateY(-2px); }
+
+/* ==========================================================
+   🔥 6. FIX PRIMENG V21: SELECTS Y MULTISELECTS 🔥
+   ========================================================== */
+
+/* Contenedor principal de los inputs y selects */
+.p-inputtext, .p-textarea, .p-select, .p-multiselect, .p-dropdown, .p-datepicker-input {
+    width: 100% !important;
+    min-height: 44px !important; /* 🔥 FIX: Altura idéntica y forzada para todos los campos 🔥 */
+    background: var(--input-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    font-family: var(--pf-font-body) !important;
+    font-size: 14px !important;
+    transition: border-color 0.2s, box-shadow 0.2s !important;
+    box-sizing: border-box !important;
+}
+
+/* Evitar dobles paddings en los contenedores Flex de PrimeNG */
+.p-select, .p-multiselect, .p-dropdown {
+    display: flex !important;
+    flex-direction: row !important; 
+    align-items: center !important;
+    padding: 0 !important; 
+}
+
+/* 🟢 TEXTO INTERNO (LABEL) - Select Simple */
+.p-select-label, 
+.p-dropdown-label {
+    flex: 1 1 auto !important; 
+    min-width: 0 !important; 
+    padding: 12px 14px !important;
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-main) !important;
+    font-family: var(--pf-font-body) !important;
+    font-size: 14px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* 🟢 TEXTO INTERNO - MultiSelect (Para que los Chips se vean bien) */
+.p-multiselect-label {
+    flex: 1 1 auto !important; 
+    min-width: 0 !important; 
+    padding: 8px 14px !important; 
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-main) !important;
+    font-family: var(--pf-font-body) !important;
+    font-size: 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    overflow: hidden !important;
+}
+
+/* Padding a Inputs de texto normales */
+.p-inputtext, .p-textarea, .p-datepicker-input {
+    padding: 12px 14px !important;
+    color: var(--text-main) !important;
+}
+
+/* Flechita (Trigger) con ancho inamovible */
+.p-select-dropdown, .p-multiselect-dropdown, .p-dropdown-trigger {
+    flex: 0 0 auto !important; 
+    width: 40px !important;
+    min-width: 40px !important; 
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+    color: var(--text-muted) !important;
+}
+
+/* Focus/Hover global */
+.p-inputtext:focus, .p-textarea:focus, 
+.p-select.p-focus, .p-multiselect.p-focus, 
+.p-select:hover, .p-multiselect:hover {
+    border-color: var(--pf-teal) !important;
+    box-shadow: 0 0 0 2px rgba(15, 140, 130, 0.2) !important;
+    outline: none !important;
+}
+
+/* ==========================================================
+   🔥 7. FIX PRIMENG V21: PANELES FLOTANTES (LISTAS) 🔥
+   ========================================================== */
+
+/* Caja flotante general */
+.p-select-panel, .p-select-overlay, .p-multiselect-overlay, .p-dropdown-panel {
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8) !important;
+    z-index: 1050 !important;
+    padding: 0.5rem !important; 
+}
+
+/* Envolturas de las listas */
+.p-select-list, .p-select-list-container, .p-multiselect-list, .p-multiselect-list-container {
+    background-color: transparent !important;
+    padding: 0 !important;
+}
+
+/* Opciones Individuales (Items) */
+.p-select-option, .p-multiselect-option {
+    color: var(--text-main) !important;
+    padding: 12px 16px !important;
+    font-family: var(--pf-font-body) !important;
+    font-size: 14.5px !important;
+    transition: all 0.2s ease !important;
+    margin: 4px 0 !important; 
+    border-radius: 6px !important;
+    background-color: transparent !important;
+    cursor: pointer !important;
+    display: flex;
+    align-items: center;
+}
+
+/* Hover de Opciones (Luz Turquesa) */
+.p-select-option:hover, .p-multiselect-option:hover {
+    background-color: rgba(15, 140, 130, 0.15) !important;
+    color: var(--pf-teal) !important;
+}
+
+/* Opción Seleccionada (Fondo Sólido) */
+.p-select-option[data-p-selected="true"], 
+.p-select-option[data-p-highlight="true"],
+.p-multiselect-option[data-p-selected="true"],
+.p-multiselect-option[data-p-highlight="true"] {
+    background-color: var(--pf-teal) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+/* ==========================================================
+   🔥 8. FIX PRIMENG V21: CALENDARIO (DATEPICKER) 🔥
+   ========================================================== */
+
+/* Panel del calendario */
+.p-datepicker, .p-datepicker-panel, .p-datepicker-overlay {
+    background-color: var(--bg-card) !important; 
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8) !important;
+    z-index: 1050 !important;
+    color: var(--text-main) !important;
+    padding: 1rem !important;
+}
+
+/* Cabecera del calendario */
+.p-datepicker-header {
+    background-color: transparent !important; 
+    border-bottom: 1px solid var(--border-color) !important;
+    padding-bottom: 1rem !important;
+    margin-bottom: 0.5rem !important; 
+}
+
+/* Títulos y Flechas */
+.p-datepicker-title, .p-datepicker-prev, .p-datepicker-next {
+    color: var(--text-main) !important;
+    transition: color 0.2s !important;
+}
+.p-datepicker-prev:hover, .p-datepicker-next:hover {
+    color: var(--pf-teal) !important;
+    background: rgba(15, 140, 130, 0.1) !important;
+    border-radius: 50%;
+}
+
+/* Días de la semana (Th) */
+.p-datepicker table th {
+    color: var(--text-muted) !important;
+    font-family: var(--pf-font-label) !important;
+    font-weight: normal !important;
+    padding: 0.5rem !important;
+    background-color: transparent !important;
+}
+
+/* Celdas generales */
+.p-datepicker table td {
+    padding: 0.25rem !important;
+    background-color: transparent !important;
+}
+
+/* Números de los días */
+.p-datepicker-day {
+    color: var(--text-main) !important;
+    border-radius: 50% !important;
+    transition: all 0.2s ease !important;
+    width: 2.2rem !important;
+    height: 2.2rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto !important;
+    cursor: pointer !important;
+    background-color: transparent !important;
+    border: 1px solid transparent !important; 
+}
+
+/* Hover de Días (Luz Turquesa) */
+.p-datepicker table td:not([data-p-disabled="true"]) .p-datepicker-day:hover {
+    background-color: rgba(15, 140, 130, 0.25) !important;
+    color: var(--pf-teal) !important;
+    font-weight: bold !important;
+}
+
+/* Día Seleccionado (Fondo Sólido) */
+.p-datepicker-day[data-p-selected="true"],
+.p-datepicker-day[data-p-highlight="true"] {
+    background-color: var(--pf-teal) !important;
+    color: #ffffff !important;
+    font-weight: bold !important;
+    box-shadow: 0 0 10px rgba(15, 140, 130, 0.5) !important;
+}
+
+/* Día actual (Hoy) */
+.p-datepicker-day.p-datepicker-today:not([data-p-selected="true"]) {
+    border-color: var(--pf-teal) !important;
+    color: var(--pf-teal) !important;
+}
+
+/* Días deshabilitados */
+.p-datepicker table td[data-p-disabled="true"] .p-datepicker-day,
+.p-datepicker-day.p-disabled {
+    color: var(--text-muted) !important;
+    opacity: 0.3 !important;
+    cursor: default !important;
+}
+
+/* ==========================================================
+   🔥 9. TOOLTIPS (MENSAJES AL PASAR EL MOUSE) 🔥
+   ========================================================== */
+.p-tooltip {
+    max-width: 250px;
+    z-index: 2000 !important; /* Para que siempre quede por encima de todo */
+}
+
+/* La cajita del texto */
+.p-tooltip .p-tooltip-text {
+    background-color: var(--pf-teal) !important; /* Fondo color de tu marca */
+    color: #ffffff !important; /* Texto blanco */
+    font-family: var(--pf-font-body) !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    padding: 6px 12px !important;
+    border-radius: 6px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6) !important;
+    letter-spacing: 0.03em;
+    text-align: center;
+}
+
+/* La flechita que apunta al botón (según de dónde salga el tooltip) */
+.p-tooltip-top .p-tooltip-arrow { border-top-color: var(--pf-teal) !important; }
+.p-tooltip-bottom .p-tooltip-arrow { border-bottom-color: var(--pf-teal) !important; }
+.p-tooltip-left .p-tooltip-arrow { border-left-color: var(--pf-teal) !important; }
+.p-tooltip-right .p-tooltip-arrow { border-right-color: var(--pf-teal) !important; }
+
+/* ==========================================================
+   🔥 10. FIX PRIMENG V21: PAGINADOR DE TABLAS 🔥
+   ========================================================== */
+
+/* Contenedor del paginador */
+.p-paginator {
+    background: var(--bg-card) !important;
+    border: none !important;
+    border-top: 1px solid var(--border-color) !important;
+    padding: 1rem !important;
+    border-radius: 0 0 8px 8px !important;
+}
+
+/* Botones del paginador (Números y Flechas) */
+.p-paginator-page,
+.p-paginator-next,
+.p-paginator-prev,
+.p-paginator-first,
+.p-paginator-last {
+    color: var(--text-main) !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 8px !important;
+    min-width: 36px !important;
+    height: 36px !important;
+    margin: 0 4px !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Hover de los botones (Luz Turquesa) */
+.p-paginator-page:hover:not(.p-highlight):not([data-p-highlight="true"]),
+.p-paginator-next:hover:not([data-p-disabled="true"]):not(.p-disabled),
+.p-paginator-prev:hover:not([data-p-disabled="true"]):not(.p-disabled),
+.p-paginator-first:hover:not([data-p-disabled="true"]):not(.p-disabled),
+.p-paginator-last:hover:not([data-p-disabled="true"]):not(.p-disabled) {
+    background: rgba(15, 140, 130, 0.15) !important;
+    color: var(--pf-teal) !important;
+}
+
+/* Página Activa / Seleccionada (Fondo Turquesa Sólido) */
+.p-paginator-page.p-highlight,
+.p-paginator-page[data-p-highlight="true"] {
+    background: var(--pf-teal) !important;
+    color: #ffffff !important;
+    font-weight: bold !important;
+    box-shadow: 0 4px 10px rgba(15, 140, 130, 0.4) !important;
+}
+
+/* Flechas Deshabilitadas (Principio o Final) */
+.p-paginator-next.p-disabled,
+.p-paginator-prev.p-disabled,
+.p-paginator-first.p-disabled,
+.p-paginator-last.p-disabled,
+.p-paginator-element[data-p-disabled="true"] {
+    opacity: 0.3 !important;
+    color: var(--text-muted) !important;
+    cursor: default !important;
+}
+
+/* ==========================================================
+   🔥 11. FIX PRIMENG V21: TOASTS (NOTIFICACIONES) 🔥
+   ========================================================== */
+
+/* Contenedor flotante */
+.p-toast {
+    opacity: 0.95;
+    z-index: 2500 !important;
+}
+
+/* La tarjeta del Toast */
+.p-toast-message,
+.p-toast .p-toast-message {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7) !important;
+    color: var(--text-main) !important;
+    margin-bottom: 1rem !important;
+    overflow: hidden !important; /* Para que la línea de color no se salga del borde redondeado */
+}
+
+/* Contenido interno */
+.p-toast-message-content {
+    padding: 1rem 1.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 1rem !important;
+}
+
+/* Título de la notificación */
+.p-toast-summary {
+    font-family: var(--pf-font-display) !important;
+    font-size: 1.15rem !important;
+    letter-spacing: 0.02em !important;
+    color: var(--text-main) !important;
+    margin-bottom: 0.25rem !important;
+    text-transform: uppercase !important;
+}
+
+/* Detalle (El mensaje) */
+.p-toast-detail {
+    font-family: var(--pf-font-body) !important;
+    font-size: 0.9rem !important;
+    color: var(--text-muted) !important;
+}
+
+/* Botón de cerrar (X) */
+.p-toast-icon-close {
+    color: var(--text-muted) !important;
+    background: transparent !important;
+    transition: all 0.2s !important;
+    border-radius: 50% !important;
+    width: 2rem !important;
+    height: 2rem !important;
+}
+.p-toast-icon-close:hover {
+    background: var(--hover-bg) !important;
+    color: var(--text-main) !important;
+}
+
+/* 🟢 COLORES POR SEVERIDAD (Borde izquierdo grueso e Icono) 🟢 */
+
+/* Éxito (Verde) */
+.p-toast-message-success,
+.p-toast-message[data-p-severity="success"] {
+    border-left: 6px solid #22c55e !important;
+}
+.p-toast-message-success .p-toast-message-icon,
+.p-toast-message[data-p-severity="success"] .p-toast-message-icon {
+    color: #22c55e !important;
+    font-size: 1.8rem !important;
+}
+
+/* Error (Rojo) */
+.p-toast-message-error,
+.p-toast-message[data-p-severity="error"] {
+    border-left: 6px solid #ef4444 !important;
+}
+.p-toast-message-error .p-toast-message-icon,
+.p-toast-message[data-p-severity="error"] .p-toast-message-icon {
+    color: #ef4444 !important;
+    font-size: 1.8rem !important;
+}
+
+/* Información (Azul) */
+.p-toast-message-info,
+.p-toast-message[data-p-severity="info"] {
+    border-left: 6px solid #3b82f6 !important;
+}
+.p-toast-message-info .p-toast-message-icon,
+.p-toast-message[data-p-severity="info"] .p-toast-message-icon {
+    color: #3b82f6 !important;
+    font-size: 1.8rem !important;
+}
+
+/* Advertencia (Amarillo/Naranja) */
+.p-toast-message-warn,
+.p-toast-message[data-p-severity="warn"] {
+    border-left: 6px solid #f59e0b !important;
+}
+.p-toast-message-warn .p-toast-message-icon,
+.p-toast-message[data-p-severity="warn"] .p-toast-message-icon {
+    color: #f59e0b !important;
+    font-size: 1.8rem !important;
+}

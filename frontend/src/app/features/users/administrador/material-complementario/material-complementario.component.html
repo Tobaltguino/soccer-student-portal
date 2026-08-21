@@ -1,99 +1,113 @@
-<div class="guides-container fadein animation-duration-500">
+<div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
-    <p-confirmdialog></p-confirmdialog>
+    <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
 
-    <header class="page-header">
+    <!-- ENCABEZADO -->
+    <header class="pf-admin-header">
         <div class="header-content">
-            <h1 class="m-0 text-main">Material Complementario</h1>
-            <p class="text-secondary m-0 mt-1">Estas guías serán visibles para todos los estudiantes, profesores y kinesiólogos.</p>
+            <div>
+                <h1 class="pf-anton text-chalk m-0 text-3xl">Material Complementario</h1>
+                <p class="pf-oswald text-teal mt-1">Estas guías serán visibles para todos los estudiantes, profesores y kinesiólogos.</p>
+            </div>
         </div>
-        <button pButton label="Subir Guía" icon="pi pi-upload" class="btn-create" (click)="abrirNuevo()"></button>
+        <button pButton label="Subir Guía" icon="pi pi-upload" class="pf-btn-primary" (click)="abrirNuevo()"></button>
     </header>
 
-    <div class="main-card">
-        <p-table [value]="guias" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm" responsiveLayout="stack" [breakpoint]="'768px'">
+    <!-- TARJETA DE TABLA -->
+    <div class="pf-admin-card table-responsive p-0">
+        <p-table [value]="guias" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm pf-table" responsiveLayout="stack" [breakpoint]="'768px'">
+            
             <ng-template pTemplate="header">
                 <tr>
                     <th style="width: 25%">Título</th>
                     <th style="width: 30%">Descripción</th>
-                    <th style="width: 15%">Área</th> <th style="width: 15%">Fecha de Subida</th>
+                    <th style="width: 15%" class="text-center">Área</th> 
+                    <th style="width: 15%" class="text-center">Fecha de Subida</th>
                     <th style="width: 15%" class="text-center">Acciones</th>
                 </tr>
             </ng-template>
+            
             <ng-template pTemplate="body" let-guia>
                 <tr>
                     <td>
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Título:</span>
-                        <span class="font-bold text-main">{{guia.titulo}}</span>
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Título:</span>
+                        <span class="pf-anton text-chalk text-lg" style="letter-spacing: 0.5px;">{{guia.titulo}}</span>
                     </td>
                     <td>
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Descripción:</span>
-                        <span class="text-secondary line-height-2">{{guia.descripcion || 'Sin descripción'}}</span>
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Descripción:</span>
+                        <span class="text-steel line-height-2">{{guia.descripcion || 'Sin descripción'}}</span>
                     </td>
-                    <td>
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Área:</span>
-                        <span class="text-sm font-medium border-round px-2 py-1 bg-primary-reverse text-primary">{{ getNombreArea(guia.tipo_material) }}</span>
+                    <td class="text-center">
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Área:</span>
+                        <p-tag [value]="getNombreArea(guia.tipo_material)" severity="info"></p-tag>
                     </td>
-                    <td>
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Fecha:</span>
-                        <span class="text-secondary"><i class="pi pi-calendar mr-1"></i> {{guia.created_at | date:'dd/MM/yyyy HH:mm'}}</span>
+                    <td class="text-center">
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Fecha:</span>
+                        <span class="text-steel"><i class="pi pi-calendar mr-1"></i> {{guia.created_at | date:'dd/MM/yyyy HH:mm'}}</span>
                     </td>
-                    <td>
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Acciones:</span>
-                        <div class="action-buttons">
-                            <a [href]="guia.archivo_url" target="_blank" class="no-underline flex align-items-center">
-                                <button pButton icon="pi pi-download" class="p-button-text p-button-secondary" pTooltip="Descargar"></button>
+                    <td class="text-center">
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Acciones:</span>
+                        <div class="pf-table-actions">
+                            <!-- Botón Azul para Descargar -->
+                            <a [href]="guia.archivo_url" target="_blank" class="no-underline">
+                                <button pButton icon="pi pi-download" class="p-button-info" pTooltip="Descargar"></button>
                             </a>
-                            <button pButton icon="pi pi-pencil" class="p-button-text p-button-warning" (click)="editarGuia(guia)" pTooltip="Editar"></button>
-                            <button pButton icon="pi pi-trash" class="p-button-text p-button-danger" (click)="eliminarGuia(guia.id)" pTooltip="Eliminar"></button>
+                            <button pButton icon="pi pi-pencil" class="p-button-warning" (click)="editarGuia(guia)" pTooltip="Editar"></button>
+                            <button pButton icon="pi pi-trash" class="p-button-danger" (click)="eliminarGuia(guia.id)" pTooltip="Eliminar"></button>
                         </div>
                     </td>
                 </tr>
             </ng-template>
+
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="5" class="text-center p-5 text-secondary">No hay guías de estudio subidas en el sistema.</td>
+                    <td colspan="5" class="text-center p-5 text-steel">
+                        <i class="pi pi-folder-open block mb-3 text-4xl"></i>
+                        <span class="pf-oswald text-lg">No hay guías de estudio subidas en el sistema.</span>
+                    </td>
                 </tr>
             </ng-template>
         </p-table>
     </div>
 
-    <p-dialog [(visible)]="displayDialog" [header]="nuevaGuia.id ? 'Editar Guía Global' : 'Subir Nueva Guía Global'" [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" styleClass="p-fluid" [closable]="!subiendoArchivo">
+    <!-- MODAL DE SUBIDA/EDICIÓN -->
+    <p-dialog [(visible)]="displayDialog" [header]="nuevaGuia.id ? 'Editar Guía Global' : 'Subir Nueva Guía Global'" [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" styleClass="p-fluid pf-dialog" [closable]="!subiendoArchivo">
         <ng-template pTemplate="content">
             
-            <div class="field mt-2">
-                <label>Área Responsable <span class="text-red-500 font-bold">*</span></label>
-                <p-select [options]="tiposMaterial" [(ngModel)]="nuevaGuia.tipo_material" optionLabel="label" optionValue="value" placeholder="Seleccione el área de la guía" appendTo="body" styleClass="w-full" [disabled]="subiendoArchivo"></p-select>
+            <div class="pf-field-group mt-3">
+                <label class="pf-oswald">Área Responsable <span class="text-pink-500 font-bold">*</span></label>
+                <p-select [options]="tiposMaterial" [(ngModel)]="nuevaGuia.tipo_material" optionLabel="label" optionValue="value" placeholder="Seleccione el área de la guía" appendTo="body" styleClass="w-full" [disabled]="subiendoArchivo" [filter]="false"></p-select>
             </div>
 
-            <div class="field">
-                <label>Título de la Guía <span class="text-red-500 font-bold">*</span></label>
+            <div class="pf-field-group">
+                <label class="pf-oswald">Título de la Guía <span class="text-pink-500 font-bold">*</span></label>
                 <input pInputText [(ngModel)]="nuevaGuia.titulo" placeholder="Ej: Fundamentos Tácticos 2026" [disabled]="subiendoArchivo">
             </div>
 
-            <div class="field">
-                <label>Descripción (Opcional)</label>
-                <!-- ✅ Cambiado a pTextarea -->
+            <div class="pf-field-group">
+                <label class="pf-oswald">Descripción (Opcional)</label>
                 <textarea pTextarea [(ngModel)]="nuevaGuia.descripcion" rows="3" placeholder="Instrucciones breves sobre este material..." [disabled]="subiendoArchivo"></textarea>
             </div>
 
-            <div class="field">
-                <label>Archivo <span class="text-red-500 font-bold">{{ nuevaGuia.id ? '(Opcional)' : '*' }}</span></label>
+            <div class="pf-field-group">
+                <label class="pf-oswald">Archivo <span class="text-pink-500 font-bold">{{ nuevaGuia.id ? '(Opcional)' : '*' }}</span></label>
                 
-                <div *ngIf="nuevaGuia.id && nuevaGuia.archivo_url && !archivoSeleccionado" class="flex flex-column mb-3 border-1 border-blue-100 border-round-lg p-3 bg-blue-50">
+                <!-- Archivo Actual Visualizado -->
+                <div *ngIf="nuevaGuia.id && nuevaGuia.archivo_url && !archivoSeleccionado" class="flex flex-column mb-3 border-1 border-round-lg p-3" style="background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3);">
                     <div class="flex align-items-center justify-content-between w-full">
                         <div class="flex align-items-center">
-                            <i class="pi pi-file-pdf text-3xl text-primary mr-3"></i>
+                            <i class="pi pi-file-pdf text-3xl text-blue-400 mr-3"></i>
                             <div class="flex flex-column">
-                                <span class="font-bold text-sm text-main">Archivo Actual en el Sistema</span>
-                                <a [href]="nuevaGuia.archivo_url" target="_blank" class="text-xs text-primary font-medium mt-1 no-underline hover:underline">Ver archivo cargado <i class="pi pi-external-link" style="font-size: 0.7rem;"></i></a>
+                                <span class="font-bold text-sm text-chalk">Archivo Actual en el Sistema</span>
+                                <a [href]="nuevaGuia.archivo_url" target="_blank" class="text-xs text-blue-400 font-medium mt-1 no-underline hover:underline">Ver archivo cargado <i class="pi pi-external-link" style="font-size: 0.7rem;"></i></a>
                             </div>
                         </div>
-                        <button pButton icon="pi pi-replay" class="p-button-rounded p-button-text p-button-sm p-button-secondary" (click)="fileInput.click()" pTooltip="Reemplazar archivo" tooltipPosition="left"></button>
+                        <button pButton icon="pi pi-replay" class="p-button-rounded p-button-info p-button-text" (click)="fileInput.click()" pTooltip="Reemplazar" tooltipPosition="left"></button>
                     </div>
                 </div>
 
-                <div class="file-upload-container text-center cursor-pointer" 
+                <!-- Caja de Upload Customizada -->
+                <div class="pf-file-upload-container text-center cursor-pointer" 
                      (click)="fileInput.click()" 
                      [class.opacity-50]="subiendoArchivo"
                      [class.pointer-events-none]="subiendoArchivo"
@@ -102,26 +116,25 @@
                     <input type="file" #fileInput class="hidden" (click)="$event.stopPropagation()" (change)="onFileSelect($event)" accept=".pdf,.doc,.docx,.jpg,.png" [disabled]="subiendoArchivo">
                     
                     <div *ngIf="!archivoSeleccionado">
-                        <i class="pi" [ngClass]="nuevaGuia.id ? 'pi-cloud-upload text-blue-400' : 'pi-cloud-upload text-primary'" class="text-4xl mb-2"></i>
-                        <div class="text-700 font-medium">
+                        <i class="pi" [ngClass]="nuevaGuia.id ? 'pi-cloud-upload text-blue-400' : 'pi-cloud-upload text-teal'" class="text-4xl mb-2"></i>
+                        <div class="text-chalk font-medium">
                             {{ nuevaGuia.id ? 'Haz clic para seleccionar un archivo nuevo y reemplazar el actual' : 'Haz clic aquí para seleccionar un archivo' }}
                         </div>
-                        <!-- ✅ Cambiado a 20MB -->
-                        <div class="text-500 text-sm mt-1">PDF, Word o Imágenes (Máximo 20MB)</div>
+                        <div class="text-steel text-sm mt-1">PDF, Word o Imágenes (Máximo 20MB)</div>
                     </div>
 
                     <div *ngIf="archivoSeleccionado" class="flex flex-column align-items-center">
-                        <i class="pi pi-check-circle text-4xl text-green-500 mb-2"></i>
-                        <div class="text-900 font-bold text-sm w-full white-space-nowrap overflow-hidden text-overflow-ellipsis px-2">{{archivoSeleccionado.name}}</div>
-                        <div class="text-500 text-xs mt-1 font-bold">{{ (archivoSeleccionado.size / 1024 / 1024) | number:'1.2-2' }} MB - Listo para subir</div>
+                        <i class="pi pi-check-circle text-4xl text-lime mb-2"></i>
+                        <div class="text-chalk font-bold text-sm w-full white-space-nowrap overflow-hidden text-overflow-ellipsis px-2">{{archivoSeleccionado.name}}</div>
+                        <div class="text-steel text-xs mt-1 font-bold">{{ (archivoSeleccionado.size / 1024 / 1024) | number:'1.2-2' }} MB - Listo para subir</div>
                     </div>
                 </div>
             </div>
         </ng-template>
         
         <ng-template pTemplate="footer">
-            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="displayDialog=false" [disabled]="subiendoArchivo"></button>
-            <button pButton [label]="nuevaGuia.id ? 'Guardar Cambios' : 'Publicar Guía'" icon="pi pi-check" (click)="guardarGuia()" [loading]="subiendoArchivo"></button>
+            <button pButton label="Cancelar" icon="pi pi-times" class="pf-btn-ghost" (click)="displayDialog=false" [disabled]="subiendoArchivo"></button>
+            <button pButton [label]="nuevaGuia.id ? 'Guardar Cambios' : 'Publicar Guía'" icon="pi pi-check" class="pf-btn-primary ml-2" (click)="guardarGuia()" [loading]="subiendoArchivo"></button>
         </ng-template>
     </p-dialog>
 </div>

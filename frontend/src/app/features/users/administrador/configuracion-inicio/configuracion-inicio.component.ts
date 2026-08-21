@@ -5,6 +5,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { forkJoin } from 'rxjs';
 
 // PrimeNG
+import { TooltipModule } from 'primeng/tooltip';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -30,11 +31,11 @@ import { WebAuspiciadorService } from '../../../../core/domains/administracion/w
   imports: [
     CommonModule, FormsModule, CardModule, ButtonModule, InputTextModule, 
     TextareaModule, TabsModule, TableModule, DialogModule, ToastModule, 
-    ConfirmDialogModule, SelectModule, FileUploadModule
+    ConfirmDialogModule, SelectModule, FileUploadModule, TooltipModule
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './configuracion-inicio.component.html',
-  styleUrls: ['./configuracion-inicio.component.css']
+  styleUrls: ['./configuracion-inicio.component.scss']
 })
 export class AdminHomeConfigComponent implements OnInit {
 

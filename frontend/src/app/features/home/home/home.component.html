@@ -4,7 +4,9 @@
   <header class="pf-nav">
     <div class="pf-container pf-nav__row">
       <div class="pf-nav__brand">
-        <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="Pro Fútbol" class="pf-nav__logo" />
+        <!-- 🔥 Intercambio de logos 🔥 -->
+        <img src="assets/logo-blanco.png" alt="Pro Fútbol" class="logo-dark" />
+        <img src="assets/logo-negro.png" alt="Pro Fútbol" class="logo-light" />
         <span class="pf-anton pf-nav__title">PRO FÚTBOL</span>
       </div>
 
@@ -15,7 +17,7 @@
       <div class="pf-nav__actions">
         <!-- 1. Texto de Portal (Solo visible en PC) -->
         <a (click)="irAlLogin()" class="pf-oswald pf-hide-mobile pf-nav__portal-link cursor-pointer">Portal ProFútbol</a>
-        
+
         <!-- 2. Botón Contáctanos (Solo visible en PC) -->
         <button class="pf-btn-primary pf-nav__cta pf-hide-mobile" (click)="irA(linkWhatsApp)">Contáctanos</button>
 
@@ -67,7 +69,7 @@
         <div class="pf-hero__badge">
           <div class="pf-hero__badge-glow"></div>
           <svg class="pf-hero__badge-ring" width="320" height="320" viewBox="0 0 320 320">
-            <circle cx="160" cy="160" r="150" fill="none" stroke="rgba(234,242,240,0.14)" stroke-width="1" />
+            <circle cx="160" cy="160" r="150" fill="none" stroke="var(--border-color)" stroke-width="1" />
             <circle
               cx="160" cy="160" r="150" fill="none"
               stroke="var(--pf-teal)" stroke-width="2"
@@ -76,14 +78,16 @@
             />
           </svg>
           <div class="pf-hero__badge-center">
-            <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="Pro Fútbol" />
+            <!-- 🔥 Intercambio de logos 🔥 -->
+            <img src="assets/logo-blanco.png" alt="Pro Fútbol" class="logo-dark" />
+            <img src="assets/logo-negro.png" alt="Pro Fútbol" class="logo-light" />
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- 🔥 METODOLOGÍA: PILARES FÍSICO / COGNITIVO RESTAURADOS 🔥 -->
+  <!-- METODOLOGÍA: PILARES FÍSICO / COGNITIVO -->
   <section id="metodologia" class="pf-section pf-section--bordered">
     <div class="pf-container">
       <div class="pf-section__head">
@@ -93,20 +97,20 @@
 
       <div class="pf-pillars">
         <div class="pf-card pf-pillar" *ngFor="let m of metodologias; let i = index">
-          
+
           <pf-splatter class="pf-pillar__splatter" 
                        [ngClass]="i % 2 === 0 ? 'pf-pillar__splatter--teal' : 'pf-pillar__splatter--lime'" 
                        [opacityValue]="i % 2 === 0 ? 0.5 : 0.35">
           </pf-splatter>
-          
+
           <span class="pf-oswald pf-pillar__eyebrow" 
                 [ngClass]="i % 2 === 0 ? 'pf-pillar__eyebrow--teal' : 'pf-pillar__eyebrow--lime'">
             Pilar {{ i + 1 }}
           </span>
-          
+
           <h3 class="pf-anton pf-pillar__title">{{ m.titulo }}</h3>
           <p class="pf-pillar__desc">{{ m.descripcion }}</p>
-          
+
           <ul class="pf-pillar__list" style="margin-top: 24px;">
             <li>
               <span class="pf-pillar__dot" [ngClass]="i % 2 === 0 ? 'pf-pillar__dot--teal' : 'pf-pillar__dot--lime'">●</span>
@@ -119,7 +123,7 @@
     </div>
   </section>
 
-  <!-- PROGRAMAS POR EDAD (Dinámicos) -->
+  <!-- PROGRAMAS POR EDAD -->
   <section id="categorias" class="pf-section pf-section--bordered pf-section--tint">
     <div class="pf-container">
       <h2 class="pf-anton pf-section__title-standalone">Categorías por edad</h2>
@@ -134,7 +138,7 @@
     </div>
   </section>
 
-  <!-- AUSPICIADORES -->
+  <!-- AUSPICIADORES (Sin modificar la imagen) -->
   <section id="auspiciadores" class="pf-section pf-section--bordered" *ngIf="auspiciadores.length > 0">
     <div class="pf-container">
       <div class="pf-section__head">
@@ -144,8 +148,9 @@
 
       <div class="pf-grid-3">
         <div class="pf-card pf-staff h-full flex flex-column" *ngFor="let au of auspiciadores">
+          <!-- Se mantiene el estilo inline original -->
           <img [src]="au.imagen_url || 'assets/images/default-sponsor.png'" [alt]="au.nombre" style="height: 50px; object-fit: contain; filter: grayscale(1) invert(1); opacity: 0.8; margin-bottom: 1rem; align-self: flex-start;">
-          
+
           <div class="flex-grow-1">
             <h3 class="pf-anton pf-staff__title">{{ au.nombre }}</h3>
             <p class="pf-staff__desc">{{ au.descripcion }}</p>
@@ -172,7 +177,7 @@
       <div class="pf-grid-3">
         <div class="pf-card pf-staff h-full flex flex-column" *ngFor="let a of alianzas">
           <div class="flex-grow-1">
-            <h3 class="pf-anton pf-staff__title" style="color: var(--pf-lime);">{{ a.nombre }}</h3>
+            <h3 class="pf-anton pf-staff__title text-lime">{{ a.nombre }}</h3>
             <p class="pf-staff__desc">{{ a.descripcion }}</p>
           </div>
 
@@ -186,12 +191,12 @@
     </div>
   </section>
 
-  <!-- CTA FRANJA TEAL -->
+  <!-- CTA FRANJA -->
   <section class="pf-cta">
     <pf-splatter class="pf-cta__splatter" [opacityValue]="0.5"></pf-splatter>
     <div class="pf-container pf-cta__row">
       <h2 class="pf-anton pf-cta__title">¿Quieres entrenar con nosotros?</h2>
-      <button class="pf-btn-primary" style="background: var(--pf-black); color: var(--pf-chalk);" (click)="irA(linkWhatsApp)">Contáctanos ahora</button>
+      <button class="pf-btn-primary" style="background: var(--bg-card); color: var(--text-main);" (click)="irA(linkWhatsApp)">Contáctanos ahora</button>
     </div>
   </section>
 
@@ -201,7 +206,9 @@
       <div class="pf-footer__grid">
         <div>
           <div class="pf-footer__brand">
-            <img src="assets/images/ProFutbol_Transparenteblanco.png" alt="Pro Fútbol" />
+            <!-- 🔥 Intercambio de logos 🔥 -->
+            <img src="assets/logo-blanco.png" alt="Pro Fútbol" class="logo-dark" />
+            <img src="assets/logo-negro.png" alt="Pro Fútbol" class="logo-light" />
             <span class="pf-anton">PRO FÚTBOL</span>
           </div>
           <p class="pf-footer__tagline">Entrenamiento físico y cognitivo integral. Arica.</p>

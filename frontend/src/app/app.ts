@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import { ToastModule } from 'primeng/toast'; // <-- 1. IMPORTAMOS EL MÓDULO VISUAL
+import { ToastModule } from 'primeng/toast'; 
 import { MessageService } from 'primeng/api';
 
 import { IdleService } from './core/services/idle.service'; 
@@ -9,10 +9,10 @@ import { IdleService } from './core/services/idle.service';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, ButtonModule, ToastModule], // <-- 2. LO AGREGAMOS AQUÍ
+  imports: [RouterOutlet, ButtonModule, ToastModule], 
   providers: [MessageService],
   templateUrl: './app.html', 
-  styleUrl: './app.css'
+  styleUrl: './app.scss' // 🔥 Cambiado a .scss
 })
 export class App implements OnInit, OnDestroy { 
   title = 'ProFutbol';
@@ -25,7 +25,6 @@ export class App implements OnInit, OnDestroy {
   ngOnInit() {
     this.checkThemePreference();
 
-    // 2. Mostrar la alerta cuando expira la sesión
     this.idleService.onIdleTimeout.subscribe(() => {
       this.messageService.add({
         severity: 'warn',
@@ -40,14 +39,18 @@ export class App implements OnInit, OnDestroy {
     this.idleService.detenerMonitoreo();
   }
 
+  // ==========================================
+  // GESTIÓN DE TEMA (Alineado con el Global CSS)
+  // ==========================================
   checkThemePreference() {
     const savedTheme = localStorage.getItem('theme');
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-    if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
-      document.body.classList.add('dark-mode');
+    // Si guardó 'light', o si no hay nada guardado y su sistema prefiere claro
+    if (savedTheme === 'light' || (!savedTheme && !systemPrefersDark)) {
+      document.body.classList.add('light-mode');
     } else {
-      document.body.classList.remove('dark-mode');
+      document.body.classList.remove('light-mode');
     }
   }
 }

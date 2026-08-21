@@ -16,7 +16,7 @@ import { SesionEvaluacionService } from '../../../../core/domains/academico/eval
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.css']
+  styleUrls: ['./dashboard.component.scss']
 })
 export class AdministradorDashboardComponent implements OnInit {
   

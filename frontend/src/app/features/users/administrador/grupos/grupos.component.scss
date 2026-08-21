@@ -1,0 +1,120 @@
+/* ==========================================================
+   ESTILOS ESPECÍFICOS: GESTIÓN DE GRUPOS
+   ========================================================== */
+
+:host {
+    display: block;
+    min-height: 100vh;
+    padding: 2rem; 
+    color: var(--text-main);
+}
+
+.pf-admin-wrapper { max-width: 1200px; margin: 0 auto; }
+
+/* --- HEADER --- */
+.pf-admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* --- TARJETA Y TABLA --- */
+.pf-admin-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+/* Forzar que las tablas no se rompan en celular */
+.table-responsive {
+    overflow-x: auto;
+}
+
+/* --- UTILIDADES DE TEXTO Y DISPLAY --- */
+.text-chalk { color: var(--text-main) !important; }
+.text-teal { color: var(--pf-teal) !important; }
+.text-steel { color: var(--text-muted) !important; }
+
+.hidden-mobile { display: table-cell; }
+.visible-mobile { display: none; }
+
+.mobile-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-style: italic;
+}
+
+/* --- BADGES --- */
+.pf-badge {
+    font-family: var(--pf-font-label, 'Oswald', sans-serif);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.badge-normal {
+    background: var(--hover-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+}
+
+.badge-success {
+    background: rgba(15, 140, 130, 0.1);
+    border: 1px solid var(--pf-teal);
+    color: var(--pf-teal);
+}
+
+/* --- INPUTS DEL MODAL --- */
+.pf-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.pf-field-group label {
+    color: var(--text-main);
+    font-size: 12px;
+}
+
+/* =========================================
+   MEDIA QUERIES (MÓVIL < 768px)
+   ========================================= */
+@media (max-width: 768px) {
+    :host { padding: 1rem; } 
+
+    .pf-admin-header {
+        flex-direction: column;
+        align-items: flex-start; 
+        text-align: left;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .header-content { justify-content: flex-start; width: 100%; }
+    
+    .pf-btn-primary { width: 100%; justify-content: center; }
+
+    .pf-admin-card { padding: 1rem; }
+
+    .hidden-mobile { display: none !important; }
+    .visible-mobile { display: block !important; }
+}
