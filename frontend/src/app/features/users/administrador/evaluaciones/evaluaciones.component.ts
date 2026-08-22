@@ -40,7 +40,7 @@ import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './evaluaciones.component.html',
-  styleUrls: ['./evaluaciones.component.css']
+  styleUrls: ['./evaluaciones.component.scss'] // 🔥 Cambiado a .scss
 })
 export class AdministradorEvaluacionesComponent implements OnInit {
 
@@ -83,6 +83,7 @@ export class AdministradorEvaluacionesComponent implements OnInit {
 
   // --- ESTADOS UI ---
   loading: boolean = true;
+  guardando: boolean = false; // 🔥 Variable Maestra de Bloqueo
   displayMainDialog: boolean = false;   
   displayTipoDialog: boolean = false;   
   displayGradesDialog: boolean = false; 
@@ -92,7 +93,7 @@ export class AdministradorEvaluacionesComponent implements OnInit {
   // --- FORMULARIOS ---
   tipoForm: any = { id: null, nombre: '', unidad_medida: '', descripcion: '' }; 
   rangosForm: any[] = [];
-  rangosOriginalesCache: any[] = []; // Para saber cuáles borrar/actualizar
+  rangosOriginalesCache: any[] = [];
   
   nuevoRango: any = { 
     edad_min: null,   
@@ -116,10 +117,11 @@ export class AdministradorEvaluacionesComponent implements OnInit {
   }
 
   // ==========================================
-  // 1. CARGA DE DATOS INICIAL
+  // CARGA DE DATOS INICIAL
   // ==========================================
   cargarDatosIniciales() {
     this.loading = true;
+    this.cdr.detectChanges(); // 🔥 Forzar renderizado
     
     forkJoin({
       grupos: this.grupoService.listarGrupos(),
@@ -132,7 +134,7 @@ export class AdministradorEvaluacionesComponent implements OnInit {
         this.sesionesOriginales = data.sesiones.registros || [];
         
         this.sesiones = [...this.sesionesOriginales];
-        this.aplicarFiltros(); 
+        this.aplicarFiltrosLocales(); // Lógica sincrónica extraída
         this.loading = false;
         this.cdr.detectChanges();
       },
@@ -145,9 +147,17 @@ export class AdministradorEvaluacionesComponent implements OnInit {
   }
 
   // ==========================================
-  // 2. LÓGICA DE FILTRADO
+  // LÓGICA DE FILTRADO
   // ==========================================
   aplicarFiltros() {
+    this.loading = true;
+    this.cdr.detectChanges();
+    this.aplicarFiltrosLocales();
+    this.loading = false;
+    this.cdr.detectChanges();
+  }
+
+  private aplicarFiltrosLocales() {
     this.sesiones = this.sesionesOriginales.filter(sesion => {
         let cumpleFecha = true;
         let cumpleGrupo = true;
@@ -181,18 +191,24 @@ export class AdministradorEvaluacionesComponent implements OnInit {
     this.aplicarFiltros();
   }
 
-  formatearFecha(date: Date): string {
-    const d = new Date(date);
-    let month = '' + (d.getMonth() + 1);
-    let day = '' + d.getDate();
-    const year = d.getFullYear();
-    if (month.length < 2) month = '0' + month;
-    if (day.length < 2) day = '0' + day;
-    return [year, month, day].join('-');
+  formatearFecha(date: any): string {
+    if (!date) return '';
+    try {
+        const d = new Date(date);
+        if (isNaN(d.getTime())) return '';
+        let month = '' + (d.getMonth() + 1);
+        let day = '' + d.getDate();
+        const year = d.getFullYear();
+        if (month.length < 2) month = '0' + month;
+        if (day.length < 2) day = '0' + day;
+        return [year, month, day].join('-');
+    } catch (e) {
+        return '';
+    }
   }
 
   // ==========================================
-  // 3. GESTIÓN DE TIPOS DE EVALUACIÓN Y RANGOS
+  // CONFIGURACIÓN DE TIPOS Y RANGOS
   // ==========================================
   abrirNuevoTipo() {
     this.cancelarEdicionTipo(); 
@@ -211,7 +227,6 @@ export class AdministradorEvaluacionesComponent implements OnInit {
     this.tipoForm = { ...test }; 
     this.displayTipoDialog = true;
     
-    // Obtenemos los rangos dinámicamente
     this.rangoService.listarRangosPorTipo(test.id).subscribe({
       next: (rangos) => {
         this.rangosForm = rangos.sort((a: any, b: any) => a.edad_min - b.edad_min || a.valor_min - b.valor_min);
@@ -266,12 +281,17 @@ export class AdministradorEvaluacionesComponent implements OnInit {
   }
 
   guardarNuevoTipo() {
+    // 🔥 Blindaje
+    if (this.guardando) return;
+
     if (!this.tipoForm.nombre || !this.tipoForm.unidad_medida) {
       this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'El Nombre y la Unidad son obligatorios (*)' });
       return;
     }
     
-    this.loading = true;
+    this.guardando = true;
+    this.cdr.detectChanges();
+
     const payloadTipo = { 
       nombre: this.tipoForm.nombre, 
       unidadMedida: this.tipoForm.unidad_medida || this.tipoForm.unidadMedida, 
@@ -285,8 +305,6 @@ export class AdministradorEvaluacionesComponent implements OnInit {
     peticionTipo$.subscribe({
       next: (tipoGuardado: any) => {
         const testId = tipoGuardado.id;
-        
-        // --- Sincronizar Rangos ---
         const peticionesRangos: any[] = [];
 
         // 1. Identificar rangos eliminados
@@ -321,24 +339,18 @@ export class AdministradorEvaluacionesComponent implements OnInit {
         if (peticionesRangos.length > 0) {
           forkJoin(peticionesRangos).subscribe({
             next: () => this.finalizarGuardadoTipo(),
-            error: () => {
-              this.messageService.add({ severity: 'error', summary: 'Error', detail: 'El Test se guardó, pero hubo un error con los rangos.' });
-              this.loading = false;
-            }
+            error: () => this.mostrarErrorGuardado('El Test se guardó, pero hubo un error con los rangos.')
           });
         } else {
           this.finalizarGuardadoTipo();
         }
       },
-      error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al guardar el Test' });
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
+      error: () => this.mostrarErrorGuardado('Error al guardar el Test')
     });
   }
 
   private finalizarGuardadoTipo() {
+    this.guardando = false;
     this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Test configurado correctamente' });
     this.displayTipoDialog = false; 
     this.cargarDatosIniciales();
@@ -366,7 +378,7 @@ export class AdministradorEvaluacionesComponent implements OnInit {
   }
 
   // ==========================================
-  // 4. GESTIÓN DE SESIONES (CRUD LOGÍSTICA)
+  // GESTIÓN DE SESIONES (CRUD LOGÍSTICA)
   // ==========================================
   abrirNuevo() {
     this.evalLogistica = { id: null, grupo_id: null, tipo_evaluacion_id: null, fecha: new Date(), estado: 'PENDIENTE' };
@@ -374,25 +386,34 @@ export class AdministradorEvaluacionesComponent implements OnInit {
   }
 
   editarSesion(sesion: any) {
-    const fechaObj = new Date(sesion.fecha + 'T00:00:00');
+    let fechaObj = new Date();
+    if (sesion.fecha) {
+        const parts = (sesion.fecha as string).split('-');
+        if (parts.length === 3) fechaObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    }
+    
     this.evalLogistica = { ...sesion, fecha: fechaObj };
-    // Mapeo seguro en caso de que venga camelCase del backend
     this.evalLogistica.grupo_id = sesion.grupo_id || sesion.grupoId;
     this.evalLogistica.tipo_evaluacion_id = sesion.tipo_evaluacion_id || sesion.tipoEvaluacionId;
     this.displayMainDialog = true;
   }
 
   crearSesionPlanificada() {
+    // 🔥 Blindaje
+    if (this.guardando) return;
+
     if (!this.evalLogistica.grupo_id || !this.evalLogistica.tipo_evaluacion_id || !this.evalLogistica.fecha) {
         this.messageService.add({ severity: 'warn', summary: 'Faltan datos', detail: 'Complete todos los campos obligatorios marcados con (*)' });
         return;
     }
 
-    const fechaSeleccionada = new Date(this.evalLogistica.fecha);
+    this.guardando = true;
+    this.cdr.detectChanges();
+
     const payload = {
         grupoId: this.evalLogistica.grupo_id,
         tipoEvaluacionId: this.evalLogistica.tipo_evaluacion_id,
-        fecha: fechaSeleccionada.toISOString().split('T')[0],
+        fecha: this.formatearFecha(this.evalLogistica.fecha),
         estado: this.evalLogistica.estado || 'PENDIENTE'
     };
 
@@ -404,9 +425,10 @@ export class AdministradorEvaluacionesComponent implements OnInit {
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Sesión guardada' });
         this.displayMainDialog = false;
+        this.guardando = false;
         this.cargarDatosIniciales(); 
       },
-      error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar la sesión' })
+      error: () => this.mostrarErrorGuardado('No se pudo guardar la sesión')
     });
   }
 
@@ -430,11 +452,12 @@ export class AdministradorEvaluacionesComponent implements OnInit {
   }
 
   // ==========================================
-  // 5. CALIFICACIÓN DE ESTUDIANTES
+  // CALIFICACIÓN DE ESTUDIANTES
   // ==========================================
   abrirCalificador(sesion: any) {
     this.evalLogistica = { ...sesion };
     this.loading = true;
+    this.cdr.detectChanges();
     
     const grupoIdToFetch = sesion.grupo_id || sesion.grupoId;
 
@@ -449,7 +472,6 @@ export class AdministradorEvaluacionesComponent implements OnInit {
           const nombre = est.perfil ? est.perfil.nombre : est.nombre;
           const apellido = est.perfil ? est.perfil.apellido : est.apellido;
 
-          // ✅ Al tiparlo como : any evitamos el error ts(2551)
           const notaExistente: any = resultados.find((r: any) => r.estudianteId === idUsuario || r.estudiante_id === idUsuario);
           
           return {
@@ -475,12 +497,15 @@ export class AdministradorEvaluacionesComponent implements OnInit {
   }
 
   limpiarFila(estudiante: any) {
+    if (this.guardando) return;
     estudiante.valor_numerico = null;
     estudiante.observacion = '';
   }
 
   guardarNotasFinales() {
-    // Filtramos solo a los que se les ingresó nota o comentario
+    // 🔥 Blindaje
+    if (this.guardando) return;
+
     const notasValidas = this.estudiantesGrupo.filter(e => e.valor_numerico !== null || (e.observacion && e.observacion.trim() !== ''));
 
     if (notasValidas.length === 0) {
@@ -488,9 +513,9 @@ export class AdministradorEvaluacionesComponent implements OnInit {
       return;
     }
 
-    this.loading = true;
+    this.guardando = true;
+    this.cdr.detectChanges();
     
-    // Armamos un arreglo de peticiones HTTP (PATCH si ya existía, POST si es nueva)
     const peticiones = notasValidas.map(e => {
       const payload = {
         sesionId: this.evalLogistica.id,
@@ -510,13 +535,18 @@ export class AdministradorEvaluacionesComponent implements OnInit {
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Resultados actualizados correctamente' });
         this.displayGradesDialog = false;
+        this.guardando = false;
         this.cargarDatosIniciales(); 
       },
-      error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Fallo al guardar algunos resultados.' });
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
+      error: () => this.mostrarErrorGuardado('Fallo al guardar algunos resultados.')
     });
+  }
+
+  // --- UTILIDADES ---
+  private mostrarErrorGuardado(mensaje: string) {
+    this.guardando = false;
+    this.loading = false;
+    this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
+    this.cdr.detectChanges();
   }
 }

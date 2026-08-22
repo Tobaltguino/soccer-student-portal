@@ -1,46 +1,48 @@
-<div class="eval-container p-3 fadein animation-duration-500">
+<div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
-    <p-confirmdialog></p-confirmdialog>
+    <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
 
-    <header class="flex justify-content-between align-items-center mb-4 page-header">
+    <header class="pf-admin-header">
         <div class="header-content">
-            <h1 class="text-2xl font-bold m-0 text-900">Evaluaciones Técnicas</h1>
-            <p class="text-600 m-0 mt-1">Gestión de pruebas físicas y resultados.</p>
+            <div>
+                <h1 class="pf-anton text-chalk m-0 text-3xl">Evaluaciones Técnicas</h1>
+                <p class="pf-oswald text-teal mt-1">Gestión de pruebas físicas y resultados de los estudiantes.</p>
+            </div>
         </div>
-        <div class="flex gap-2 header-actions">
-            <button pButton label="Configurar Test" icon="pi pi-cog" class="p-button-outlined p-button-secondary p-button-sm" (click)="abrirNuevoTipo()"></button>
-            <button pButton label="Nueva Sesión" icon="pi pi-plus" class="p-button-primary p-button-sm" (click)="abrirNuevo()"></button>
+        <div class="flex gap-2">
+            <button pButton label="Configurar Test" icon="pi pi-cog" class="pf-btn-ghost" (click)="abrirNuevoTipo()"></button>
+            <button pButton label="Nueva Sesión" icon="pi pi-plus" class="pf-btn-primary" (click)="abrirNuevo()"></button>
         </div>
     </header>
 
-    <div class="filter-bar card mb-4 p-3 surface-card border-round shadow-1">
+    <div class="pf-admin-card mb-4 p-3">
         <div class="filter-row">
             
             <div class="filter-item flex-grow-1">
-                <label><i class="pi pi-calendar mr-1"></i> Fecha</label>
-                <p-datepicker [(ngModel)]="filtroFecha" dateFormat="dd/mm/yy" [showIcon]="false" 
+                <label><i class="pi pi-calendar mr-1 text-teal"></i> Fecha</label>
+                <p-datepicker [(ngModel)]="filtroFecha" dateFormat="dd/mm/yy" [showIcon]="true" 
                               placeholder="Filtrar por Fecha" (onSelect)="aplicarFiltros()" 
-                              [showClear]="true" (onClear)="aplicarFiltros()" styleClass="w-full"></p-datepicker>
+                              [showClear]="true" (onClear)="aplicarFiltros()" styleClass="w-full" appendTo="body"></p-datepicker>
             </div>
 
             <div class="filter-item flex-grow-1">
-                <label><i class="pi pi-users mr-1"></i> Grupo</label>
+                <label><i class="pi pi-users mr-1 text-teal"></i> Grupo</label>
                 <p-select [options]="grupos" [(ngModel)]="filtroGrupo" optionLabel="nombre" 
                           placeholder="Todos los grupos" (onChange)="aplicarFiltros()" 
-                          [showClear]="true" styleClass="w-full"></p-select>
+                          [showClear]="true" styleClass="w-full" appendTo="body" [filter]="false"></p-select>
             </div>
 
             <div class="filter-item flex-grow-1">
-                <label><i class="pi pi-clipboard mr-1"></i> Prueba</label>
+                <label><i class="pi pi-clipboard mr-1 text-teal"></i> Prueba</label>
                 <p-select [options]="tiposEvaluacion" [(ngModel)]="filtroPrueba" optionLabel="nombre" 
                           placeholder="Todas las pruebas" (onChange)="aplicarFiltros()" 
-                          [showClear]="true" styleClass="w-full"></p-select>
+                          [showClear]="true" styleClass="w-full" appendTo="body" [filter]="false"></p-select>
             </div>
 
             <div class="filter-item w-10rem">
-                <label><i class="pi pi-flag mr-1"></i> Estado</label>
+                <label><i class="pi pi-flag mr-1 text-teal"></i> Estado</label>
                 <p-select [options]="opcionesEstadoFiltro" [(ngModel)]="filtroEstado" optionLabel="label" optionValue="value" 
-                          placeholder="Todos" (onChange)="aplicarFiltros()" [showClear]="true" styleClass="w-full">
+                          placeholder="Todos" (onChange)="aplicarFiltros()" [showClear]="true" styleClass="w-full" appendTo="body" [filter]="false">
                     <ng-template let-option pTemplate="item">
                         <p-tag [value]="option.label" [severity]="option.value === 'PENDIENTE' ? 'warn' : 'success'"></p-tag>
                     </ng-template>
@@ -48,122 +50,126 @@
             </div>
 
             <div class="filter-item-btn">
-                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary w-full" 
-                        (click)="limpiarFiltros()" pTooltip="Limpiar"></button>
+                <button pButton icon="pi pi-filter-slash" class="pf-btn-ghost w-full justify-content-center" 
+                        (click)="limpiarFiltros()" pTooltip="Limpiar Filtros" tooltipPosition="top"></button>
             </div>
             
         </div>
     </div>
 
-    <div class="card shadow-2 border-round surface-card p-3 card-table">
-        <p-table [value]="sesiones" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="scroll">    
+    <!-- TABLA PRINCIPAL DE SESIONES -->
+    <div class="pf-admin-card table-responsive p-0">
+        <p-table [value]="sesiones" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm pf-table" responsiveLayout="stack" [breakpoint]="'768px'">    
             <ng-template pTemplate="header">
                 <tr>
                     <th style="width: 20%">Fecha</th>
                     <th style="width: 25%">Grupo</th>
                     <th style="width: 25%">Prueba</th>
-                    <th style="width: 15%">Estado</th>
+                    <th style="width: 15%" class="text-center">Estado</th>
                     <th style="width: 15%" class="text-center">Acciones</th>
                 </tr>
             </ng-template>
             <ng-template pTemplate="body" let-sesion>
                 <tr>
                     <td>
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Fecha:</span>
-                        <span class="font-bold">{{ sesion.fecha | date:'dd/MM/yyyy' }}</span>
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Fecha:</span>
+                        <span class="pf-anton text-chalk text-lg" style="letter-spacing: 0.5px;">{{ sesion.fecha | date:'dd/MM/yyyy' }}</span>
                     </td>
                     <td>
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Grupo:</span>
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Grupo:</span>
                         <p-tag [value]="sesion.grupo?.nombre || sesion.grupos?.nombre || 'Grupo'" severity="info"></p-tag>
                     </td>
                     <td>
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Prueba:</span>
-                        <span class="font-bold text-900">{{ sesion.tipoEvaluacion?.nombre || sesion.tipo_evaluacion?.nombre || 'Test' }}</span>
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Prueba:</span>
+                        <span class="text-chalk font-bold">{{ sesion.tipoEvaluacion?.nombre || sesion.tipo_evaluacion?.nombre || 'Test' }}</span>
                     </td>
-                    <td>
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Estado:</span>
+                    <td class="text-center">
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Estado:</span>
                         <p-tag [value]="sesion.estado" [severity]="sesion.estado === 'PENDIENTE' ? 'warn' : 'success'"></p-tag>
                     </td>
                     <td class="text-center">
-                        <div class="action-buttons">
-                            <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-secondary p-button-sm" (click)="editarSesion(sesion)" pTooltip="Editar Logística"></button>
-                            <button pButton icon="pi pi-user-edit" class="p-button-rounded p-button-success p-button-sm" (click)="abrirCalificador(sesion)" pTooltip="Calificar Alumnos"></button>
-                            <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger p-button-sm" (click)="eliminarSesion(sesion.id)" pTooltip="Eliminar"></button>
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Acciones:</span>
+                        <div class="pf-table-actions">
+                            <button pButton icon="pi pi-pencil" class="p-button-warning" (click)="editarSesion(sesion)" pTooltip="Editar Logística"></button>
+                            <button pButton icon="pi pi-chart-line" class="p-button-success" (click)="abrirCalificador(sesion)" pTooltip="Calificar Alumnos"></button>
+                            <button pButton icon="pi pi-trash" class="p-button-danger" (click)="eliminarSesion(sesion.id)" pTooltip="Eliminar Sesión"></button>
                         </div>
                     </td>
                 </tr>
             </ng-template>
             <ng-template pTemplate="emptymessage">
-                <tr><td colspan="5" class="text-center p-4 text-500">No se encontraron sesiones con estos filtros.</td></tr>
+                <tr>
+                    <td colspan="5" class="text-center p-5 text-steel">
+                        <i class="pi pi-clipboard block mb-3 text-4xl"></i>
+                        <span class="pf-oswald text-lg">No se encontraron sesiones de evaluación.</span>
+                    </td>
+                </tr>
             </ng-template>
         </p-table>
     </div>
 
-    <!-- MODAL DE TIPO DE EVALUACIÓN -->
-    <p-dialog [(visible)]="displayTipoDialog" header="Configuración Maestra de Tests" [modal]="true" [style]="{width: '95vw', maxWidth: '1000px'}" [draggable]="false" [resizable]="false" styleClass="p-fluid">
+    <!-- MODAL 1: CONFIGURACIÓN DE TESTS (MAESTRO) -->
+    <p-dialog [(visible)]="displayTipoDialog" header="Configuración Maestra de Tests" [modal]="true" [style]="{width: '95vw', maxWidth: '1000px'}" [draggable]="false" [resizable]="false" styleClass="p-fluid pf-dialog" [closable]="!guardando">
         <ng-template pTemplate="content">
-            <div class="grid pt-2">
-             <div class="col-12 md:col-6 border-right-1 surface-border pr-3">
+            <div class="grid pt-2 m-0">
+             
+             <!-- Columna Izquierda: Formulario -->
+             <div class="col-12 md:col-5 border-right-1 surface-border pr-0 md:pr-4" style="border-color: var(--border-color) !important;">
                  <div class="flex justify-content-between align-items-center mb-3">
-                     <h3 class="mt-0 mb-0 text-primary" [ngClass]="{'text-blue-500': tipoForm.id}">
-                         <i [class]="tipoForm.id ? 'pi pi-pencil mr-1' : 'pi pi-plus-circle mr-1'"></i> 
-                         {{ tipoForm.id ? 'Editando Test: ' + tipoForm.nombre : 'Nuevo Test' }}
+                     <h3 class="pf-anton m-0 text-xl" [ngClass]="tipoForm.id ? 'text-teal' : 'text-chalk'">
+                         <i [class]="tipoForm.id ? 'pi pi-pencil mr-2' : 'pi pi-plus-circle mr-2'"></i> 
+                         {{ tipoForm.id ? 'Editando Test' : 'Nuevo Test' }}
                      </h3>
-                     <button *ngIf="tipoForm.id" pButton label="Cancelar" icon="pi pi-times" class="p-button-text p-button-secondary p-button-sm w-auto" (click)="cancelarEdicionTipo()"></button>
+                     <button *ngIf="tipoForm.id" pButton icon="pi pi-times" class="pf-btn-ghost w-auto px-3 py-2 text-xs" label="Cancelar" (click)="cancelarEdicionTipo()" [disabled]="guardando"></button>
                  </div>
                  
                  <div class="formgrid grid">
-                     <div class="field col-8 mb-2">
-                         <label class="font-bold text-sm">Nombre <span class="text-red-500 font-bold">*</span></label>
-                         <input pInputText [(ngModel)]="tipoForm.nombre" placeholder="Ej: Salto Largo">
+                     <div class="pf-field-group col-8">
+                         <label class="pf-oswald">Nombre de Prueba <span class="text-pink-500 font-bold">*</span></label>
+                         <input pInputText [(ngModel)]="tipoForm.nombre" placeholder="Ej: Salto Largo" [disabled]="guardando">
                      </div>
-                     <div class="field col-4 mb-2">
-                         <label class="font-bold text-sm">Unidad <span class="text-red-500 font-bold">*</span></label>
-                         <input pInputText [(ngModel)]="tipoForm.unidad_medida" placeholder="cm, seg">
+                     <div class="pf-field-group col-4">
+                         <label class="pf-oswald">Unidad <span class="text-pink-500 font-bold">*</span></label>
+                         <input pInputText [(ngModel)]="tipoForm.unidad_medida" placeholder="cm, seg" [disabled]="guardando">
                      </div>
-                     <div class="field col-12 m-0 mt-1">
-                         <label class="font-bold text-sm">Descripción (Opcional)</label>
-                         <textarea pInputTextarea [(ngModel)]="tipoForm.descripcion" rows="2" placeholder="Detalle o instrucciones del test..." style="resize: none; width: 100%;"></textarea>
+                     <div class="pf-field-group col-12 m-0 mt-1">
+                         <label class="pf-oswald">Descripción (Opcional)</label>
+                         <textarea pTextarea [(ngModel)]="tipoForm.descripcion" rows="2" placeholder="Detalle o instrucciones del test..." style="resize: none;" [disabled]="guardando"></textarea>
                      </div>
                  </div>
                  
-                 <div class="flex align-items-center mt-3 mb-3">
-                      <p-checkbox [(ngModel)]="usarRangos" [binary]="true" inputId="chkRangos"></p-checkbox>
-                      <label for="chkRangos" class="ml-2 font-bold text-sm cursor-pointer text-900">Agregar Rangos de Evaluación</label>
+                 <div class="flex align-items-center mt-3 mb-3 pb-3 border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                      <p-checkbox [(ngModel)]="usarRangos" [binary]="true" inputId="chkRangos" [disabled]="guardando"></p-checkbox>
+                      <label for="chkRangos" class="ml-2 pf-oswald text-steel cursor-pointer">Definir Rangos de Evaluación</label>
                  </div>
                  
-                 <div *ngIf="usarRangos" class="surface-100 border-round p-3 mt-2 animation-duration-200 fadein">
-                     <h4 class="m-0 mb-3 text-700 font-bold text-sm">NUEVO RANGO</h4>
+                 <div *ngIf="usarRangos" class="fadein animation-duration-300">
+                     <h4 class="pf-oswald text-lime m-0 mb-3"><i class="pi pi-plus mr-2"></i>Añadir Rango</h4>
 
                     <div class="range-inline-row">
-                        <div class="field field-edad">
-                            <label class="font-bold text-xs block mb-1 text-600">Ed. Mín <span class="text-red-500">*</span></label>
-                            <p-inputNumber [(ngModel)]="nuevoRango.edad_min" [showButtons]="false" styleClass="w-full" inputStyleClass="w-full text-center" placeholder="10"></p-inputNumber>
+                        <div class="pf-field-group field-edad">
+                            <label class="pf-oswald text-xs">Mín</label>
+                            <p-inputNumber [(ngModel)]="nuevoRango.edad_min" [showButtons]="false" styleClass="w-full" inputStyleClass="w-full text-center" placeholder="10" [disabled]="guardando"></p-inputNumber>
                         </div>
-
-                        <div class="field field-edad">
-                            <label class="font-bold text-xs block mb-1 text-600">Ed. Máx <span class="text-red-500">*</span></label>
-                            <p-inputNumber [(ngModel)]="nuevoRango.edad_max" [showButtons]="false" styleClass="w-full" inputStyleClass="w-full text-center" placeholder="12"></p-inputNumber>
+                        <div class="pf-field-group field-edad">
+                            <label class="pf-oswald text-xs">Máx</label>
+                            <p-inputNumber [(ngModel)]="nuevoRango.edad_max" [showButtons]="false" styleClass="w-full" inputStyleClass="w-full text-center" placeholder="12" [disabled]="guardando"></p-inputNumber>
                         </div>
-                        
-                        <div class="field field-etiqueta">
-                            <label class="font-bold text-xs block mb-1 text-600">Etiqueta <span class="text-red-500">*</span></label>
-                            <input pInputText [(ngModel)]="nuevoRango.nombre_etiqueta" placeholder="Ej: Bueno" class="w-full">
+                        <div class="pf-field-group field-etiqueta">
+                            <label class="pf-oswald text-xs">Etiqueta</label>
+                            <input pInputText [(ngModel)]="nuevoRango.nombre_etiqueta" placeholder="Ej: Bueno" class="w-full" [disabled]="guardando">
                         </div>
-
-                        <div class="field field-minmax">
-                            <label class="font-bold text-xs block mb-1 text-600">Val. Mín <span class="text-red-500">*</span></label>
-                            <p-inputNumber [(ngModel)]="nuevoRango.valor_min" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2" [showButtons]="false" styleClass="w-full" inputStyleClass="w-full text-center"></p-inputNumber>
+                        <div class="pf-field-group field-minmax">
+                            <label class="pf-oswald text-xs">Val.Mín</label>
+                            <p-inputNumber [(ngModel)]="nuevoRango.valor_min" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2" [showButtons]="false" styleClass="w-full" inputStyleClass="w-full text-center" [disabled]="guardando"></p-inputNumber>
                         </div>
-                        
-                        <div class="field field-minmax">
-                            <label class="font-bold text-xs block mb-1 text-600">Val. Máx <span class="text-red-500">*</span></label>
-                            <p-inputNumber [(ngModel)]="nuevoRango.valor_max" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2" [showButtons]="false" styleClass="w-full" inputStyleClass="w-full text-center"></p-inputNumber>
+                        <div class="pf-field-group field-minmax">
+                            <label class="pf-oswald text-xs">Val.Máx</label>
+                            <p-inputNumber [(ngModel)]="nuevoRango.valor_max" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2" [showButtons]="false" styleClass="w-full" inputStyleClass="w-full text-center" [disabled]="guardando"></p-inputNumber>
                         </div>
-                        
-                        <div class="field field-color">
-                            <label class="font-bold text-xs block mb-1 text-600">Color <span class="text-red-500">*</span></label>
-                            <p-select [options]="opcionesColor" [(ngModel)]="nuevoRango.color_sugerido" optionLabel="label" optionValue="value" styleClass="w-full">
+                        <div class="pf-field-group field-color">
+                            <label class="pf-oswald text-xs">Color</label>
+                            <p-select [options]="opcionesColor" [(ngModel)]="nuevoRango.color_sugerido" optionLabel="label" optionValue="value" styleClass="w-full" appendTo="body" [filter]="false" [disabled]="guardando">
                                 <ng-template pTemplate="selectedItem" let-selectedOption>
                                     <div class="flex align-items-center gap-2" *ngIf="selectedOption">
                                         <div class="w-1rem h-1rem border-circle shadow-1" [style.backgroundColor]="selectedOption.value"></div>
@@ -179,28 +185,28 @@
                             </p-select>
                         </div>
                         
-                        <div class="btn-fixed">
-                            <button pButton icon="pi pi-plus" class="p-button-primary" (click)="agregarRangoALista()" pTooltip="Añadir"></button>
+                        <div class="btn-fixed pb-2">
+                            <button pButton icon="pi pi-plus" class="pf-btn-primary h-full w-full p-0 flex justify-content-center align-items-center border-round" (click)="agregarRangoALista()" pTooltip="Añadir Rango" [disabled]="guardando"></button>
                         </div>
                     </div>
 
-                     <div class="mt-4 border-top-1 border-300 pt-3" *ngIf="rangosForm.length > 0">
-                         <span class="text-xs font-bold text-600 mb-2 block">Rangos listos para guardar:</span>
-                         <p-table [value]="rangosForm" styleClass="p-datatable-sm custom-compact-table" responsiveLayout="scroll">
+                     <div class="mt-4" *ngIf="rangosForm.length > 0">
+                         <span class="text-xs font-bold text-steel mb-2 block pf-oswald">Rangos por Guardar:</span>
+                         <p-table [value]="rangosForm" styleClass="p-datatable-sm pf-table custom-compact-table" responsiveLayout="scroll">
                              <ng-template pTemplate="body" let-r let-i="rowIndex">
                                  <tr class="text-sm">
-                                     <td class="font-bold text-primary py-1" style="width: 120px; white-space: nowrap;">
+                                     <td class="font-bold text-teal py-2" style="width: 120px; white-space: nowrap;">
                                          {{r.edad_min || r.edadMin}} a {{r.edad_max || r.edadMax}} años
                                      </td>
-                                     <td class="font-bold py-1">{{r.nombre_etiqueta || r.nombreEtiqueta}}</td>
-                                     <td class="py-1 text-center text-600" style="white-space: nowrap;">
+                                     <td class="font-bold py-2 text-chalk">{{r.nombre_etiqueta || r.nombreEtiqueta}}</td>
+                                     <td class="py-2 text-center text-steel" style="white-space: nowrap;">
                                          {{r.valor_min || r.valorMin}} - {{r.valor_max || r.valorMax}}
                                      </td>
-                                     <td class="py-1 text-center" style="width: 50px;">
+                                     <td class="py-2 text-center" style="width: 50px;">
                                          <span class="color-indicator" [style.background-color]="r.color_sugerido || r.colorSugerido"></span>
                                      </td>
-                                     <td class="text-right py-1" style="width: 40px;">
-                                         <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm py-0 w-2rem h-2rem" (click)="quitarRangoDeLista(i)"></button>
+                                     <td class="text-right py-2" style="width: 40px;">
+                                         <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm py-0 w-2rem h-2rem" (click)="quitarRangoDeLista(i)" [disabled]="guardando"></button>
                                      </td>
                                  </tr>
                              </ng-template>
@@ -210,41 +216,41 @@
 
                  <button pButton [label]="tipoForm.id ? 'Actualizar Test Completo' : 'Guardar Test Completo'" 
                          [icon]="tipoForm.id ? 'pi pi-refresh' : 'pi pi-save'" 
-                         [class]="tipoForm.id ? 'mt-4 w-full p-button-info' : 'mt-4 w-full'" 
-                         [loading]="loading"
+                         class="mt-4 w-full pf-btn-primary" 
+                         [loading]="guardando"
                          (click)="guardarNuevoTipo()"></button>
              </div>
 
-             <div class="col-12 md:col-6 pl-0 md:pl-4 mt-4 md:mt-0">
-                 <h3 class="mt-0 mb-3 text-primary">Tests Configurados</h3>
-                 <div class="border-1 surface-border border-round overflow-hidden shadow-1 bg-white">
-                     <p-table [value]="tiposEvaluacion" [scrollable]="true" scrollHeight="400px" styleClass="p-datatable-sm p-datatable-striped">
+             <!-- Columna Derecha: Lista de Tests Guardados -->
+             <div class="col-12 md:col-7 pl-0 md:pl-4 mt-4 md:mt-0">
+                 <h3 class="pf-anton mt-0 mb-3 text-chalk text-xl">Tests Configurados</h3>
+                 <div class="border-round overflow-hidden" style="border: 1px solid var(--border-color);">
+                     <p-table [value]="tiposEvaluacion" [scrollable]="true" scrollHeight="450px" styleClass="p-datatable-sm pf-table">
                          <ng-template pTemplate="header">
                              <tr>
                                  <th>Nombre de la Prueba</th>
                                  <th style="width: 100px;">Unidad</th>
-                                 <th class="text-center" style="width: 90px">Acción</th>
+                                 <th class="text-center" style="width: 100px">Acción</th>
                              </tr>
                          </ng-template>
                          
                          <ng-template pTemplate="body" let-t>
                              <tr>
                                  <td>
-                                     <span class="font-bold text-900 block">{{t.nombre}}</span>
-                                     <span class="text-xs text-500 block mt-1 line-height-2" *ngIf="t.descripcion">{{t.descripcion}}</span>
+                                     <span class="font-bold text-chalk block">{{t.nombre}}</span>
+                                     <span class="text-xs text-steel block mt-1 line-height-2" *ngIf="t.descripcion">{{t.descripcion}}</span>
                                  </td>
                                  <td class="vertical-align-top pt-3"><p-tag [value]="t.unidad_medida || t.unidadMedida" severity="secondary"></p-tag></td>
                                  <td class="text-center vertical-align-top pt-2">
-                                     <div class="flex gap-1 justify-content-center">
-                                         <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-secondary p-button-sm" (click)="editarTipoTest(t)" pTooltip="Editar Test"></button>
-                                         <button pButton icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text p-button-sm" (click)="eliminarTipoTest(t.id)" pTooltip="Eliminar test y registros"></button>
+                                     <div class="pf-table-actions justify-content-center">
+                                         <button pButton icon="pi pi-pencil" class="p-button-warning" (click)="editarTipoTest(t)" pTooltip="Editar Test" [disabled]="guardando"></button>
+                                         <button pButton icon="pi pi-trash" class="p-button-danger" (click)="eliminarTipoTest(t.id)" pTooltip="Eliminar test" [disabled]="guardando"></button>
                                      </div>
                                  </td>
                              </tr>
                          </ng-template>
-                         
                          <ng-template pTemplate="emptymessage">
-                             <tr><td colspan="3" class="text-center p-4 text-500">No hay tests configurados actualmente.</td></tr>
+                             <tr><td colspan="3" class="text-center p-4 text-steel pf-oswald">No hay tests configurados actualmente.</td></tr>
                          </ng-template>
                      </p-table>
                  </div>
@@ -252,75 +258,76 @@
          </div>
         </ng-template>
     </p-dialog>
- 
-    <!-- MODAL NUEVA SESION -->
-    <p-dialog [(visible)]="displayMainDialog" [header]="evalLogistica.id ? 'Editar Sesión' : 'Nueva Sesión'" [modal]="true" [style]="{width: '450px'}" styleClass="p-fluid">
+
+    <!-- MODAL 2: NUEVA SESIÓN (LOGÍSTICA) -->
+    <p-dialog [(visible)]="displayMainDialog" [header]="evalLogistica.id ? 'Editar Sesión' : 'Nueva Sesión'" [modal]="true" [style]="{width: '450px'}" styleClass="p-fluid pf-dialog" [closable]="!guardando">
         <ng-template pTemplate="content">
-         <div class="field mt-2">
-             <label class="font-bold">Fecha de Aplicación <span class="text-red-500 font-bold">*</span></label>
-             <p-datepicker [(ngModel)]="evalLogistica.fecha" appendTo="body" dateFormat="dd/mm/yy" [showIcon]="true"></p-datepicker>
-         </div>
-         <div class="field">
-             <label class="font-bold">Grupo <span class="text-red-500 font-bold">*</span></label>
-             <p-select [options]="grupos" [(ngModel)]="evalLogistica.grupo_id" optionLabel="nombre" optionValue="id" placeholder="Selecciona un grupo" appendTo="body"></p-select>
-         </div>
-         <div class="field">
-             <label class="font-bold">Tipo de Evaluación <span class="text-red-500 font-bold">*</span></label>
-             <p-select [options]="tiposEvaluacion" [(ngModel)]="evalLogistica.tipo_evaluacion_id" optionLabel="nombre" optionValue="id" placeholder="Selecciona la prueba" appendTo="body">
-                 <ng-template let-item pTemplate="item">
-                     <div class="flex align-items-center gap-2">
-                         <span>{{item.nombre}}</span>
-                         <p-tag [value]="item.unidad_medida || item.unidadMedida" severity="secondary"></p-tag>
-                     </div>
-                 </ng-template>
-             </p-select>
-         </div>
-         <div class="field" *ngIf="evalLogistica.id">
-             <label class="font-bold mb-2 block">Estado de la Sesión</label>
-             <div class="flex gap-4">
-                 <div class="flex align-items-center">
-                     <p-radioButton name="estado" value="PENDIENTE" [(ngModel)]="evalLogistica.estado" inputId="st1"></p-radioButton>
-                     <label for="st1" class="ml-2 cursor-pointer">Pendiente</label>
-                 </div>
-                 <div class="flex align-items-center">
-                     <p-radioButton name="estado" value="FINALIZADO" [(ngModel)]="evalLogistica.estado" inputId="st2"></p-radioButton>
-                     <label for="st2" class="ml-2 cursor-pointer">Finalizado</label>
-                 </div>
-             </div>
-         </div>
+            <div class="pf-field-group mt-3">
+                <label class="pf-oswald">Fecha de Aplicación <span class="text-pink-500 font-bold">*</span></label>
+                <p-datepicker [(ngModel)]="evalLogistica.fecha" appendTo="body" dateFormat="dd/mm/yy" [showIcon]="true" [disabled]="guardando"></p-datepicker>
+            </div>
+            <div class="pf-field-group">
+                <label class="pf-oswald">Grupo <span class="text-pink-500 font-bold">*</span></label>
+                <p-select [options]="grupos" [(ngModel)]="evalLogistica.grupo_id" optionLabel="nombre" optionValue="id" placeholder="Selecciona un grupo" appendTo="body" [filter]="false" [disabled]="guardando"></p-select>
+            </div>
+            <div class="pf-field-group">
+                <label class="pf-oswald">Tipo de Evaluación <span class="text-pink-500 font-bold">*</span></label>
+                <p-select [options]="tiposEvaluacion" [(ngModel)]="evalLogistica.tipo_evaluacion_id" optionLabel="nombre" optionValue="id" placeholder="Selecciona la prueba" appendTo="body" [filter]="false" [disabled]="guardando">
+                    <ng-template let-item pTemplate="item">
+                        <div class="flex align-items-center justify-content-between w-full">
+                            <span>{{item.nombre}}</span>
+                            <p-tag [value]="item.unidad_medida || item.unidadMedida" severity="secondary"></p-tag>
+                        </div>
+                    </ng-template>
+                </p-select>
+            </div>
+            
+            <div class="pf-field-group" *ngIf="evalLogistica.id">
+                <label class="pf-oswald mb-3 block">Estado de la Sesión</label>
+                <div class="flex gap-4">
+                    <div class="flex align-items-center">
+                        <p-radioButton name="estado" value="PENDIENTE" [(ngModel)]="evalLogistica.estado" inputId="st1" [disabled]="guardando"></p-radioButton>
+                        <label for="st1" class="ml-2 cursor-pointer text-chalk font-bold">Pendiente</label>
+                    </div>
+                    <div class="flex align-items-center">
+                        <p-radioButton name="estado" value="FINALIZADO" [(ngModel)]="evalLogistica.estado" inputId="st2" [disabled]="guardando"></p-radioButton>
+                        <label for="st2" class="ml-2 cursor-pointer text-chalk font-bold">Finalizado</label>
+                    </div>
+                </div>
+            </div>
         </ng-template>
-         <ng-template pTemplate="footer">
-             <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="displayMainDialog = false"></button>
-             <button pButton label="Guardar" icon="pi pi-check" (click)="crearSesionPlanificada()"></button>
-         </ng-template>
+        <ng-template pTemplate="footer">
+            <button pButton label="Cancelar" icon="pi pi-times" class="pf-btn-ghost" (click)="displayMainDialog = false" [disabled]="guardando"></button>
+            <button pButton label="Guardar" icon="pi pi-check" class="pf-btn-primary ml-2" (click)="crearSesionPlanificada()" [loading]="guardando"></button>
+        </ng-template>
     </p-dialog>
- 
-    <!-- MODAL DE CALIFICADOR -->
-    <p-dialog [(visible)]="displayGradesDialog" header="Registro de Resultados" [modal]="true" [style]="{width: '90vw', maxWidth: '900px'}" [maximizable]="true" styleClass="p-fluid">
+
+    <!-- MODAL 3: CALIFICADOR DE ALUMNOS -->
+    <p-dialog [(visible)]="displayGradesDialog" header="Registro de Resultados" [modal]="true" [style]="{width: '90vw', maxWidth: '900px'}" [maximizable]="true" styleClass="p-fluid pf-dialog" [closable]="!guardando">
         <ng-template pTemplate="content">
-            <div class="surface-100 p-3 border-round mb-3 flex justify-content-between align-items-center">
+            <div class="p-3 border-round mb-3 flex justify-content-between align-items-center mt-2" style="background-color: var(--input-bg); border: 1px solid var(--border-color);">
                 <div class="flex flex-column">
-                    <span class="text-sm text-600">Evaluación Seleccionada</span>
-                    <span class="text-xl font-bold text-900">{{evalLogistica.tipoEvaluacion?.nombre || evalLogistica.tipo_evaluacion?.nombre}}</span>
+                    <span class="pf-oswald text-steel text-xs">Evaluación Seleccionada</span>
+                    <span class="text-xl pf-anton text-chalk mt-1" style="letter-spacing: 1px;">{{evalLogistica.tipoEvaluacion?.nombre || evalLogistica.tipo_evaluacion?.nombre}}</span>
                 </div>
                 <div class="text-right">
-                    <span class="text-sm text-600 block">Grupo</span>
-                    <p-tag [value]="evalLogistica.grupo?.nombre || evalLogistica.grupos?.nombre" severity="info" styleClass="text-base"></p-tag>
+                    <span class="pf-oswald text-steel text-xs block mb-1">Grupo</span>
+                    <p-tag [value]="evalLogistica.grupo?.nombre || evalLogistica.grupos?.nombre" severity="info" styleClass="text-sm px-3"></p-tag>
                 </div>
             </div>
             
-            <p-table [value]="estudiantesGrupo" [scrollable]="true" scrollHeight="500px" styleClass="p-datatable-gridlines p-datatable-sm" responsiveLayout="scroll">
+            <p-table [value]="estudiantesGrupo" [scrollable]="true" scrollHeight="500px" styleClass="p-datatable-sm pf-table" responsiveLayout="scroll">
                 <ng-template pTemplate="header">
                     <tr>
                         <th style="width: 30%">Estudiante</th>
                         <th style="width: 25%">Resultado ({{evalLogistica.tipoEvaluacion?.unidad_medida || evalLogistica.tipo_evaluacion?.unidad_medida || evalLogistica.tipoEvaluacion?.unidadMedida}})</th>
                         <th style="width: 35%">Observación</th>
-                        <th style="width: 10%" class="text-center"></th>
+                        <th style="width: 10%" class="text-center">Limpiar</th>
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="body" let-estudiante>
                     <tr>
-                        <td><span class="font-bold text-900">{{estudiante.apellido}}</span>, {{estudiante.nombre}}</td>
+                        <td class="pf-anton text-chalk text-sm" style="letter-spacing: 0.5px;">{{estudiante.apellido}}, {{estudiante.nombre}}</td>
                         <td>
                             <p-inputNumber 
                                 [(ngModel)]="estudiante.valor_numerico" 
@@ -328,28 +335,35 @@
                                 [maxFractionDigits]="2" 
                                 [showButtons]="false" 
                                 placeholder="0.00"
-                                styleClass="w-full">
+                                styleClass="w-full"
+                                [disabled]="guardando">
                             </p-inputNumber>
                         </td>
-                        <td><input pInputText [(ngModel)]="estudiante.observacion" placeholder="Opcional"></td>
+                        <td><input pInputText [(ngModel)]="estudiante.observacion" placeholder="Opcional..." [disabled]="guardando"></td>
                         <td class="text-center">
-                            <button pButton icon="pi pi-eraser" class="p-button-rounded p-button-text p-button-secondary" (click)="limpiarFila(estudiante)" pTooltip="Limpiar fila"></button>
+                            <button pButton icon="pi pi-eraser" class="p-button-rounded p-button-text p-button-secondary" (click)="limpiarFila(estudiante)" pTooltip="Borrar fila" [disabled]="guardando"></button>
                         </td>
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="emptymessage">
-                    <tr><td colspan="4" class="text-center p-4 text-500">No hay estudiantes activos en este grupo.</td></tr>
+                    <tr><td colspan="4" class="text-center p-5 text-steel pf-oswald">No hay estudiantes activos en este grupo.</td></tr>
                 </ng-template>
             </p-table>
         </ng-template>
         <ng-template pTemplate="footer">
             <div class="flex justify-content-between align-items-center w-full">
-                <small class="text-500 italic">Solo se guardarán las notas modificadas.</small>
+                <small class="text-steel pf-oswald"><i class="pi pi-info-circle mr-1"></i>Solo se guardarán las notas que contengan valores o texto.</small>
                 <div class="flex gap-2">
-                    <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="displayGradesDialog = false"></button>
-                    <button pButton label="Guardar Resultados" icon="pi pi-save" (click)="guardarNotasFinales()" [loading]="loading"></button>
+                    <button pButton label="Cancelar" icon="pi pi-times" class="pf-btn-ghost" (click)="displayGradesDialog = false" [disabled]="guardando"></button>
+                    <button pButton label="Guardar Resultados" icon="pi pi-check" class="pf-btn-primary ml-2" (click)="guardarNotasFinales()" [loading]="guardando"></button>
                 </div>
             </div>
         </ng-template>
     </p-dialog>
+
+<!-- 🔥 OVERLAY DE CARGA GLOBAL DE PANTALLA COMPLETA (SOLO AL GUARDAR) 🔥 -->
+    <div class="pf-loading-overlay fadein" *ngIf="guardando">
+        <div class="pf-spinner"></div>
+        <div class="pf-loading-text">Guardando...</div>
+    </div>
 </div>

@@ -114,6 +114,7 @@
           <h3 class="pf-anton text-chalk m-0 text-2xl">Próximos Cumpleaños (7 días)</h3>
       </div>
       <button class="pf-btn-ghost-icon" (click)="refrescar()" [disabled]="loading">
+        <!-- AQUÍ ESTÁ EL CIRCULITO NORMAL QUE GIRARÁ -->
         <i class="pi pi-refresh" [ngClass]="{'pi-spin text-lime': loading}"></i>
       </button>
     </div>
@@ -143,11 +144,5 @@
 
     </div>
   </section>
-
-  <!-- 🔥 OVERLAY DE CARGA GLOBAL DE PANTALLA COMPLETA 🔥 -->
-  <div class="pf-loading-overlay fadein" *ngIf="loading">
-      <div class="pf-spinner"></div>
-      <div class="pf-loading-text">Actualizando...</div>
-  </div>
 
 </div>

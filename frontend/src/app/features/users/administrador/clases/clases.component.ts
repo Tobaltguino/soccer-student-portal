@@ -29,7 +29,7 @@ import { Clase, CrearClasePayload, FiltrosClase } from '../../../../core/domains
 import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
 import { Grupo } from '../../../../core/domains/academico/grupos/models/grupo.interface';
 
-// Dominios: Asistencias y Estudiantes (NUEVO)
+// Dominios: Asistencias y Estudiantes
 import { AsistenciaService } from '../../../../core/domains/academico/asistencias/services/asistencia.service';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
 
@@ -44,14 +44,14 @@ import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes
   ],
   providers: [ConfirmationService, MessageService],
   templateUrl: './clases.component.html',
-  styleUrls: ['./clases.component.css']
+  styleUrls: ['./clases.component.scss']
 })
 export class AdministradorClasesComponent implements OnInit {
 
   private claseService = inject(ClaseService);
   private grupoService = inject(GrupoService);
-  private asistenciaService = inject(AsistenciaService); // ✅ Inyectado
-  private estudianteService = inject(EstudianteService); // ✅ Inyectado
+  private asistenciaService = inject(AsistenciaService); 
+  private estudianteService = inject(EstudianteService); 
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
   private cdr = inject(ChangeDetectorRef);
@@ -78,10 +78,12 @@ export class AdministradorClasesComponent implements OnInit {
 
   claseSeleccionada: Clase | null = null;
   alumnosAsistencia: any[] = [];
+  
+  // 🔥 Variables de Bloqueo
   loadingAsistencia: boolean = false;
+  guardando: boolean = false;
 
   claseForm: Partial<Clase> = this.getFormularioVacio();
-  guardando: boolean = false;
 
   ngOnInit() {
     this.cargarDatos();
@@ -89,6 +91,8 @@ export class AdministradorClasesComponent implements OnInit {
 
   cargarDatos() {
     this.loading = true;
+    this.cdr.detectChanges(); // Forzar visualización de carga
+
     this.grupoService.listarGrupos().subscribe({
       next: (data) => {
         this.grupos = data;
@@ -104,6 +108,7 @@ export class AdministradorClasesComponent implements OnInit {
 
   aplicarFiltros() {
     this.loading = true;
+    this.cdr.detectChanges(); // 🔥 OBLIGAMOS a Angular a mostrar el cargador
 
     const filtros: FiltrosClase = {
       grupoId: this.filtroGrupoId || undefined,
@@ -117,12 +122,12 @@ export class AdministradorClasesComponent implements OnInit {
         this.clases = response.registros;
         this.totalRegistros = response.total;
         this.loading = false;
-        this.cdr.detectChanges();
+        this.cdr.detectChanges(); // 🔥 Refrescar vista con datos
       },
       error: (err) => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar las clases' });
         this.loading = false;
-        this.cdr.detectChanges();
+        this.cdr.detectChanges(); // 🔥 Apagar cargador en caso de error
       }
     });
   }
@@ -134,33 +139,30 @@ export class AdministradorClasesComponent implements OnInit {
     this.aplicarFiltros();
   }
 
-  // ✅ Modificado para cruzar datos de Asistencia y Estudiantes
+  // --- LÓGICA DE ASISTENCIA ---
   verAsistencia(clase: Clase) {
     this.claseSeleccionada = clase; 
     this.displayAttendanceDialog = true;
     this.loadingAsistencia = true;
     this.alumnosAsistencia = [];
+    this.cdr.detectChanges(); // 🔥 Forzamos que se abra el modal y empiece a cargar visualmente
 
     if (!clase.grupo_id || !clase.id) {
       this.loadingAsistencia = false;
+      this.cdr.detectChanges();
       return;
     }
 
     forkJoin({
-      // Pedimos todos los estudiantes activos que pertenecen al grupo de esta clase
       estudiantes: this.estudianteService.listarEstudiantes({ grupoIds: [clase.grupo_id], limite: 1000, activo: true }),
-      // Pedimos los registros de asistencia ya guardados para esta clase
       asistenciasGuardadas: this.asistenciaService.listarPorClase(clase.id)
     }).subscribe({
       next: ({ estudiantes, asistenciasGuardadas }) => {
         
-        // Creamos un diccionario (Map) rápido para saber quién ya tiene asistencia registrada
         const asistenciasMap = new Map();
         asistenciasGuardadas.forEach(a => asistenciasMap.set(a.estudiante_id, a.presente));
 
-        // Armamos el arreglo para la tabla del modal
         this.alumnosAsistencia = estudiantes.registros.map(est => {
-          // Aplanamos según la interfaz PaginacionEstudiantes
           const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id;
           const nombre = est.perfil ? est.perfil.nombre : (est as any).nombre;
           const apellido = est.perfil ? est.perfil.apellido : (est as any).apellido;
@@ -169,13 +171,12 @@ export class AdministradorClasesComponent implements OnInit {
             estudianteId: idUsuario,
             nombre: nombre,
             apellido: apellido,
-            // Si tiene registro previo usa ese valor, sino por defecto false (ausente)
             presente: asistenciasMap.has(idUsuario) ? asistenciasMap.get(idUsuario) : false 
           };
         });
 
         this.loadingAsistencia = false;
-        this.cdr.detectChanges();
+        this.cdr.detectChanges(); // 🔥 Avisar a la tabla que ya tenemos datos
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar la asistencia' });
@@ -185,13 +186,13 @@ export class AdministradorClasesComponent implements OnInit {
     });
   }
 
-  // ✅ Modificado para enviar el payload al backend
   guardarAsistencia() {
+    if (this.loadingAsistencia) return;
     if (!this.claseSeleccionada || !this.claseSeleccionada.id) return; 
 
     this.loadingAsistencia = true;
+    this.cdr.detectChanges(); // 🔥 Bloquea el botón visualmente
 
-    // Armamos el payload exacto que pide tu interfaz RegistrarAsistenciasLotePayload
     const payload = {
       asistencias: this.alumnosAsistencia.map(alumno => ({
         estudianteId: alumno.estudianteId,
@@ -203,17 +204,18 @@ export class AdministradorClasesComponent implements OnInit {
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Asistencia guardada correctamente' });
         this.displayAttendanceDialog = false;
-        this.loadingAsistencia = false;
+        this.loadingAsistencia = false; 
         this.cdr.detectChanges();
       },
       error: (err) => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'No se pudo guardar la asistencia' });
-        this.loadingAsistencia = false;
+        this.loadingAsistencia = false; 
         this.cdr.detectChanges();
       }
     });
   }
 
+  // --- LÓGICA DE CLASES (LOGÍSTICA/PLANIFICACIÓN) ---
   abrirNuevo() {
     this.isEditing = false;
     this.tituloDialogo = 'Nueva Clase';
@@ -234,20 +236,25 @@ export class AdministradorClasesComponent implements OnInit {
     this.claseForm = { ...clase };
     
     if (this.claseForm.fecha) {
-      const [year, month, day] = (this.claseForm.fecha as string).split('-');
-      this.claseForm.fecha = new Date(Number(year), Number(month) - 1, Number(day)) as any;
+      const parts = (this.claseForm.fecha as string).split('-');
+      if (parts.length === 3) {
+          this.claseForm.fecha = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])) as any;
+      }
     }
 
     this.displayDialog = true;
   }
 
   guardarClase() {
+    if (this.guardando) return;
+
     if (!this.claseForm.grupo_id || !this.claseForm.fecha || !this.claseForm.hora || !this.claseForm.lugar || this.claseForm.lugar.trim() === '') {
         this.messageService.add({ severity: 'warn', summary: 'Faltan datos', detail: 'Complete todos los campos obligatorios (*)' });
         return;
     }
 
     this.guardando = true;
+    this.cdr.detectChanges(); // 🔥 Mostramos el loader de pantalla completa
 
     const datosParaEnviar: CrearClasePayload = {
       grupoId: this.claseForm.grupo_id,
@@ -274,15 +281,17 @@ export class AdministradorClasesComponent implements OnInit {
   }
 
   private finalizarGuardado(mensaje: string) {
-    this.guardando = false;
-    this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
+    this.guardando = false; 
     this.displayDialog = false;
+    this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
+    this.cdr.detectChanges(); // 🔥 Refrescamos la vista para quitar el loader oscuro
     this.aplicarFiltros();
   }
 
   private mostrarErrorGuardado(err: any) {
-    this.guardando = false;
+    this.guardando = false; 
     this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Ocurrió un error al guardar' });
+    this.cdr.detectChanges(); // 🔥 Refrescamos la vista para quitar el loader oscuro en caso de error
   }
 
   eliminarClase(id: number) {
@@ -315,8 +324,15 @@ export class AdministradorClasesComponent implements OnInit {
     };
   }
 
-  formatearFecha(date: Date | null): string {
+  // 🔥 Función protegida contra errores de fechas corruptas
+  formatearFecha(date: any): string {
       if (!date) return '';
-      return `${date.getFullYear()}-${('0' + (date.getMonth() + 1)).slice(-2)}-${('0' + date.getDate()).slice(-2)}`;
+      try {
+          const d = new Date(date);
+          if (isNaN(d.getTime())) return '';
+          return `${d.getFullYear()}-${('0' + (d.getMonth() + 1)).slice(-2)}-${('0' + d.getDate()).slice(-2)}`;
+      } catch (e) {
+          return '';
+      }
   }
 }

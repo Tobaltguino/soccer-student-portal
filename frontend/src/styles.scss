@@ -384,7 +384,60 @@ body {
    10. FIX PRIMENG V21: CALENDARIO (DATEPICKER)
    ========================================================== */
 
-.p-datepicker, .p-datepicker-panel, .p-datepicker-overlay {
+/* 1. Limpiar el contenedor exterior para evitar la "doble caja" */
+.p-datepicker {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    position: relative !important; /* Para anclar el ícono dentro */
+}
+
+/* 2. Forzar que el campo de texto interno sea idéntico a los demás (Fondo oscuro) */
+.p-datepicker input {
+    background-color: var(--input-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    color: var(--text-main) !important;
+    padding: 12px 35px 12px 14px !important; /* Más padding a la derecha para que el texto no pise el ícono */
+    min-height: 44px !important;
+    width: 100% !important;
+    font-family: var(--pf-font-body) !important;
+    font-size: 14px !important;
+    box-sizing: border-box !important;
+    transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+
+/* Efecto focus del input interno */
+.p-datepicker input:focus {
+    border-color: var(--pf-teal) !important;
+    box-shadow: 0 0 0 2px rgba(15, 140, 130, 0.2) !important;
+    outline: none !important;
+}
+
+/* 3. Ajuste del botón/ícono del calendario para que quede dentro del input oscuro */
+.p-datepicker-trigger {
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-steel) !important;
+    position: absolute !important;
+    right: 12px !important; /* 🔥 Aumentamos este valor para empujarlo dentro de la caja 🔥 */
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    z-index: 2 !important;
+    cursor: pointer !important;
+    height: auto !important;
+    width: auto !important;
+    padding: 0 !important; /* 🔥 Quitamos el padding extra para que encaje perfecto 🔥 */
+}
+
+.p-datepicker-trigger:hover {
+    color: var(--pf-teal) !important;
+}
+
+/* 4. El panel flotante (popup) con el calendario */
+.p-datepicker-panel, .p-datepicker-overlay {
     background-color: var(--bg-card) !important; 
     border: 1px solid var(--border-color) !important;
     border-radius: 8px !important;
@@ -394,6 +447,7 @@ body {
     padding: 1rem !important;
 }
 
+/* Diseño interno del calendario (Días, meses, años) */
 .p-datepicker-header {
     background-color: transparent !important; 
     border-bottom: 1px solid var(--border-color) !important;
@@ -766,4 +820,138 @@ p-fileupload {
     font-weight: bold !important;
     font-size: 1.1rem !important;
     margin-right: 4px !important;
+}
+
+/* ==========================================================
+   🔥 16. BARRA DE FILTROS HORIZONTAL Y DATEPICKER FIX 🔥
+   ========================================================== */
+
+/* Estructura alineada y compacta */
+.filter-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.75rem;
+    width: 100%;
+    flex-wrap: nowrap;
+}
+
+.filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.filter-item label {
+    color: var(--text-steel);
+    font-family: var(--pf-font-label);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+
+.filter-item-btn {
+    flex: none;
+    padding-bottom: 0;
+}
+
+/* Tamaños de las columnas */
+.flex-grow-1 { flex: 1; min-width: 130px; }
+.flex-grow-2 { flex: 2; min-width: 200px; }
+
+/* FIX: Evitar doble caja en el DatePicker de PrimeNG v21 */
+p-datepicker {
+    display: block;
+    width: 100%;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+}
+
+/* En celulares, la barra se apila automáticamente hacia abajo */
+@media (max-width: 768px) {
+    .filter-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .filter-item, .filter-item-btn {
+        width: 100%;
+    }
+}
+
+/* ==========================================================
+   🔥 17. TABLAS RESPONSIVAS (MÓVIL A TARJETAS) 🔥
+   ========================================================== */
+
+/* 1. Ocultar los títulos de columnas en PC */
+.hidden-desktop { 
+    display: none !important; 
+}
+
+/* 2. Comportamiento en Celulares y Tablets */
+@media (max-width: 768px) {
+    /* Mostrar títulos de columna y ocultar elementos de PC */
+    .hidden-desktop { display: inline-block !important; }
+    .hidden-mobile { display: none !important; }
+
+    /* Ocultar la cabecera original de la tabla */
+    .pf-table .p-datatable-thead { 
+        display: none !important; 
+    }
+    
+    /* Convertir cada fila (tr) en una Tarjeta (Card) */
+    .pf-table .p-datatable-tbody > tr {
+        display: flex; 
+        flex-direction: column;
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 12px; 
+        margin-bottom: 1rem;
+        padding: 1rem; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    /* Ajustar cada celda (td) para que sea una fila dentro de la tarjeta */
+    .pf-table .p-datatable-tbody > tr > td {
+        display: flex !important; 
+        align-items: center !important; 
+        justify-content: space-between !important; 
+        width: 100% !important; 
+        padding: 0.6rem 0 !important;
+        border: none !important; 
+        border-bottom: 1px dashed var(--border-color) !important;
+        text-align: right !important; 
+        white-space: normal; 
+    }
+
+    /* Quitar la línea divisoria a la última celda (la de los botones) */
+    .pf-table .p-datatable-tbody > tr > td:last-child {
+        border-bottom: none !important; 
+        padding-top: 1rem !important; 
+        justify-content: center !important;
+    }
+
+    /* Estilo para los títulos (Lugar:, Fecha:, Grupo:) */
+    .pf-table .p-column-title {
+        font-weight: 700;
+        color: var(--text-steel);
+        font-family: var(--pf-font-label);
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        margin-right: 1rem;
+    }
+    
+    /* Agrupar los botones de acción en un bloque bonito al fondo de la tarjeta */
+    .pf-table-actions {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        background-color: var(--input-bg);
+        border-radius: 8px;
+        padding: 0.5rem;
+        border: 1px solid var(--border-color);
+    }
 }

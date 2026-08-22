@@ -1,0 +1,101 @@
+/* =========================================================
+   ESTILOS ESPECÍFICOS: EVALUACIONES Y RANGOS
+   ========================================================= */
+
+/* Fila inline para agregar un nuevo rango en el Modal */
+.range-inline-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-end !important;
+    gap: 8px; 
+    width: 100%;
+    margin-bottom: 0.5rem;
+}
+
+.range-inline-row .pf-field-group {
+    margin-bottom: 0 !important; 
+}
+
+.range-inline-row .field-edad { flex: 0 0 65px; }
+.range-inline-row .field-etiqueta { flex: 0 0 110px; } 
+.range-inline-row .field-minmax { flex: 0 0 75px; }
+.range-inline-row .field-color { flex: 1; min-width: 120px; } 
+
+/* Botón Plus cuadrado para el rango */
+.range-inline-row .btn-fixed { 
+    flex: 0 0 44px; /* Mismo alto que los inputs */
+    height: 44px;
+}
+
+/* Indicador circular de color */
+.color-indicator {
+    width: 16px; 
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    display: inline-block;
+    margin: 0 auto;
+}
+
+/* Ajustes para la tabla ultra-compacta interna de rangos */
+.custom-compact-table {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.custom-compact-table .p-datatable-tbody > tr > td {
+    padding: 0.5rem !important;
+    font-size: 0.8rem !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    background-color: var(--input-bg) !important;
+}
+
+/* Fix específico de PrimeNG para RadioButtons (Dark mode) */
+:host ::ng-deep .p-radiobutton .p-radiobutton-box {
+    border: 1px solid var(--border-color) !important;
+    background: var(--input-bg) !important;
+    width: 22px;
+    height: 22px;
+    transition: all 0.2s;
+}
+
+:host ::ng-deep .p-radiobutton .p-radiobutton-box:not(.p-disabled):hover {
+    border-color: var(--pf-teal) !important;
+}
+
+:host ::ng-deep .p-radiobutton .p-radiobutton-box.p-highlight {
+    border-color: var(--pf-lime) !important;
+    background: var(--pf-lime) !important;
+}
+
+:host ::ng-deep .p-radiobutton .p-radiobutton-box.p-highlight .p-radiobutton-icon {
+    background-color: #0a0f0e !important;
+}
+
+/* =========================================================
+   RESPONSIVE MÓVIL (MODAL DE RANGOS)
+   ========================================================= */
+@media (max-width: 768px) {
+    /* Romper la fila de rangos a formato de columna */
+    .range-inline-row {
+        flex-direction: column !important; 
+        align-items: stretch !important;
+        gap: 0.75rem;
+    }
+    
+    .range-inline-row .pf-field-group,
+    .range-inline-row .btn-fixed {
+        width: 100% !important; 
+        flex: none !important;
+    }
+
+    /* El divisor de columnas en el modal principal de Tests */
+    .border-right-1 { 
+        border-right: none !important; 
+        border-bottom: 1px solid var(--border-color) !important; 
+        padding-bottom: 1.5rem !important; 
+        margin-bottom: 1rem !important; 
+    }
+}

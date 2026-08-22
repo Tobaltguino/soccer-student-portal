@@ -27,7 +27,7 @@ import { AsistenciaService } from '../../../../core/domains/academico/asistencia
   ],
   providers: [MessageService],
   templateUrl: './asistencias.component.html',
-  styleUrls: ['./asistencias.component.css']
+  styleUrls: ['./asistencias.component.scss'] // Recuerda que debe ser .scss
 })
 export class AdministradorAsistenciasComponent implements OnInit {
   
@@ -40,6 +40,8 @@ export class AdministradorAsistenciasComponent implements OnInit {
   grupos: any[] = [];
   grupoSeleccionado: any = null;
   estudiantesAsistencia: any[] = [];
+  
+  // 🔥 Variable Maestra de Carga
   loading: boolean = false;
 
   // Modal Historial
@@ -63,37 +65,30 @@ export class AdministradorAsistenciasComponent implements OnInit {
     this.cargarTodosLosGrupos();
   }
 
-  /**
-   * Carga TODOS los grupos disponibles en la academia (Vista Admin)
-   */
   cargarTodosLosGrupos() {
-    this.loading = true;
     this.grupoService.listarGrupos().subscribe({
       next: (data) => {
         this.grupos = data || [];
-        this.loading = false;
         this.cdr.detectChanges();
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los grupos' });
-        this.loading = false;
-        this.cdr.detectChanges();
       }
     });
   }
 
-  /**
-   * Se ejecuta al cambiar de grupo o de mes/año
-   */
   onFilterChange() {
+    // 🔥 Protección de doble recarga
+    if (this.loading) return;
+
     if (!this.grupoSeleccionado) {
       this.estudiantesAsistencia = [];
       return;
     }
 
     this.loading = true;
+    this.cdr.detectChanges(); // 🔥 Forzar la visualización del overlay oscuro
     
-    // 🔥 Delegamos toda la carga pesada al nuevo endpoint de NestJS
     this.asistenciaService.obtenerReporteMensual(this.grupoSeleccionado, this.filtroMes, this.filtroAnio)
       .subscribe({
         next: (data) => {
@@ -109,24 +104,20 @@ export class AdministradorAsistenciasComponent implements OnInit {
       });
   }
 
-  /**
-   * Abre el modal de historial detallado
-   */
   verHistorialIndividual(alumno: any) {
     this.alumnoSeleccionado = alumno;
     this.displayHistorial = true;
     this.cargarDetalleHistorial();
   }
 
-  /**
-   * Carga el detalle de asistencias día por día para el modal
-   */
   cargarDetalleHistorial() {
+    // 🔥 Protección
+    if (this.loadingHistorial) return;
     if (!this.alumnoSeleccionado) return;
 
     this.loadingHistorial = true;
+    this.cdr.detectChanges(); // 🔥 Forzar spinner interno
     
-    // Usamos estudiante_id porque así lo manda ahora el backend NestJS
     const estudianteId = this.alumnoSeleccionado.estudiante_id;
 
     this.asistenciaService.obtenerDetalleMensualEstudiante(estudianteId, this.filtroMes, this.filtroAnio)
