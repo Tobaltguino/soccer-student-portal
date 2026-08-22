@@ -11,7 +11,8 @@ import { TagModule } from 'primeng/tag';
 import { AvatarModule } from 'primeng/avatar';
 import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api'; // 🔥 AGREGADO ConfirmationService
+import { ConfirmDialogModule } from 'primeng/confirmdialog'; 
 
 // Servicios
 import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
@@ -23,17 +24,18 @@ import { AsistenciaService } from '../../../../core/domains/academico/asistencia
   imports: [
     CommonModule, FormsModule, TableModule, SelectModule, 
     ButtonModule, DialogModule, TagModule, AvatarModule, 
-    TooltipModule, ToastModule
+    TooltipModule, ToastModule, ConfirmDialogModule
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService], // 🔥 AGREGADO ConfirmationService AQUÍ
   templateUrl: './asistencias.component.html',
-  styleUrls: ['./asistencias.component.scss'] // Recuerda que debe ser .scss
+  styleUrls: ['./asistencias.component.scss'] 
 })
 export class AdministradorAsistenciasComponent implements OnInit {
   
   private grupoService = inject(GrupoService);
   private asistenciaService = inject(AsistenciaService);
   private messageService = inject(MessageService);
+  private confirmationService = inject(ConfirmationService); // 🔥 Inyectado para que el modal de confirmación funcione sin problemas
   private cdr = inject(ChangeDetectorRef);
 
   // Datos principales

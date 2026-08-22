@@ -38,14 +38,12 @@ import { UsuarioService } from '../../../../core/domains/usuarios/central/servic
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './nutricion.component.html',
-  styleUrls: ['./nutricion.component.css']
+  styleUrls: ['./nutricion.component.scss'] // 🔥 Cambiado a .scss
 })
 export class AdminNutriComponent implements OnInit {
   
-  // ✅ Exponemos el Enum para poder usarlo en el HTML
   readonly EstadoSesion = EstadoSesion;
 
-  // Inyección de servicios
   private nutriTipoService = inject(NutriTipoEvaluacionService);
   private nutriSesionService = inject(NutriSesionService);
   private nutriResultadoService = inject(NutriResultadoService);
@@ -73,8 +71,9 @@ export class AdminNutriComponent implements OnInit {
   displayMainDialog = false;
   displayGradesDialog = false;
   displayTiposDialog = false;
+  
   loading = false;
-  guardando = false;
+  guardando = false; // 🔥 Bloqueo maestro
 
   evalLogistica: any = {};
   nuevoTipo = { nombre: '', descripcion: '' };
@@ -88,8 +87,8 @@ export class AdminNutriComponent implements OnInit {
   // ==========================================
   cargarDatosBase() {
     this.loading = true;
+    this.cdr.detectChanges();
 
-    // Asumimos que usuarioService tiene listarNutricionistas(). Si usa otro nombre, cámbialo.
     const nutricionistasReq: Observable<any[]> = (this.usuarioService as any).listarNutricionistas 
       ? (this.usuarioService as any).listarNutricionistas() 
       : of([]);
@@ -134,24 +133,26 @@ export class AdminNutriComponent implements OnInit {
   }
 
   guardarNuevoTipo() {
+    if (this.guardando) return; // 🔥 Protección
     if (!this.nuevoTipo.nombre) return;
-    this.loading = true;
+    
+    this.guardando = true;
+    this.cdr.detectChanges();
     
     this.nutriTipoService.crearTipoEvaluacion(this.nuevoTipo).subscribe({
       next: () => {
         this.mostrarExito('Test agregado correctamente');
         this.nuevoTipo = { nombre: '', descripcion: '' };
         
-        // Recargar la lista de tipos para la tabla del modal
         this.nutriTipoService.listarTiposEvaluacion().subscribe(res => {
           this.tiposEvaluacion = res || [];
-          this.loading = false;
+          this.guardando = false;
           this.cdr.detectChanges();
         });
       },
       error: () => {
         this.mostrarError('Error al guardar el tipo de test');
-        this.loading = false;
+        this.guardando = false;
         this.cdr.detectChanges();
       }
     });
@@ -166,24 +167,25 @@ export class AdminNutriComponent implements OnInit {
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
-        this.loading = true;
+        this.guardando = true;
+        this.cdr.detectChanges();
+        
         this.nutriTipoService.eliminarTipoEvaluacion(tipo.id).subscribe({
           next: () => {
             this.mostrarExito('Test eliminado correctamente');
             this.nutriTipoService.listarTiposEvaluacion().subscribe(res => {
               this.tiposEvaluacion = res || [];
-              this.loading = false;
+              this.guardando = false;
               this.cdr.detectChanges();
             });
           },
           error: (err) => {
-            // Manejo rudimentario de error de llave foránea según la lógica anterior
             if (err?.error?.message?.includes('violates foreign key') || err?.error?.statusCode === 500) {
               this.mostrarError('No se puede eliminar porque ya hay sesiones usando este test.');
             } else {
               this.mostrarError('Hubo un error al eliminar el test');
             }
-            this.loading = false;
+            this.guardando = false;
             this.cdr.detectChanges();
           }
         });
@@ -202,7 +204,12 @@ export class AdminNutriComponent implements OnInit {
   }
 
   editarSesion(sesion: any) {
-    const fechaObj = new Date(sesion.fecha + 'T00:00:00');
+    let fechaObj = new Date();
+    if (sesion.fecha) {
+        const parts = (sesion.fecha as string).split('-');
+        if (parts.length === 3) fechaObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    }
+    
     this.evalLogistica = { 
       ...sesion,
       fecha: fechaObj,
@@ -213,18 +220,19 @@ export class AdminNutriComponent implements OnInit {
   }
 
   guardarSesionPlanificada() {
+    if (this.guardando) return; // 🔥 Protección
     if (!this.evalLogistica.fecha || !this.evalLogistica.tipo_id || !this.evalLogistica.nutricionista_id) {
       this.mostrarError('Faltan campos obligatorios');
       return;
     }
 
-    this.loading = true;
-    const fechaSeleccionada = new Date(this.evalLogistica.fecha);
+    this.guardando = true;
+    this.cdr.detectChanges();
     
     const payload = {
       tipoId: this.evalLogistica.tipo_id,
       nutricionistaId: this.evalLogistica.nutricionista_id,
-      fecha: fechaSeleccionada.toISOString().split('T')[0],
+      fecha: this.formatearFechaIso(this.evalLogistica.fecha),
       estado: this.evalLogistica.estado || EstadoSesion.PROGRAMADA
     };
 
@@ -236,11 +244,12 @@ export class AdminNutriComponent implements OnInit {
       next: () => {
         this.mostrarExito(this.evalLogistica.id ? 'Sesión actualizada' : 'Sesión creada');
         this.displayMainDialog = false;
-        this.cargarDatosBase(); // Refrescar todo
+        this.guardando = false;
+        this.cargarDatosBase();
       },
       error: () => {
         this.mostrarError('Error al guardar la sesión');
-        this.loading = false;
+        this.guardando = false;
         this.cdr.detectChanges();
       }
     });
@@ -255,15 +264,18 @@ export class AdminNutriComponent implements OnInit {
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
-        this.loading = true;
+        this.guardando = true;
+        this.cdr.detectChanges();
+        
         this.nutriSesionService.eliminarSesion(sesion.id).subscribe({
           next: () => {
             this.mostrarExito('Sesión eliminada correctamente');
+            this.guardando = false;
             this.cargarDatosBase();
           },
           error: () => {
             this.mostrarError('Hubo un error al eliminar la sesión');
-            this.loading = false;
+            this.guardando = false;
             this.cdr.detectChanges();
           }
         });
@@ -277,6 +289,7 @@ export class AdminNutriComponent implements OnInit {
   abrirCalificador(sesion: any) {
     this.evalLogistica = sesion;
     this.loading = true;
+    this.cdr.detectChanges();
 
     forkJoin({
       alumnos: this.estudianteService.listarEstudiantes({ limite: 2000, activo: true }),
@@ -291,7 +304,6 @@ export class AdminNutriComponent implements OnInit {
           const nombre = est.perfil ? est.perfil.nombre : est.nombre;
           const apellido = est.perfil ? est.perfil.apellido : est.apellido;
 
-          // ✅ Al poner ': any', TypeScript deja de quejarse por si es camelCase o snake_case
           const resultadoGuardado: any = resultadosPrevios.find((r: any) => r.estudianteId === idUsuario || r.estudiante_id === idUsuario);
 
           const nuevoEst = {
@@ -300,7 +312,6 @@ export class AdminNutriComponent implements OnInit {
             apellido: apellido,
             resultado_id: resultadoGuardado ? resultadoGuardado.id : null,
             archivoSeleccionado: null as File | null, 
-            // ✅ Soportamos tanto archivo_url como archivoUrl
             archivo_url_previo: resultadoGuardado ? (resultadoGuardado.archivo_url || resultadoGuardado.archivoUrl) : null,
             nombre_archivo_previo: null as string | null, 
             observacion: resultadoGuardado ? (resultadoGuardado.observaciones || resultadoGuardado.observacion) : ''
@@ -328,7 +339,9 @@ export class AdminNutriComponent implements OnInit {
     });
   }
 
+  // 🔥 Fuerza la detección de cambios al seleccionar el archivo PDF
   onFileSelected(event: any, estudiante: any) {
+    if (this.guardando) return;
     const file = event.target.files[0];
     if (file) {
       if (file.type !== 'application/pdf') {
@@ -344,6 +357,7 @@ export class AdminNutriComponent implements OnInit {
   }
 
   limpiarFila(estudiante: any, fileInput: any) {
+    if (this.guardando) return;
     estudiante.archivoSeleccionado = null;
     estudiante.observacion = '';
     if(fileInput) fileInput.value = ''; 
@@ -351,6 +365,8 @@ export class AdminNutriComponent implements OnInit {
   }
 
   guardarNotasFinales() {
+    if (this.guardando) return;
+    
     const porGuardar = this.estudiantes.filter(e => e.archivoSeleccionado || (e.resultado_id && e.observacion !== undefined));
     if (porGuardar.length === 0) {
       this.mostrarError('No hay archivos nuevos ni modificaciones para guardar.');
@@ -359,6 +375,7 @@ export class AdminNutriComponent implements OnInit {
 
     this.guardando = true;
     this.messageService.add({ severity: 'info', summary: 'Guardando', detail: `Procesando ${porGuardar.length} resultados...` });
+    this.cdr.detectChanges();
 
     const peticiones = porGuardar.map(est => {
       const payload = {
@@ -413,9 +430,14 @@ export class AdminNutriComponent implements OnInit {
 
   private formatearFechaIso(fecha: any): string {
     if (!fecha) return '';
-    const d = new Date(fecha);
-    const tzOffset = d.getTimezoneOffset() * 60000;
-    return (new Date(d.getTime() - tzOffset)).toISOString().split('T')[0];
+    try {
+        const d = new Date(fecha);
+        if (isNaN(d.getTime())) return '';
+        const tzOffset = d.getTimezoneOffset() * 60000;
+        return (new Date(d.getTime() - tzOffset)).toISOString().split('T')[0];
+    } catch {
+        return '';
+    }
   }
 
   mostrarExito(m: string) { this.messageService.add({ severity: 'success', summary: 'Éxito', detail: m }); }

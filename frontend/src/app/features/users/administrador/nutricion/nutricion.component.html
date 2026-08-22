@@ -1,120 +1,131 @@
-<div class="eval-container fadein animation-duration-500">
+<div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
-    <p-confirmdialog></p-confirmdialog>
+    <!-- 🔥 CLASE pf-confirm-dialog AGREGADA AQUÍ 🔥 -->
+    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
 
-    <header class="page-header">
+    <header class="pf-admin-header">
         <div class="header-content">
-            <h1 class="m-0 text-main">Admin General: Nutrición</h1>
-            <p class="text-secondary m-0 mt-1">Gestión global de pautas y mediciones de la academia.</p>
+            <div>
+                <h1 class="pf-anton text-chalk m-0 text-3xl">Admin General: Nutrición</h1>
+                <p class="pf-oswald text-teal mt-1">Gestión global de pautas alimenticias y mediciones de la academia.</p>
+            </div>
         </div>
-        <div class="header-actions">
-            <button pButton label="Configurar Tests" icon="pi pi-cog" class="p-button-outlined p-button-secondary btn-create" (click)="abrirConfiguracionTipos()"></button>
-            <button pButton label="Nueva Sesión" icon="pi pi-plus" class="btn-create" (click)="abrirNuevo()"></button>
+        <div class="flex gap-2">
+            <button pButton label="Configurar Tests" icon="pi pi-cog" class="pf-btn-ghost" (click)="abrirConfiguracionTipos()"></button>
+            <button pButton label="Nueva Sesión" icon="pi pi-plus" class="pf-btn-primary" (click)="abrirNuevo()"></button>
         </div>
     </header>
 
-    <div class="filter-bar">
-        <div class="horizontal-filters">
-            <div class="filter-item">
-                <label><i class="pi pi-calendar mr-1"></i> Fecha</label>
-                <p-datepicker [(ngModel)]="filtroFecha" dateFormat="dd/mm/yy" [showIcon]="false" 
+    <div class="pf-admin-card mb-4 p-3">
+        <div class="filter-row">
+            
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-calendar mr-1 text-teal"></i> Fecha</label>
+                <p-datepicker [(ngModel)]="filtroFecha" dateFormat="dd/mm/yy" [showIcon]="true" 
                               placeholder="Filtrar por Fecha" 
                               (onSelect)="aplicarFiltros()" [showClear]="true" (onClear)="aplicarFiltros()" 
                               styleClass="w-full" appendTo="body"></p-datepicker>
             </div>
 
-            <div class="filter-item">
-                <label><i class="pi pi-list mr-1"></i> Tipo de Evaluación</label>
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-list mr-1 text-teal"></i> Tipo de Evaluación</label>
                 <p-select [options]="tiposEvaluacion" [(ngModel)]="filtroPrueba" optionLabel="nombre" 
                           placeholder="Filtrar por Tipo" 
                           (onChange)="aplicarFiltros()" [showClear]="true" 
-                          styleClass="w-full" appendTo="body"></p-select>
+                          styleClass="w-full" appendTo="body" [filter]="false"></p-select>
             </div>
 
-            <div class="filter-item">
-                <label><i class="pi pi-check-circle mr-1"></i> Estado</label>
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-check-circle mr-1 text-teal"></i> Estado</label>
                 <p-select [options]="opcionesEstadoFiltro" [(ngModel)]="filtroEstado" optionLabel="label" optionValue="value" 
                           placeholder="Filtrar por Estado" 
                           (onChange)="aplicarFiltros()" [showClear]="true" 
-                          styleClass="w-full" appendTo="body">
+                          styleClass="w-full" appendTo="body" [filter]="false">
                     <ng-template let-option pTemplate="item">
                         <p-tag [value]="option.label" [severity]="option.value === 'PENDIENTE' ? 'warn' : 'success'"></p-tag>
                     </ng-template>
                 </p-select>
             </div>
 
-            <div class="filter-btn">
-                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary" 
-                        (click)="limpiarFiltros()" pTooltip="Limpiar"></button>
+            <div class="filter-item-btn">
+                <button pButton icon="pi pi-filter-slash" class="pf-btn-ghost w-full justify-content-center" 
+                        (click)="limpiarFiltros()" pTooltip="Limpiar" tooltipPosition="top"></button>
             </div>
+            
         </div>
     </div>
 
-    <div class="main-card">
+    <!-- TABLA PRINCIPAL -->
+    <div class="pf-admin-card table-responsive p-0">
         <p-table [value]="sesionesFiltradas" [loading]="loading" [rows]="10" [paginator]="true" 
-         styleClass="p-datatable-sm p-datatable-striped" 
-         responsiveLayout="stack" [breakpoint]="'768px'">
+                 styleClass="p-datatable-sm pf-table w-full" responsiveLayout="stack" [breakpoint]="'768px'">
             <ng-template pTemplate="header">
                 <tr>
-                    <th style="width: 15%">Fecha</th>
+                    <th style="width: 20%">Fecha</th>
                     <th style="width: 35%">Tipo de Evaluación</th>
-                    <th style="width: 15%" class="hidden-mobile text-center">Estado</th>
-                    <th style="width: 35%" class="text-center">Acciones</th>
+                    <th style="width: 20%" class="text-center">Estado</th>
+                    <th style="width: 25%" class="text-center">Acciones</th>
                 </tr>
             </ng-template>
             <ng-template pTemplate="body" let-sesion>
                 <tr>
                     <td>
-                        <span class="p-column-title hidden-desktop">Fecha</span>
-                        <span class="font-bold text-main">{{ sesion.fecha | date:'dd/MM/yyyy' }}</span>
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Fecha</span>
+                        <span class="pf-anton text-chalk text-lg" style="letter-spacing: 0.5px;">{{ sesion.fecha | date:'dd/MM/yyyy' }}</span>
                     </td>
                     <td>
-                        <span class="p-column-title hidden-desktop">Evaluación</span>
-                        <span class="font-bold text-main">{{ sesion.tipo_evaluacion?.nombre }}</span>
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Evaluación</span>
+                        <span class="font-bold text-chalk">{{ sesion.tipo_evaluacion?.nombre }}</span>
                     </td>
                     <td class="text-center">
-                        <span class="p-column-title hidden-desktop">Estado</span>
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Estado</span>
                         <p-tag [value]="sesion.estado" [severity]="sesion.estado === 'PENDIENTE' ? 'warn' : 'success'"></p-tag>
                     </td>
                     <td class="text-center">
-                        <span class="p-column-title hidden-desktop">Acciones</span>
-                        <div class="action-buttons">
-                            <button pButton icon="pi pi-pencil" class="p-button-text p-button-secondary" (click)="editarSesion(sesion)" pTooltip="Editar Logística"></button>
-                            <button pButton icon="pi pi-file-arrow-up" class="p-button-text p-button-success" (click)="abrirCalificador(sesion)" pTooltip="Adjuntar Resultados"></button>
-                            <button pButton icon="pi pi-trash" class="p-button-text p-button-danger" (click)="eliminarSesion(sesion)" pTooltip="Eliminar Sesión"></button>
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Acciones</span>
+                        <div class="pf-table-actions">
+                            <button pButton icon="pi pi-pencil" class="p-button-warning" (click)="editarSesion(sesion)" pTooltip="Editar Logística"></button>
+                            <button pButton icon="pi pi-file-arrow-up" class="p-button-success" (click)="abrirCalificador(sesion)" pTooltip="Adjuntar Pautas"></button>
+                            <button pButton icon="pi pi-trash" class="p-button-danger" (click)="eliminarSesion(sesion)" pTooltip="Eliminar Sesión"></button>
                         </div>
                     </td>
                 </tr>
             </ng-template>
             <ng-template pTemplate="emptymessage">
-                <tr><td colspan="4" class="text-center p-4">No hay sesiones registradas.</td></tr>
+                <tr>
+                    <td colspan="4" class="text-center p-5 text-steel">
+                        <i class="pi pi-calendar-times block mb-3 text-4xl"></i>
+                        <span class="pf-oswald text-lg">No hay sesiones registradas.</span>
+                    </td>
+                </tr>
             </ng-template>
         </p-table>
     </div>
 
-    <p-dialog [(visible)]="displayTiposDialog" header="Configurar Tipos de Evaluación" [modal]="true" [style]="{width: '600px', maxWidth: '90vw'}" styleClass="p-fluid">
+    <!-- MODAL 1: CONFIGURAR TIPOS DE EVALUACIÓN -->
+    <p-dialog [(visible)]="displayTiposDialog" header="Configurar Tipos de Evaluación" [modal]="true" [style]="{width: '600px', maxWidth: '90vw'}" styleClass="p-fluid pf-dialog" [closable]="!guardando" [draggable]="false" [resizable]="false">
         <ng-template pTemplate="content">
             
-            <div class="surface-100 p-3 border-round mb-4">
-                <h4 class="m-0 mb-3 text-700">Agregar Nuevo Test</h4>
+            <div class="p-3 border-round mb-4 mt-2" style="background-color: rgba(15, 140, 130, 0.1); border: 1px solid var(--pf-teal);">
+                <h4 class="m-0 mb-3 pf-oswald text-teal"><i class="pi pi-plus mr-2"></i>Agregar Nuevo Test</h4>
                 
-                <div class="field mt-2">
-                    <label>Nombre <span class="text-red-500 font-bold">*</span></label>
-                    <input type="text" pInputText [(ngModel)]="nuevoTipo.nombre" placeholder="Ej: Medición Antropométrica">
+                <div class="pf-field-group mt-2">
+                    <label class="pf-oswald text-steel text-xs">Nombre <span class="text-pink-500 font-bold">*</span></label>
+                    <input type="text" pInputText [(ngModel)]="nuevoTipo.nombre" placeholder="Ej: Medición Antropométrica" [disabled]="guardando">
                 </div>
                 
-                <div class="field">
-                    <label>Descripción</label>
-                    <input type="text" pInputText [(ngModel)]="nuevoTipo.descripcion" placeholder="Opcional">
+                <div class="pf-field-group">
+                    <label class="pf-oswald text-steel text-xs">Descripción</label>
+                    <input type="text" pInputText [(ngModel)]="nuevoTipo.descripcion" placeholder="Opcional..." [disabled]="guardando">
                 </div>
                 
                 <div class="flex justify-content-end mt-3">
-                    <button pButton label="Guardar Test" icon="pi pi-save" class="p-button-success w-auto btn-create" 
-                            (click)="guardarNuevoTipo()" [disabled]="!nuevoTipo.nombre"></button>
+                    <button pButton label="Guardar Test" icon="pi pi-save" class="pf-btn-primary w-auto" 
+                            (click)="guardarNuevoTipo()" [disabled]="!nuevoTipo.nombre || guardando" [loading]="guardando"></button>
                 </div>
             </div>
 
-            <p-table [value]="tiposEvaluacion" [scrollable]="true" scrollHeight="300px" styleClass="p-datatable-sm p-datatable-striped">
+            <p-table [value]="tiposEvaluacion" [scrollable]="true" scrollHeight="300px" styleClass="p-datatable-sm pf-table custom-compact-table">
                 <ng-template pTemplate="header">
                     <tr>
                         <th style="width: 40%">Nombre del Test</th>
@@ -124,123 +135,127 @@
                 </ng-template>
                 <ng-template pTemplate="body" let-tipo>
                     <tr>
-                        <td><span class="font-bold text-main">{{ tipo.nombre }}</span></td>
-                        <td class="text-secondary">{{ tipo.descripcion || 'Sin descripción' }}</td>
+                        <td><span class="font-bold text-chalk">{{ tipo.nombre }}</span></td>
+                        <td class="text-steel italic text-sm">{{ tipo.descripcion || 'Sin descripción' }}</td>
                         <td class="text-center">
-                            <div class="action-buttons">
-                                <button pButton icon="pi pi-trash" class="p-button-text p-button-danger" 
-                                        (click)="eliminarTipo(tipo)" pTooltip="Eliminar Test"></button>
+                            <div class="pf-table-actions justify-content-center">
+                                <button pButton icon="pi pi-trash" class="p-button-danger" 
+                                        (click)="eliminarTipo(tipo)" pTooltip="Eliminar Test" [disabled]="guardando"></button>
                             </div>
                         </td>
                     </tr>
                 </ng-template>
             </p-table>
-
         </ng-template>
     </p-dialog>
 
-    <p-dialog [(visible)]="displayMainDialog" [header]="evalLogistica.id ? 'Editar Sesión' : 'Nueva Sesión'" [modal]="true" [style]="{width: '450px'}" styleClass="p-fluid">
+    <!-- MODAL 2: NUEVA SESIÓN (LOGÍSTICA) -->
+    <p-dialog [(visible)]="displayMainDialog" [header]="evalLogistica.id ? 'Editar Sesión' : 'Nueva Sesión'" [modal]="true" [style]="{width: '450px'}" styleClass="p-fluid pf-dialog" [closable]="!guardando" [draggable]="false" [resizable]="false">
         <ng-template pTemplate="content">
             
-            <div class="field mt-2">
-                <label>Fecha <span class="text-red-500 font-bold">*</span></label>
-                <p-datepicker [(ngModel)]="evalLogistica.fecha" appendTo="body" dateFormat="dd/mm/yy" [showIcon]="true"></p-datepicker>
+            <div class="pf-field-group mt-3">
+                <label class="pf-oswald">Fecha <span class="text-pink-500 font-bold">*</span></label>
+                <p-datepicker [(ngModel)]="evalLogistica.fecha" appendTo="body" dateFormat="dd/mm/yy" [showIcon]="true" [disabled]="guardando"></p-datepicker>
             </div>
             
-            <div class="field">
-                <label>Tipo de Evaluación <span class="text-red-500 font-bold">*</span></label>
-                <p-select [options]="tiposEvaluacion" [(ngModel)]="evalLogistica.tipo_id" optionLabel="nombre" optionValue="id" placeholder="Selecciona el tipo" appendTo="body"></p-select>
+            <div class="pf-field-group">
+                <label class="pf-oswald">Tipo de Evaluación <span class="text-pink-500 font-bold">*</span></label>
+                <p-select [options]="tiposEvaluacion" [(ngModel)]="evalLogistica.tipo_id" optionLabel="nombre" optionValue="id" placeholder="Selecciona el tipo" appendTo="body" [filter]="false" [disabled]="guardando"></p-select>
             </div>
 
-            <div class="field">
-                <label>Profesional a Cargo <span class="text-red-500 font-bold">*</span></label>
-                <p-select [options]="nutricionistas" [(ngModel)]="evalLogistica.nutricionista_id" optionLabel="nombreCompleto" optionValue="id" placeholder="Asignar Nutricionista" appendTo="body"></p-select>
+            <div class="pf-field-group">
+                <label class="pf-oswald">Nutricionista a Cargo <span class="text-pink-500 font-bold">*</span></label>
+                <p-select [options]="nutricionistas" [(ngModel)]="evalLogistica.nutricionista_id" optionLabel="nombreCompleto" optionValue="id" placeholder="Asignar Nutricionista" appendTo="body" [filter]="true" filterBy="nombreCompleto" [disabled]="guardando"></p-select>
             </div>
             
-            <div class="field" *ngIf="evalLogistica.id">
-                <label class="mb-2">Estado de la Sesión</label>
+            <div class="pf-field-group" *ngIf="evalLogistica.id">
+                <label class="pf-oswald mb-3 block">Estado de la Sesión</label>
                 <div class="flex gap-4">
                     <div class="flex align-items-center">
-                        <p-radioButton name="estado" value="PENDIENTE" [(ngModel)]="evalLogistica.estado" inputId="st1"></p-radioButton>
-                        <label for="st1" class="ml-2 font-normal">Pendiente</label>
+                        <p-radioButton name="estado" value="PENDIENTE" [(ngModel)]="evalLogistica.estado" inputId="st1" [disabled]="guardando"></p-radioButton>
+                        <label for="st1" class="ml-2 cursor-pointer text-chalk font-bold">Pendiente</label>
                     </div>
                     <div class="flex align-items-center">
-                        <p-radioButton name="estado" value="FINALIZADO" [(ngModel)]="evalLogistica.estado" inputId="st2"></p-radioButton>
-                        <label for="st2" class="ml-2 font-normal">Finalizado</label>
+                        <p-radioButton name="estado" value="FINALIZADO" [(ngModel)]="evalLogistica.estado" inputId="st2" [disabled]="guardando"></p-radioButton>
+                        <label for="st2" class="ml-2 cursor-pointer text-chalk font-bold">Finalizado</label>
                     </div>
                 </div>
             </div>
 
         </ng-template>
         <ng-template pTemplate="footer">
-            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="displayMainDialog = false"></button>
-            <button pButton label="Guardar" icon="pi pi-check" (click)="guardarSesionPlanificada()" [loading]="loading"></button>
+            <button pButton label="Cancelar" icon="pi pi-times" class="pf-btn-ghost" (click)="displayMainDialog = false" [disabled]="guardando"></button>
+            <button pButton label="Guardar" icon="pi pi-check" class="pf-btn-primary ml-2" (click)="guardarSesionPlanificada()" [loading]="guardando"></button>
         </ng-template>
     </p-dialog>
 
-    <p-dialog [(visible)]="displayGradesDialog" header="Registro de Resultados" [modal]="true" [style]="{width: '90vw', maxWidth: '1000px'}" [maximizable]="true" styleClass="p-fluid">
+    <!-- MODAL 3: CALIFICADOR / ADJUNTAR ARCHIVOS -->
+    <p-dialog [(visible)]="displayGradesDialog" header="Registro de Resultados" [modal]="true" [style]="{width: '90vw', maxWidth: '1000px'}" [maximizable]="true" styleClass="p-fluid pf-dialog" [closable]="!guardando">
         <ng-template pTemplate="content">
-            <div class="surface-100 p-3 border-round mb-3 flex justify-content-between align-items-center flex-wrap gap-2">
+            
+            <div class="p-3 border-round mb-3 flex justify-content-between align-items-center mt-2 flex-wrap gap-2" style="background-color: var(--input-bg); border: 1px solid var(--border-color);">
                 <div class="flex flex-column">
-                    <span class="text-sm text-600">Evaluación Seleccionada</span>
-                    <span class="text-xl font-bold text-900">{{evalLogistica.tipo_evaluacion?.nombre}}</span>
+                    <span class="pf-oswald text-steel text-xs">Evaluación Seleccionada</span>
+                    <span class="text-xl pf-anton text-chalk mt-1" style="letter-spacing: 1px;">{{evalLogistica.tipo_evaluacion?.nombre}}</span>
                 </div>
                 <div class="text-right">
-                    <span class="text-sm text-600 block">Total Estudiantes</span>
-                    <p-tag [value]="estudiantes.length.toString()" severity="info" styleClass="text-base"></p-tag>
+                    <span class="pf-oswald text-steel text-xs block mb-1">Total Estudiantes</span>
+                    <p-tag [value]="estudiantes.length.toString()" severity="info" styleClass="text-sm px-3"></p-tag>
                 </div>
             </div>
 
-            <p-table [value]="estudiantes" [scrollable]="true" scrollHeight="500px" styleClass="p-datatable-gridlines p-datatable-sm" responsiveLayout="scroll">
+            <p-table [value]="estudiantes" [scrollable]="true" scrollHeight="500px" styleClass="p-datatable-sm pf-table custom-grades-table" responsiveLayout="scroll">
                 <ng-template pTemplate="header">
                     <tr>
                         <th style="width: 25%">Estudiante</th>
-                        <th style="width: 40%">Archivo Adjunto</th>
+                        <th style="width: 40%">Pauta / Archivo Adjunto</th>
                         <th style="width: 25%">Observación (Opcional)</th>
-                        <th style="width: 10%" class="text-center"></th>
+                        <th style="width: 10%" class="text-center">Limpiar</th>
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="body" let-estudiante>
                     <tr>
-                        <td><span class="font-bold text-main">{{estudiante.apellido}}</span>, <span class="text-secondary">{{estudiante.nombre}}</span></td>
-                        
                         <td>
-                            <input type="file" #fileInput hidden accept="application/pdf, .pdf" (change)="onFileSelected($event, estudiante)">
+                            <span class="pf-anton text-chalk text-sm block" style="letter-spacing: 0.5px;">{{estudiante.apellido}}</span>
+                            <span class="pf-oswald text-steel text-xs">{{estudiante.nombre}}</span>
+                        </td>
+                        
+                        <!-- ÁREA DE SUBIDA DE PDF -->
+                        <td>
+                            <input type="file" #fileInput hidden accept="application/pdf, .pdf" (change)="onFileSelected($event, estudiante)" [disabled]="guardando">
                             
                             <div *ngIf="estudiante.archivoSeleccionado || estudiante.archivo_url_previo; else noFile" class="flex flex-column gap-2">
                                 
-                                <div class="flex align-items-center gap-2 border-1 surface-border p-2 border-round surface-50 overflow-hidden">
+                                <div class="flex align-items-center gap-2 border-1 p-2 border-round overflow-hidden" style="background-color: var(--bg-main); border-color: var(--border-color) !important;">
                                     <i class="pi pi-file-pdf text-red-500 text-xl"></i>
-                                    <span class="text-sm text-700 font-medium white-space-nowrap overflow-hidden text-overflow-ellipsis" 
+                                    <span class="text-sm text-chalk font-medium white-space-nowrap overflow-hidden text-overflow-ellipsis" 
                                           [title]="estudiante.archivoSeleccionado?.name || estudiante.nombre_archivo_previo">
                                         {{ estudiante.archivoSeleccionado?.name || estudiante.nombre_archivo_previo }}
                                     </span>
                                 </div>
                                 
                                 <div class="flex gap-2">
-                                    <button pButton type="button" label="Cambiar" icon="pi pi-sync" class="p-button-outlined p-button-sm w-full" (click)="fileInput.click()"></button>
+                                    <button pButton type="button" label="Cambiar" icon="pi pi-sync" class="pf-btn-ghost w-full py-1 text-xs" (click)="fileInput.click()" [disabled]="guardando"></button>
                                     
                                     <a *ngIf="estudiante.archivo_url_previo && !estudiante.archivoSeleccionado" 
                                        [href]="estudiante.archivo_url_previo" target="_blank" 
-                                       class="p-button p-component p-button-outlined p-button-sm p-button-info flex align-items-center justify-content-center p-0" 
-                                       style="width: 40px" pTooltip="Ver PDF guardado">
-                                        <i class="pi pi-external-link"></i>
+                                       class="p-button p-component p-button-info flex align-items-center justify-content-center p-0" 
+                                       style="width: 40px; background-color: var(--pf-teal); border-color: var(--pf-teal);" pTooltip="Ver PDF guardado">
+                                        <i class="pi pi-external-link text-white"></i>
                                     </a>
                                 </div>
                             </div>
 
                             <ng-template #noFile>
-                                <button pButton type="button" label="Seleccionar PDF" icon="pi pi-upload" class="p-button-outlined p-button-secondary p-button-sm w-full border-dashed" (click)="fileInput.click()"></button>
+                                <button pButton type="button" label="Adjuntar Pauta PDF" icon="pi pi-upload" class="pf-btn-ghost w-full border-dashed" (click)="fileInput.click()" [disabled]="guardando"></button>
                             </ng-template>
                         </td>
 
-                        <td><input pInputText [(ngModel)]="estudiante.observacion" placeholder="Ej: Subió % grasa" class="w-full"></td>
+                        <td><input pInputText [(ngModel)]="estudiante.observacion" placeholder="Ej: Subió % grasa" class="w-full" [disabled]="guardando"></td>
                         
                         <td class="text-center">
-                            <div class="action-buttons">
-                                <button pButton icon="pi pi-refresh" class="p-button-text p-button-secondary" 
-                                        (click)="limpiarFila(estudiante, fileInput)" pTooltip="Deshacer selección"></button>
-                            </div>
+                            <button pButton icon="pi pi-eraser" class="p-button-rounded p-button-text p-button-secondary p-0" style="width: 2rem; height: 2rem;" 
+                                    (click)="limpiarFila(estudiante, fileInput)" pTooltip="Deshacer selección" [disabled]="guardando"></button>
                         </td>
                     </tr>
                 </ng-template>
@@ -248,13 +263,19 @@
         </ng-template>
         
         <ng-template pTemplate="footer">
-            <div class="flex flex-column sm:flex-row justify-content-between align-items-center w-full gap-3">
-                <small class="text-600 text-center sm:text-left">Se subirán los archivos de los estudiantes que hayas modificado.</small>
+            <div class="flex flex-column sm:flex-row justify-content-between align-items-center w-full gap-3 pt-3">
+                <small class="text-steel text-center sm:text-left pf-oswald"><i class="pi pi-info-circle mr-1 text-teal"></i>Se subirán los archivos de los estudiantes que hayas modificado.</small>
                 <div class="flex gap-2 w-full sm:w-auto">
-                    <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text flex-1 sm:flex-none" (click)="displayGradesDialog = false" [disabled]="guardando"></button>
-                    <button pButton label="Subir y Guardar" icon="pi pi-cloud-upload" class="p-button-success flex-1 sm:flex-none" (click)="guardarNotasFinales()" [loading]="guardando"></button>
+                    <button pButton label="Cerrar" icon="pi pi-times" class="pf-btn-ghost flex-1 sm:flex-none" (click)="displayGradesDialog = false" [disabled]="guardando"></button>
+                    <button pButton label="Subir y Guardar" icon="pi pi-cloud-upload" class="pf-btn-primary flex-1 sm:flex-none" (click)="guardarNotasFinales()" [loading]="guardando"></button>
                 </div>
             </div>
         </ng-template>
     </p-dialog>
+
+    <!-- 🔥 OVERLAY DE CARGA GLOBAL DE PANTALLA COMPLETA 🔥 -->
+    <div class="pf-loading-overlay fadein" *ngIf="guardando">
+        <div class="pf-spinner"></div>
+        <div class="pf-loading-text">Guardando Archivos PDF...</div>
+    </div>
 </div>

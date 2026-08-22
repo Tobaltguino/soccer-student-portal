@@ -1,6 +1,7 @@
 <div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
-    <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
+    <!-- 🔥 AQUÍ SE AGREGÓ LA CLASE pf-confirm-dialog 🔥 -->
+    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
 
     <header class="pf-admin-header">
         <div class="header-content">
@@ -186,33 +187,33 @@
         <div class="flex flex-column gap-3 pt-3">
 
             <div class="pf-field-group">
-                <label class="pf-oswald"><i class="pi pi-envelope mr-2"></i>Email <span class="text-pink-500 font-bold">*</span></label>
+                <label class="pf-oswald"><i class="pi pi-envelope mr-2 text-teal"></i>Email <span class="text-pink-500 font-bold">*</span></label>
                 <input pInputText [(ngModel)]="userForm.email" [disabled]="guardando" />
             </div>
             
             <div class="formgrid grid">
                 <div class="pf-field-group col-6">
-                    <label class="pf-oswald"><i class="pi pi-user mr-2"></i>Nombre <span class="text-pink-500 font-bold">*</span></label>
+                    <label class="pf-oswald"><i class="pi pi-user mr-2 text-teal"></i>Nombre <span class="text-pink-500 font-bold">*</span></label>
                     <input pInputText [(ngModel)]="userForm.nombre" [disabled]="guardando" />
                 </div>
                 <div class="pf-field-group col-6">
-                    <label class="pf-oswald"><i class="pi pi-user mr-2"></i>Apellido <span class="text-pink-500 font-bold">*</span></label>
+                    <label class="pf-oswald"><i class="pi pi-user mr-2 text-teal"></i>Apellido <span class="text-pink-500 font-bold">*</span></label>
                     <input pInputText [(ngModel)]="userForm.apellido" [disabled]="guardando" />
                 </div>
             </div>
             
             <div class="pf-field-group">
-                <label class="pf-oswald"><i class="pi pi-id-card mr-2"></i>RUT <span class="text-pink-500 font-bold">*</span></label>
+                <label class="pf-oswald"><i class="pi pi-id-card mr-2 text-teal"></i>RUT <span class="text-pink-500 font-bold">*</span></label>
                 <input pInputText appRutFormat [(ngModel)]="userForm.rut" placeholder="12.345.678-9" [disabled]="isEditing || guardando"/>
             </div>
             
             <div class="pf-field-group" *ngIf="vistaActual === 'estudiante'">
-                <label class="pf-oswald"><i class="pi pi-calendar mr-2"></i>Fecha de Nacimiento</label>
+                <label class="pf-oswald"><i class="pi pi-calendar mr-2 text-teal"></i>Fecha de Nacimiento</label>
                 <p-datepicker [(ngModel)]="userForm.fecha_nacimiento" [showIcon]="true" appendTo="body" dateFormat="dd/mm/yy" [maxDate]="maxDate" placeholder="Selecciona fecha" [disabled]="guardando"></p-datepicker>
             </div>
             
-            <div class="pf-field-group bg-blue-50 p-3 border-round border-1 border-blue-200" *ngIf="!isEditing" style="background: rgba(59, 130, 246, 0.1) !important; border-color: rgba(59, 130, 246, 0.3) !important;">
-                <span class="text-blue-500 text-sm font-medium">
+            <div class="pf-field-group bg-blue-50 p-3 border-round border-1 border-blue-200" *ngIf="!isEditing" style="background: rgba(15, 140, 130, 0.1) !important; border-color: var(--pf-teal) !important;">
+                <span class="text-teal text-sm font-medium pf-oswald">
                     <i class="pi pi-info-circle mr-1"></i> La contraseña inicial se generará automáticamente usando el RUT del usuario (sin puntos ni guiones).
                 </span>
             </div>
@@ -220,11 +221,11 @@
             <!-- CAMPOS ESTUDIANTE -->
             <ng-container *ngIf="vistaActual === 'estudiante'">
                 <div class="pf-field-group">
-                    <label class="pf-oswald"><i class="pi pi-users mr-2"></i>Grupo Asignado</label> 
+                    <label class="pf-oswald"><i class="pi pi-users mr-2 text-teal"></i>Grupo Asignado</label> 
                     <p-select [options]="listaGrupos" [(ngModel)]="userForm.grupo_id" optionLabel="nombre" optionValue="id" placeholder="Selecciona grupo" appendTo="body" [showClear]="true" [filter]="false" [disabled]="guardando"></p-select>
                 </div>
                 <div class="pf-field-group">
-                    <label class="pf-oswald"><i class="pi pi-map mr-2"></i>Posiciones de Juego</label>
+                    <label class="pf-oswald"><i class="pi pi-map mr-2 text-teal"></i>Posiciones de Juego</label>
                     <p-multiSelect [options]="listaPosiciones" [(ngModel)]="userForm.posicionesIds" optionLabel="nombre" optionValue="id" placeholder="Seleccionar" display="chip" appendTo="body" [filter]="false" [disabled]="guardando"></p-multiSelect>
                 </div>
 
@@ -232,22 +233,22 @@
                     <span class="text-sm font-bold text-teal uppercase tracking-wider mb-3 block pf-oswald">Datos Médicos y Contacto</span>
                     
                     <div class="pf-field-group">
-                        <label class="pf-oswald"><i class="pi pi-home mr-2"></i>Dirección</label>
+                        <label class="pf-oswald"><i class="pi pi-home mr-2 text-teal"></i>Dirección</label>
                         <input pInputText [(ngModel)]="userForm.direccion" placeholder="Ej: Av. Siempre Viva 123" [disabled]="guardando" />
                     </div>
                     
                     <div class="pf-field-group">
-                        <label class="pf-oswald"><i class="pi pi-heart mr-2"></i>Previsión Médica</label>
+                        <label class="pf-oswald"><i class="pi pi-heart mr-2 text-teal"></i>Previsión Médica</label>
                         <input pInputText [(ngModel)]="userForm.prevision" placeholder="Ej: Fonasa, Isapre..." [disabled]="guardando" />
                     </div>
 
                     <div class="formgrid grid">
                         <div class="pf-field-group col-6">
-                            <label class="pf-oswald"><i class="pi pi-sort-numeric-up mr-2"></i>Peso (kg)</label>
+                            <label class="pf-oswald"><i class="pi pi-sort-numeric-up mr-2 text-teal"></i>Peso (kg)</label>
                             <p-inputNumber [(ngModel)]="userForm.peso" mode="decimal" [minFractionDigits]="1" [maxFractionDigits]="2" placeholder="Ej: 75.5" styleClass="w-full" [disabled]="guardando"></p-inputNumber>
                         </div>
                         <div class="pf-field-group col-6">
-                            <label class="pf-oswald"><i class="pi pi-arrows-v mr-2"></i>Altura (m)</label>
+                            <label class="pf-oswald"><i class="pi pi-arrows-v mr-2 text-teal"></i>Altura (m)</label>
                             <p-inputNumber [(ngModel)]="userForm.altura" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" placeholder="Ej: 1.75" styleClass="w-full" [disabled]="guardando"></p-inputNumber>
                         </div>
                     </div>
@@ -257,7 +258,7 @@
             <!-- CAMPOS PROFESOR -->
             <ng-container *ngIf="vistaActual === 'profesor'">
                 <div class="pf-field-group">
-                    <label class="pf-oswald"><i class="pi pi-briefcase mr-2"></i>Especialidad</label> 
+                    <label class="pf-oswald"><i class="pi pi-briefcase mr-2 text-teal"></i>Especialidad</label> 
                     <p-select [options]="listaTiposProfesor" [(ngModel)]="userForm.tipo_profesor" optionLabel="label" optionValue="value" placeholder="Seleccione" appendTo="body" [filter]="false" [disabled]="guardando"></p-select>
                 </div>
             </ng-container>

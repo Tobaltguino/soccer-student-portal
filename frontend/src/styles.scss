@@ -955,3 +955,129 @@ p-datepicker {
         border: 1px solid var(--border-color);
     }
 }
+
+/* ==========================================================
+   🔥 18. CONFIRM DIALOG (ALERTAS GLOBALES BLINDADAS) 🔥
+   ========================================================== */
+
+/* Fondo, caja y sombra principal */
+.pf-confirm-dialog {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9) !important;
+    color: var(--text-main) !important;
+}
+
+/* Cabecera del diálogo */
+.pf-confirm-dialog .p-dialog-header {
+    background: transparent !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    padding: 1.5rem !important;
+}
+
+.pf-confirm-dialog .p-dialog-title {
+    color: var(--text-chalk) !important;
+    font-family: var(--pf-font-anton) !important;
+    letter-spacing: 0.5px !important;
+    font-size: 1.25rem !important;
+    text-transform: uppercase !important;
+}
+
+/* Ícono X de cerrar */
+.pf-confirm-dialog .p-dialog-header-icon {
+    color: var(--text-steel) !important;
+    background: transparent !important;
+    border: none !important;
+    width: 2rem !important;
+    height: 2rem !important;
+    transition: all 0.2s ease !important;
+    border-radius: 50% !important;
+}
+.pf-confirm-dialog .p-dialog-header-icon:hover {
+    background-color: var(--hover-bg) !important;
+    color: var(--pf-teal) !important;
+}
+
+/* Contenedor del Mensaje y el Ícono */
+.pf-confirm-dialog .p-dialog-content {
+    background: transparent !important;
+    padding: 2rem 1.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 1.5rem !important;
+}
+
+/* Ícono de Advertencia (Basurero, Triángulo, etc.) */
+.pf-confirm-dialog .p-confirm-dialog-icon {
+    color: var(--pf-teal) !important;
+    font-size: 2.5rem !important;
+    margin: 0 !important;
+}
+
+/* Texto del Mensaje */
+.pf-confirm-dialog .p-confirm-dialog-message {
+    margin: 0 !important;
+    font-size: 1.05rem !important;
+    line-height: 1.5 !important;
+    color: var(--text-chalk) !important;
+    font-family: var(--pf-font-body) !important;
+}
+
+/* Pie del Diálogo (Soluciona los botones pegados) */
+.pf-confirm-dialog .p-dialog-footer {
+    background: var(--input-bg) !important;
+    border-top: 1px solid var(--border-color) !important;
+    padding: 1.25rem 1.5rem !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 1rem !important; /* Separa los botones */
+    border-bottom-left-radius: 12px !important;
+    border-bottom-right-radius: 12px !important;
+}
+
+/* Diseño base de los botones internos */
+.pf-confirm-dialog .p-dialog-footer button {
+    margin: 0 !important;
+    padding: 0.6rem 1.5rem !important;
+    border-radius: 8px !important;
+    font-family: var(--pf-font-oswald) !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    text-transform: uppercase !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+/* Botón Cancelar / Rechazar */
+.pf-confirm-dialog .p-dialog-footer button.p-confirm-dialog-reject {
+    background: transparent !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-steel) !important;
+}
+.pf-confirm-dialog .p-dialog-footer button.p-confirm-dialog-reject:hover {
+    background: var(--hover-bg) !important;
+    color: var(--text-main) !important;
+    border-color: var(--text-main) !important;
+}
+
+/* Botón Aceptar (Turquesa por defecto) */
+.pf-confirm-dialog .p-dialog-footer button.p-confirm-dialog-accept {
+    background: var(--pf-teal) !important;
+    border: 1px solid var(--pf-teal) !important;
+    color: #ffffff !important;
+}
+.pf-confirm-dialog .p-dialog-footer button.p-confirm-dialog-accept:hover {
+    filter: brightness(1.1) !important;
+}
+
+/* Botón Aceptar cuando es PELIGRO (Rojo - Ej: Al eliminar) */
+.pf-confirm-dialog .p-dialog-footer button.p-button-danger {
+    background: #ef4444 !important; /* Rojo de error */
+    border-color: #ef4444 !important;
+    color: #ffffff !important;
+}
+.pf-confirm-dialog .p-dialog-footer button.p-button-danger:hover {
+    background: #dc2626 !important;
+    border-color: #dc2626 !important;
+}

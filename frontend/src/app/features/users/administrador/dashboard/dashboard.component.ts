@@ -3,6 +3,11 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
+// PrimeNG
+import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { MessageService, ConfirmationService } from 'primeng/api';
+
 // 🚀 SERVICIOS MODULARES (NestJS)
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
@@ -14,7 +19,13 @@ import { SesionEvaluacionService } from '../../../../core/domains/academico/eval
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [
+    CommonModule, 
+    RouterModule,
+    ToastModule,
+    ConfirmDialogModule // 🔥 Módulo requerido para que no falle el HTML
+  ],
+  providers: [MessageService, ConfirmationService], // 🔥 Servicios requeridos
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })

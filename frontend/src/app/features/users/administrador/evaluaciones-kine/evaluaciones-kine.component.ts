@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of, Observable } from 'rxjs';
 
-// Enums (Ajusta la ruta según tu proyecto si es necesario)
+// Enums
 import { EstadoSesion } from '../../../../shared/enums/estado-sesion.enum';
 
 // Servicios de Dominio
@@ -43,15 +43,13 @@ import { InputNumberModule } from 'primeng/inputnumber';
     RadioButtonModule, InputNumberModule, ProgressSpinnerModule
   ],
   templateUrl: './evaluaciones-kine.component.html',
-  styleUrls: ['./evaluaciones-kine.component.css'],
+  styleUrls: ['./evaluaciones-kine.component.scss'],
   providers: [MessageService, ConfirmationService]
 })
 export class AdministradorEvaluacionesKineComponent implements OnInit {
 
-  // ✅ Exponemos el Enum para poder usarlo en el HTML
   readonly EstadoSesion = EstadoSesion;
 
-  // Inyección de Servicios
   private kineTipoService = inject(KineTipoEvaluacionService);
   private kineSubService = inject(KineSubevaluacionService);
   private kineSesionService = inject(KineSesionService);
@@ -70,7 +68,9 @@ export class AdministradorEvaluacionesKineComponent implements OnInit {
   grupos: any[] = [];
   tiposEvaluacion: any[] = [];
   kinesiologos: any[] = []; 
+  
   loading: boolean = false;
+  guardando: boolean = false; // Variable Maestra de Bloqueo
   rangos: any[] = [];
 
   // --- FILTROS ---
@@ -105,8 +105,8 @@ export class AdministradorEvaluacionesKineComponent implements OnInit {
 
   cargarDatosGenerales() {
     this.loading = true;
+    this.cdr.detectChanges();
 
-    // ✅ Obligamos a TypeScript a saber que esto es un Observable de arreglos para evitar el error de ".map en {}"
     const kinesiologosReq: Observable<any[]> = (this.usuarioService as any).listarKinesiologos 
       ? (this.usuarioService as any).listarKinesiologos() 
       : of<any[]>([]); 
@@ -121,7 +121,6 @@ export class AdministradorEvaluacionesKineComponent implements OnInit {
         this.tiposEvaluacion = data.tipos || [];
         this.grupos = data.grupos || [];
         
-        // ✅ Forzamos el tipado para asegurar que reconozca el .map
         this.kinesiologos = (data.kines as any[] || []).map((k: any) => ({ 
             ...k, nombreCompleto: `${k.nombre} ${k.apellido}` 
         }));
@@ -184,6 +183,7 @@ export class AdministradorEvaluacionesKineComponent implements OnInit {
 
       return cumpleFecha && cumpleGrupo && cumplePrueba && cumpleEstado;
     });
+    this.cdr.detectChanges();
   }
 
   limpiarFiltros() {
@@ -211,12 +211,16 @@ export class AdministradorEvaluacionesKineComponent implements OnInit {
   }
 
   guardarSesionLogistica() {
+    if (this.guardando) return;
+
     if (!this.evalLogistica.fecha) return this.mostrarAdvertencia('Selecciona una fecha.');
     if (!this.evalLogistica.grupo_id) return this.mostrarAdvertencia('Selecciona un grupo.');
     if (!this.evalLogistica.tipo_evaluacion_id) return this.mostrarAdvertencia('Selecciona el tipo de prueba.');
     if (!this.evalLogistica.kinesiologo_id) return this.mostrarAdvertencia('Asigna un Kinesiólogo.');
 
-    this.loading = true;
+    this.guardando = true;
+    this.cdr.detectChanges();
+
     const payload = {
       fecha: this.formatearFechaIso(this.evalLogistica.fecha),
       grupoId: this.evalLogistica.grupo_id,
@@ -232,12 +236,13 @@ export class AdministradorEvaluacionesKineComponent implements OnInit {
     peticion$.subscribe({
       next: () => {
         this.mostrarExito('Sesión guardada correctamente.');
+        this.guardando = false;
         this.displayMainDialog = false;
         this.cargarDatosGenerales();
       },
       error: () => {
         this.mostrarError('Ocurrió un error al guardar la sesión.');
-        this.loading = false;
+        this.guardando = false;
         this.cdr.detectChanges();
       }
     });
@@ -252,12 +257,18 @@ export class AdministradorEvaluacionesKineComponent implements OnInit {
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
+        this.loading = true;
+        this.cdr.detectChanges();
         this.kineSesionService.eliminarSesion(sesion.id).subscribe({
           next: () => {
             this.mostrarExito('La sesión fue eliminada exitosamente.');
             this.cargarDatosGenerales(); 
           },
-          error: () => this.mostrarError('No se pudo eliminar la sesión.')
+          error: () => {
+            this.mostrarError('No se pudo eliminar la sesión.');
+            this.loading = false;
+            this.cdr.detectChanges();
+          }
         });
       }
     });
@@ -280,20 +291,25 @@ export class AdministradorEvaluacionesKineComponent implements OnInit {
     });
   }
 
+  // 🔥 Fuerza la detección de cambios para actualizar el ícono verde/gris al instante
   actualizarEstadoEstudiante() {
     setTimeout(() => {
       if (this.estudianteSeleccionado) {
         this.estudianteSeleccionado.evaluado = this.verificarSiEstaEvaluado(this.estudianteSeleccionado.evaluaciones);
+        this.cdr.detectChanges();
       }
     }, 50);
   }
 
+  // 🔥 Se limpian los datos y se obliga a la vista a refrescarse
   limpiarFila(sub: any) {
+    if (this.guardando) return;
     sub.resultado_unico = null;
     sub.resultado_izquierdo = null;
     sub.resultado_derecho = null;
     sub.observacion = '';
     this.actualizarEstadoEstudiante();
+    this.cdr.detectChanges(); 
   }
 
   abrirCalificador(sesion: any) {
@@ -308,6 +324,8 @@ export class AdministradorEvaluacionesKineComponent implements OnInit {
 
   private prepararModal(sesion: any, modo: 'calificador' | 'visor') {
     this.loading = true;
+    this.cdr.detectChanges();
+
     const sGrupoId = sesion.grupo_id || sesion.grupoId;
     const sTipoId = sesion.tipo_evaluacion_id || sesion.tipoEvaluacionId;
 
@@ -389,6 +407,8 @@ export class AdministradorEvaluacionesKineComponent implements OnInit {
   }
 
   guardarNotasFinales() {
+    if (this.guardando) return;
+
     const peticionesAGuardar: any[] = [];
 
     this.estudiantesGrupo.forEach(estudiante => {
@@ -423,10 +443,11 @@ export class AdministradorEvaluacionesKineComponent implements OnInit {
       return;
     }
 
-    this.loading = true;
+    this.guardando = true;
+    this.cdr.detectChanges();
+
     forkJoin(peticionesAGuardar).subscribe({
       next: () => {
-        // ✅ Comparamos con el Enum
         if (this.evalLogistica.estado === EstadoSesion.PROGRAMADA) {
           this.confirmationService.confirm({
             message: '¿Deseas marcar esta sesión como FINALIZADA?',
@@ -437,26 +458,32 @@ export class AdministradorEvaluacionesKineComponent implements OnInit {
             accept: () => {
                 this.kineSesionService.cambiarEstado(this.evalLogistica.id, { estado: EstadoSesion.FINALIZADA }).subscribe(() => {
                   this.mostrarExito('Resultados guardados y sesión finalizada.');
-                  this.displayGradesDialog = false;
-                  this.cargarDatosGenerales();
+                  this.cerrarCalificador();
                 });
             },
             reject: () => {
                 this.mostrarExito('Resultados guardados correctamente.');
-                this.displayGradesDialog = false;
+                this.cerrarCalificador();
             }
           });
         } else {
           this.mostrarExito('Resultados guardados correctamente.');
-          this.displayGradesDialog = false;
+          this.cerrarCalificador();
         }
       },
       error: () => {
         this.mostrarError('Error al guardar los resultados.');
-        this.loading = false;
+        this.guardando = false;
         this.cdr.detectChanges();
       }
     });
+  }
+
+  private cerrarCalificador() {
+    this.displayGradesDialog = false;
+    this.guardando = false;
+    this.cdr.detectChanges();
+    this.cargarDatosGenerales();
   }
 
   // ==========================================

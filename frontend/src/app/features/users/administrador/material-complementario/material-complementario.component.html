@@ -1,6 +1,7 @@
 <div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
-    <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
+    <!-- 🔥 CLASE pf-confirm-dialog AGREGADA AQUÍ 🔥 -->
+    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
 
     <!-- ENCABEZADO -->
     <header class="pf-admin-header">
@@ -15,7 +16,7 @@
 
     <!-- TARJETA DE TABLA -->
     <div class="pf-admin-card table-responsive p-0">
-        <p-table [value]="guias" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm pf-table" responsiveLayout="stack" [breakpoint]="'768px'">
+        <p-table [value]="guias" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm pf-table w-full" responsiveLayout="stack" [breakpoint]="'768px'">
             
             <ng-template pTemplate="header">
                 <tr>
@@ -60,8 +61,8 @@
 
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="5" class="text-center p-5 text-steel">
-                        <i class="pi pi-folder-open block mb-3 text-4xl"></i>
+                    <td colspan="5" class="text-center p-6 text-steel">
+                        <i class="pi pi-folder-open block mb-3 text-5xl"></i>
                         <span class="pf-oswald text-lg">No hay guías de estudio subidas en el sistema.</span>
                     </td>
                 </tr>
@@ -70,7 +71,7 @@
     </div>
 
     <!-- MODAL DE SUBIDA/EDICIÓN -->
-    <p-dialog [(visible)]="displayDialog" [header]="nuevaGuia.id ? 'Editar Guía Global' : 'Subir Nueva Guía Global'" [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" styleClass="p-fluid pf-dialog" [closable]="!subiendoArchivo">
+    <p-dialog [(visible)]="displayDialog" [header]="nuevaGuia.id ? 'Editar Guía Global' : 'Subir Nueva Guía Global'" [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" styleClass="p-fluid pf-dialog" [closable]="!subiendoArchivo" [draggable]="false" [resizable]="false">
         <ng-template pTemplate="content">
             
             <div class="pf-field-group mt-3">
@@ -92,42 +93,40 @@
                 <label class="pf-oswald">Archivo <span class="text-pink-500 font-bold">{{ nuevaGuia.id ? '(Opcional)' : '*' }}</span></label>
                 
                 <!-- Archivo Actual Visualizado -->
-                <div *ngIf="nuevaGuia.id && nuevaGuia.archivo_url && !archivoSeleccionado" class="flex flex-column mb-3 border-1 border-round-lg p-3" style="background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3);">
+                <div *ngIf="nuevaGuia.id && nuevaGuia.archivo_url && !archivoSeleccionado" class="flex flex-column mb-3 border-1 border-round-lg p-3" style="background: var(--input-bg); border-color: var(--border-color);">
                     <div class="flex align-items-center justify-content-between w-full">
                         <div class="flex align-items-center">
-                            <i class="pi pi-file-pdf text-3xl text-blue-400 mr-3"></i>
+                            <i class="pi pi-file-pdf text-3xl text-red-500 mr-3"></i>
                             <div class="flex flex-column">
-                                <span class="font-bold text-sm text-chalk">Archivo Actual en el Sistema</span>
-                                <a [href]="nuevaGuia.archivo_url" target="_blank" class="text-xs text-blue-400 font-medium mt-1 no-underline hover:underline">Ver archivo cargado <i class="pi pi-external-link" style="font-size: 0.7rem;"></i></a>
+                                <span class="font-bold text-sm text-chalk pf-oswald">Archivo Actual en el Sistema</span>
+                                <a [href]="nuevaGuia.archivo_url" target="_blank" class="text-xs text-teal font-medium mt-1 no-underline hover:underline">Ver archivo cargado <i class="pi pi-external-link" style="font-size: 0.7rem;"></i></a>
                             </div>
                         </div>
-                        <button pButton icon="pi pi-replay" class="p-button-rounded p-button-info p-button-text" (click)="fileInput.click()" pTooltip="Reemplazar" tooltipPosition="left"></button>
+                        <button pButton icon="pi pi-sync" class="p-button-rounded p-button-info p-button-text" (click)="fileInput.click()" pTooltip="Reemplazar" tooltipPosition="left"></button>
                     </div>
                 </div>
 
-                <!-- 🔥 CAJA DE UPLOAD ARREGLADA 🔥 -->
-                <div class="pf-file-upload-container text-center cursor-pointer flex flex-column align-items-center justify-content-center" 
+                <!-- 🔥 CAJA DE UPLOAD 🔥 -->
+                <div class="pf-file-upload-container text-center cursor-pointer flex flex-column align-items-center justify-content-center p-4 border-round" 
+                     style="border: 2px dashed var(--border-color); background-color: var(--input-bg); transition: all 0.2s ease;"
                      (click)="fileInput.click()" 
                      [class.opacity-50]="subiendoArchivo"
                      [class.pointer-events-none]="subiendoArchivo"
                      [ngClass]="{'mt-2': nuevaGuia.id && nuevaGuia.archivo_url}">
                     
-                    <!-- Ocultamos el input nativo con style en lugar de class -->
                     <input type="file" #fileInput style="display: none;" (click)="$event.stopPropagation()" (change)="onFileSelect($event)" accept=".pdf,.doc,.docx,.jpg,.png" [disabled]="subiendoArchivo">
                     
                     <div *ngIf="!archivoSeleccionado" class="flex flex-column align-items-center">
-                        <!-- Clases del icono unificadas -->
-                        <i class="pi text-5xl mb-3" [ngClass]="nuevaGuia.id ? 'pi-cloud-upload text-blue-400' : 'pi-cloud-upload text-teal'"></i>
-                        <div class="text-chalk font-bold text-lg mb-1">
+                        <i class="pi text-5xl mb-3" [ngClass]="nuevaGuia.id ? 'pi-cloud-upload text-teal' : 'pi-cloud-upload text-teal'"></i>
+                        <div class="text-chalk font-bold text-lg mb-1 pf-oswald">
                             {{ nuevaGuia.id ? 'Reemplazar archivo actual' : 'Haz clic para seleccionar un archivo' }}
                         </div>
                         <div class="text-steel text-sm font-medium">PDF, Word o Imágenes (Máximo 20MB)</div>
                     </div>
 
-                    <div *ngIf="archivoSeleccionado" class="flex flex-column align-items-center">
+                    <div *ngIf="archivoSeleccionado" class="flex flex-column align-items-center w-full">
                         <i class="pi pi-check-circle text-5xl text-lime mb-3"></i>
-                        <!-- Evitamos que el nombre de un archivo muy largo rompa la caja -->
-                        <div class="text-chalk font-bold text-lg w-full px-2" style="word-break: break-word;">{{archivoSeleccionado.name}}</div>
+                        <div class="text-chalk font-bold text-lg w-full px-2 pf-oswald" style="word-break: break-word;">{{archivoSeleccionado.name}}</div>
                         <div class="text-steel text-sm mt-2 font-bold">{{ (archivoSeleccionado.size / 1024 / 1024) | number:'1.2-2' }} MB - Listo para subir</div>
                     </div>
                 </div>

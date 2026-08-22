@@ -1,0 +1,148 @@
+/* ==========================================================
+   TABS DE NAVEGACIÓN (REEMPLAZO DEL SELECTBUTTON ROTO)
+   ========================================================== */
+.custom-tabs-container {
+    display: inline-flex;
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 4px;
+    width: 100%;
+    max-width: 500px;
+}
+
+.custom-tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-steel);
+    font-size: 0.9rem;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.custom-tab:hover:not(:disabled) {
+    background-color: var(--hover-bg);
+    color: var(--text-main);
+}
+
+.custom-tab.active {
+    background-color: var(--pf-teal);
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.custom-tab:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* =========================================
+   DISEÑO "HOJA DE PAPEL" KINÉSICA
+   ========================================= */
+.kine-table-wrapper {
+    width: 100%;
+    overflow-x: auto; 
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-card);
+    margin-bottom: 1.5rem;
+}
+
+.kine-table {
+    width: 100%; 
+    min-width: 700px; 
+    border-collapse: collapse; 
+    border: none; 
+}
+
+.kine-table th, .kine-table td { 
+    border: 1px solid var(--border-color); 
+    vertical-align: middle; 
+}
+
+.kine-header {
+    background-color: rgba(15, 140, 130, 0.1) !important; 
+    color: var(--pf-teal);
+    font-weight: 700; 
+    padding: 0.8rem 1rem !important; 
+    text-transform: uppercase; 
+    font-size: 0.85rem !important; 
+    text-align: left;
+    font-family: var(--pf-font-label);
+}
+
+.kine-subheader, .kine-label-cell-fixed, .kine-label-cell {
+    background-color: var(--input-bg) !important; 
+    color: var(--text-steel);
+    font-family: var(--pf-font-label);
+    font-weight: 600; font-size: 0.75rem !important; 
+    padding: 0.6rem 0.8rem !important; text-transform: uppercase;
+}
+
+.kine-table .kine-input, .kine-table textarea.kine-input {
+    width: 100%; min-height: 44px; border: none !important; background: transparent !important;
+    color: var(--text-main) !important; padding: 0.6rem 0.8rem !important; font-size: 0.85rem !important;
+    resize: vertical; display: block; outline: none !important;
+    font-family: var(--pf-font-body);
+}
+
+.kine-input-inline {
+    border: none; border-bottom: 1px solid var(--pf-teal) !important;
+    background: transparent !important; color: var(--text-main) !important;
+    font-size: 0.85rem !important; font-weight: 700; width: 60px; text-align: center;
+}
+
+/* Evitar bordes raros en los Selects del ROM */
+:host ::ng-deep .kine-table td .p-select { box-shadow: none !important; border: none !important; background: transparent !important; }
+:host ::ng-deep .kine-table td .p-select .p-select-label { font-size: 0.8rem !important; padding: 0.4rem !important; color: var(--text-chalk); }
+
+/* =========================================
+   FIX PARA MODO "SOLO LECTURA" 
+   ========================================= */
+:host ::ng-deep .kine-table .kine-input:disabled,
+:host ::ng-deep .p-disabled {
+    opacity: 0.85 !important;
+    color: var(--text-main) !important;
+    cursor: not-allowed !important;
+}
+
+/* =========================================
+   MEDIA QUERIES - MÓVIL Y TARJETAS
+   ========================================= */
+@media (max-width: 768px) {
+    /* --- MAGIA: FORMULARIO KINE APILADO EN CELULAR --- */
+    .table-stack, .table-stack tbody, .table-stack th, .table-stack td, .table-stack tr {
+        display: block !important; width: 100% !important;
+    }
+    
+    .table-stack thead { display: none !important; } 
+    
+    .table-stack tr {
+        margin-bottom: 1rem; border: 1px solid var(--border-color) !important;
+        border-radius: 8px; overflow: hidden; background-color: var(--bg-card) !important;
+    }
+    
+    .table-stack td { border: none !important; }
+    
+    .table-stack td.kine-label-cell-fixed, 
+    .table-stack td.kine-label-cell, 
+    .table-stack td.kine-subheader {
+        background-color: var(--input-bg) !important; padding: 0.8rem 1rem !important; 
+        border-bottom: 1px solid var(--border-color) !important; text-align: left !important;
+        font-size: 0.85rem !important; font-weight: 700;
+        color: var(--pf-teal);
+    }
+    
+    .table-stack .kine-input, 
+    .table-stack textarea.kine-input {
+        padding: 1rem !important; min-height: 80px; font-size: 1rem !important;
+    }
+}

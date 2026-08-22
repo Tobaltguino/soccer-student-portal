@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 
 // Módulos de PrimeNG
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
@@ -25,6 +27,7 @@ import { FichaEvolutiva,
 } from '../../../../core/domains/salud/kinesiologia/ficha-evolutiva/models/ficha-evolutiva.interface';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
 import { UsuarioService } from '../../../../core/domains/usuarios/central/services/usuario.service';
+
 @Component({
   selector: 'app-admin-kine-evolution',
   standalone: true,
@@ -40,11 +43,12 @@ import { UsuarioService } from '../../../../core/domains/usuarios/central/servic
     SelectModule,
     SelectButtonModule,
     ToastModule,
-    TooltipModule
+    TooltipModule,
+    ConfirmDialogModule
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './ficha-evolutiva.component.html',
-  styleUrls: ['./ficha-evolutiva.component.css']
+  styleUrls: ['./ficha-evolutiva.component.scss'] // 🔥 OJO: Cambiar a .scss
 })
 export class AdminKineEvolutionComponent implements OnInit {
 
@@ -62,7 +66,8 @@ export class AdminKineEvolutionComponent implements OnInit {
   listaKinesiologos: any[] = []; 
   
   cargandoHistorial: boolean = false;
-  historialFichas: any[] = []; // Fichas mapeadas con Kinesiólogo obj
+  guardando: boolean = false; // 🔥 Variable maestra de bloqueo
+  historialFichas: any[] = []; 
 
   modoFormulario: boolean = false;
   editandoId: string | null = null;
@@ -89,11 +94,7 @@ export class AdminKineEvolutionComponent implements OnInit {
     this.cargarDatosGenerales();
   }
 
-  // ==========================================
-  // CARGA DE DATOS PRINCIPALES
-  // ==========================================
   cargarDatosGenerales() {
-    // 1. Cargamos alumnos y kinesiólogos en paralelo
     const kinesiologosReq: Observable<any[]> = (this.usuarioService as any).listarKinesiologos 
       ? (this.usuarioService as any).listarKinesiologos() 
       : of([]);
@@ -103,7 +104,6 @@ export class AdminKineEvolutionComponent implements OnInit {
       kines: kinesiologosReq
     }).subscribe({
       next: (res) => {
-        // Mapeo Alumnos
         const alumnosBD = res.alumnos.registros || [];
         this.listaAlumnos = alumnosBD.map((a: any) => {
           const nombre = a.perfil ? a.perfil.nombre : a.nombre;
@@ -113,11 +113,11 @@ export class AdminKineEvolutionComponent implements OnInit {
           return { id: idUsuario, nombreCompleto: `${nombre} ${apellido} ${rut ? '('+rut+')' : ''}` };
         });
 
-        // Mapeo Kinesiólogos
         this.listaKinesiologos = (res.kines || []).map((k: any) => ({
             id: k.id,
             nombreCompleto: `${k.nombre} ${k.apellido}`
         }));
+        this.cdr.detectChanges();
       },
       error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos base' })
     });
@@ -134,9 +134,10 @@ export class AdminKineEvolutionComponent implements OnInit {
 
   cargarHistorial() {
     this.cargandoHistorial = true;
+    this.cdr.detectChanges();
+
     this.fichaService.listarFichasPorEstudiante(this.alumnoSeleccionado.id).subscribe({
       next: (data) => {
-        // Enlazamos el objeto del kinesiólogo a la ficha para la tabla
         this.historialFichas = (data || []).map(f => ({
           ...f,
           kinesiologoObj: this.listaKinesiologos.find(k => k.id === f.kinesiologo_id) || { nombreCompleto: 'Desconocido' }
@@ -152,9 +153,6 @@ export class AdminKineEvolutionComponent implements OnInit {
     });
   }
 
-  // ==========================================
-  // NAVEGACIÓN Y FLUJOS
-  // ==========================================
   abrirNuevaFicha() {
     this.resetearFormulario();
     this.editandoId = null;
@@ -174,14 +172,12 @@ export class AdminKineEvolutionComponent implements OnInit {
     this.editandoId = fichaData.id;
     this.vistaFormulario = 'antecedentes';
     
-    // Mapeo estricto inverso (De Base de Datos a Formulario)
     this.ficha = {
       kinesiologoId: fichaData.kinesiologo_id, 
       fechaEvaluacion: new Date(fichaData.fecha_evaluacion + 'T00:00:00'),
       diagnosticoMedico: fichaData.diagnostico_medico,
       observacion: fichaData.observacion,
       balanceRomberg: fichaData.balance_romberg,
-      // Inicializamos objetos por si vienen null desde la BD para no romper el ngModel
       antecedentesPersonales: fichaData.antecedentes_personales || {},
       antecedentesRemotos: fichaData.antecedentes_remotos || {},
       inspeccionEstatica: fichaData.inspeccion_estatica || {},
@@ -191,7 +187,6 @@ export class AdminKineEvolutionComponent implements OnInit {
       coordinacion: fichaData.coordinacion || { dedoNariz: false, pinzaPulgarIndice: false, talonRodilla: false }
     };
 
-    // Mapeo de ROM
     this.listaArticulaciones = this.obtenerArticulacionesVacias();
     if (fichaData.rango_movimiento && fichaData.rango_movimiento.length > 0) {
       this.listaArticulaciones.forEach(art => {
@@ -205,7 +200,6 @@ export class AdminKineEvolutionComponent implements OnInit {
       });
     }
 
-    // Mapeo de Fuerza
     this.listaFuerzas = fichaData.fuerza_movimientos ? [...fichaData.fuerza_movimientos] : [];
     
     this.modoFormulario = true;
@@ -217,24 +211,27 @@ export class AdminKineEvolutionComponent implements OnInit {
     this.modoSoloLectura = true;      
   }
 
-  // ==========================================
-  // GUARDAR (Mapeo estricto UI -> Payload)
-  // ==========================================
   guardarFicha() {
+    // 🔥 Blindaje anti-clics
+    if (this.guardando) return;
+
     if (!this.ficha.kinesiologoId) {
       this.messageService.add({ severity: 'warn', summary: 'Falta Kinesiólogo', detail: 'Debe asignar a un Profesional Tratante a la ficha.' });
       return;
     }
+
+    // 🔥 Activamos estado de guardado
+    this.guardando = true;
+    this.cdr.detectChanges();
 
     let fechaFormateada = this.ficha.fechaEvaluacion;
     if (this.ficha.fechaEvaluacion instanceof Date) {
       fechaFormateada = this.ficha.fechaEvaluacion.toISOString().split('T')[0];
     }
 
-    // Armamos el Payload adhiriendo 100% a las interfaces
-    const payload: any = { // Hacemos un bypass de any momentáneo para inyectar kinesiologoId si el backend lo permite
+    const payload: any = { 
       estudianteId: this.alumnoSeleccionado.id,
-      kinesiologoId: this.ficha.kinesiologoId, // Se asume que el backend lo acepta para el rol Admin
+      kinesiologoId: this.ficha.kinesiologoId,
       fechaEvaluacion: fechaFormateada,
       diagnosticoMedico: this.ficha.diagnosticoMedico,
       observacion: this.ficha.observacion,
@@ -257,16 +254,18 @@ export class AdminKineEvolutionComponent implements OnInit {
     peticion$.subscribe({
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: this.editandoId ? 'Ficha actualizada.' : 'Nueva ficha registrada.' });
+        this.guardando = false;
         this.volverAlHistorial();
         this.cargarHistorial();
       },
-      error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Ocurrió un problema al guardar la ficha.' })
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Ocurrió un problema al guardar la ficha.' });
+        this.guardando = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
-  // ==========================================
-  // UTILIDADES DEL FORMULARIO
-  // ==========================================
   agregarFuerza() { this.listaFuerzas.push({ movimiento: '', escala: '' }); }
   eliminarFuerza(index: number) { this.listaFuerzas.splice(index, 1); }
 
@@ -276,7 +275,6 @@ export class AdminKineEvolutionComponent implements OnInit {
     this.listaFuerzas = [];
   }
 
-  // Inicializa todo vacío y estructurado para evitar que [(ngModel)] falle por null
   obtenerFichaVacia() {
     return {
       kinesiologoId: null,
