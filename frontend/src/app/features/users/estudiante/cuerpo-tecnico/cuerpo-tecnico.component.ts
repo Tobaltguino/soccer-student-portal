@@ -1,7 +1,13 @@
-import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-// Nuevos Servicios de Dominio
+// PrimeNG
+import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TagModule } from 'primeng/tag';
+import { MessageService, ConfirmationService } from 'primeng/api';
+
+// Servicios de Dominio
 import { UsuarioService } from '../../../../core/domains/usuarios/central/services/usuario.service';
 import { UsuarioPerfil } from '../../../../core/domains/usuarios/central/models/usuario.interface';
 import { Rol } from '../../../../core/domains/usuarios/central/models/usuario.interface';
@@ -9,9 +15,15 @@ import { Rol } from '../../../../core/domains/usuarios/central/models/usuario.in
 @Component({
   selector: 'app-estudiante-cuerpo-tecnico',
   standalone: true,
-  imports: [CommonModule],
+  imports: [
+    CommonModule,
+    ToastModule,
+    ConfirmDialogModule,
+    TagModule // 🔥 Añadido para mostrar el rol del profesor
+  ],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './cuerpo-tecnico.component.html',
-  styleUrls: ['./cuerpo-tecnico.component.css']
+  styleUrls: ['./cuerpo-tecnico.component.scss'] // 🔥 Cambiado a .scss
 })
 export class EstudianteCuerpoTecnicoComponent implements OnInit {
   
@@ -52,7 +64,6 @@ export class EstudianteCuerpoTecnicoComponent implements OnInit {
     if (profesor.rol === Rol.KINESIOLOGO) {
       return 'Kinesiólogo';
     }
-    // Si es profesor, intentamos mostrar su especialidad (preparador físico, etc.), si la mandó el backend
     return profesor.tipo_profesor || 'Entrenador';
   }
 }

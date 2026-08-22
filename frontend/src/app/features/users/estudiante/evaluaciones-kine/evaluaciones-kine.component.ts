@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api'; // 🔥 Agregado ConfirmationService
 import { forkJoin } from 'rxjs';
 
 // Módulos de PrimeNG
@@ -11,6 +11,7 @@ import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ConfirmDialogModule } from 'primeng/confirmdialog'; // 🔥 Agregado
 
 // Servicios de Dominio
 import { KineResultadoService } from '../../../../core/domains/salud/kinesiologia/evaluaciones/resultados/service/resultado.service';
@@ -28,11 +29,12 @@ import { KineRangoService } from '../../../../core/domains/salud/kinesiologia/ev
     TagModule, 
     ToastModule, 
     TooltipModule, 
-    ProgressSpinnerModule
+    ProgressSpinnerModule,
+    ConfirmDialogModule // 🔥 Importado
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService], // 🔥 Importado
   templateUrl: './evaluaciones-kine.component.html',
-  styleUrls: ['./evaluaciones-kine.component.css']
+  styleUrls: ['./evaluaciones-kine.component.scss'] // 🔥 Cambiado a .scss
 })
 export class StudentKineEvaluationComponent implements OnInit {
 

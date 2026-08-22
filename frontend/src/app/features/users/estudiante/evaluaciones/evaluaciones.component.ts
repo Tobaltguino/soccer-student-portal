@@ -11,7 +11,8 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog'; // 🔥 Agregado
+import { MessageService, ConfirmationService } from 'primeng/api'; // 🔥 Agregado ConfirmationService
 
 // Nuevo Servicio
 import { ResultadoEvaluacionService } from '../../../../core/domains/academico/evaluaciones/resultados/services/resultado.service';
@@ -21,11 +22,12 @@ import { ResultadoEvaluacionService } from '../../../../core/domains/academico/e
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, TagModule, ButtonModule, 
-    DialogModule, DatePickerModule, SelectModule, TooltipModule, ToastModule
+    DialogModule, DatePickerModule, SelectModule, TooltipModule, ToastModule,
+    ConfirmDialogModule // 🔥 Importado
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService], // 🔥 Importado
   templateUrl: './evaluaciones.component.html',
-  styleUrls: ['./evaluaciones.component.css']
+  styleUrls: ['./evaluaciones.component.scss'] // 🔥 Cambiado a .scss
 })
 export class EstudianteEvaluacionesComponent implements OnInit {
   

@@ -3,6 +3,14 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
+// 🔥 PrimeNG (Módulos agregados para reconocer p-tag, botones con iconos y tooltips)
+import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ButtonModule } from 'primeng/button';
+import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
+import { MessageService, ConfirmationService } from 'primeng/api';
+
 // 🚀 SERVICIOS MODULARES (NestJS)
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
@@ -11,9 +19,18 @@ import { ResultadoEvaluacionService } from '../../../../core/domains/academico/e
 @Component({
   selector: 'app-estudiante-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [
+    CommonModule, 
+    RouterModule,
+    ToastModule,
+    ConfirmDialogModule,
+    ButtonModule,      // 🔥 Soluciona el error del botón [icon]
+    TagModule,         // 🔥 Soluciona el error de <p-tag>
+    TooltipModule      // 🔥 Soluciona el pTooltip
+  ],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.css'],
+  styleUrls: ['./dashboard.component.scss'],
 })
 export class EstudianteDashboardComponent implements OnInit {
   
@@ -24,7 +41,7 @@ export class EstudianteDashboardComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
 
   loading: boolean = true;
-  apiStatus: 'online' | 'offline' | 'checking' = 'checking'; // Cambiado de supabaseStatus
+  apiStatus: 'online' | 'offline' | 'checking' = 'checking'; 
   
   proximaClase: any = null;
   fechaFormateada: string = '';
@@ -69,7 +86,6 @@ export class EstudianteDashboardComponent implements OnInit {
       }
 
       // 2. Cargar Evaluaciones Reales
-      // Usamos el método que ya tenías creado en tu servicio: listarMisResultados()
       const misResultados = await firstValueFrom(this.resultadoService.listarMisResultados());
       
       if (misResultados && misResultados.length > 0) {

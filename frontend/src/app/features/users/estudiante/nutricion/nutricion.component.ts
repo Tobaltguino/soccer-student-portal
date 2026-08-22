@@ -10,7 +10,8 @@ import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { MessageService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog'; // 🔥 Agregado
+import { MessageService, ConfirmationService } from 'primeng/api'; // 🔥 Agregado ConfirmationService
 
 // Nuevo Servicio
 import { NutriResultadoService } from '../../../../core/domains/salud/nutricion/resultados/services/resultado.service';
@@ -20,11 +21,12 @@ import { NutriResultadoService } from '../../../../core/domains/salud/nutricion/
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, ButtonModule, 
-    DatePickerModule, SelectModule, TooltipModule, ToastModule, ProgressSpinnerModule
+    DatePickerModule, SelectModule, TooltipModule, ToastModule, ProgressSpinnerModule,
+    ConfirmDialogModule // 🔥 Importado
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService], // 🔥 Importado
   templateUrl: './nutricion.component.html',
-  styleUrls: ['./nutricion.component.css']
+  styleUrls: ['./nutricion.component.scss'] // 🔥 Cambiado a .scss
 })
 export class StudentNutriComponent implements OnInit {
   

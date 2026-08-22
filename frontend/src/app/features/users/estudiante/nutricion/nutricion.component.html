@@ -1,51 +1,54 @@
-<div class="eval-container fadein animation-duration-500">
-    
-    <div *ngIf="loading" class="loading-overlay">
-        <div class="flex flex-column align-items-center">
-            <p-progressSpinner styleClass="w-4rem h-4rem" strokeWidth="4" animationDuration=".5s"></p-progressSpinner>
-            <span class="text-white font-bold mt-3">Cargando tus resultados...</span>
-        </div>
-    </div>
-
+<div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
+    <!-- 🔥 Confirm Dialog Global 🔥 -->
+    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
 
-    <header class="page-header">
+    <header class="pf-admin-header">
         <div class="header-content">
-            <h1 class="m-0 text-main">Mis Evaluaciones Nutricionales</h1>
-            <p class="text-secondary m-0 mt-1">Revisa tu historial de pautas, mediciones e indicaciones de nuestros especialistas.</p>
+            <div>
+                <h1 class="pf-anton text-chalk m-0 text-3xl">Mis Evaluaciones Nutricionales</h1>
+                <p class="pf-oswald text-teal mt-1">Revisa tu historial de pautas, mediciones e indicaciones de nuestros especialistas.</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <!-- Botón de actualizar unificado con el resto del diseño -->
+            <button pButton icon="pi pi-sync" class="pf-btn-ghost" 
+                    (click)="cargarMisResultados()" [loading]="loading" pTooltip="Actualizar Datos" tooltipPosition="left"></button>
         </div>
     </header>
 
-    <div class="filter-bar">
+    <!-- BARRA DE FILTROS -->
+    <div class="pf-admin-card mb-4 p-3">
         <div class="filter-row">
             
             <div class="filter-item flex-grow-1">
-                <label><i class="pi pi-calendar mr-1"></i> Fecha</label>
-                <p-datepicker [(ngModel)]="filtroFecha" dateFormat="dd/mm/yy" [showIcon]="false" 
+                <label><i class="pi pi-calendar mr-1 text-teal"></i> Fecha</label>
+                <p-datepicker [(ngModel)]="filtroFecha" dateFormat="dd/mm/yy" [showIcon]="true" 
                               placeholder="Filtrar por Fecha" 
                               (onSelect)="aplicarFiltros()" [showClear]="true" (onClear)="aplicarFiltros()" 
                               styleClass="w-full" appendTo="body"></p-datepicker>
             </div>
 
-            <div class="filter-item flex-grow-1">
-                <label><i class="pi pi-heart-fill mr-1"></i> Tipo de Evaluación</label>
+            <div class="filter-item flex-grow-2">
+                <label><i class="pi pi-heart-fill mr-1 text-teal"></i> Tipo de Evaluación</label>
                 <p-select [options]="tiposEvaluacionDisponibles" [(ngModel)]="filtroPrueba" optionLabel="nombre" 
                           placeholder="Filtrar por Tipo de Evaluación" 
                           (onChange)="aplicarFiltros()" [showClear]="true" 
-                          styleClass="w-full" appendTo="body"></p-select>
+                          styleClass="w-full" appendTo="body" [filter]="false"></p-select>
             </div>
 
-            <div class="filter-btn">
-                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary" 
-                        (click)="limpiarFiltros()" pTooltip="Limpiar"></button>
+            <div class="filter-item-btn">
+                <button pButton icon="pi pi-filter-slash" class="pf-btn-ghost w-full justify-content-center" 
+                        (click)="limpiarFiltros()" pTooltip="Limpiar Filtros"></button>
             </div>
             
         </div>
     </div>
 
-    <div class="main-card">
+    <!-- TABLA DE EVALUACIONES NUTRICIONALES -->
+    <div class="pf-admin-card table-responsive p-0">
         <p-table [value]="resultadosFiltrados" [loading]="loading" [rows]="10" [paginator]="true" 
-                 styleClass="p-datatable-sm p-datatable-striped" 
+                 styleClass="p-datatable-sm pf-table w-full" 
                  responsiveLayout="stack" [breakpoint]="'768px'">
             
             <ng-template pTemplate="header">
@@ -60,28 +63,28 @@
             <ng-template pTemplate="body" let-resultado>
                 <tr>
                     <td>
-                        <span class="p-column-title hidden-desktop">Fecha</span>
-                        <span class="font-bold text-main">{{ resultado.fecha | date:'dd/MM/yyyy' }}</span>
+                        <span class="p-column-title hidden-desktop pf-oswald text-steel">Fecha</span>
+                        <span class="font-bold text-chalk pf-anton text-lg" style="letter-spacing: 0.5px;">{{ resultado.fecha | date:'dd/MM/yyyy' }}</span>
                     </td>
                     <td>
-                        <span class="p-column-title hidden-desktop">Tipo de Evaluación</span>
-                        <span class="font-bold text-main">{{ resultado.tipo_nombre }}</span>
+                        <span class="p-column-title hidden-desktop pf-oswald text-steel">Tipo de Evaluación</span>
+                        <span class="font-bold text-chalk">{{ resultado.tipo_nombre }}</span>
                     </td>
                     <td>
-                        <span class="p-column-title hidden-desktop">Observación Médica</span>
-                        <span *ngIf="resultado.observacion" class="text-secondary text-sm">{{ resultado.observacion }}</span>
-                        <span *ngIf="!resultado.observacion" class="text-400 italic text-sm">Sin observaciones adicionales.</span>
+                        <span class="p-column-title hidden-desktop pf-oswald text-steel">Observación Médica</span>
+                        <span *ngIf="resultado.observacion" class="text-steel text-sm" style="line-height: 1.5;">{{ resultado.observacion }}</span>
+                        <span *ngIf="!resultado.observacion" class="text-steel italic text-sm">Sin observaciones adicionales.</span>
                     </td>
                     <td class="text-center">
-                        <span class="p-column-title hidden-desktop">Documento</span>
-                        <div class="action-buttons justify-content-center flex">
-                            <div *ngIf="resultado.archivo_url; else noFile" class="w-full">
-                                <a [href]="resultado.archivo_url" target="_blank" class="no-underline w-full">
-                                    <button pButton label="Descargar PDF" icon="pi pi-download" class="p-button-outlined p-button-danger p-button-sm"></button>
+                        <span class="p-column-title hidden-desktop pf-oswald text-steel">Documento</span>
+                        <div class="pf-table-actions">
+                            <div *ngIf="resultado.archivo_url; else noFile" class="w-full flex justify-content-center">
+                                <a [href]="resultado.archivo_url" target="_blank" class="no-underline">
+                                    <button pButton label="Descargar PDF" icon="pi pi-download" class="p-button-outlined p-button-info p-button-sm font-bold" style="white-space: nowrap;"></button>
                                 </a>
                             </div>
                             <ng-template #noFile>
-                                <span class="text-500 italic text-sm w-full block text-center"><i class="pi pi-times-circle mr-1"></i> No adjunto</span>
+                                <span class="text-steel italic text-sm flex align-items-center justify-content-center"><i class="pi pi-times-circle mr-2 text-teal"></i> No adjunto</span>
                             </ng-template>
                         </div>
                     </td>
@@ -90,13 +93,12 @@
             
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="4" class="text-center p-5 text-secondary">
-                        <i class="pi pi-folder-open text-400 mb-3 block" style="font-size: 2rem"></i>
-                        No tienes evaluaciones nutricionales registradas o finalizadas aún.
+                    <td colspan="4" class="text-center p-6 text-steel">
+                        <i class="pi pi-folder-open text-steel mb-3 block" style="font-size: 3.5rem"></i>
+                        <span class="pf-oswald text-lg">No tienes evaluaciones nutricionales registradas o finalizadas aún.</span>
                     </td>
                 </tr>
             </ng-template>
-            
         </p-table>
     </div>
 </div>

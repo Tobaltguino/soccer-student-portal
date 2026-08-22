@@ -1,15 +1,15 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core'; // 🔥 Agregado ChangeDetectorRef
 import { CommonModule } from '@angular/common';
-import { MessageService } from 'primeng/api'; 
+import { MessageService, ConfirmationService } from 'primeng/api'; 
 
 // Módulos de PrimeNG
 import { TableModule } from 'primeng/table';
 import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog'; 
 
 // Nuevos Servicios de Dominio
 import { HistorialClinicoService } from '../../../../core/domains/salud/kinesiologia/historial-clinico/services/historial-clinico.service';
-import {TipoHistorialClinico, EstadoHistorialClinico, HistorialClinico } from "../../../../core/domains/salud/kinesiologia/historial-clinico/models/historial-clinico.interface";
-
+import { TipoHistorialClinico, EstadoHistorialClinico, HistorialClinico } from "../../../../core/domains/salud/kinesiologia/historial-clinico/models/historial-clinico.interface";
 
 @Component({
   selector: 'app-estudiante-historial-clinico',
@@ -17,25 +17,25 @@ import {TipoHistorialClinico, EstadoHistorialClinico, HistorialClinico } from ".
   imports: [
     CommonModule,
     TableModule,
-    ToastModule
+    ToastModule,
+    ConfirmDialogModule 
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService], 
   templateUrl: './historial-clinico.component.html',
-  styleUrls: ['./historial-clinico.component.css']
+  styleUrls: ['./historial-clinico.component.scss'] 
 })
 export class EstudianteHistorialClinicoComponent implements OnInit {
 
-  // ✅ Exponemos los Enums para usarlos en el HTML
   readonly TipoHistorialClinico = TipoHistorialClinico;
   readonly EstadoHistorialClinico = EstadoHistorialClinico;
 
   private historialService = inject(HistorialClinicoService);
   private messageService = inject(MessageService);
+  private cdr = inject(ChangeDetectorRef); // 🔥 Inyectado
 
   listaLesiones: HistorialClinico[] = [];
   cargandoLesiones: boolean = false;
 
-  // Diccionarios para etiquetas limpias
   opcionesTipoLesion = [
     { label: 'Lesión', value: TipoHistorialClinico.LESION },
     { label: 'Patología', value: TipoHistorialClinico.PATOLOGIA },
@@ -53,28 +53,24 @@ export class EstudianteHistorialClinicoComponent implements OnInit {
     this.cargarListaLesiones();
   }
 
-  // ==========================================
-  // CARGA DE HISTORIAL (AUTOMÁTICA POR JWT)
-  // ==========================================
   cargarListaLesiones() {
     this.cargandoLesiones = true;
+    this.cdr.detectChanges(); // 🔥 Forzamos detección al iniciar carga
     
-    // ✅ El backend ya sabe quién soy por mi Token
     this.historialService.listarMiHistorial().subscribe({
       next: (data) => {
         this.listaLesiones = data || [];
         this.cargandoLesiones = false;
+        this.cdr.detectChanges(); // 🔥 Forzamos detección al recibir datos
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar tu historial médico.' });
         this.cargandoLesiones = false;
+        this.cdr.detectChanges(); // 🔥 Forzamos detección en caso de error
       }
     });
   }
 
-  // ==========================================
-  // HELPERS UI
-  // ==========================================
   getTipoLabel(tipo: string): string {
     const opt = this.opcionesTipoLesion.find(o => o.value === tipo);
     return opt ? opt.label : tipo;

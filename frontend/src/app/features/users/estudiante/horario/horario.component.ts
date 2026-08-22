@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { forkJoin } from 'rxjs'; // ✅ Importamos forkJoin
+import { forkJoin } from 'rxjs';
 
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { CalendarOptions } from '@fullcalendar/core/index.js';
@@ -16,7 +16,7 @@ import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
-// Nuevos Servicios de Dominio
+// Servicios de Dominio
 import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
 import { AsistenciaService } from '../../../../core/domains/academico/asistencias/services/asistencia.service';
 
@@ -33,7 +33,7 @@ import { AsistenciaService } from '../../../../core/domains/academico/asistencia
   ],
   providers: [MessageService],
   templateUrl: './horario.component.html',
-  styleUrls: ['./horario.component.css']
+  styleUrls: ['./horario.component.scss'] // 🔥 Cambiado a .scss (o deja .css si tu archivo es .css)
 })
 export class EstudianteHorarioComponent implements OnInit {
   
@@ -103,24 +103,20 @@ export class EstudianteHorarioComponent implements OnInit {
   cargarClasesCalendario() {
     this.loading = true;
 
-    // 🔥 Cruzamos Mis Clases con Mis Asistencias
     forkJoin({
       clases: this.claseService.obtenerMisClases(),
       asistencias: this.asistenciaService.obtenerMisAsistencias()
     }).subscribe({
       next: ({ clases, asistencias }) => {
         
-        // Creamos un diccionario rápido de la asistencia del estudiante
         const asistenciasMap = new Map();
         asistencias.forEach(a => asistenciasMap.set(a.clase_id, a.presente));
 
-        // Mapeamos a formato FullCalendar
         const eventos = clases.map((clase: any) => {
-            // Le inyectamos el "presente" para que la función de color funcione
             clase.presente = asistenciasMap.has(clase.id) ? asistenciasMap.get(clase.id) : null;
 
             const start = new Date(`${clase.fecha}T${clase.hora}`);
-            const end = new Date(start.getTime() + 90 * 60000); // 90 min de duración
+            const end = new Date(start.getTime() + 90 * 60000); 
 
             return {
               title: `${clase.lugar || 'Cancha'}`,
@@ -128,8 +124,8 @@ export class EstudianteHorarioComponent implements OnInit {
               end: end.toISOString(),
               extendedProps: { ...clase },
               backgroundColor: this.getColorEvento(clase),
-              borderColor: this.getColorEvento(clase),
-              textColor: '#ffffff'
+              borderColor: this.getColorEvento(clase)
+              // 🔥 textColor: '#ffffff' HA SIDO ELIMINADO AQUÍ PARA QUE FULLCALENDAR AUTO-ADAPTE
             };
         });
 
@@ -163,6 +159,6 @@ export class EstudianteHorarioComponent implements OnInit {
     const tiempoClase = new Date(`${clase.fecha}T${clase.hora}`).getTime();
     const tiempoAhora = new Date().getTime();
     
-    return tiempoClase <= tiempoAhora; // Solo true si la hora actual ya pasó la hora de la clase
+    return tiempoClase <= tiempoAhora; 
   }
 }

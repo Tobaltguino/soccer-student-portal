@@ -1,68 +1,86 @@
-<div class="animation-fade-in">
+<div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
+    <!-- 🔥 Confirm Dialog Global 🔥 -->
+    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
     
-    <div class="card-table mt-4 fadein">
-        <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-5 border-bottom-1 surface-border pb-4 gap-4">
+    <header class="pf-admin-header">
+        <div class="header-content">
             <div>
-                <h2 class="m-0 text-main mb-2" style="font-size: 1.25rem; font-weight: 700;">Mis Evaluaciones Físicas</h2>
-                <p class="text-secondary m-0">Revisa tus resultados de las pruebas kinesiológicas aplicadas a tu grupo.</p>
+                <h1 class="pf-anton text-chalk m-0 text-3xl">Mis Evaluaciones Físicas</h1>
+                <p class="pf-oswald text-teal mt-1">Revisa tus resultados de las pruebas kinesiológicas aplicadas a tu grupo.</p>
             </div>
         </div>
+        <div class="header-actions">
+            <!-- Botón de actualizar para mantener la consistencia con el resto de la plataforma -->
+            <button pButton icon="pi pi-sync" class="pf-btn-ghost" 
+                    (click)="cargarSesionesDelEstudiante()" [loading]="loading" pTooltip="Actualizar Datos" tooltipPosition="left"></button>
+        </div>
+    </header>
 
-        <p-table [value]="sesiones" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped" [responsiveLayout]="'stack'" [breakpoint]="'768px'">
+    <div class="pf-admin-card table-responsive p-0 mt-4">
+        <p-table [value]="sesiones" [loading]="loading" [rows]="10" [paginator]="true" 
+                 styleClass="p-datatable-sm pf-table w-full" [responsiveLayout]="'stack'" [breakpoint]="'768px'">
+            
             <ng-template pTemplate="header">
                 <tr>
-                    <th style="width: 30%">Fecha</th>
-                    <th style="width: 50%">Prueba Kinesiológica</th>
+                    <th style="width: 25%">Fecha</th>
+                    <th style="width: 55%">Prueba Kinesiológica</th>
                     <th style="width: 20%" class="text-center">Resultados</th>
                 </tr>
             </ng-template>
+
             <ng-template pTemplate="body" let-sesion>
                 <tr>
                     <td>
-                        <span class="p-column-title hidden-desktop font-bold text-secondary">Fecha</span>
-                        <span class="font-bold text-secondary">{{ sesion.fecha | date:'dd/MM/yyyy' }}</span>
+                        <span class="p-column-title hidden-desktop pf-oswald text-steel">Fecha</span>
+                        <span class="pf-anton text-chalk text-lg" style="letter-spacing: 0.5px;">{{ sesion.fecha | date:'dd/MM/yyyy' }}</span>
                     </td>
                     <td>
-                        <span class="p-column-title hidden-desktop font-bold text-secondary">Prueba</span>
-                        <span class="font-bold text-main">{{ sesion.tipo_evaluacion?.nombre }}</span>
+                        <span class="p-column-title hidden-desktop pf-oswald text-steel">Prueba</span>
+                        <span class="text-chalk font-bold">{{ sesion.tipo_evaluacion?.nombre }}</span>
                     </td>
                     <td class="text-center">
-                        <span class="p-column-title hidden-desktop font-bold text-secondary">Resultados</span>
-                        <button pButton icon="pi pi-eye" class="p-button-text p-button-rounded p-button-info" 
-                                (click)="verResultados(sesion)" pTooltip="Ver mis notas"></button>
+                        <span class="p-column-title hidden-desktop pf-oswald text-steel">Resultados</span>
+                        <div class="pf-table-actions">
+                            <button pButton icon="pi pi-eye" class="p-button-info" 
+                                    (click)="verResultados(sesion)" pTooltip="Ver mis notas"></button>
+                        </div>
                     </td>
                 </tr>
             </ng-template>
+
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="3" class="text-center p-6 text-500">
-                        <i class="pi pi-chart-line text-5xl mb-3 text-300"></i><br>
-                        Aún no hay evaluaciones finalizadas registradas para tu grupo.
+                    <td colspan="3" class="text-center p-6 text-steel">
+                        <i class="pi pi-chart-line text-steel text-5xl mb-3 block"></i>
+                        <span class="pf-oswald text-lg">Aún no hay evaluaciones finalizadas registradas para tu grupo.</span>
                     </td>
                 </tr>
             </ng-template>
         </p-table>
     </div>
 
-    <p-dialog [(visible)]="displayViewDialog" header="Mis Resultados" [modal]="true" [style]="{width: '90vw', maxWidth: '800px'}" styleClass="p-fluid">
+    <!-- MODAL DE RESULTADOS -->
+    <p-dialog [(visible)]="displayViewDialog" header="Mis Resultados" [modal]="true" 
+              [style]="{width: '90vw', maxWidth: '800px'}" styleClass="p-fluid pf-dialog" [draggable]="false" [resizable]="false">
         
-        <div *ngIf="cargandoResultados" class="flex flex-column align-items-center p-5">
-            <p-progressSpinner styleClass="w-3rem h-3rem" strokeWidth="4" animationDuration=".5s"></p-progressSpinner>
-            <span class="text-secondary mt-3">Cargando notas...</span>
+        <div *ngIf="cargandoResultados" class="flex flex-column align-items-center justify-content-center p-6">
+            <p-progressSpinner styleClass="w-4rem h-4rem" strokeWidth="4" animationDuration=".5s"></p-progressSpinner>
+            <span class="pf-oswald text-teal mt-3 text-lg" style="letter-spacing: 0.5px;">Cargando notas...</span>
         </div>
 
-        <div *ngIf="!cargandoResultados && sesionVista">
+        <div *ngIf="!cargandoResultados && sesionVista" class="animation-fade-in pt-3">
             
-            <div class="mb-4 bg-gray-50 border-round p-3">
-                <span class="text-xs text-secondary text-uppercase font-bold tracking-wider">Prueba Evaluada</span>
-                <div class="text-xl font-bold text-main mt-1">{{sesionVista.tipo_evaluacion?.nombre}}</div>
-                <div class="text-sm text-secondary mt-1">
-                    <i class="pi pi-calendar mr-1"></i> Fecha: {{sesionVista.fecha | date:'dd/MM/yyyy'}}
+            <div class="flex flex-column gap-2 mb-4 pb-3 border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                <span class="pf-oswald text-steel text-sm tracking-wider">Prueba Evaluada</span>
+                <div class="pf-anton text-chalk text-2xl" style="letter-spacing: 0.5px;">{{sesionVista.tipo_evaluacion?.nombre}}</div>
+                <div class="pf-oswald text-steel text-sm mt-1">
+                    <i class="pi pi-calendar mr-1 text-teal"></i> Fecha: <span class="text-chalk">{{sesionVista.fecha | date:'dd/MM/yyyy'}}</span>
                 </div>
             </div>
             
-            <p-table [value]="resultadosVista" styleClass="p-datatable-sm p-datatable-gridlines p-datatable-striped" responsiveLayout="scroll">
+            <!-- Ojo: aquí usamos pf-table en vez de p-datatable-gridlines para mantener la elegancia Dark-Tech -->
+            <p-table [value]="resultadosVista" styleClass="p-datatable-sm pf-table w-full" responsiveLayout="stack" [breakpoint]="'768px'">
                 <ng-template pTemplate="header">
                     <tr>
                         <th style="width: 35%">Parámetro</th>
@@ -72,36 +90,49 @@
                         <th style="width: 20%">Observación</th>
                     </tr>
                 </ng-template>
+
                 <ng-template pTemplate="body" let-sub>
                     <tr>
-                        <td class="font-medium text-sm">{{sub.nombre_parametro}}</td>
+                        <td>
+                            <span class="p-column-title hidden-desktop pf-oswald text-steel">Parámetro</span>
+                            <span class="text-chalk font-bold">{{sub.nombre_parametro}}</span>
+                        </td>
                         
                         <td class="text-center">
+                            <span class="p-column-title hidden-desktop pf-oswald text-steel">Único</span>
                             <p-tag *ngIf="sub.resultado_unico !== null" [value]="sub.resultado_unico" [severity]="getSeverityPuntaje(sub.resultado_unico, sub.subevaluacion_id)"></p-tag>
-                            <span *ngIf="sub.resultado_unico === null" class="text-400">-</span>
+                            <span *ngIf="sub.resultado_unico === null" class="text-steel">-</span>
                         </td>
                         
                         <td class="text-center">
+                            <span class="p-column-title hidden-desktop pf-oswald text-steel">Izquierdo</span>
                             <p-tag *ngIf="sub.resultado_izquierdo !== null" [value]="sub.resultado_izquierdo" [severity]="getSeverityPuntaje(sub.resultado_izquierdo, sub.subevaluacion_id)"></p-tag>
-                            <span *ngIf="sub.resultado_izquierdo === null" class="text-400">-</span>
+                            <span *ngIf="sub.resultado_izquierdo === null" class="text-steel">-</span>
                         </td>
                         
                         <td class="text-center">
+                            <span class="p-column-title hidden-desktop pf-oswald text-steel">Derecho</span>
                             <p-tag *ngIf="sub.resultado_derecho !== null" [value]="sub.resultado_derecho" [severity]="getSeverityPuntaje(sub.resultado_derecho, sub.subevaluacion_id)"></p-tag>
-                            <span *ngIf="sub.resultado_derecho === null" class="text-400">-</span>
+                            <span *ngIf="sub.resultado_derecho === null" class="text-steel">-</span>
                         </td>
                         
-                        <td class="text-sm text-700 italic">{{sub.observacion || '-'}}</td>
+                        <td>
+                            <span class="p-column-title hidden-desktop pf-oswald text-steel">Observación</span>
+                            <span class="text-sm text-steel italic">{{sub.observacion || '-'}}</span>
+                        </td>
                     </tr>
                 </ng-template>
+
                 <ng-template pTemplate="emptymessage">
-                    <tr><td colspan="5" class="text-center p-4">Aún no tienes notas registradas en los parámetros de esta evaluación.</td></tr>
+                    <tr>
+                        <td colspan="5" class="text-center p-5 text-steel">Aún no tienes notas registradas en los parámetros de esta evaluación.</td>
+                    </tr>
                 </ng-template>
             </p-table>
         </div>
 
         <ng-template pTemplate="footer">
-            <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="displayViewDialog = false"></button>
+            <button pButton label="Cerrar" icon="pi pi-times" class="pf-btn-ghost w-full justify-content-center" (click)="displayViewDialog = false"></button>
         </ng-template>
     </p-dialog>
 </div>

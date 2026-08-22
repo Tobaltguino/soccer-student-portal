@@ -1,93 +1,107 @@
-<div class="stats-container fadein animation-duration-500">
+<div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
+    <!-- 🔥 Confirm Dialog Global 🔥 -->
+    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
     
-    <header class="page-header">
-        <!-- ... -->
-        
-        <div class="header-actions filter-bar m-0 p-2 border-none bg-transparent shadow-none w-auto flex-row align-items-center">
-            
-            <p-select [options]="years" [(ngModel)]="selectedYear" 
-                      optionLabel="label" optionValue="value"
-                      (onChange)="procesarEstadisticas()" 
-                      styleClass="w-full sm:w-auto" placeholder="Año" appendTo="body"></p-select>
-            
-            <p-select [options]="months" [(ngModel)]="selectedMonth" 
-                      optionLabel="label" optionValue="value"
-                      (onChange)="procesarEstadisticas()" 
-                      styleClass="w-full sm:w-auto" placeholder="Mes" appendTo="body"></p-select>
-
-            <button pButton icon="pi pi-refresh" class="p-button-outlined p-button-secondary btn-create" 
-                    (click)="cargarDatosEstadisticos()" [loading]="loading" pTooltip="Actualizar"></button>
-        </div>
-    </header>
-
-    <div class="grid mb-4">
-        <div class="col-12 md:col-6">
-            <div class="main-card summary-card border-left-3 border-green-500">
-                <div class="flex justify-content-between align-items-center">
-                    <div>
-                        <span class="block text-secondary font-bold text-sm text-uppercase tracking-wider mb-2">
-                            Asistidas ({{ selectedMonth === null ? 'Año' : 'Mes' }})
-                        </span>
-                        <div class="text-main font-bold text-4xl">{{ totalAsistidas }}</div>
-                    </div>
-                    <div class="icon-circle bg-green-100">
-                        <i class="pi pi-check-circle text-green-500 text-3xl"></i>
-                    </div>
-                </div>
+    <header class="pf-admin-header">
+        <div class="header-content">
+            <div>
+                <h1 class="pf-anton text-chalk m-0 text-3xl">Estadísticas de Asistencia</h1>
+                <p class="pf-oswald text-teal mt-1">Resumen anual y mensual de tu participación.</p>
             </div>
         </div>
-        
-        <div class="col-12 md:col-6">
-            <div class="main-card summary-card border-left-3 border-blue-500">
-                <div class="flex justify-content-between align-items-center">
-                    <div>
-                        <span class="block text-secondary font-bold text-sm text-uppercase tracking-wider mb-2">
-                            Índice de Asistencia
-                        </span>
-                        <div class="text-main font-bold text-4xl">{{ porcentajeAsistencia }}%</div>
-                    </div>
-                    <div class="icon-circle bg-blue-100">
-                        <i class="pi pi-chart-line text-blue-500 text-3xl"></i>
-                    </div>
-                </div>
-                <p-progressBar [value]="porcentajeAsistencia" [showValue]="false" styleClass="mt-4 custom-progress"></p-progressBar>
+        <button pButton icon="pi pi-sync" class="pf-btn-ghost" 
+                (click)="cargarDatosEstadisticos()" [loading]="loading" pTooltip="Actualizar Datos" tooltipPosition="left"></button>
+    </header>
+
+    <!-- BARRA DE FILTROS -->
+    <div class="pf-admin-card mb-4 p-3">
+        <div class="filter-row">
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-calendar-plus mr-1 text-teal"></i> Año</label>
+                <p-select [options]="years" [(ngModel)]="selectedYear" 
+                          optionLabel="label" optionValue="value"
+                          (onChange)="procesarEstadisticas()" 
+                          styleClass="w-full" placeholder="Año" appendTo="body" [filter]="false"></p-select>
+            </div>
+            
+            <div class="filter-item flex-grow-1">
+                <label><i class="pi pi-calendar mr-1 text-teal"></i> Mes</label>
+                <p-select [options]="months" [(ngModel)]="selectedMonth" 
+                          optionLabel="label" optionValue="value"
+                          (onChange)="procesarEstadisticas()" 
+                          styleClass="w-full" placeholder="Mes" appendTo="body" [filter]="false"></p-select>
             </div>
         </div>
     </div>
 
+    <!-- TARJETAS DE RESUMEN (KPIs) -->
+    <div class="grid mb-4">
+        <!-- Asistidas -->
+        <div class="col-12 md:col-6">
+            <div class="pf-admin-card border-left-3" style="border-left-color: var(--pf-lime) !important;">
+                <div class="flex justify-content-between align-items-center">
+                    <div>
+                        <span class="block text-steel pf-oswald text-sm tracking-wider mb-2" style="letter-spacing: 0.05em;">
+                            Asistidas ({{ selectedMonth === null ? 'Año' : 'Mes' }})
+                        </span>
+                        <div class="text-chalk pf-anton text-4xl" style="letter-spacing: 1px;">{{ totalAsistidas }}</div>
+                    </div>
+                    <div class="flex align-items-center justify-content-center border-round w-4rem h-4rem" style="background: rgba(198, 255, 61, 0.1);">
+                        <i class="pi pi-check-circle text-lime text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Índice -->
+        <div class="col-12 md:col-6">
+            <div class="pf-admin-card border-left-3" style="border-left-color: var(--neon-blue) !important;">
+                <div class="flex justify-content-between align-items-center">
+                    <div>
+                        <span class="block text-steel pf-oswald text-sm tracking-wider mb-2" style="letter-spacing: 0.05em;">
+                            Índice de Asistencia
+                        </span>
+                        <div class="text-chalk pf-anton text-4xl" style="letter-spacing: 1px;">{{ porcentajeAsistencia }}%</div>
+                    </div>
+                    <div class="flex align-items-center justify-content-center border-round w-4rem h-4rem" style="background: rgba(59, 130, 246, 0.1);">
+                        <i class="pi pi-chart-line text-blue-500 text-3xl"></i>
+                    </div>
+                </div>
+                <p-progressBar [value]="porcentajeAsistencia" [showValue]="false" styleClass="mt-4 pf-progress"></p-progressBar>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRÁFICOS -->
     <div class="grid align-items-start">
         
+        <!-- PIE CHART -->
         <div class="col-12 lg:col-4">
-            <div class="main-card h-full">
-                <h3 class="text-center mb-4 text-main">Distribución de {{ selectedMonth === null ? 'Todo el Año' : 'Mes' }}</h3>
-                <div class="chart-container-pie">
-                    @if (hasData) {
-                        <p-chart type="doughnut" [data]="pieData" [options]="pieOptions"></p-chart>
-                    } @else {
-                        <div class="empty-state">
-                            <i class="pi pi-calendar-times mb-3 text-400 text-4xl"></i>
-                            <p class="text-secondary m-0 font-bold">Sin clases registradas</p>
-                            <span class="text-500 text-sm">en este periodo</span>
-                        </div>
-                    }
+            <div class="pf-admin-card h-full">
+                <h3 class="text-center mb-4 text-chalk pf-anton text-xl" style="letter-spacing: 0.5px;">Distribución {{ selectedMonth === null ? 'Anual' : 'Mensual' }}</h3>
+                <div class="pf-chart-container" style="height: 300px; position: relative;">
+                    <p-chart *ngIf="hasData" type="doughnut" [data]="pieData" [options]="pieOptions" width="100%" height="300px"></p-chart>
+                    <div *ngIf="!hasData" class="flex flex-column align-items-center justify-content-center h-full text-center p-4 border-1 border-round surface-border" style="border-color: var(--border-color) !important;">
+                        <i class="pi pi-calendar-times mb-3 text-steel text-5xl"></i>
+                        <p class="text-chalk m-0 pf-oswald text-lg">Sin registros</p>
+                        <span class="text-steel text-sm pf-oswald">en este periodo</span>
+                    </div>
                 </div>
             </div>
         </div>
 
+        <!-- BAR CHART -->
         <div class="col-12 lg:col-8">
-            <div class="main-card h-full">
-                <h3 class="mb-4 text-main">Evolución Anual ({{ selectedYear }})</h3>
-                <div class="chart-container-bar">
-                    @if (hasYearlyData) {
-                        <p-chart type="bar" [data]="barData" [options]="barOptions"></p-chart>
-                    } @else {
-                        <div class="empty-state">
-                            <i class="pi pi-chart-bar mb-3 text-400 text-4xl"></i>
-                            <p class="text-secondary m-0 font-bold">No hay asistencias</p>
-                            <span class="text-500 text-sm">registradas en {{ selectedYear }}</span>
-                        </div>
-                    }
+            <div class="pf-admin-card h-full">
+                <h3 class="mb-4 text-chalk pf-anton text-xl" style="letter-spacing: 0.5px;">Evolución Anual ({{ selectedYear }})</h3>
+                <div class="pf-chart-container" style="height: 300px; position: relative;">
+                    <p-chart *ngIf="hasYearlyData" type="bar" [data]="barData" [options]="barOptions" width="100%" height="300px"></p-chart>
+                    <div *ngIf="!hasYearlyData" class="flex flex-column align-items-center justify-content-center h-full text-center p-4 border-1 border-round surface-border" style="border-color: var(--border-color) !important;">
+                        <i class="pi pi-chart-bar mb-3 text-steel text-5xl"></i>
+                        <p class="text-chalk m-0 pf-oswald text-lg">No hay asistencias</p>
+                        <span class="text-steel text-sm pf-oswald">registradas en {{ selectedYear }}</span>
+                    </div>
                 </div>
             </div>
         </div>

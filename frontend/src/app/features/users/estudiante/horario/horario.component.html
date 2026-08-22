@@ -1,82 +1,86 @@
-<div class="schedule-container fadein animation-duration-500">
+<div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
     
-    <header class="page-header">
+    <header class="pf-admin-header">
         <div class="header-content">
-            <h1 class="m-0 text-main">Mi Agenda Semanal</h1>
-            <p class="text-secondary m-0 mt-1">Calendario de entrenamientos y planificación</p>
+            <div>
+                <h1 class="pf-anton text-chalk m-0 text-3xl">Mi Agenda Semanal</h1>
+                <p class="pf-oswald text-teal mt-1">Calendario de entrenamientos y planificación.</p>
+            </div>
         </div>
-        <div class="header-actions">
-            <button pButton icon="pi pi-sync" class="p-button-outlined p-button-secondary btn-create" 
-                    (click)="cargarClasesCalendario()" [loading]="loading" pTooltip="Actualizar"></button>
-        </div>
+        <button pButton icon="pi pi-sync" class="pf-btn-ghost" 
+                (click)="cargarClasesCalendario()" [loading]="loading" pTooltip="Actualizar Datos" tooltipPosition="left"></button>
     </header>
 
-    <div class="main-card calendar-wrapper p-3 md:p-4">
+    <div class="pf-admin-card p-3 md:p-4" style="min-height: 600px;">
         <full-calendar [options]="calendarOptions"></full-calendar>
     </div>
 
+    <!-- MODAL DETALLE DE ENTRENAMIENTO (Transparente y adaptado a Modo Claro/Oscuro) -->
     <p-dialog [(visible)]="displayDetalle" header="Detalle del Entrenamiento" 
               [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" 
-              [draggable]="false" [resizable]="false" styleClass="p-fluid">
+              [draggable]="false" [resizable]="false" styleClass="p-fluid pf-dialog">
         
-        <div *ngIf="claseSeleccionada" class="animation-fade-in pt-2">
+        <div *ngIf="claseSeleccionada" class="animation-fade-in pt-3">
             
-            <div class="modal-header-info mb-4 border-bottom-1 border-300 pb-3">
-                <div class="info-block">
-                    <span class="info-label">Fecha</span>
-                    <span class="info-value text-primary"><i class="pi pi-calendar mr-2"></i>{{ claseSeleccionada?.fecha | date:'dd/MM/yyyy' }}</span>
+            <!-- FECHA Y HORA -->
+            <div class="flex flex-column gap-2 mb-4 pb-3 border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                <div class="flex align-items-center gap-2">
+                    <span class="pf-oswald text-steel" style="font-size: 0.85rem; width: 45px;">FECHA</span>
+                    <i class="pi pi-calendar text-teal text-lg"></i>
+                    <span class="pf-anton text-chalk text-xl" style="letter-spacing: 0.5px;">{{ claseSeleccionada?.fecha | date:'dd/MM/yyyy' }}</span>
                 </div>
-                <div class="info-block text-right">
-                    <span class="info-label">Hora</span>
-                    <span class="info-value text-main"><i class="pi pi-clock mr-2"></i>{{ claseSeleccionada?.hora ? (claseSeleccionada.hora | slice:0:5) : '--:--' }}</span>
+                <div class="flex align-items-center gap-2">
+                    <span class="pf-oswald text-steel" style="font-size: 0.85rem; width: 45px;">HORA</span>
+                    <i class="pi pi-clock text-teal text-lg"></i>
+                    <span class="pf-anton text-chalk text-xl" style="letter-spacing: 0.5px;">{{ claseSeleccionada?.hora ? (claseSeleccionada.hora | slice:0:5) : '--:--' }}</span>
                 </div>
             </div>
 
-            <div class="field mb-4">
-                <label class="modal-label"><i class="pi pi-map-marker text-primary mr-2"></i> Lugar</label>
-                <div class="modal-content-box font-bold">
+            <!-- LUGAR -->
+            <div class="mb-4">
+                <label class="pf-oswald text-steel block mb-1 text-sm"><i class="pi pi-map-marker text-teal mr-1"></i> LUGAR</label>
+                <div class="text-chalk text-lg font-bold">
                     {{ claseSeleccionada?.lugar || 'Cancha Principal' }}
                 </div>
             </div>
 
-            <div class="field mb-4">
-                <label class="modal-label"><i class="pi pi-bullseye text-primary mr-2"></i> Objetivo Principal</label>
-                <div class="modal-content-box italic text-secondary">
+            <!-- OBJETIVO -->
+            <div class="mb-4">
+                <label class="pf-oswald text-steel block mb-1 text-sm"><i class="pi pi-bullseye text-lime mr-1"></i> OBJETIVO PRINCIPAL</label>
+                <div class="text-chalk text-lg font-bold">
                     {{ (claseSeleccionada?.objetivo && claseSeleccionada?.objetivo !== 'EMPTY') ? claseSeleccionada.objetivo : 'Entrenamiento técnico/táctico' }}
                 </div>
             </div>
 
+            <!-- PLANIFICACIÓN -->
             <div *ngIf="puedeVerPlanificacion(claseSeleccionada)" class="animation-fade-in">
-                <div class="field mb-3" *ngIf="claseSeleccionada.calentamiento && claseSeleccionada.calentamiento !== 'EMPTY'">
-                    <label class="modal-label"><span class="mr-2">🔥</span> Calentamiento</label>
-                    <div class="modal-content-box text-sm">{{ claseSeleccionada.calentamiento }}</div>
+                <div class="mb-4" *ngIf="claseSeleccionada.calentamiento && claseSeleccionada.calentamiento !== 'EMPTY'">
+                    <label class="pf-oswald text-steel block mb-1 text-sm"><span class="mr-1">🔥</span> CALENTAMIENTO</label>
+                    <div class="text-chalk text-lg font-bold">{{ claseSeleccionada.calentamiento }}</div>
                 </div>
                  
-                <!-- Soporte para camelCase (partePrincipal) o snake_case (parte_principal) -->
-                <div class="field mb-3" *ngIf="(claseSeleccionada.partePrincipal || claseSeleccionada.parte_principal) && (claseSeleccionada.partePrincipal || claseSeleccionada.parte_principal) !== 'EMPTY'">
-                    <label class="modal-label"><span class="mr-2">⚽</span> Parte Principal</label>
-                    <div class="modal-content-box text-sm">{{ claseSeleccionada.partePrincipal || claseSeleccionada.parte_principal }}</div>
+                <div class="mb-4" *ngIf="(claseSeleccionada.partePrincipal || claseSeleccionada.parte_principal) && (claseSeleccionada.partePrincipal || claseSeleccionada.parte_principal) !== 'EMPTY'">
+                    <label class="pf-oswald text-steel block mb-1 text-sm"><span class="mr-1">⚽</span> PARTE PRINCIPAL</label>
+                    <div class="text-chalk text-lg font-bold">{{ claseSeleccionada.partePrincipal || claseSeleccionada.parte_principal }}</div>
                 </div>
 
-                <!-- Soporte para camelCase o snake_case -->
-                <div class="field mb-3" *ngIf="(claseSeleccionada.vueltaCalma || claseSeleccionada.vuelta_calma) && (claseSeleccionada.vueltaCalma || claseSeleccionada.vuelta_calma) !== 'EMPTY'">
-                    <label class="modal-label"><span class="mr-2">❄️</span> Vuelta a la Calma</label>
-                    <div class="modal-content-box text-sm">{{ claseSeleccionada.vueltaCalma || claseSeleccionada.vuelta_calma }}</div>
+                <div class="mb-4" *ngIf="(claseSeleccionada.vueltaCalma || claseSeleccionada.vuelta_calma) && (claseSeleccionada.vueltaCalma || claseSeleccionada.vuelta_calma) !== 'EMPTY'">
+                    <label class="pf-oswald text-steel block mb-1 text-sm"><span class="mr-1">❄️</span> VUELTA A LA CALMA</label>
+                    <div class="text-chalk text-lg font-bold">{{ claseSeleccionada.vueltaCalma || claseSeleccionada.vuelta_calma }}</div>
                 </div>
             </div>
 
-            <div *ngIf="!puedeVerPlanificacion(claseSeleccionada)" 
-                 class="empty-state text-center p-4 mt-4 animation-fade-in">
-                <i class="pi pi-lock text-4xl mb-3 text-400 block"></i>
-                <span class="text-sm font-medium text-secondary">La planificación detallada estará disponible a la hora del entrenamiento.</span>
+            <!-- CANDADO -->
+            <div *ngIf="!puedeVerPlanificacion(claseSeleccionada)" class="text-center p-4 mt-4 border-round border-1 surface-border animation-fade-in" style="background: transparent; border-color: var(--border-color) !important;">
+                <i class="pi pi-lock text-4xl mb-3 text-steel block"></i>
+                <span class="text-sm pf-oswald text-steel" style="letter-spacing: 0.05em;">La planificación detallada estará disponible a la hora del entrenamiento.</span>
             </div>
             
         </div>
 
         <ng-template pTemplate="footer">
-            <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text w-full sm:w-auto" 
-                    (click)="displayDetalle = false"></button>
+            <button pButton label="Cerrar" icon="pi pi-times" class="pf-btn-ghost w-full justify-content-center" (click)="displayDetalle = false"></button>
         </ng-template>
     </p-dialog>
 </div>

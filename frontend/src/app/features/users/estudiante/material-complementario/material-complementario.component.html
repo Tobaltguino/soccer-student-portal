@@ -1,53 +1,64 @@
-<div class="guides-container fadein animation-duration-500 max-w-full">
-    <header class="page-header">
+<div class="pf-admin-wrapper fadein animation-duration-500">
+    <p-toast position="top-right"></p-toast>
+    <!-- 🔥 Confirm Dialog Global 🔥 -->
+    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
+    
+    <header class="pf-admin-header">
         <div class="header-content">
-            <h1 class="m-0 text-main">Material Complementario</h1>
-            <p class="text-secondary m-0 mt-1">Documentos y guías compartidas por la administración.</p>
+            <div>
+                <h1 class="pf-anton text-chalk m-0 text-3xl">Material Complementario</h1>
+                <p class="pf-oswald text-teal mt-1">Documentos y guías compartidas por la administración.</p>
+            </div>
         </div>
         <div class="header-actions">
-            <button pButton icon="pi pi-sync" class="p-button-outlined p-button-secondary btn-create" (click)="cargarGuias()" [loading]="loading" pTooltip="Actualizar lista"></button>
+            <button pButton icon="pi pi-sync" class="pf-btn-ghost" 
+                    (click)="cargarGuias()" [loading]="loading" pTooltip="Actualizar lista" tooltipPosition="left"></button>
         </div>
     </header>
 
-    <div class="filter-bar">
+    <!-- BARRA DE FILTROS -->
+    <div class="pf-admin-card mb-4 p-3">
         <div class="filter-row">
             
             <div class="filter-item flex-grow-1">
-                <label><i class="pi pi-search mr-1"></i> Buscar Título</label>
+                <label><i class="pi pi-search mr-1 text-teal"></i> Buscar Título</label>
                 <input pInputText type="text" [(ngModel)]="filtroTitulo" (input)="aplicarFiltros()" 
                        placeholder="Ej: Reglamento..." class="w-full"/>
             </div>
 
             <div class="filter-item flex-grow-1">
-                <label><i class="pi pi-briefcase mr-1"></i> Área</label>
+                <label><i class="pi pi-briefcase mr-1 text-teal"></i> Área</label>
                 <p-select [options]="tiposMaterial" [(ngModel)]="filtroArea" placeholder="Todas"
                           (onChange)="aplicarFiltros()" [showClear]="true" optionLabel="label" 
-                          optionValue="value" styleClass="w-full" appendTo="body"></p-select>
+                          optionValue="value" styleClass="w-full" appendTo="body" [filter]="false"></p-select>
             </div>
 
             <div class="filter-item flex-grow-1">
-                <label><i class="pi pi-calendar mr-1"></i> Fecha de Subida</label>
+                <label><i class="pi pi-calendar mr-1 text-teal"></i> Fecha de Subida</label>
                 <p-datepicker [(ngModel)]="filtroFecha" placeholder="Seleccionar Fecha" 
                               (onSelect)="aplicarFiltros()" [showClear]="true" (onClear)="aplicarFiltros()" 
-                              dateFormat="dd/mm/yy" styleClass="w-full" appendTo="body"></p-datepicker>
+                              dateFormat="dd/mm/yy" styleClass="w-full" appendTo="body" [showIcon]="true"></p-datepicker>
             </div>
 
-            <div class="filter-btn">
-                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary" 
+            <div class="filter-item-btn">
+                <button pButton icon="pi pi-filter-slash" class="pf-btn-ghost w-full justify-content-center" 
                         (click)="limpiarFiltros()" pTooltip="Limpiar Filtros"></button>
             </div>
 
         </div>
     </div>
 
-    <div class="main-card">
-        <p-table [value]="guiasFiltradas" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="stack" [breakpoint]="'768px'">
+    <!-- TABLA PRINCIPAL -->
+    <div class="pf-admin-card table-responsive p-0">
+        <p-table [value]="guiasFiltradas" [loading]="loading" [rows]="10" [paginator]="true" 
+                 styleClass="p-datatable-sm pf-table w-full" responsiveLayout="stack" [breakpoint]="'768px'">
             
             <ng-template pTemplate="header">
                 <tr>
                     <th style="width: 25%">Título</th>
                     <th style="width: 40%">Descripción</th>
-                    <th style="width: 15%" class="text-center">Área</th> <th style="width: 10%" class="text-center">Fecha</th>
+                    <th style="width: 15%" class="text-center">Área</th> 
+                    <th style="width: 10%" class="text-center">Fecha</th>
                     <th style="width: 10%" class="text-center">Acciones</th>
                 </tr>
             </ng-template>
@@ -55,28 +66,26 @@
             <ng-template pTemplate="body" let-guia>
                 <tr>
                     <td>
-                        <span class="p-column-title hidden-desktop">Título</span>
-                        <span class="font-bold text-main">{{guia.titulo}}</span>
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Título:</span>
+                        <span class="font-bold text-chalk block">{{guia.titulo}}</span>
                     </td>
                     <td>
-                        <span class="p-column-title hidden-desktop">Descripción</span>
-                        <span class="text-secondary line-height-2">{{guia.descripcion || 'Sin descripción adicional.'}}</span>
-                    </td>
-                    
-                    <td class="text-center">
-                        <span class="p-column-title hidden-desktop">Área</span>
-                        <span class="text-sm font-medium border-round px-2 py-1 area-badge">{{ getNombreArea(guia.tipo_material) }}</span>
-                    </td>
-
-                    <td class="text-center">
-                        <span class="p-column-title hidden-desktop">Fecha</span>
-                        <span class="text-secondary"><i class="pi pi-calendar mr-1"></i> {{guia.created_at | date:'dd/MM/yyyy'}}</span>
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Descripción:</span>
+                        <span class="text-steel line-height-2">{{guia.descripcion || 'Sin descripción adicional.'}}</span>
                     </td>
                     <td class="text-center">
-                        <span class="p-column-title hidden-desktop">Acciones</span>
-                        <div class="action-buttons">
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Área:</span>
+                        <p-tag [value]="getNombreArea(guia.tipo_material)" severity="info"></p-tag>
+                    </td>
+                    <td class="text-center">
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Fecha:</span>
+                        <span class="text-steel"><i class="pi pi-calendar mr-1 text-teal"></i> {{guia.created_at | date:'dd/MM/yyyy'}}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Acciones:</span>
+                        <div class="pf-table-actions">
                             <a [href]="guia.archivo_url" target="_blank" class="no-underline">
-                                <button pButton icon="pi pi-download" class="p-button-text p-button-primary" pTooltip="Descargar"></button>
+                                <button pButton icon="pi pi-download" class="p-button-info" pTooltip="Descargar"></button>
                             </a>
                         </div>
                     </td>
@@ -85,7 +94,10 @@
 
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="5" class="text-center p-5 text-secondary">No se encontró material de estudio con esos filtros.</td>
+                    <td colspan="5" class="text-center p-6 text-steel">
+                        <i class="pi pi-folder-open text-steel mb-3 block" style="font-size: 3rem"></i>
+                        <span class="pf-oswald text-lg">No se encontró material de estudio con esos filtros.</span>
+                    </td>
                 </tr>
             </ng-template>
             

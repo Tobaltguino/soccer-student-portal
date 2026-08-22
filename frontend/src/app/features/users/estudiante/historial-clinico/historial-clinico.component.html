@@ -1,15 +1,22 @@
-<div class="animation-fade-in">
+<div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
+    <!-- 🔥 Confirm Dialog Global 🔥 -->
+    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
     
-    <div class="card-table mt-4 fadein">
-        <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-5 border-bottom-1 surface-border pb-4 gap-4">
+    <header class="pf-admin-header">
+        <div class="header-content">
             <div>
-                <h2 class="m-0 text-main mb-2" style="font-size: 1.25rem; font-weight: 700;">Mi Historial Clínico</h2>
-                <p class="text-secondary m-0">Consulta el registro de tus eventos médicos, patologías, alergias y su estado de recuperación.</p>
+                <h1 class="pf-anton text-chalk m-0 text-3xl">Mi Historial Clínico</h1>
+                <p class="pf-oswald text-teal mt-1">Consulta el registro de tus eventos médicos, patologías, alergias y su estado de recuperación.</p>
             </div>
         </div>
+    </header>
 
-        <p-table [value]="listaLesiones" [paginator]="true" [rows]="10" styleClass="p-datatable-sm p-datatable-striped" [loading]="cargandoLesiones" [responsiveLayout]="'stack'" [breakpoint]="'960px'">
+    <div class="pf-admin-card table-responsive p-0">
+        <p-table [value]="listaLesiones" [paginator]="true" [rows]="10" 
+                 styleClass="p-datatable-sm pf-table w-full" [loading]="cargandoLesiones" 
+                 [responsiveLayout]="'stack'" [breakpoint]="'960px'">
+            
             <ng-template pTemplate="header">
                 <tr>
                     <th class="py-3" style="width: 20%;">Fecha</th>
@@ -22,33 +29,33 @@
             <ng-template pTemplate="body" let-l>
                 <tr>
                     <td class="py-3">
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Fecha: </span>
-                        <span>{{ l.fecha_evento | date:'dd/MM/yyyy' }}</span>
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Fecha: </span>
+                        <span class="pf-anton text-chalk" style="letter-spacing: 0.5px;">{{ l.fecha_evento | date:'dd/MM/yyyy' }}</span>
                     </td>
                     
                     <td class="py-3 font-bold">
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Tipo: </span>
-                        <span class="text-primary">{{ getTipoLabel(l.tipo) }}</span>
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Tipo: </span>
+                        <span class="text-teal pf-oswald" style="letter-spacing: 0.5px;">{{ getTipoLabel(l.tipo) }}</span>
                     </td>
                     
                     <td class="py-3 text-sm">
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Diagnóstico: </span>
-                        <span *ngIf="l.diagnostico">{{ l.diagnostico }}</span>
-                        <span *ngIf="!l.diagnostico" class="text-400 italic">No especificado</span>
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Diagnóstico: </span>
+                        <span *ngIf="l.diagnostico" class="text-chalk">{{ l.diagnostico }}</span>
+                        <span *ngIf="!l.diagnostico" class="text-steel italic">No especificado</span>
                         
-                        <div *ngIf="l.observaciones" class="mt-2 text-xs text-500">
-                            <strong>Obs:</strong> {{ l.observaciones }}
+                        <div *ngIf="l.observaciones" class="mt-2 text-xs text-steel">
+                            <strong class="pf-oswald">Obs:</strong> {{ l.observaciones }}
                         </div>
                     </td>
                     
                     <td class="text-center py-3">
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Estado: </span>
-                        <span class="px-2 py-1 border-round text-xs font-bold" 
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Estado: </span>
+                        <span class="px-2 py-1 border-round text-xs pf-oswald font-bold" 
                               [ngClass]="{
-                                  'bg-red-100 text-red-700': l.estado === EstadoHistorialClinico.EN_OBSERVACION, 
-                                  'bg-orange-100 text-orange-700': l.estado === EstadoHistorialClinico.EN_TRATAMIENTO,
-                                  'bg-blue-100 text-blue-700': l.estado === EstadoHistorialClinico.EN_REINTEGRO_DEPORTIVO,
-                                  'bg-green-100 text-green-700': l.estado === EstadoHistorialClinico.RECUPERADO
+                                  'bg-red-900 text-red-200 border-1 border-red-500': l.estado === EstadoHistorialClinico.EN_OBSERVACION, 
+                                  'bg-orange-900 text-orange-200 border-1 border-orange-500': l.estado === EstadoHistorialClinico.EN_TRATAMIENTO,
+                                  'bg-blue-900 text-blue-200 border-1 border-blue-500': l.estado === EstadoHistorialClinico.EN_REINTEGRO_DEPORTIVO,
+                                  'bg-green-900 text-green-200 border-1 border-green-500': l.estado === EstadoHistorialClinico.RECUPERADO
                               }">
                             {{ getEstadoLabel(l.estado) }}
                         </span>
@@ -58,9 +65,9 @@
             
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="4" class="text-center p-6 text-500">
-                        <i class="pi pi-heart text-5xl mb-3 text-300"></i><br>
-                        No registras lesiones, alergias ni patologías en tu historial médico.
+                    <td colspan="4" class="text-center p-6 text-steel">
+                        <i class="pi pi-heart text-steel mb-3" style="font-size: 3rem;"></i><br>
+                        <span class="pf-oswald text-lg">No registras lesiones, alergias ni patologías en tu historial médico.</span>
                     </td>
                 </tr>
             </ng-template>

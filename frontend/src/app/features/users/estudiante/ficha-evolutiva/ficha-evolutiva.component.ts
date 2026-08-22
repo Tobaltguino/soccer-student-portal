@@ -1,7 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MessageService } from 'primeng/api'; 
 import { forkJoin, Observable, of } from 'rxjs';
 
 // Módulos de PrimeNG
@@ -17,6 +16,8 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { DatePickerModule } from 'primeng/datepicker'; 
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ConfirmDialogModule } from 'primeng/confirmdialog'; // 🔥 Agregado
+import { MessageService, ConfirmationService } from 'primeng/api'; // 🔥 Agregado ConfirmationService
 
 // Nuevos Servicios y Modelos
 import { FichaEvolutivaService } from '../../../../core/domains/salud/kinesiologia/ficha-evolutiva/services/ficha-evolutiva.service';
@@ -45,11 +46,12 @@ import { UsuarioService } from '../../../../core/domains/usuarios/central/servic
     ToastModule,
     TooltipModule,
     DatePickerModule,
-    ProgressSpinnerModule
+    ProgressSpinnerModule,
+    ConfirmDialogModule // 🔥 Importado
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService], // 🔥 Importado
   templateUrl: './ficha-evolutiva.component.html',
-  styleUrls: ['./ficha-evolutiva.component.css']
+  styleUrls: ['./ficha-evolutiva.component.scss'] // 🔥 Cambiado a .scss
 })
 export class EstudianteFichaEvolutivaComponent implements OnInit {
 
@@ -58,26 +60,17 @@ export class EstudianteFichaEvolutivaComponent implements OnInit {
   private messageService = inject(MessageService);
   private cdr = inject(ChangeDetectorRef);
 
-  // ==========================================
-  // ESTADOS DE LA VISTA E HISTORIAL
-  // ==========================================
   cargandoHistorial: boolean = false;
   historialFichas: any[] = [];
   listaKinesiologos: any[] = [];
   modoFormulario: boolean = false;
 
-  // ==========================================
-  // CONTROL DEL SWITCHER
-  // ==========================================
   vistaFormulario: string = 'antecedentes';
   opcionesVistaForm: any[] = [
     { label: 'Antecedentes', value: 'antecedentes', icon: 'pi pi-info-circle' },
     { label: 'Evaluación Clínica', value: 'evaluacion', icon: 'pi pi-heartbeat' }
   ];
 
-  // ==========================================
-  // MODELO DE LA FICHA MÉDICA (SOLO LECTURA)
-  // ==========================================
   ficha: any = this.obtenerFichaVacia();
   opcionesROM: string[] = ['Normal', 'Bueno', 'Moderado', 'Limitado'];
   listaArticulaciones: ArticulacionRom[] = this.obtenerArticulacionesVacias();
@@ -87,13 +80,9 @@ export class EstudianteFichaEvolutivaComponent implements OnInit {
     this.cargarMisDatos();
   }
 
-  // ==========================================
-  // CARGA DE DATOS AUTOMÁTICA (JWT)
-  // ==========================================
   cargarMisDatos() {
     this.cargandoHistorial = true;
 
-    // Pedimos el listado de kinesiólogos para poder mostrar el nombre del profesional
     const kinesiologosReq: Observable<any[]> = (this.usuarioService as any).listarKinesiologos 
       ? (this.usuarioService as any).listarKinesiologos() 
       : of([]);
@@ -124,13 +113,9 @@ export class EstudianteFichaEvolutivaComponent implements OnInit {
     });
   }
 
-  // ==========================================
-  // NAVEGACIÓN Y VISTA DE FICHA
-  // ==========================================
   abrirVerFicha(fichaData: FichaEvolutiva) {
     this.vistaFormulario = 'antecedentes';
     
-    // Mapeo estricto de base de datos a vista
     this.ficha = {
       fechaEvaluacion: new Date(fichaData.fecha_evaluacion + 'T00:00:00'),
       kinesiologoObj: this.listaKinesiologos.find(k => k.id === fichaData.kinesiologo_id) || { nombreCompleto: 'Desconocido' },
@@ -147,7 +132,6 @@ export class EstudianteFichaEvolutivaComponent implements OnInit {
       marcha: fichaData.marcha || ''
     };
 
-    // Mapeo de ROM
     this.listaArticulaciones = this.obtenerArticulacionesVacias();
     if (fichaData.rango_movimiento && fichaData.rango_movimiento.length > 0) {
       this.listaArticulaciones.forEach(art => {
@@ -161,7 +145,6 @@ export class EstudianteFichaEvolutivaComponent implements OnInit {
       });
     }
 
-    // Mapeo de Fuerza
     this.listaFuerzas = fichaData.fuerza_movimientos ? [...fichaData.fuerza_movimientos] : [];
     
     this.modoFormulario = true;

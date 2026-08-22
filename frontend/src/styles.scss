@@ -1081,3 +1081,351 @@ p-datepicker {
     background: #dc2626 !important;
     border-color: #dc2626 !important;
 }
+
+/* ==========================================================
+   🔥 19. FIX FULLCALENDAR V6 (MODO OSCURO GLOBAL) 🔥
+   (Se aplica automáticamente a cualquier calendario de la app)
+   ========================================================== */
+.fc {
+    font-family: var(--pf-font-body) !important;
+    color: var(--text-main);
+    --fc-border-color: var(--border-color);
+    --fc-today-bg-color: rgba(15, 140, 130, 0.05); /* Fondo teal sutil para hoy */
+    --fc-now-indicator-color: var(--neon-red);
+    --fc-page-bg-color: transparent;
+    --fc-neutral-bg-color: var(--input-bg);
+    --fc-list-event-hover-bg-color: var(--hover-bg);
+}
+
+/* Fix: Color del texto en los encabezados y vistas de lista */
+.fc-col-header-cell-cushion,
+a.fc-col-header-cell-cushion,
+.fc-list-day-text,
+.fc-list-day-side-text {
+    color: var(--text-main) !important; 
+    text-decoration: none !important;
+    font-family: var(--pf-font-label) !important;
+    text-transform: uppercase !important;
+    font-size: 0.85rem !important;
+    padding: 0.5rem !important;
+    letter-spacing: 0.05em;
+}
+
+.fc-list-day-cushion {
+    background-color: var(--input-bg) !important;
+}
+
+/* Fix: Transparencia y bordes en headers de tablas */
+.fc-theme-standard th,
+.fc-theme-standard .fc-scrollgrid-section-header,
+.fc-theme-standard .fc-scrollgrid-section-header th,
+.fc-theme-standard .fc-scrollgrid-section-header td {
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+/* Fix: Horas laterales */
+.fc-timegrid-slot-label-cushion,
+.fc-list-event-time {
+    color: var(--text-muted) !important;
+    font-size: 0.85rem !important;
+    font-family: var(--pf-font-label) !important;
+}
+
+/* Eventos (Cajas de clases) */
+.fc-timegrid-event {
+    border: none;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 2px 4px;
+    margin: 1px 2px;
+}
+
+.fc-event-title { font-weight: 700; color: #ffffff; font-size: 0.85rem; font-family: var(--pf-font-body); }
+.fc-event-time { color: rgba(255, 255, 255, 0.9); font-size: 0.75rem; font-family: var(--pf-font-body); }
+
+/* Fix: Botones de navegación del calendario */
+.fc-button-primary {
+    background-color: transparent !important; 
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-main) !important;
+    text-transform: uppercase !important;
+    font-family: var(--pf-font-label) !important;
+    letter-spacing: 0.05em !important;
+    font-size: 0.8rem !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+    box-shadow: none !important;
+}
+
+.fc-button-primary:not(:disabled):hover, 
+.fc-button-primary:not(:disabled).fc-button-active {
+    background-color: var(--pf-teal) !important;
+    border-color: var(--pf-teal) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 10px rgba(15, 140, 130, 0.3) !important;
+}
+
+.fc-button-primary:disabled {
+    opacity: 0.3;
+    border-color: var(--border-color) !important;
+}
+
+/* Título de mes (ej. OCTUBRE 2026) */
+.fc-toolbar-title { 
+    color: var(--text-main); 
+    font-family: var(--pf-font-display) !important; 
+    font-size: 1.5rem !important; 
+    letter-spacing: 0.02em !important;
+    text-transform: uppercase !important;
+}
+
+/* Ajustes Responsive */
+@media (max-width: 768px) {
+    .fc-toolbar { flex-direction: column; gap: 1rem; }
+    .fc-toolbar-title { font-size: 1.25rem !important; }
+}
+
+/* ==========================================================
+   🔥 FIX FULLCALENDAR V6 (MODO OSCURO Y CLARO) 🔥
+   ========================================================== */
+.fc {
+    font-family: var(--pf-font-body) !important;
+    color: var(--text-main);
+    --fc-border-color: var(--border-color);
+    --fc-today-bg-color: rgba(15, 140, 130, 0.05);
+    --fc-now-indicator-color: var(--neon-red);
+    --fc-page-bg-color: transparent;
+    --fc-neutral-bg-color: var(--input-bg);
+    --fc-list-event-hover-bg-color: var(--hover-bg);
+}
+
+/* Encabezados y textos base que cambian según el modo */
+.fc-col-header-cell-cushion,
+a.fc-col-header-cell-cushion,
+.fc-list-day-text,
+.fc-list-day-side-text {
+    color: var(--text-main) !important; 
+    text-decoration: none !important;
+    font-family: var(--pf-font-label) !important;
+    text-transform: uppercase !important;
+    font-size: 0.85rem !important;
+    padding: 0.5rem !important;
+    letter-spacing: 0.05em;
+}
+
+.fc-list-day-cushion {
+    background-color: var(--input-bg) !important;
+}
+
+.fc-theme-standard th,
+.fc-theme-standard .fc-scrollgrid-section-header,
+.fc-theme-standard .fc-scrollgrid-section-header th,
+.fc-theme-standard .fc-scrollgrid-section-header td {
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+.fc-timegrid-slot-label-cushion,
+.fc-list-event-time {
+    color: var(--text-muted) !important;
+    font-size: 0.85rem !important;
+    font-family: var(--pf-font-label) !important;
+}
+
+.fc-timegrid-event {
+    border: none !important;
+    border-radius: 6px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+/* 🔥 TEXTOS DE EVENTOS INTELIGENTES 🔥 */
+/* Para vista mensual (puntos) y agenda (Fondo transparente) */
+.fc-daygrid-dot-event .fc-event-title,
+.fc-daygrid-dot-event .fc-event-time,
+.fc-list-event-title a {
+    color: var(--text-main) !important; /* Se adaptará al modo oscuro o claro */
+    font-family: var(--pf-font-body) !important;
+    font-weight: 600 !important;
+}
+
+/* Para bloques de color sólido (timegrid) */
+.fc-timegrid-event .fc-event-title,
+.fc-timegrid-event .fc-event-time,
+.fc-daygrid-block-event .fc-event-title,
+.fc-daygrid-block-event .fc-event-time {
+    color: #ffffff !important; /* Blanco para que contraste con el fondo azul/rojo/verde */
+    font-family: var(--pf-font-body) !important;
+    font-weight: 600 !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4) !important; 
+}
+
+/* Botones del Calendario */
+.fc-button-primary {
+    background-color: transparent !important; 
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-main) !important;
+    text-transform: uppercase !important;
+    font-family: var(--pf-font-label) !important;
+    letter-spacing: 0.05em !important;
+    font-size: 0.8rem !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+    box-shadow: none !important;
+}
+
+.fc-button-primary:not(:disabled):hover, 
+.fc-button-primary:not(:disabled).fc-button-active {
+    background-color: var(--pf-teal) !important;
+    border-color: var(--pf-teal) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 10px rgba(15, 140, 130, 0.3) !important;
+}
+
+.fc-button-primary:disabled {
+    opacity: 0.3;
+    border-color: var(--border-color) !important;
+}
+
+.fc-toolbar-title { 
+    color: var(--text-main) !important; 
+    font-family: var(--pf-font-display) !important; 
+    font-size: 1.5rem !important; 
+    letter-spacing: 0.02em !important;
+    text-transform: uppercase !important;
+}
+
+@media (max-width: 768px) {
+    .fc-toolbar { flex-direction: column; gap: 1rem; }
+    .fc-toolbar-title { font-size: 1.25rem !important; }
+}
+
+/* ==========================================================
+   🔥 20. FIX PRIMENG V21: PROGRESS BAR & CHARTS 🔥
+   ========================================================== */
+.pf-progress {
+    height: 8px !important;
+    border-radius: 10px !important;
+    background: var(--input-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    overflow: hidden !important;
+}
+
+.pf-progress .p-progressbar-value {
+    background-color: var(--neon-blue) !important; /* Azul Neon */
+}
+
+/* Contenedor fluido para gráficos Canvas (Evita que se salgan de su caja) */
+.pf-chart-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.pf-chart-container canvas {
+    max-width: 100% !important;
+}
+
+/* ==========================================================
+   🔥 21. DISEÑO DE FORMULARIO KINESIOLÓGICO (kine-table) 🔥
+   ========================================================== */
+.kine-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-card);
+}
+.kine-table {
+    width: 100%;
+    min-width: 700px;
+    border-collapse: collapse;
+    border: none;
+}
+.kine-table th, .kine-table td {
+    border: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+.kine-header {
+    background-color: rgba(15, 140, 130, 0.1) !important; /* Fondo Teal transparente */
+    color: var(--pf-teal);
+    font-family: var(--pf-font-label);
+    font-weight: 700;
+    padding: 0.75rem 1rem !important;
+    text-transform: uppercase;
+    font-size: 0.9rem !important;
+    text-align: left;
+    letter-spacing: 0.05em;
+}
+.kine-subheader, .kine-label-cell-fixed, .kine-label-cell {
+    background-color: var(--bg-main) !important;
+    color: var(--text-secondary);
+    font-family: var(--pf-font-body);
+    font-weight: 600;
+    font-size: 0.8rem !important;
+    padding: 0.75rem 1rem !important;
+    text-transform: uppercase;
+}
+.kine-table .kine-input, .kine-table textarea.kine-input {
+    width: 100%;
+    min-height: 44px;
+    border: none !important;
+    background: transparent !important;
+    color: var(--text-main) !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 0.85rem !important;
+    font-family: var(--pf-font-body);
+    resize: vertical;
+    display: block;
+    outline: none !important;
+}
+.kine-table .kine-input:disabled, .kine-table textarea.kine-input:disabled {
+    opacity: 1 !important;
+    color: var(--text-main) !important;
+}
+.kine-input-inline {
+    border: none !important;
+    border-bottom: 2px solid var(--pf-teal) !important;
+    background: transparent !important;
+    color: var(--text-main) !important;
+    font-size: 0.85rem !important;
+    font-weight: 700;
+    width: 60px;
+    text-align: center;
+    border-radius: 0 !important;
+}
+.kine-table td .p-select {
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+/* Responsividad de las Hojas Kinesiológicas en Móvil */
+@media (max-width: 768px) {
+    .kine-table-wrapper {
+        border: none;
+        background-color: transparent;
+    }
+    .kine-table, .kine-table tbody, .kine-table th, .kine-table td, .kine-table tr {
+        display: block !important;
+        width: 100% !important;
+    }
+    .kine-table thead { display: none !important; } 
+    .kine-table tr {
+        margin-bottom: 1rem;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 8px;
+        overflow: hidden;
+        background-color: var(--bg-card) !important;
+    }
+    .kine-table td { border: none !important; }
+    .kine-table td.kine-label-cell-fixed, .kine-table td.kine-label-cell, .kine-table td.kine-subheader {
+        background-color: var(--bg-main) !important;
+        padding: 0.8rem 1rem !important;
+        border-bottom: 1px solid var(--border-color) !important;
+        text-align: left !important;
+    }
+}

@@ -9,7 +9,8 @@ import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog'; // 🔥 Agregado
+import { MessageService, ConfirmationService } from 'primeng/api'; // 🔥 Agregado ConfirmationService
 
 // Servicios de Dominio
 import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
@@ -25,11 +26,12 @@ import { AsistenciaService } from '../../../../core/domains/academico/asistencia
     SelectModule,
     ButtonModule,
     ProgressBarModule,
-    ToastModule
+    ToastModule,
+    ConfirmDialogModule // 🔥 Importado
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService], // 🔥 Importado
   templateUrl: './asistencias.component.html',
-  styleUrl: './asistencias.component.css',
+  styleUrls: ['./asistencias.component.scss'], // 🔥 Cambiado a styleUrls y .scss
 })
 export class EstudianteAsistenciasComponent implements OnInit {
   
@@ -39,8 +41,8 @@ export class EstudianteAsistenciasComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
 
   loading: boolean = false;
-  hasData: boolean = false; // Control para el gráfico circular
-  hasYearlyData: boolean = false; // Control para el gráfico de barras
+  hasData: boolean = false; 
+  hasYearlyData: boolean = false; 
 
   selectedYear: number = new Date().getFullYear();
   selectedMonth: number | null = null; 
@@ -70,7 +72,6 @@ export class EstudianteAsistenciasComponent implements OnInit {
   totalAsistidas: number = 0;
   porcentajeAsistencia: number = 0;
 
-  // Guardamos las clases cacheadas para no volver a llamar al servidor al cambiar de filtro
   clasesCacheadas: any[] = [];
 
   ngOnInit() {
@@ -82,7 +83,6 @@ export class EstudianteAsistenciasComponent implements OnInit {
     this.loading = true;
     this.cdr.detectChanges(); 
 
-    // ✅ Ejecutamos ambas peticiones en paralelo
     forkJoin({
       clases: this.claseService.obtenerMisClases(),
       asistencias: this.asistenciaService.obtenerMisAsistencias()
@@ -92,7 +92,6 @@ export class EstudianteAsistenciasComponent implements OnInit {
         const asistenciasMap = new Map();
         asistencias.forEach(a => asistenciasMap.set(a.clase_id, a.presente));
 
-        // Cruzamos las clases con su asistencia
         this.clasesCacheadas = clases.map(clase => ({
           ...clase,
           presente: asistenciasMap.has(clase.id) ? asistenciasMap.get(clase.id) : null
@@ -110,13 +109,10 @@ export class EstudianteAsistenciasComponent implements OnInit {
     });
   }
 
-  // ✅ Se llama también al cambiar el combo de Año o Mes (ahora sin llamar a BD)
   procesarEstadisticas() {
-    // Extraemos año y mes del string 'YYYY-MM-DD' para evitar problemas de timezone
     const getAnio = (fecha: string) => parseInt(fecha.substring(0, 4), 10);
-    const getMes = (fecha: string) => parseInt(fecha.substring(5, 7), 10) - 1; // 0-indexed
+    const getMes = (fecha: string) => parseInt(fecha.substring(5, 7), 10) - 1; 
 
-    // 1. Filtro estricto para el resumen y gráfico circular
     let filtradas = this.clasesCacheadas.filter(c => 
       c.fecha && 
       getAnio(c.fecha as string) === this.selectedYear && 
@@ -138,16 +134,15 @@ export class EstudianteAsistenciasComponent implements OnInit {
 
     if (this.hasData) {
       this.pieData = {
-        labels: ['Asistidas (Verde)', 'Faltas (Rojo)'],
+        labels: ['Asistidas', 'Faltas'],
         datasets: [{
           data: [asistidas, faltas],
-          backgroundColor: ['#22c55e', '#ef4444'],
+          backgroundColor: ['#c6ff3d', '#ff5c5c'], // 🔥 Usando Colores Neon
           borderWidth: 0
         }]
       };
     }
 
-    // 2. Gráfico de barras anual
     const countsPorMes = new Array(12).fill(0);
     let totalAnual = 0;
 
@@ -165,10 +160,10 @@ export class EstudianteAsistenciasComponent implements OnInit {
       labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
       datasets: [{
         label: 'Asistencias',
-        backgroundColor: '#3b82f6',
-        borderRadius: 8,
+        backgroundColor: '#3b82f6', // Azul Neon
+        borderRadius: 4,
         data: countsPorMes,
-        barPercentage: 0.6
+        barPercentage: 0.5
       }]
     };
     
@@ -176,6 +171,10 @@ export class EstudianteAsistenciasComponent implements OnInit {
   }
 
   initOptions() {
+    const textColor = '#eaf2f0';
+    const textMuted = '#7c8b88';
+    const gridColor = 'rgba(234, 242, 240, 0.08)'; // border-color
+
     this.pieOptions = {
       maintainAspectRatio: false,
       plugins: {
@@ -184,27 +183,30 @@ export class EstudianteAsistenciasComponent implements OnInit {
               position: 'bottom',
               labels: { 
                   usePointStyle: true, 
-                  padding: 8, 
-                  font: { size: 14 } 
+                  color: textColor, // 🔥 Letras Claras
+                  padding: 15, 
+                  font: { family: 'Oswald', size: 13 } 
               }
           }
       },
       cutout: '70%' 
-  };
+    };
 
     this.barOptions = {
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        plugins: { 
+            legend: { display: false } 
+        },
         scales: {
             x: { 
-                ticks: { font: { size: 10 } },
+                ticks: { color: textMuted, font: { family: 'Oswald', size: 11 } },
                 grid: { display: false } 
             },
             y: { 
                 beginAtZero: true, 
                 suggestedMax: 5, 
-                ticks: { stepSize: 1, font: { size: 10 } },
-                grid: { color: 'rgba(255,255,255,0.05)' } 
+                ticks: { color: textMuted, stepSize: 1, font: { family: 'Inter', size: 11 } },
+                grid: { color: gridColor } // 🔥 Grilla sutil
             }
         }
     };

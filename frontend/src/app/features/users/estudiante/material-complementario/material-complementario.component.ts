@@ -10,7 +10,10 @@ import { TooltipModule } from 'primeng/tooltip';
 import { InputTextModule } from 'primeng/inputtext'; 
 import { DatePickerModule } from 'primeng/datepicker'; 
 import { SelectModule } from 'primeng/select';
-import { MessageService } from 'primeng/api'; // ✅ Recomendado para manejo de errores
+import { ToastModule } from 'primeng/toast';
+import { TagModule } from 'primeng/tag';
+import { ConfirmDialogModule } from 'primeng/confirmdialog'; // 🔥 Agregado
+import { MessageService, ConfirmationService } from 'primeng/api'; // 🔥 Agregado ConfirmationService
 
 // Servicios y Modelos unificados a NestJS
 import { MaterialService } from '../../../../core/domains/academico/material-complementario/services/material-complementario.service';
@@ -29,11 +32,14 @@ import { Material } from '../../../../core/domains/academico/material-complement
     TableModule,
     InputTextModule,
     DatePickerModule,
-    SelectModule 
+    SelectModule,
+    ToastModule,
+    TagModule, // 🔥 Para reemplazar el span del área por un p-tag
+    ConfirmDialogModule // 🔥 Importado
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService], // 🔥 Importado
   templateUrl: './material-complementario.component.html',
-  styleUrls: ['./material-complementario.component.css']
+  styleUrls: ['./material-complementario.component.scss'] // 🔥 Cambiado a .scss
 })
 export class EstudianteMaterialcomplementarioComponent implements OnInit {
   
@@ -65,12 +71,11 @@ export class EstudianteMaterialcomplementarioComponent implements OnInit {
     this.loading = true;
     this.cdr.detectChanges(); 
 
-    // ✅ Llamamos a la API de NestJS con límite alto para filtrar localmente
     this.materialService.listarMaterial({ limite: 100 }).subscribe({
       next: (response) => {
         this.guias = response.registros || [];
         this.guiasFiltradas = [...this.guias]; 
-        this.aplicarFiltros(); // Asegura que se apliquen filtros preexistentes al recargar
+        this.aplicarFiltros(); 
         this.loading = false;
         this.cdr.detectChanges(); 
       },

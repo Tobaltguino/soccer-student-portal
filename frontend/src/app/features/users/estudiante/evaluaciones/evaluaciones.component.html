@@ -1,45 +1,51 @@
-<div class="evaluations-container fadein animation-duration-500">
+<div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
-    <header class="page-header">
+    <!-- 🔥 Confirm Dialog Global 🔥 -->
+    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
+    
+    <header class="pf-admin-header">
         <div class="header-content">
-            <h1 class="m-0 text-main">Mis Evaluaciones</h1>
-            <p class="text-secondary m-0 mt-1">Historial de pruebas físicas y evolución técnica</p>
+            <div>
+                <h1 class="pf-anton text-chalk m-0 text-3xl">Mis Evaluaciones</h1>
+                <p class="pf-oswald text-teal mt-1">Historial de pruebas físicas y evolución técnica.</p>
+            </div>
         </div>
         <div class="header-actions">
-            <button pButton icon="pi pi-sync" class="p-button-outlined p-button-secondary btn-create" 
-                    (click)="cargarEvaluaciones()" [loading]="loading" pTooltip="Actualizar"></button>
+            <button pButton icon="pi pi-sync" class="pf-btn-ghost" 
+                    (click)="cargarEvaluaciones()" [loading]="loading" pTooltip="Actualizar Datos" tooltipPosition="left"></button>
         </div>
     </header>
 
-    <div class="filter-bar">
+    <!-- BARRA DE FILTROS -->
+    <div class="pf-admin-card mb-4 p-3">
         <div class="filter-row">
             <div class="filter-item flex-grow-1">
-                <label><i class="pi pi-calendar mr-1"></i> Fecha</label>
+                <label><i class="pi pi-calendar mr-1 text-teal"></i> Fecha</label>
                 <p-datepicker [(ngModel)]="filtroFecha" placeholder="Filtrar por Fecha" 
                               (onSelect)="aplicarFiltros()" 
                               [showClear]="true" dateFormat="dd/mm/yy" 
-                              styleClass="w-full" appendTo="body"></p-datepicker>
+                              styleClass="w-full" appendTo="body" [showIcon]="true"></p-datepicker>
             </div>
 
             <div class="filter-item flex-grow-1">
-                <label><i class="pi pi-bolt mr-1"></i> Prueba Evaluada</label>
+                <label><i class="pi pi-bolt mr-1 text-teal"></i> Prueba Evaluada</label>
                 <p-select [options]="tiposTests" [(ngModel)]="filtroPrueba" optionLabel="nombre" 
                           placeholder="Filtrar por Prueba" 
                           (onChange)="aplicarFiltros()" [showClear]="true" 
-                          styleClass="w-full" appendTo="body"></p-select>
+                          styleClass="w-full" appendTo="body" [filter]="false"></p-select>
             </div>
 
-            <div class="filter-btn">
-                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary" 
+            <div class="filter-item-btn">
+                <button pButton icon="pi pi-filter-slash" class="pf-btn-ghost w-full justify-content-center" 
                         (click)="limpiarFiltros()" pTooltip="Limpiar Filtros"></button>
             </div>
         </div>
     </div>
 
-    <div class="main-card">
+    <!-- TABLA DE EVALUACIONES -->
+    <div class="pf-admin-card table-responsive p-0">
         <p-table #dt [value]="evaluaciones" [loading]="loading" [rows]="10" [paginator]="true" 
-                 styleClass="p-datatable-sm p-datatable-striped" [rowHover]="true" 
-                 responsiveLayout="stack" [breakpoint]="'768px'">
+                 styleClass="p-datatable-sm pf-table w-full" responsiveLayout="stack" [breakpoint]="'768px'">
             
             <ng-template pTemplate="header">
                 <tr>
@@ -54,39 +60,39 @@
             <ng-template pTemplate="body" let-eval>
                 <tr>
                     <td>
-                        <span class="p-column-title hidden-desktop">Fecha</span>
-                        <div class="font-bold text-main text-right md:text-left">{{ eval.fecha | date:'dd/MM/yyyy' }}</div>
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Fecha</span>
+                        <div class="font-bold text-chalk text-right md:text-left text-lg pf-anton" style="letter-spacing: 0.5px;">{{ eval.fecha | date:'dd/MM/yyyy' }}</div>
                     </td>
 
                     <td>
-                        <span class="p-column-title hidden-desktop">Prueba Evaluada</span>
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Prueba Evaluada</span>
                         <div class="flex flex-column align-items-end md:align-items-start">
-                            <span class="text-main font-bold block">{{ eval.test_nombre }}</span>
-                            <small class="text-secondary font-medium block mt-1" *ngIf="eval.edad_evaluacion > 0">
+                            <span class="text-chalk font-bold block">{{ eval.test_nombre }}</span>
+                            <small class="text-steel font-medium block mt-1 pf-oswald" *ngIf="eval.edad_evaluacion > 0">
                                 Evaluado a los {{ eval.edad_evaluacion }} años
                             </small>
                         </div>
                     </td>
 
                     <td class="text-center">
-                        <span class="p-column-title hidden-desktop">Resultado</span>
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Resultado</span>
                         <div class="flex align-items-baseline justify-content-end md:justify-content-center">
-                            <span class="text-lg font-bold text-main">{{ eval.resultado }}</span>
-                            &nbsp; <small class="text-secondary font-medium">{{ eval.unidad }}</small>
+                            <span class="text-xl font-bold text-chalk pf-anton" style="letter-spacing: 1px;">{{ eval.resultado }}</span>
+                            &nbsp; <small class="text-steel font-medium">{{ eval.unidad }}</small>
                         </div>
                     </td>
 
                     <td class="text-center">
-                        <span class="p-column-title hidden-desktop">Nivel</span>
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Nivel</span>
                         <p-tag [value]="eval.nivel" 
                                [style]="{'background-color': eval.color, 'color': '#ffffff', 'padding': '0.2rem 0.6rem', 'font-size': '0.75rem'}">
                         </p-tag>
                     </td>
 
                     <td class="text-center">
-                        <span class="p-column-title hidden-desktop">Información</span>
-                        <div class="action-buttons">
-                            <button pButton icon="pi pi-eye" class="p-button-text p-button-info" 
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Información</span>
+                        <div class="pf-table-actions">
+                            <button pButton icon="pi pi-eye" class="p-button-info" 
                                     (click)="verDetalle(eval)" pTooltip="Ver Detalles"></button>
                         </div>
                     </td>
@@ -95,41 +101,42 @@
 
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="5" class="text-center p-5 text-secondary">
-                        <i class="pi pi-chart-line text-400 mb-3 block" style="font-size: 2rem"></i>
-                        No hay evaluaciones registradas en el periodo seleccionado.
+                    <td colspan="5" class="text-center p-6 text-steel">
+                        <i class="pi pi-chart-line text-steel mb-3 block" style="font-size: 4rem"></i>
+                        <span class="pf-oswald text-lg">No hay evaluaciones registradas en el periodo seleccionado.</span>
                     </td>
                 </tr>
             </ng-template>
         </p-table>
     </div>
 
+    <!-- MODAL DETALLE DE EVALUACIÓN -->
     <p-dialog [(visible)]="displayDetalle" header="Detalle de Evaluación" 
-              [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" [draggable]="false" [resizable]="false" styleClass="p-fluid">
+              [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" [draggable]="false" [resizable]="false" styleClass="p-fluid pf-dialog">
         
-        <div *ngIf="selectedEval" class="animation-fade-in pb-2 mt-2">
+        <div *ngIf="selectedEval" class="animation-fade-in pb-2 mt-3">
             
-            <div class="modal-header-info mb-4 border-bottom-1 border-300 pb-3">
-                <div class="info-block">
-                    <span class="info-label">Prueba Seleccionada</span>
-                    <span class="info-value text-primary">{{selectedEval.test_nombre}}</span>
+            <div class="flex justify-content-between align-items-center mb-4 pb-3 border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                <div class="flex flex-column gap-1">
+                    <span class="pf-oswald text-steel" style="font-size: 0.75rem;">Prueba Seleccionada</span>
+                    <span class="pf-anton text-chalk text-xl" style="letter-spacing: 0.5px;">{{selectedEval.test_nombre}}</span>
                 </div>
-                <div class="info-block text-right" *ngIf="selectedEval.edad_evaluacion > 0">
-                    <span class="info-label">Edad al rendir</span>
+                <div class="flex flex-column gap-1 text-right" *ngIf="selectedEval.edad_evaluacion > 0">
+                    <span class="pf-oswald text-steel" style="font-size: 0.75rem;">Edad al rendir</span>
                     <p-tag [value]="selectedEval.edad_evaluacion + ' años'" severity="info" styleClass="px-2 py-1 text-xs font-bold"></p-tag>
                 </div>
             </div>
 
-            <div class="field mb-4" *ngIf="selectedEval.test_descripcion">
-                <label class="modal-label"><i class="pi pi-book text-primary mr-1"></i> Descripción de la Prueba</label>
-                <div class="modal-content-box text-sm">
+            <div class="mb-4" *ngIf="selectedEval.test_descripcion">
+                <label class="pf-oswald text-steel block mb-2"><i class="pi pi-book text-blue-500 mr-2"></i> Descripción de la Prueba</label>
+                <div class="p-3 border-round border-1 surface-border text-chalk text-sm" style="background: var(--input-bg); border-color: var(--border-color) !important;">
                     {{ selectedEval.test_descripcion }}
                 </div>
             </div>
 
-            <div class="field mb-2">
-                <label class="modal-label"><i class="pi pi-comment text-primary mr-1"></i> Observaciones del Entrenador</label>
-                <div class="modal-content-box text-sm" [ngClass]="{'empty-state': !selectedEval.observacion}">
+            <div class="mb-2">
+                <label class="pf-oswald text-steel block mb-2"><i class="pi pi-comment text-teal mr-2"></i> Observaciones del Entrenador</label>
+                <div class="p-3 border-round border-1 surface-border text-chalk text-sm" style="background: var(--input-bg); border-color: var(--border-color) !important;" [ngClass]="{'text-steel italic': !selectedEval.observacion}">
                     {{ selectedEval.observacion || 'Sin observaciones registradas para esta sesión.' }}
                 </div>
             </div>
@@ -137,7 +144,7 @@
         </div>
 
         <ng-template pTemplate="footer">
-            <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text" (click)="displayDetalle = false"></button>
+            <button pButton label="Cerrar" icon="pi pi-times" class="pf-btn-ghost w-full justify-content-center" (click)="displayDetalle = false"></button>
         </ng-template>
     </p-dialog>
 </div>

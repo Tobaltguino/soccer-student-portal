@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs'; // ✅ Importamos forkJoin
+import { forkJoin } from 'rxjs';
 
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
@@ -12,12 +12,13 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api'; // 🔥 Agregado ConfirmationService
+import { ConfirmDialogModule } from 'primeng/confirmdialog'; // 🔥 Agregado ConfirmDialogModule
 
 import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
 import { Clase } from '../../../../core/domains/academico/clases/models/clase.interface';
 
-// ✅ Nuevo servicio de asistencia
+// Nuevo servicio de asistencia
 import { AsistenciaService } from '../../../../core/domains/academico/asistencias/services/asistencia.service';
 
 @Component({
@@ -25,16 +26,17 @@ import { AsistenciaService } from '../../../../core/domains/academico/asistencia
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, TagModule, ButtonModule,
-    DialogModule, InputTextModule, DatePickerModule, SelectModule, TooltipModule, ToastModule
+    DialogModule, InputTextModule, DatePickerModule, SelectModule, TooltipModule, 
+    ToastModule, ConfirmDialogModule // 🔥 Importado aquí
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService], // 🔥 Importado aquí
   templateUrl: './clases.component.html',
-  styleUrls: ['./clases.component.css']
+  styleUrls: ['./clases.component.scss'] // Recuerda cambiar a .scss si usas sass
 })
 export class EstudianteClasesComponent implements OnInit {
 
   private claseService = inject(ClaseService);
-  private asistenciaService = inject(AsistenciaService); // ✅ Inyectado
+  private asistenciaService = inject(AsistenciaService); 
   private cdr = inject(ChangeDetectorRef);
   private messageService = inject(MessageService);
 
@@ -62,7 +64,7 @@ export class EstudianteClasesComponent implements OnInit {
   cargarClases() {
     this.loading = true;
 
-    // ✅ Ejecutamos ambas peticiones en paralelo
+    // Ejecutamos ambas peticiones en paralelo
     forkJoin({
       clases: this.claseService.obtenerMisClases(),
       asistencias: this.asistenciaService.obtenerMisAsistencias()
