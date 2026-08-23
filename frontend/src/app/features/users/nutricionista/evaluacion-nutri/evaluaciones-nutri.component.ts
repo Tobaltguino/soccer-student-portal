@@ -37,11 +37,10 @@ import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './evaluaciones-nutri.component.html',
-  styleUrls: ['./evaluaciones-nutri.component.css']
+  styleUrls: ['./evaluaciones-nutri.component.scss'] // 🔥 Cambiado a .scss
 })
 export class NutriEvaluationsComponent implements OnInit {
   
-  // ✅ Exponemos el Enum al HTML
   readonly EstadoSesion = EstadoSesion;
 
   // Inyección de Servicios
@@ -189,7 +188,6 @@ export class NutriEvaluationsComponent implements OnInit {
     this.loading = true;
     const fechaSeleccionada = new Date(this.evalLogistica.fecha);
     
-    // 💡 El backend ya sabe quién es el nutricionista por su JWT, no es necesario enviarlo
     const payload = {
       tipoId: this.evalLogistica.tipo_id,
       fecha: fechaSeleccionada.toISOString().split('T')[0],
@@ -309,7 +307,6 @@ export class NutriEvaluationsComponent implements OnInit {
         observaciones: est.observacion || ''
       };
 
-      // FormData se maneja automáticamente en el NutriResultadoService ✨
       if (est.resultado_id) {
         return this.nutriResultadoService.actualizarResultado(est.resultado_id, payload, est.archivoSeleccionado);
       } else {

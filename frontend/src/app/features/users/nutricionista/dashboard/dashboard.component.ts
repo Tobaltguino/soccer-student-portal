@@ -3,6 +3,14 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
+// 🔥 Módulos de PrimeNG agregados
+import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
+import { ButtonModule } from 'primeng/button';
+import { MessageService, ConfirmationService } from 'primeng/api';
+
 // 🚀 SERVICIOS MODULARES (NestJS)
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
@@ -13,16 +21,25 @@ import { NutriSesionService } from '../../../../core/domains/salud/nutricion/ses
 @Component({
   selector: 'app-nutri-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [
+    CommonModule, 
+    RouterModule,
+    ToastModule,
+    ConfirmDialogModule,
+    TagModule,
+    TooltipModule,
+    ButtonModule
+  ],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './dashboard.component.html', 
-  styleUrls: ['./dashboard.component.css'],
+  styleUrls: ['./dashboard.component.scss'], // 🔥 Cambiado a .scss
 })
 export class NutricionistaDashboardComponent implements OnInit {
   
   private authService = inject(AuthService);
   private estudianteService = inject(EstudianteService);
   private usuarioService = inject(UsuarioService);
-  private nutriSesionService = inject(NutriSesionService); // 👈 Tu servicio específico de sesiones
+  private nutriSesionService = inject(NutriSesionService);
   
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
@@ -69,11 +86,11 @@ export class NutricionistaDashboardComponent implements OnInit {
       const resCount = await firstValueFrom(this.estudianteService.contarEstudiantesActivos());
       this.totalEstudiantes = resCount?.total || 0;
 
-      // 2. Última Evaluación Nutricional Finalizada (Llamando a tu servicio de Sesiones)
+      // 2. Última Evaluación Nutricional Finalizada
       const resUltimaEval = await firstValueFrom(this.nutriSesionService.obtenerUltimaFinalizada());
       this.ultimaEvaluacionGlobal = resUltimaEval || null;
 
-      // 3. Cumpleaños Globales procesados por NestJS
+      // 3. Cumpleaños Globales
       const resCumples = await firstValueFrom(this.usuarioService.obtenerCumpleanosGlobales(7));
       this.proximosCumpleanos = resCumples || [];
 

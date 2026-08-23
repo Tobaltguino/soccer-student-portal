@@ -9,8 +9,9 @@ import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api'; // 🔥 Agregado ConfirmationService
 import { TextareaModule } from 'primeng/textarea';
+import { ConfirmDialogModule } from 'primeng/confirmdialog'; // 🔥 Agregado
 
 // Servicios y Modelos unificados a NestJS
 import { MaterialService } from '../../../../core/domains/academico/material-complementario/services/material-complementario.service';
@@ -29,11 +30,12 @@ import { Material, CrearMaterialPayload, ActualizarMaterialPayload } from '../..
     InputTextModule, 
     ToastModule, 
     TooltipModule,
-    TextareaModule
+    TextareaModule,
+    ConfirmDialogModule // 🔥 Importado
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService], // 🔥 Importado
   templateUrl: './material-complementario.component.html',
-  styleUrls: ['./material-complementario.component.css']
+  styleUrls: ['./material-complementario.component.scss'] // 🔥 Cambiado a .scss
 })
 export class NutricionistaMaterialComplementarioComponent implements OnInit {
   
