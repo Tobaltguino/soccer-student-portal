@@ -14,6 +14,7 @@ import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
 import { MessageService } from 'primeng/api';
 import { TextareaModule } from 'primeng/textarea';
+import { TagModule } from 'primeng/tag'; // 🔥 Agregado para los p-tag
 
 // Servicios y Modelos unificados a NestJS
 import { MaterialService } from '../../../../core/domains/academico/material-complementario/services/material-complementario.service';
@@ -35,11 +36,12 @@ import { Material, CrearMaterialPayload, ActualizarMaterialPayload } from '../..
     SelectModule,
     ToastModule,
     DialogModule,
-    TextareaModule
+    TextareaModule,
+    TagModule // 🔥 Importado
   ],
   providers: [MessageService],
   templateUrl: './material-complementario.component.html',
-  styleUrls: ['./material-complementario.component.css']
+  styleUrls: ['./material-complementario.component.scss'] // 🔥 Cambiado a .scss
 })
 export class KinesiollogoMaterialComplementarioComponent implements OnInit {
   
@@ -76,7 +78,7 @@ export class KinesiollogoMaterialComplementarioComponent implements OnInit {
     this.loading = true;
     this.cdr.detectChanges(); 
 
-    // ✅ Llamamos a la API con límite alto para filtrar localmente (El Kine ve todo)
+    // Llamamos a la API con límite alto para filtrar localmente (El Kine ve todo)
     this.materialService.listarMaterial({ limite: 100 }).subscribe({
       next: (response) => {
         this.guiasOriginales = response.registros || [];

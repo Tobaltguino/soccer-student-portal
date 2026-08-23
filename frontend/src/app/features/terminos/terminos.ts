@@ -35,10 +35,7 @@ export class TerminosComponent implements OnInit {
   ngOnInit() {
     this.authService.me().subscribe({
       next: (res: any) => {
-        // 🔥 SOLUCIÓN: Buscamos el rol en todas las formas posibles que tu backend pueda enviarlo
         this.userRole = res.role || res.rol || res.user?.role || res.user?.rol; 
-        
-        // Imprimimos en consola para que puedas verificar que sí llegó
         console.log('Rol detectado en Términos:', this.userRole);
       },
       error: () => {
@@ -48,10 +45,8 @@ export class TerminosComponent implements OnInit {
   }
 
   confirmarAceptacion() {
-    // Si no marcó la casilla, no hace nada (aunque el HTML ya bloquea el botón)
     if (!this.acepto) return;
 
-    // 🔥 NUEVO: Si no detectó el rol, ya no falla en silencio, te avisa en pantalla.
     if (!this.userRole) {
       this.messageService.add({ 
         severity: 'error', 
@@ -78,7 +73,6 @@ export class TerminosComponent implements OnInit {
       },
       error: (err) => {
         this.guardando = false;
-        // Si el backend (NestJS/Supabase) falla, entrará aquí y verás el error
         const mensajeError = err.error?.message || 'No se pudo registrar la aceptación. Intente nuevamente.';
         this.messageService.add({ severity: 'error', summary: 'Error de Servidor', detail: mensajeError });
         console.error('Error de BD:', err);
@@ -86,39 +80,39 @@ export class TerminosComponent implements OnInit {
     });
   }
 
+  // 🔥 REDIRECCIONES EN ESPAÑOL Y A /inicio 🔥
   redirigirPorRol(rol: string) {
-    // Normalizamos a minúsculas por si el backend lo envía con mayúsculas
     const rolNormalizado = rol ? rol.toLowerCase() : '';
 
     switch (rolNormalizado) {
-      case Rol.ESTUDIANTE: // O 'student' según como evalúes tu enum
+      case Rol.ESTUDIANTE:
       case 'student':
       case 'estudiante':
-        this.router.navigate(['/student/dashboard']); 
+        this.router.navigate(['/estudiante/inicio']); 
         break;
 
       case Rol.PROFESOR:
       case 'professor':
       case 'profesor':
-        this.router.navigate(['/professor/dashboard']);
+        this.router.navigate(['/profesor/inicio']);
         break;
 
       case Rol.KINESIOLOGO:
       case 'kine':
       case 'kinesiologo':
-        this.router.navigate(['/kine/dashboard']);
+        this.router.navigate(['/kinesiologo/inicio']);
         break;
 
       case Rol.NUTRICIONISTA:
       case 'nutri':
       case 'nutricionista':
-        this.router.navigate(['/nutri/dashboard']);
+        this.router.navigate(['/nutricionista/inicio']);
         break;
 
       case Rol.ADMINISTRADOR:
       case 'admin':
       case 'administrador':
-        this.router.navigate(['/admin/dashboard']);
+        this.router.navigate(['/admin/inicio']);
         break;
 
       default:

@@ -157,27 +157,27 @@ export class LayoutComponent implements OnInit {
   }
 
   // ==========================================
-  // DEFINICIÓN DE MENÚS POR ROL
+  // DEFINICIÓN DE MENÚS POR ROL (RUTAS ESTANDARIZADAS)
   // ==========================================
   private getAdminMenu(): MenuGroup[] {
     return [
-      { label: 'PRINCIPAL', items: [{ label: 'Inicio', icon: 'pi pi-home', route: '/admin/dashboard' }] },
+      { label: 'PRINCIPAL', items: [{ label: 'Inicio', icon: 'pi pi-home', route: '/admin/inicio' }] },
       { label: 'ADMINISTRACIÓN', items: [
-          { label: 'Usuarios', icon: 'pi pi-users', route: '/admin/users' },
-          { label: 'Grupos', icon: 'pi pi-th-large', route: '/admin/groups' },
-          { label: 'Pagos', icon: 'pi pi-wallet', route: '/admin/payments' },
-          { label: 'Material', icon: 'pi pi-book', route: '/admin/guides' },
-          { label: 'Configuración', icon: 'pi pi-globe', route: '/admin/home-config' }
+          { label: 'Usuarios', icon: 'pi pi-users', route: '/admin/usuarios' },
+          { label: 'Grupos', icon: 'pi pi-th-large', route: '/admin/grupos' },
+          { label: 'Pagos', icon: 'pi pi-wallet', route: '/admin/pagos' },
+          { label: 'Material', icon: 'pi pi-book', route: '/admin/material' },
+          { label: 'Configuración', icon: 'pi pi-globe', route: '/admin/configuracion' }
       ]},
       { label: 'DEPORTIVO', items: [
-          { label: 'Clases', icon: 'pi pi-calendar', route: '/admin/classes' },
-          { label: 'Asistencias', icon: 'pi pi-check-square', route: '/admin/attendance' },
-          { label: 'Evaluaciones', icon: 'pi pi-chart-line', route: '/admin/evaluations' }
+          { label: 'Clases', icon: 'pi pi-calendar', route: '/admin/clases' },
+          { label: 'Asistencias', icon: 'pi pi-check-square', route: '/admin/asistencias' },
+          { label: 'Evaluaciones', icon: 'pi pi-chart-line', route: '/admin/evaluaciones' }
       ]},
       { label: 'ÁREA MÉDICA', items: [
-          { label: 'Kine - Historial', icon: 'pi pi-heart-fill', route: '/admin/kine-historial' },
-          { label: 'Kine - Fichas', icon: 'pi pi-file-edit', route: '/admin/kine-fichas' },
-          { label: 'Kine - Pruebas', icon: 'pi pi-bolt', route: '/admin/kine-evaluaciones' },
+          { label: 'Kine - Historial', icon: 'pi pi-heart-fill', route: '/admin/historial-clinico' },
+          { label: 'Kine - Fichas', icon: 'pi pi-file-edit', route: '/admin/fichas-evolutivas' },
+          { label: 'Kine - Pruebas', icon: 'pi pi-bolt', route: '/admin/evaluaciones-kine' },
           { label: 'Nutrición', icon: 'pi pi-apple', route: '/admin/nutricion' }
       ]}
     ];
@@ -185,67 +185,69 @@ export class LayoutComponent implements OnInit {
 
   private getStudentMenu(): MenuGroup[] {
     return [
-      { label: 'PRINCIPAL', items: [{ label: 'Inicio', icon: 'pi pi-home', route: '/student/dashboard' }] },
+      { label: 'PRINCIPAL', items: [{ label: 'Inicio', icon: 'pi pi-home', route: '/estudiante/inicio' }] },
       { label: 'DEPORTIVO', items: [
-          { label: 'Horario', icon: 'pi pi-calendar', route: '/student/schedule' },
-          { label: 'Mis Clases', icon: 'pi pi-th-large', route: '/student/classes' },
-          { label: 'Asistencia', icon: 'pi pi-check-square', route: '/student/attendance' },
-          { label: 'Evaluaciones', icon: 'pi pi-chart-line', route: '/student/evaluations' },
-          { label: 'Material', icon: 'pi pi-book', route: '/student/guides' },
-          { label: 'Profesores', icon: 'pi pi-users', route: '/student/view-professor' }
+          { label: 'Horario', icon: 'pi pi-calendar', route: '/estudiante/horario' },
+          { label: 'Mis Clases', icon: 'pi pi-th-large', route: '/estudiante/clases' },
+          { label: 'Asistencia', icon: 'pi pi-check-square', route: '/estudiante/asistencias' },
+          { label: 'Evaluaciones', icon: 'pi pi-chart-line', route: '/estudiante/evaluaciones' },
+          { label: 'Material', icon: 'pi pi-book', route: '/estudiante/material' },
+          { label: 'Cuerpo Técnico', icon: 'pi pi-users', route: '/estudiante/cuerpo-tecnico' }
       ]},
       { label: 'ÁREA MÉDICA', items: [
-          { label: 'Kine - Historial', icon: 'pi pi-heart-fill', route: '/student/kine-historial' },
-          { label: 'Kine - Fichas', icon: 'pi pi-file-edit', route: '/student/kine-fichas' },
-          { label: 'Kine - Pruebas', icon: 'pi pi-bolt', route: '/student/kine-evaluaciones' },
-          { label: 'Nutrición', icon: 'pi pi-apple', route: '/student/nutricion' }
+          { label: 'Kine - Historial', icon: 'pi pi-heart-fill', route: '/estudiante/historial-clinico' },
+          { label: 'Kine - Fichas', icon: 'pi pi-file-edit', route: '/estudiante/fichas-evolutivas' },
+          { label: 'Kine - Pruebas', icon: 'pi pi-bolt', route: '/estudiante/evaluaciones-kine' },
+          { label: 'Nutrición', icon: 'pi pi-apple', route: '/estudiante/nutricion' }
       ]}
     ];
   }
 
   private getProfessorMenu(): MenuGroup[] {
     return [
-      { label: 'PRINCIPAL', items: [{ label: 'Inicio', icon: 'pi pi-home', route: '/professor/dashboard' }] },
+      { label: 'PRINCIPAL', items: [{ label: 'Inicio', icon: 'pi pi-home', route: '/profesor/inicio' }] },
       { label: 'GESTIÓN', items: [
-          { label: 'Mis Clases', icon: 'pi pi-calendar', route: '/professor/classes' },
-          { label: 'Asistencia', icon: 'pi pi-check-square', route: '/professor/attendance' },
-          { label: 'Evaluaciones', icon: 'pi pi-chart-line', route: '/professor/evaluations' },
-          { label: 'Estudiantes', icon: 'pi pi-users', route: '/professor/students' },
-          { label: 'Material', icon: 'pi pi-book', route: '/professor/guides' }
+          { label: 'Horario', icon: 'pi pi-calendar', route: '/profesor/horario' },
+          { label: 'Mis Clases', icon: 'pi pi-calendar', route: '/profesor/clases' },
+          { label: 'Asistencia', icon: 'pi pi-check-square', route: '/profesor/asistencias' },
+          { label: 'Evaluaciones', icon: 'pi pi-chart-line', route: '/profesor/evaluaciones' },
+          { label: 'Material', icon: 'pi pi-book', route: '/profesor/material' },
+          { label: 'Estudiantes', icon: 'pi pi-users', route: '/profesor/estudiantes' }
       ]},
-      { label: 'ÁREA MÉDICA (Lectura)', items: [
-          { label: 'Kine - Historial', icon: 'pi pi-heart-fill', route: '/professor/kine-historial' },
-          { label: 'Kine - Fichas', icon: 'pi pi-file-edit', route: '/professor/kine-fichas' },
-          { label: 'Kine - Pruebas', icon: 'pi pi-bolt', route: '/professor/kine-evaluaciones' },
-          { label: 'Nutrición', icon: 'pi pi-apple', route: '/professor/nutricion' }
+      { label: 'ÁREA MÉDICA', items: [
+          { label: 'Kine - Historial', icon: 'pi pi-heart-fill', route: '/profesor/historial-clinico' },
+          { label: 'Kine - Fichas', icon: 'pi pi-file-edit', route: '/profesor/fichas-evolutivas' },
+          { label: 'Kine - Pruebas', icon: 'pi pi-bolt', route: '/profesor/evaluaciones-kine' },
+          { label: 'Nutrición', icon: 'pi pi-apple', route: '/profesor/nutricion' }
       ]}
     ];
   }
 
   private getKineMenu(): MenuGroup[] {
     return [
-      { label: 'PRINCIPAL', items: [{ label: 'Inicio', icon: 'pi pi-home', route: '/kine/dashboard' }] },
+      { label: 'PRINCIPAL', items: [{ label: 'Inicio', icon: 'pi pi-home', route: '/kinesiologo/inicio' }] },
       { label: 'DEPORTIVO', items: [
-          { label: 'Clases', icon: 'pi pi-calendar', route: '/kine/classes' },
-          { label: 'Horarios', icon: 'pi pi-clock', route: '/kine/schedule' },
-          { label: 'Material', icon: 'pi pi-book', route: '/kine/guides' },
-          { label: 'Pacientes', icon: 'pi pi-users', route: '/kine/patients' }
+          { label: 'Horario', icon: 'pi pi-clock', route: '/kinesiologo/horario' },
+          { label: 'Clases', icon: 'pi pi-calendar', route: '/kinesiologo/clases' },
+          { label: 'Evaluaciones', icon: 'pi pi-chart-line', route: '/kinesiologo/evaluaciones' },
+          { label: 'Material', icon: 'pi pi-book', route: '/kinesiologo/material' },
+          { label: 'Pacientes', icon: 'pi pi-users', route: '/kinesiologo/pacientes' }
       ]},
       { label: 'KINESIOLOGÍA', items: [
-          { label: 'Historial Clínico', icon: 'pi pi-heart-fill', route: '/kine/kine-historial' },
-          { label: 'Fichas Evolutivas', icon: 'pi pi-file-edit', route: '/kine/kine-fichas' },
-          { label: 'Evaluaciones Físicas', icon: 'pi pi-bolt', route: '/kine/kine-evaluaciones' },
-          { label: 'Pautas Nutricionales', icon: 'pi pi-apple', route: '/kine/nutricion' }
+          { label: 'Historial Clínico', icon: 'pi pi-heart-fill', route: '/kinesiologo/historial-clinico' },
+          { label: 'Fichas Evolutivas', icon: 'pi pi-file-edit', route: '/kinesiologo/fichas-evolutivas' },
+          { label: 'Evaluaciones Kinésicas', icon: 'pi pi-bolt', route: '/kinesiologo/evaluaciones-kine' },
+          { label: 'Pautas Nutricionales', icon: 'pi pi-apple', route: '/kinesiologo/nutricion' }
       ]}
     ];
   }
 
   private getNutriMenu(): MenuGroup[] {
     return [
-      { label: 'PRINCIPAL', items: [{ label: 'Inicio', icon: 'pi pi-home', route: '/nutri/dashboard' }] },
+      { label: 'PRINCIPAL', items: [{ label: 'Inicio', icon: 'pi pi-home', route: '/nutricionista/inicio' }] },
       { label: 'NUTRICIÓN', items: [
-          { label: 'Evaluaciones', icon: 'pi pi-apple', route: '/nutri/evaluations' },
-          { label: 'Material Complementario', icon: 'pi pi-book', route: '/nutri/guides' }
+          { label: 'Evaluaciones', icon: 'pi pi-apple', route: '/nutricionista/evaluaciones' },
+          { label: 'Material Complementario', icon: 'pi pi-book', route: '/nutricionista/material' }
       ]}
     ];
   }

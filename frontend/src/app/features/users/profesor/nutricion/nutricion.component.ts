@@ -35,7 +35,7 @@ import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes
   ],
   providers: [MessageService],
   templateUrl: './nutricion.component.html',
-  styleUrls: ['./nutricion.component.css'] 
+  styleUrls: ['./nutricion.component.scss'] // 🔥 Cambiado a .scss
 })
 export class ProfessorNutritionComponent implements OnInit {
   

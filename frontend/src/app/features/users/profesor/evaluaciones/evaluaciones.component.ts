@@ -35,7 +35,7 @@ import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './evaluaciones.component.html',
-  styleUrls: ['./evaluaciones.component.css']
+  styleUrls: ['./evaluaciones.component.scss'] // 🔥 Cambiado a .scss
 })
 export class ProfesorEvaluacionesComponent implements OnInit {
 

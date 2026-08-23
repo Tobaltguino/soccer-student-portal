@@ -38,7 +38,7 @@ import { HistorialClinico } from '../../../../core/domains/salud/kinesiologia/hi
   ],
   providers: [FilterService],
   templateUrl: './ver-estudiantes.component.html',
-  styleUrls: ['./ver-estudiantes.component.css']
+  styleUrls: ['./ver-estudiantes.component.scss'] // 🔥 Cambiado a .scss
 })
 export class KinesiolgoVerEstudiantesComponent implements OnInit {
   @ViewChild('dt') dt: Table | undefined;
@@ -118,10 +118,8 @@ export class KinesiolgoVerEstudiantesComponent implements OnInit {
     this.estudianteService.obtenerEstudiantesDeMiGrupo().subscribe({
       next: (data) => {
         // Aplanamos la data si viene estructurada como EstudianteConPerfil
-        // (Asumiendo que el backend te devuelve el perfil anidado o plano, ajustamos por si acaso)
         this.dataList = data.map((est: any) => ({
           ...est,
-          // Si tu backend lo envía plano, esto ya sirve. Si lo envía anidado en "perfil", desestructuramos:
           ...(est.perfil ? est.perfil : {})
         }));
         this.loading = false;
@@ -153,7 +151,6 @@ export class KinesiolgoVerEstudiantesComponent implements OnInit {
     this.cdr.detectChanges();
 
     // ✅ Usamos tu nuevo servicio de historial clínico
-    // Nota: Verificamos si el ID viene en `id_usuario`, `usuario_id` o `id` según cómo responda tu backend
     const userId = estudiante.id_usuario || estudiante.usuario_id || estudiante.id;
 
     this.historialClinicoService.listarHistorialPorEstudiante(userId).subscribe({
@@ -183,7 +180,7 @@ export class KinesiolgoVerEstudiantesComponent implements OnInit {
 
   getSeveridadEstado(estado: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
       if (estado === 'RECUPERADO') return 'success';
-      if (estado === 'ACTIVO') return 'danger'; // En caso de que uses 'ACTIVO' en algún lado
+      if (estado === 'ACTIVO') return 'danger'; 
       if (estado === 'EN_OBSERVACION') return 'warn';
       return 'info'; // EN_TRATAMIENTO, EN_REINTEGRO_DEPORTIVO
   }

@@ -1,49 +1,51 @@
-<div class="classes-container fadein animation-duration-500">
-    
+<div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
+    <!-- 🔥 Confirm Dialog Global 🔥 -->
+    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
     
-    <header class="page-header">
+    <header class="pf-admin-header">
         <div class="header-content">
-            <h1 class="m-0 text-main">Agenda de Entrenamientos</h1>
-            <p class="text-secondary m-0 mt-1">Revisa la planificación técnica de las categorías a tu cargo.</p>
+            <div>
+                <h1 class="pf-anton text-chalk m-0 text-3xl">Agenda de Entrenamientos</h1>
+                <p class="pf-oswald text-teal mt-1">Revisa la planificación técnica de las categorías a tu cargo.</p>
+            </div>
         </div>
         <div class="header-actions">
-            <button pButton icon="pi pi-sync" class="p-button-outlined p-button-secondary btn-create" 
-                    (click)="cargarClases()" [loading]="loading" pTooltip="Actualizar lista"></button>
+            <button pButton icon="pi pi-sync" class="pf-btn-ghost" 
+                    (click)="cargarClases()" [loading]="loading" pTooltip="Actualizar lista" tooltipPosition="left"></button>
         </div>
     </header>
 
-    <div class="filter-bar">
+    <div class="pf-admin-card mb-4 p-3">
         <div class="filter-row">
             <div class="filter-item flex-grow-1" style="min-width: 200px;">
-                <label><i class="pi pi-users mr-1"></i> Categoría</label>
+                <label><i class="pi pi-users mr-1 text-teal"></i> Categoría</label>
                 <p-select [options]="grupos" [(ngModel)]="selectedGrupoId" optionLabel="nombre" optionValue="id" 
-                          placeholder="Selecciona una categoría" (onChange)="onGrupoChange()" styleClass="w-full" appendTo="body"></p-select>
+                          placeholder="Selecciona una categoría" (onChange)="onGrupoChange()" styleClass="w-full" appendTo="body" [filter]="false"></p-select>
             </div>
             
             <div class="filter-item flex-grow-1">
-                <label><i class="pi pi-calendar mr-1"></i> Fecha</label>
-                <p-datepicker [(ngModel)]="filtroFecha" placeholder="Filtrar por Fecha" dateFormat="dd/mm/yy"
+                <label><i class="pi pi-calendar mr-1 text-teal"></i> Fecha</label>
+                <p-datepicker [(ngModel)]="filtroFecha" placeholder="Filtrar por Fecha" dateFormat="dd/mm/yy" [showIcon]="true"
                               (onSelect)="aplicarFiltros()" (onClear)="aplicarFiltros()" [showClear]="true" styleClass="w-full" appendTo="body"></p-datepicker>
             </div>
             
             <div class="filter-item flex-grow-1">
-                <label><i class="pi pi-map-marker mr-1"></i> Lugar</label>
+                <label><i class="pi pi-map-marker mr-1 text-teal"></i> Lugar</label>
                 <input pInputText type="text" [(ngModel)]="filtroLugar" (keyup.enter)="aplicarFiltros()" 
                        placeholder="Buscar por lugar..." class="w-full"/>
             </div>
             
-            <div class="filter-btn">
-                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary" 
+            <div class="filter-item-btn">
+                <button pButton icon="pi pi-filter-slash" class="pf-btn-ghost w-full justify-content-center" 
                         (click)="limpiarFiltros()" pTooltip="Limpiar Filtros"></button>
             </div>
         </div>
     </div>
 
-    <div class="main-card table-responsive">
+    <div class="pf-admin-card table-responsive p-0">
         <p-table [value]="clases" [loading]="loading" [rows]="10" [paginator]="true" 
-                 styleClass="p-datatable-sm p-datatable-striped" [rowHover]="true" 
-                 responsiveLayout="stack" [breakpoint]="'768px'">
+                 styleClass="p-datatable-sm pf-table w-full" responsiveLayout="stack" [breakpoint]="'768px'">
             
             <ng-template pTemplate="header">
                 <tr>
@@ -56,23 +58,23 @@
             <ng-template pTemplate="body" let-clase>
                 <tr>
                     <td>
-                        <span class="p-column-title hidden-desktop">Fecha / Hora</span>
-                        <div class="flex flex-column align-items-end md:align-items-start w-full md:w-auto text-right md:text-left">
-                            <div class="font-bold text-main w-full">{{ clase.fecha | date:'dd/MM/yyyy' }}</div>
-                            <div class="text-sm text-secondary flex align-items-center justify-content-end md:justify-content-start w-full mt-1">
-                                <i class="pi pi-clock mr-1"></i>{{ clase.hora | slice:0:5 }} hrs
-                            </div>
+                        <span class="p-column-title hidden-desktop pf-oswald text-steel">Fecha / Hora</span>
+                        <div class="flex flex-column gap-1 text-right md:text-left">
+                            <span class="pf-anton text-chalk text-xl" style="letter-spacing: 0.5px;">{{ clase.fecha | date:'dd/MM/yyyy' }}</span>
+                            <span class="text-steel font-bold text-sm pf-oswald"><i class="pi pi-clock mr-1 text-teal"></i>{{ clase.hora | slice:0:5 }} hrs</span>
                         </div>
                     </td>
                     <td>
-                        <span class="p-column-title hidden-desktop">Lugar</span>
-                        <div class="font-bold text-main">{{ clase.lugar || 'Cancha Principal' }}</div>
+                        <span class="p-column-title hidden-desktop pf-oswald text-steel">Lugar</span>
+                        <div class="font-bold text-chalk">{{ clase.lugar || 'Cancha Principal' }}</div>
                     </td>
                     <td class="text-center">
-                        <span class="p-column-title hidden-desktop">Planificación</span>
-                        <div class="action-buttons">
-                            <button pButton icon="pi pi-eye" label="Ver Detalles" class="p-button-text p-button-info p-button-sm font-bold" 
-                                    (click)="verPlanificacion(clase)"></button>
+                        <span class="p-column-title hidden-desktop pf-oswald text-steel">Planificación</span>
+                        <div class="pf-table-actions">
+                            <button pButton icon="pi pi-check-square" class="p-button-success" 
+                                    (click)="verAsistencia(clase)" pTooltip="Ver Asistencia"></button>
+                            <button pButton icon="pi pi-eye" class="p-button-info" 
+                                    (click)="verPlanificacion(clase)" pTooltip="Ver Detalles"></button>
                         </div>
                     </td>
                 </tr>
@@ -80,66 +82,87 @@
             
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="3" class="text-center p-5 text-secondary">
-                        <i class="pi pi-calendar-times text-400 mb-3 block" style="font-size: 2rem"></i>
-                        No hay entrenamientos planificados para este grupo.
+                    <td colspan="3" class="text-center p-6 text-steel">
+                        <i class="pi pi-calendar-times text-steel mb-3 block" style="font-size: 3.5rem"></i>
+                        <span class="pf-oswald text-lg">No hay entrenamientos planificados para esta categoría.</span>
                     </td>
                 </tr>
             </ng-template>
         </p-table>
     </div>
 
-    <!-- Modal Detalle Planificación -->
-    <p-dialog [(visible)]="displayPlan" header="Detalle del Entrenamiento" 
-              [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" styleClass="p-fluid">
+    <!-- Modal Asistencia -->
+    <p-dialog [(visible)]="displayAttendanceDialog" [header]="'Asistencia: ' + (claseSeleccionadaAsistencia?.fecha | date: 'dd/MM/yyyy')" 
+              [modal]="true" [style]="{width: '90vw', maxWidth: '450px'}" styleClass="p-fluid pf-dialog" [draggable]="false" [resizable]="false">
         
-        <div *ngIf="selectedClase" class="animation-fade-in pt-2">
-            
-            <div class="modal-header-info mb-4 border-bottom-1 border-300 pb-3 mt-2 flex justify-content-between">
-                <div class="info-block">
-                    <span class="info-label block text-sm text-500 mb-1">Fecha Programada</span>
-                    <span class="info-value text-main font-bold"><i class="pi pi-calendar mr-2 text-primary"></i> {{selectedClase.fecha | date:'dd/MM/yyyy'}}</span>
-                </div>
-                <div class="info-block text-right">
-                    <span class="info-label block text-sm text-500 mb-1">Lugar</span>
-                    <span class="info-value text-main font-bold"><i class="pi pi-map-marker mr-2 text-primary"></i> {{selectedClase.lugar || 'Cancha Principal'}}</span>
-                </div>
-            </div>
-
-            <div class="field mb-4">
-                <label class="font-bold text-primary mb-2 block"><i class="pi pi-bullseye mr-2"></i> Objetivo Principal</label>
-                <div class="p-3 surface-100 border-round font-medium">
-                    {{ selectedClase.objetivo || 'Sin objetivo definido' }}
-                </div>
-            </div>
-            
-            <div class="field mb-3" *ngIf="selectedClase.calentamiento">
-                <label class="font-bold text-700 mb-2 block"><span class="mr-2">🔥</span> Calentamiento</label>
-                <div class="p-3 surface-50 border-round text-sm" style="white-space: pre-wrap;">
-                    {{ selectedClase.calentamiento }}
-                </div>
-            </div>
-            
-            <div class="field mb-3" *ngIf="selectedClase.parte_principal">
-                <label class="font-bold text-700 mb-2 block"><span class="mr-2">⚽</span> Parte Principal</label>
-                <div class="p-3 surface-50 border-round text-sm" style="white-space: pre-wrap;">
-                    {{ selectedClase.parte_principal }}
-                </div>
-            </div>
-            
-            <div class="field mb-3" *ngIf="selectedClase.vuelta_calma">
-                <label class="font-bold text-700 mb-2 block"><span class="mr-2">❄️</span> Vuelta a la Calma</label>
-                <div class="p-3 surface-50 border-round text-sm" style="white-space: pre-wrap;">
-                    {{ selectedClase.vuelta_calma }}
-                </div>
-            </div>
-            
+        <div class="animation-fade-in pt-3">
+            <p-table [value]="alumnosAsistencia" [loading]="loadingAsistencia" scrollable="true" scrollHeight="300px" styleClass="p-datatable-sm pf-table w-full">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Estudiante</th>
+                        <th style="width: 80px; text-align: center;">Presente</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-alumno>
+                    <tr>
+                        <td class="text-sm font-bold text-chalk">{{ alumno.nombre }} {{ alumno.apellido }}</td>
+                        <td class="text-center">
+                            <!-- El kinesiólogo solo ve, por lo tanto el checkbox se encuentra bloqueado -->
+                            <p-checkbox [(ngModel)]="alumno.presente" [binary]="true" [disabled]="true"></p-checkbox>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr><td colspan="2" class="text-center p-4 text-sm text-steel pf-oswald">No hay estudiantes activos en este grupo.</td></tr>
+                </ng-template>
+            </p-table>
         </div>
         
         <ng-template pTemplate="footer">
-            <div class="w-full flex justify-content-end">
-                <button pButton label="Cerrar Detalle" icon="pi pi-times" class="p-button-secondary w-full sm:w-auto" (click)="displayPlan = false"></button>
+            <button pButton label="Cerrar" icon="pi pi-times" class="pf-btn-ghost w-full justify-content-center" (click)="displayAttendanceDialog = false"></button>
+        </ng-template>
+    </p-dialog>
+
+    <!-- Modal Ver Planificación -->
+    <p-dialog [(visible)]="displayPlan" header="Detalle del Entrenamiento" [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" styleClass="p-fluid pf-dialog" [draggable]="false" [resizable]="false">
+        <div *ngIf="selectedClase" class="animation-fade-in pt-3">
+            
+            <div class="flex justify-content-between align-items-center mb-4 pb-3 border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                <div class="flex flex-column gap-1">
+                    <span class="pf-oswald text-steel" style="font-size: 0.75rem;">Fecha Programada</span>
+                    <span class="pf-anton text-chalk text-xl" style="letter-spacing: 0.5px;"><i class="pi pi-calendar text-teal mr-2 text-lg"></i>{{selectedClase.fecha | date:'dd/MM/yyyy'}}</span>
+                </div>
+                <div class="flex flex-column gap-1 text-right">
+                    <span class="pf-oswald text-steel" style="font-size: 0.75rem;">Lugar</span>
+                    <span class="pf-anton text-chalk text-xl" style="letter-spacing: 0.5px;"><i class="pi pi-map-marker text-teal mr-2 text-lg"></i>{{selectedClase.lugar || 'Cancha Principal'}}</span>
+                </div>
             </div>
+
+            <div class="mb-4">
+                <label class="pf-oswald text-steel block mb-2"><i class="pi pi-bullseye text-lime mr-2"></i> Objetivo Principal</label>
+                <div class="p-3 border-round border-1 surface-border text-chalk italic" style="background: var(--input-bg); border-color: var(--border-color) !important;">
+                    {{ selectedClase.objetivo || 'Sin objetivo definido' }}
+                </div>
+            </div>
+
+            <div class="mb-3" *ngIf="selectedClase.calentamiento">
+                <label class="pf-oswald text-steel block mb-2"><span class="mr-2">🔥</span> Calentamiento</label>
+                <div class="p-3 border-round border-1 surface-border text-chalk text-sm" style="background: var(--input-bg); border-color: var(--border-color) !important; white-space: pre-wrap;">{{ selectedClase.calentamiento }}</div>
+            </div>
+
+            <div class="mb-3" *ngIf="selectedClase.parte_principal">
+                <label class="pf-oswald text-steel block mb-2"><span class="mr-2">⚽</span> Parte Principal</label>
+                <div class="p-3 border-round border-1 surface-border text-chalk text-sm" style="background: var(--input-bg); border-color: var(--border-color) !important; white-space: pre-wrap;">{{ selectedClase.parte_principal }}</div>
+            </div>
+
+            <div class="mb-3" *ngIf="selectedClase.vuelta_calma">
+                <label class="pf-oswald text-steel block mb-2"><span class="mr-2">❄️</span> Vuelta a la Calma</label>
+                <div class="p-3 border-round border-1 surface-border text-chalk text-sm" style="background: var(--input-bg); border-color: var(--border-color) !important; white-space: pre-wrap;">{{ selectedClase.vuelta_calma }}</div>
+            </div>
+
+        </div>
+        <ng-template pTemplate="footer">
+            <button pButton label="Cerrar Detalle" icon="pi pi-times" class="pf-btn-ghost w-full justify-content-center" (click)="displayPlan = false"></button>
         </ng-template>
     </p-dialog>
 </div>

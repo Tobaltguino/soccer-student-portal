@@ -12,6 +12,7 @@ import { AvatarModule } from 'primeng/avatar';
 import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 // Servicios de Dominio
 import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
@@ -23,11 +24,11 @@ import { AsistenciaService } from '../../../../core/domains/academico/asistencia
   imports: [
     CommonModule, FormsModule, TableModule, SelectModule, 
     ButtonModule, DialogModule, TagModule, AvatarModule, 
-    TooltipModule, ToastModule
+    TooltipModule, ToastModule, ProgressSpinnerModule
   ],
   providers: [MessageService],
   templateUrl: './asistencias.component.html',
-  styleUrls: ['./asistencias.component.css']
+  styleUrls: ['./asistencias.component.scss'] // 🔥 Cambiado a .scss
 })
 export class ProfesorAsistenciasComponent implements OnInit {
   

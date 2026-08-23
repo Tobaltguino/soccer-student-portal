@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs'; // ✅ Importamos forkJoin
+import { forkJoin } from 'rxjs'; 
 
 // PrimeNG
 import { TableModule } from 'primeng/table';
@@ -13,7 +13,9 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog'; 
+import { CheckboxModule } from 'primeng/checkbox'; 
+import { MessageService, ConfirmationService } from 'primeng/api'; 
 
 // Dominios: Clases y Grupos
 import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
@@ -21,7 +23,7 @@ import { Clase, FiltrosClase } from '../../../../core/domains/academico/clases/m
 import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
 import { Grupo } from '../../../../core/domains/academico/grupos/models/grupo.interface';
 
-// Dominios: Asistencia y Estudiantes (NUEVO)
+// Dominios: Asistencia y Estudiantes
 import { AsistenciaService } from '../../../../core/domains/academico/asistencias/services/asistencia.service';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
 
@@ -31,18 +33,19 @@ import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes
   imports: [
     CommonModule, FormsModule, TableModule, TagModule, ButtonModule, 
     DialogModule, InputTextModule, DatePickerModule, SelectModule, 
-    TooltipModule, ToastModule
+    TooltipModule, ToastModule, ConfirmDialogModule, 
+    CheckboxModule 
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService], 
   templateUrl: './clases.component.html',
-  styleUrls: ['./clases.component.css']
+  styleUrls: ['./clases.component.scss'] 
 })
 export class KinesiologoClasesComponent implements OnInit {
   
   private claseService = inject(ClaseService);
   private grupoService = inject(GrupoService);
-  private asistenciaService = inject(AsistenciaService); // ✅ Inyectado
-  private estudianteService = inject(EstudianteService); // ✅ Inyectado
+  private asistenciaService = inject(AsistenciaService); 
+  private estudianteService = inject(EstudianteService); 
   private cdr = inject(ChangeDetectorRef);
   private messageService = inject(MessageService);
 
@@ -67,6 +70,7 @@ export class KinesiologoClasesComponent implements OnInit {
   displayAttendanceDialog: boolean = false;
   alumnosAsistencia: any[] = [];
   loadingAsistencia: boolean = false;
+  claseSeleccionadaAsistencia: Clase | null = null; // 🔥 VARIABLE RECUPERADA
 
   ngOnInit() {
     this.cargarGrupos();
@@ -136,7 +140,7 @@ export class KinesiologoClasesComponent implements OnInit {
 
   // ✅ Ver Asistencia (Solo Lectura)
   verAsistencia(clase: Clase) {
-    this.selectedClase = clase; 
+    this.claseSeleccionadaAsistencia = clase; // 🔥 CORREGIDO (Antes decía this.selectedClase)
     this.displayAttendanceDialog = true;
     this.loadingAsistencia = true;
     this.alumnosAsistencia = [];

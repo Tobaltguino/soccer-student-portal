@@ -1,124 +1,144 @@
-<div class="evolution-record-container fadein animation-duration-500">
+<div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
     
-    <header class="page-header mb-5">
+    <header class="pf-admin-header">
         <div class="header-content">
-            <h1 class="m-0 text-main">Registro de Lesiones y Antecedentes Médicos</h1>
-            <p class="text-secondary m-0 mt-1">Gestión de patologías, lesiones y eventos médicos de tus pacientes asignados.</p>
+            <div>
+                <h1 class="pf-anton text-chalk m-0 text-3xl">Registro de Lesiones y Antecedentes Médicos</h1>
+                <p class="pf-oswald text-teal mt-1">Gestión de patologías, lesiones y eventos médicos de tus pacientes asignados.</p>
+            </div>
         </div>
     </header>
 
-    <div class="filter-bar mb-5">
+    <div class="pf-admin-card mb-4 p-3">
         <div class="filter-row">
             <div class="filter-item flex-grow-1">
-                <label class="mb-2">Buscador de Mis Pacientes</label>
+                <label><i class="pi pi-search mr-1 text-teal"></i> BUSCADOR DE MIS PACIENTES</label>
                 <p-select [options]="listaAlumnos" [(ngModel)]="alumnoSeleccionado" optionLabel="nombreCompleto"
                           [filter]="true" filterBy="nombreCompleto" [showClear]="true" 
                           placeholder="Buscar paciente en mis grupos..." 
                           (onChange)="onAlumnoChange()"
-                          appendTo="body" styleClass="w-full shadow-none border-blue-100">
+                          appendTo="body" styleClass="w-full">
                 </p-select>
             </div>
         </div>
     </div>
 
-    <div class="card-table mt-4 text-center p-6 fadein" *ngIf="!alumnoSeleccionado">
-        <i class="pi pi-heart text-7xl text-300 mb-4"></i>
-        <h2 class="text-secondary m-0 mt-3" style="font-size: 1.35rem;">Seleccione un paciente</h2>
-        <p class="text-500 mt-3 text-lg">Busque un alumno para ver o modificar su registro médico.</p>
+    <!-- ESTADO VACÍO (SIN SELECCIONAR) -->
+    <div class="pf-admin-card mt-4 text-center p-6 fadein flex flex-column align-items-center justify-content-center" *ngIf="!alumnoSeleccionado">
+        <i class="pi pi-heart text-6xl text-steel mb-3"></i>
+        <h2 class="text-chalk m-0 mt-2 pf-anton text-2xl" style="letter-spacing: 0.5px;">Seleccione un paciente</h2>
+        <p class="text-steel mt-2 pf-oswald">Busque un alumno para ver o modificar su registro médico.</p>
     </div>
 
+    <!-- CONTENIDO HISTORIAL -->
     <div *ngIf="alumnoSeleccionado" class="animation-fade-in">
-        <div class="card-table mt-4 fadein">
-            <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-5 border-bottom-1 surface-border pb-4 gap-4">
+        <div class="pf-admin-card table-responsive p-0 mt-4 fadein">
+            
+            <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-0 p-4 border-bottom-1 surface-border gap-3" style="border-color: var(--border-color) !important; background: var(--bg-main);">
                 <div>
-                    <h2 class="m-0 text-main mb-2" style="font-size: 1.25rem; font-weight: 700;">Historial Clínico</h2>
-                    <p class="text-secondary m-0">Paciente: <span class="font-bold text-main">{{alumnoSeleccionado.nombreCompleto}}</span></p>
+                    <h2 class="m-0 text-chalk pf-anton text-2xl" style="letter-spacing: 0.5px;">Historial Clínico</h2>
+                    <p class="text-steel m-0 mt-1 pf-oswald">Paciente: <span class="font-bold text-teal">{{alumnoSeleccionado.nombreCompleto}}</span></p>
                 </div>
-                <button pButton label="Registrar Evento" icon="pi pi-plus" class="btn-create p-button-success w-full md:w-auto" (click)="abrirNuevaLesion()"></button>
+                <button pButton label="Registrar Evento" icon="pi pi-plus" class="pf-btn-primary w-full md:w-auto" (click)="abrirNuevaLesion()"></button>
             </div>
 
-            <p-table [value]="listaLesiones" [paginator]="true" [rows]="10" styleClass="p-datatable-sm p-datatable-striped" [loading]="cargandoLesiones" [responsiveLayout]="'stack'" [breakpoint]="'960px'">
+            <p-table [value]="listaLesiones" [paginator]="true" [rows]="10" styleClass="p-datatable-sm pf-table w-full" [loading]="cargandoLesiones" responsiveLayout="stack" [breakpoint]="'960px'">
                 <ng-template pTemplate="header">
                     <tr>
-                        <th class="py-3" style="width: 15%">Fecha</th>
-                        <th class="py-3" style="width: 15%">Tipo</th>
-                        <th class="py-3" style="width: 35%">Diagnóstico</th>
-                        <th class="py-3 text-center" style="width: 20%">Estado</th>
-                        <th class="text-center py-3" style="width: 15%">Acciones</th>
+                        <th style="width: 15%">Fecha</th>
+                        <th style="width: 15%">Tipo</th>
+                        <th style="width: 35%">Diagnóstico</th>
+                        <th class="text-center" style="width: 20%">Estado</th>
+                        <th class="text-center" style="width: 15%">Acciones</th>
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="body" let-l>
                     <tr>
-                        <td class="py-3">
-                            <span class="p-column-title font-bold text-secondary hidden-desktop">Fecha: </span>
-                            <span>{{ l.fecha_evento | date:'dd/MM/yyyy' }}</span>
+                        <td>
+                            <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Fecha: </span>
+                            <span class="font-bold text-chalk pf-anton text-lg" style="letter-spacing: 0.5px;">{{ l.fecha_evento | date:'dd/MM/yyyy' }}</span>
                         </td>
-                        <td class="py-3 font-bold">
-                            <span class="p-column-title font-bold text-secondary hidden-desktop">Tipo: </span>
-                            <span class="text-primary">{{ getTipoLabel(l.tipo) }}</span>
+                        <td>
+                            <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Tipo: </span>
+                            <span class="text-teal font-bold">{{ getTipoLabel(l.tipo) }}</span>
                         </td>
-                        <td class="py-3 text-sm">
-                            <span class="p-column-title font-bold text-secondary hidden-desktop">Diagnóstico: </span>
-                            <span *ngIf="l.diagnostico">{{ l.diagnostico }}</span>
-                            <span *ngIf="!l.diagnostico" class="text-400 italic">No especificado</span>
+                        <td>
+                            <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Diagnóstico: </span>
+                            <span *ngIf="l.diagnostico" class="text-chalk">{{ l.diagnostico }}</span>
+                            <span *ngIf="!l.diagnostico" class="text-steel italic">No especificado</span>
                         </td>
-                        <td class="text-center py-3">
-                            <span class="p-column-title font-bold text-secondary hidden-desktop">Estado: </span>
-                            <span class="px-2 py-1 border-round text-xs font-bold" 
-                                  [ngClass]="{
-                                    'bg-red-100 text-red-700': l.estado === EstadoHistorialClinico.EN_OBSERVACION, 
-                                    'bg-orange-100 text-orange-700': l.estado === EstadoHistorialClinico.EN_TRATAMIENTO,
-                                    'bg-blue-100 text-blue-700': l.estado === EstadoHistorialClinico.EN_REINTEGRO_DEPORTIVO,
-                                    'bg-green-100 text-green-700': l.estado === EstadoHistorialClinico.RECUPERADO
-                                  }">
-                                {{ getEstadoLabel(l.estado) }}
-                            </span>
+                        <td class="text-center">
+                            <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Estado: </span>
+                            <p-tag [value]="getEstadoLabel(l.estado)" 
+                                   [severity]="l.estado === EstadoHistorialClinico.EN_OBSERVACION ? 'danger' : 
+                                               l.estado === EstadoHistorialClinico.EN_TRATAMIENTO ? 'warn' : 
+                                               l.estado === EstadoHistorialClinico.EN_REINTEGRO_DEPORTIVO ? 'info' : 'success'">
+                            </p-tag>
                         </td>
-                        <td class="text-center py-3">
-                            <div class="action-buttons justify-content-center">
-                                <button pButton icon="pi pi-pencil" class="p-button-text p-button-rounded p-button-warning" (click)="abrirEditarLesion(l)" pTooltip="Editar"></button>
+                        <td class="text-center">
+                            <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Acciones: </span>
+                            <div class="pf-table-actions">
+                                <button pButton icon="pi pi-pencil" class="p-button-warning" (click)="abrirEditarLesion(l)" pTooltip="Editar"></button>
                             </div>
                         </td>
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="emptymessage">
-                    <tr><td colspan="5" class="text-center p-6 text-500"><i class="pi pi-folder-open text-5xl mb-3 text-300"></i><br>El paciente no registra lesiones ni antecedentes médicos.</td></tr>
+                    <tr>
+                        <td colspan="5" class="text-center p-6 text-steel">
+                            <i class="pi pi-folder-open text-5xl mb-3 block text-steel"></i>
+                            <span class="pf-oswald text-lg">El paciente no registra lesiones ni antecedentes médicos.</span>
+                        </td>
+                    </tr>
                 </ng-template>
             </p-table>
         </div>
     </div>
 
-    <p-dialog [(visible)]="mostrarDialogoLesion" [header]="lesionActual.id ? 'Editar Registro' : 'Nuevo Registro Médico'" [modal]="true" [style]="{width: '450px'}" styleClass="p-fluid" [draggable]="false" [resizable]="false">
+    <!-- MODAL NUEVA/EDITAR LESIÓN -->
+    <p-dialog [(visible)]="mostrarDialogoLesion" [header]="lesionActual.id ? 'Editar Registro' : 'Nuevo Registro Médico'" [modal]="true" [style]="{width: '450px'}" styleClass="p-fluid pf-dialog" [draggable]="false" [resizable]="false">
         
         <div class="field mt-3 flex flex-column">
-            <label class="font-bold text-secondary text-sm">Fecha del Evento</label>
-            <p-datepicker [(ngModel)]="lesionActual.fecha_evento" dateFormat="dd/mm/yy" [showIcon]="true" styleClass="w-full mt-1" appendTo="body"></p-datepicker>
+            <label class="pf-oswald text-steel mb-2 block">Fecha del Evento <span class="text-red-500 font-bold ml-1">*</span></label>
+            <p-datepicker [(ngModel)]="lesionActual.fecha_evento" dateFormat="dd/mm/yy" [showIcon]="true" styleClass="w-full" appendTo="body"></p-datepicker>
         </div>
         
-        <div class="field mt-4">
-            <label class="font-bold text-secondary text-sm">Tipo de Registro</label>
-            <p-select [options]="opcionesTipoLesion" [(ngModel)]="lesionActual.tipo" optionLabel="label" optionValue="value" styleClass="w-full mt-1" appendTo="body"></p-select>
+        <div class="field mt-4 flex flex-column">
+            <label class="pf-oswald text-steel mb-2 block">Tipo de Registro <span class="text-red-500 font-bold ml-1">*</span></label>
+            <p-select [options]="opcionesTipoLesion" [(ngModel)]="lesionActual.tipo" optionLabel="label" optionValue="value" styleClass="w-full" appendTo="body" [filter]="false">
+                <ng-template let-option pTemplate="item">
+                    <span class="text-chalk">{{option.label}}</span>
+                </ng-template>
+            </p-select>
         </div>
 
-        <div class="field mt-4">
-            <label class="font-bold text-secondary text-sm">Diagnóstico</label>
-            <textarea pTextarea [(ngModel)]="lesionActual.diagnostico" rows="2" class="w-full mt-1 border-blue-100" placeholder="Ej: Esguince de tobillo grado II..."></textarea>
+        <div class="field mt-4 flex flex-column">
+            <label class="pf-oswald text-steel mb-2 block">Diagnóstico</label>
+            <textarea pTextarea [(ngModel)]="lesionActual.diagnostico" rows="2" class="w-full" placeholder="Ej: Esguince de tobillo grado II..."></textarea>
         </div>
 
-        <div class="field mt-4">
-            <label class="font-bold text-secondary text-sm">Observaciones (Opcional)</label>
-            <textarea pTextarea [(ngModel)]="lesionActual.observaciones" rows="2" class="w-full mt-1 border-blue-100" placeholder="Añadir contexto adicional, reposo, etc..."></textarea>
+        <div class="field mt-4 flex flex-column">
+            <label class="pf-oswald text-steel mb-2 block">Observaciones (Opcional)</label>
+            <textarea pTextarea [(ngModel)]="lesionActual.observaciones" rows="2" class="w-full" placeholder="Añadir contexto adicional, reposo, etc..."></textarea>
         </div>
 
-        <div class="field mt-4 mb-4">
-            <label class="font-bold text-secondary text-sm">Estado Actual</label>
-            <p-select [options]="opcionesEstadoLesion" [(ngModel)]="lesionActual.estado" optionLabel="label" optionValue="value" styleClass="w-full mt-1" appendTo="body"></p-select>
+        <div class="field mt-4 mb-4 flex flex-column">
+            <label class="pf-oswald text-steel mb-2 block">Estado Actual</label>
+            <p-select [options]="opcionesEstadoLesion" [(ngModel)]="lesionActual.estado" optionLabel="label" optionValue="value" styleClass="w-full" appendTo="body" [filter]="false">
+                <ng-template let-option pTemplate="item">
+                    <p-tag [value]="option.label" 
+                           [severity]="option.value === EstadoHistorialClinico.EN_OBSERVACION ? 'danger' : 
+                                       option.value === EstadoHistorialClinico.EN_TRATAMIENTO ? 'warn' : 
+                                       option.value === EstadoHistorialClinico.EN_REINTEGRO_DEPORTIVO ? 'info' : 'success'">
+                    </p-tag>
+                </ng-template>
+            </p-select>
         </div>
 
         <ng-template pTemplate="footer">
-            <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="mostrarDialogoLesion = false"></button>
-            <button pButton label="Guardar Registro" icon="pi pi-save" class="p-button-success border-round-md" (click)="guardarLesion()"></button>
+            <button pButton label="Cancelar" icon="pi pi-times" class="pf-btn-ghost w-full sm:w-auto" (click)="mostrarDialogoLesion = false"></button>
+            <button pButton label="Guardar Registro" icon="pi pi-save" class="pf-btn-primary w-full sm:w-auto" (click)="guardarLesion()"></button>
         </ng-template>
     </p-dialog>
 

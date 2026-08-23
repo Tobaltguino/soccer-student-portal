@@ -12,8 +12,10 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select'; 
 import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api'; // 🔥 Agregado ConfirmationService
 import { TextareaModule } from 'primeng/textarea';
+import { TagModule } from 'primeng/tag'; // 🔥 Agregado para usar p-tag
+import { ConfirmDialogModule } from 'primeng/confirmdialog'; // 🔥 Agregado
 
 // Servicios y Modelos unificados a NestJS
 import { MaterialService } from '../../../../core/domains/academico/material-complementario/services/material-complementario.service';
@@ -35,11 +37,13 @@ import { Material, CrearMaterialPayload, ActualizarMaterialPayload } from '../..
     SelectModule,
     ToastModule,
     DialogModule,
-    TextareaModule
+    TextareaModule,
+    TagModule, // 🔥 Importado
+    ConfirmDialogModule // 🔥 Importado
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService], // 🔥 Importado
   templateUrl: './material-complementario.component.html',
-  styleUrls: ['./material-complementario.component.css']
+  styleUrls: ['./material-complementario.component.scss'] // 🔥 Cambiado a .scss
 })
 export class ProfesorMaterialComplementarioComponent implements OnInit {
   

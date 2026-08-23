@@ -1,55 +1,65 @@
-<div class="eval-container fadein animation-duration-500">
+<div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
+    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
 
-    <header class="page-header">
+    <header class="pf-admin-header">
         <div class="header-content">
-            <h1 class="m-0 text-main">Evaluaciones Físicas</h1>
-            <p class="text-secondary m-0 mt-1">Visualiza los resultados de las pruebas físicas tomadas a tus pacientes.</p>
+            <div>
+                <h1 class="pf-anton text-chalk m-0 text-3xl">Evaluaciones Físicas</h1>
+                <p class="pf-oswald text-teal mt-1">Visualiza los resultados de las pruebas físicas tomadas a tus pacientes.</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <!-- Botón de recarga añadido -->
+            <button pButton icon="pi pi-sync" class="pf-btn-ghost" 
+                    (click)="cargarDatosIniciales()" [loading]="loading" pTooltip="Actualizar lista" tooltipPosition="left"></button>
         </div>
     </header>
 
-    <div class="filter-bar">
+    <!-- BARRA DE FILTROS -->
+    <div class="pf-admin-card mb-4 p-3">
         <div class="filter-row">
             <div class="filter-item flex-grow-1">
-                <label><i class="pi pi-calendar mr-1"></i> Fecha</label>
-                <p-datepicker [(ngModel)]="filtroFecha" dateFormat="dd/mm/yy" [showIcon]="false" 
+                <label><i class="pi pi-calendar mr-1 text-teal"></i> Fecha</label>
+                <p-datepicker [(ngModel)]="filtroFecha" dateFormat="dd/mm/yy" [showIcon]="true" 
                               placeholder="Filtrar por Fecha" 
                               (onSelect)="aplicarFiltros()" [showClear]="true" (onClear)="aplicarFiltros()" 
                               styleClass="w-full" appendTo="body"></p-datepicker>
             </div>
 
             <div class="filter-item flex-grow-1">
-                <label><i class="pi pi-users mr-1"></i> Grupo Asignado</label>
+                <label><i class="pi pi-users mr-1 text-teal"></i> Grupo Asignado</label>
                 <p-select [options]="grupos" [(ngModel)]="filtroGrupo" optionLabel="nombre" 
                           placeholder="Selecciona un Grupo" 
                           (onChange)="aplicarFiltros()" [showClear]="true" 
-                          styleClass="w-full" appendTo="body"></p-select>
+                          styleClass="w-full" appendTo="body" [filter]="false"></p-select>
             </div>
 
             <div class="filter-item flex-grow-1">
-                <label><i class="pi pi-bolt mr-1"></i> Prueba Física</label>
+                <label><i class="pi pi-bolt mr-1 text-teal"></i> Prueba Física</label>
                 <p-select [options]="tiposEvaluacion" [(ngModel)]="filtroPrueba" optionLabel="nombre" 
                           placeholder="Filtrar por Prueba" 
                           (onChange)="aplicarFiltros()" [showClear]="true" 
-                          styleClass="w-full" appendTo="body"></p-select>
+                          styleClass="w-full" appendTo="body" [filter]="false"></p-select>
             </div>
 
-            <div class="filter-btn">
-                <button pButton icon="pi pi-filter-slash" class="p-button-outlined p-button-secondary" 
-                        (click)="limpiarFiltros()" pTooltip="Limpiar"></button>
+            <div class="filter-item-btn">
+                <button pButton icon="pi pi-filter-slash" class="pf-btn-ghost w-full justify-content-center" 
+                        (click)="limpiarFiltros()" pTooltip="Limpiar Filtros"></button>
             </div>
         </div>
     </div>
 
-    <div class="main-card">
+    <!-- TABLA DE EVALUACIONES -->
+    <div class="pf-admin-card table-responsive p-0">
         <p-table [value]="sesiones" [loading]="loading" [rows]="10" [paginator]="true" 
-                 styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="stack" [breakpoint]="'768px'">
+                 styleClass="p-datatable-sm pf-table w-full" responsiveLayout="stack" [breakpoint]="'768px'">
             
             <ng-template pTemplate="header">
                 <tr>
-                    <th style="width: 25%">Fecha</th>
+                    <th style="width: 20%">Fecha</th>
                     <th style="width: 30%">Grupo</th>
-                    <th style="width: 30%">Prueba Física</th>
+                    <th style="width: 35%">Prueba Física</th>
                     <th style="width: 15%" class="text-center">Resultados</th>
                 </tr>
             </ng-template>
@@ -57,21 +67,21 @@
             <ng-template pTemplate="body" let-sesion>
                 <tr>
                     <td>
-                        <span class="p-column-title hidden-desktop">Fecha</span>
-                        <span class="font-bold text-main">{{ sesion.fecha | date:'dd/MM/yyyy' }}</span>
+                        <span class="p-column-title hidden-desktop pf-oswald text-steel">Fecha</span>
+                        <span class="font-bold text-chalk pf-anton text-lg" style="letter-spacing: 0.5px;">{{ sesion.fecha | date:'dd/MM/yyyy' }}</span>
                     </td>
                     <td>
-                        <span class="p-column-title hidden-desktop">Grupo</span>
-                        <p-tag [value]="sesion.grupos?.nombre" severity="info" styleClass="text-xs"></p-tag>
+                        <span class="p-column-title hidden-desktop pf-oswald text-steel">Grupo</span>
+                        <p-tag [value]="sesion.grupos?.nombre" severity="info" styleClass="text-sm font-bold"></p-tag>
                     </td>
                     <td>
-                        <span class="p-column-title hidden-desktop">Prueba Física</span>
-                        <span class="font-bold text-main">{{ sesion.tipo_evaluacion?.nombre }}</span>
+                        <span class="p-column-title hidden-desktop pf-oswald text-steel">Prueba Física</span>
+                        <span class="font-bold text-chalk">{{ sesion.tipo_evaluacion?.nombre }}</span>
                     </td>
                     <td class="text-center">
-                        <span class="p-column-title hidden-desktop">Resultados</span>
-                        <div class="action-buttons">
-                            <button pButton icon="pi pi-eye" class="p-button-text p-button-info" 
+                        <span class="p-column-title hidden-desktop pf-oswald text-steel">Resultados</span>
+                        <div class="pf-table-actions">
+                            <button pButton icon="pi pi-file-o" class="p-button-info" 
                                     (click)="abrirCalificador(sesion)" pTooltip="Ver Informe Completo"></button>
                         </div>
                     </td>
@@ -80,32 +90,33 @@
 
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="4" class="text-center p-5 text-secondary">
-                        <i class="pi pi-folder-open text-400 mb-3 block" style="font-size: 2rem"></i>
-                        No hay evaluaciones finalizadas para tus grupos.
+                    <td colspan="4" class="text-center p-6 text-steel">
+                        <i class="pi pi-folder-open text-steel mb-3 block" style="font-size: 3.5rem"></i>
+                        <span class="pf-oswald text-lg">No hay evaluaciones finalizadas para tus grupos.</span>
                     </td>
                 </tr>
             </ng-template>
         </p-table>
     </div>
 
+    <!-- MODAL DE INFORME (SOLO LECTURA) -->
     <p-dialog [(visible)]="displayGradesDialog" header="Informe de Resultados Físicos" 
-              [modal]="true" [style]="{width: '90vw', maxWidth: '900px'}" [maximizable]="true" styleClass="p-fluid">
+              [modal]="true" [style]="{width: '90vw', maxWidth: '900px'}" [maximizable]="true" styleClass="p-fluid pf-dialog" [draggable]="false" [resizable]="false">
         <ng-template pTemplate="content">
             
-            <div class="modal-content-box mb-4 flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3 mt-2">
+            <div class="surface-hover p-4 border-round mb-4 flex justify-content-between align-items-center flex-wrap gap-3 mt-2 border-1 surface-border" style="border-color: var(--border-color) !important;">
                 <div class="flex flex-column">
-                    <span class="text-xs text-secondary text-uppercase font-bold tracking-wider">Evaluación Seleccionada</span>
-                    <span class="text-xl font-bold text-main mt-1">{{evalLogistica.tipo_evaluacion?.nombre}}</span>
+                    <span class="pf-oswald text-steel text-sm tracking-wider">Evaluación Seleccionada</span>
+                    <span class="pf-anton text-chalk text-2xl mt-1" style="letter-spacing: 0.5px;">{{evalLogistica.tipo_evaluacion?.nombre}}</span>
                 </div>
                 <div class="flex flex-column sm:align-items-end">
-                    <span class="text-xs text-secondary text-uppercase font-bold tracking-wider mb-1">Grupo</span>
-                    <p-tag [value]="evalLogistica.grupos?.nombre" severity="info"></p-tag>
+                    <span class="pf-oswald text-steel text-sm tracking-wider mb-2">Grupo</span>
+                    <p-tag [value]="evalLogistica.grupos?.nombre" severity="info" styleClass="text-base font-bold"></p-tag>
                 </div>
             </div>
 
             <p-table [value]="estudiantesGrupo" [scrollable]="true" scrollHeight="500px" 
-                     styleClass="p-datatable-gridlines p-datatable-sm" responsiveLayout="stack" [breakpoint]="'768px'">
+                     styleClass="pf-table p-datatable-sm w-full" responsiveLayout="stack" [breakpoint]="'768px'">
                 
                 <ng-template pTemplate="header">
                     <tr>
@@ -118,27 +129,27 @@
                 <ng-template pTemplate="body" let-estudiante>
                     <tr>
                         <td>
-                            <span class="p-column-title hidden-desktop">Paciente / Estudiante</span>
-                            <span class="font-bold text-main">{{estudiante.apellido}}</span>, {{estudiante.nombre}}
+                            <span class="p-column-title hidden-desktop pf-oswald text-steel">Paciente / Estudiante</span>
+                            <span class="font-bold text-chalk">{{estudiante.apellido}}</span>, <span class="text-steel">{{estudiante.nombre}}</span>
                         </td>
                         <td class="text-center">
-                            <span class="p-column-title hidden-desktop">Resultado Obtenido</span>
-                            <span *ngIf="estudiante.valor_numerico !== null" class="font-bold text-lg text-primary">
-                                {{estudiante.valor_numerico}} <span class="text-sm text-secondary">{{evalLogistica.tipo_evaluacion?.unidad_medida}}</span>
+                            <span class="p-column-title hidden-desktop pf-oswald text-steel">Resultado Obtenido</span>
+                            <span *ngIf="estudiante.valor_numerico !== null" class="font-bold text-xl text-teal pf-anton" style="letter-spacing: 0.5px;">
+                                {{estudiante.valor_numerico}} <span class="text-sm text-steel font-normal ml-1">{{evalLogistica.tipo_evaluacion?.unidad_medida}}</span>
                             </span>
-                            <span *ngIf="estudiante.valor_numerico === null" class="text-500 italic text-sm">Ausente / S.D.</span>
+                            <span *ngIf="estudiante.valor_numerico === null" class="text-steel italic text-sm">Ausente / S.D.</span>
                         </td>
                         <td>
-                            <span class="p-column-title hidden-desktop">Observación Técnica</span>
-                            <span *ngIf="estudiante.observacion" class="text-secondary text-sm line-height-2">{{ estudiante.observacion }}</span>
-                            <span *ngIf="!estudiante.observacion" class="text-400 italic text-sm">-</span>
+                            <span class="p-column-title hidden-desktop pf-oswald text-steel">Observación Técnica</span>
+                            <span *ngIf="estudiante.observacion" class="text-chalk text-sm" style="line-height: 1.5;">{{ estudiante.observacion }}</span>
+                            <span *ngIf="!estudiante.observacion" class="text-steel italic text-sm">-</span>
                         </td>
                     </tr>
                 </ng-template>
 
                 <ng-template pTemplate="emptymessage">
                     <tr>
-                        <td colspan="3" class="text-center p-4 text-secondary">No hay pacientes en este grupo.</td>
+                        <td colspan="3" class="text-center p-6 text-steel pf-oswald text-lg">No hay pacientes en este grupo.</td>
                     </tr>
                 </ng-template>
             </p-table>
@@ -147,7 +158,7 @@
 
         <ng-template pTemplate="footer">
             <div class="flex justify-content-end w-full">
-                <button pButton label="Cerrar Informe" icon="pi pi-times" class="p-button-secondary w-full sm:w-auto" (click)="displayGradesDialog = false"></button>
+                <button pButton label="Cerrar Informe" icon="pi pi-times" class="pf-btn-ghost w-full sm:w-auto justify-content-center" (click)="displayGradesDialog = false"></button>
             </div>
         </ng-template>
     </p-dialog>

@@ -48,7 +48,7 @@ import { UsuarioService } from '../../../../core/domains/usuarios/central/servic
   ],
   providers: [MessageService],
   templateUrl: './ficha-evolutiva.component.html',
-  styleUrls: ['./ficha-evolutiva.component.css']
+  styleUrls: ['./ficha-evolutiva.component.scss'] // 🔥 Cambiado a .scss
 })
 export class ProfesorFichaEvolutivaComponent implements OnInit {
 

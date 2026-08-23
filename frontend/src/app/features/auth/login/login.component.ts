@@ -85,7 +85,7 @@ export class LoginComponent implements OnInit {
     });
   }
 
-  // 🔥 AQUÍ ESTÁ LA CORRECCIÓN: Rutas actualizadas a la versión en inglés con /dashboard 🔥
+  // 🔥 RUTAS ACTUALIZADAS AL ESPAÑOL Y A /inicio 🔥
   private redirectByRole(rol: string): void {
     const rolNormalizado = rol ? rol.toLowerCase() : '';
 
@@ -93,31 +93,31 @@ export class LoginComponent implements OnInit {
       case Rol.ESTUDIANTE:
       case 'student':
       case 'estudiante':
-        this.router.navigate(['/student/dashboard']); 
+        this.router.navigate(['/estudiante/inicio']); 
         break;
 
       case Rol.PROFESOR:
       case 'professor':
       case 'profesor':
-        this.router.navigate(['/professor/dashboard']);
+        this.router.navigate(['/profesor/inicio']);
         break;
 
       case Rol.KINESIOLOGO:
       case 'kine':
       case 'kinesiologo':
-        this.router.navigate(['/kine/dashboard']);
+        this.router.navigate(['/kinesiologo/inicio']);
         break;
 
       case Rol.NUTRICIONISTA:
       case 'nutri':
       case 'nutricionista':
-        this.router.navigate(['/nutri/dashboard']);
+        this.router.navigate(['/nutricionista/inicio']);
         break;
 
       case Rol.ADMINISTRADOR:
       case 'admin':
       case 'administrador':
-        this.router.navigate(['/admin/dashboard']);
+        this.router.navigate(['/admin/inicio']);
         break;
 
       default:

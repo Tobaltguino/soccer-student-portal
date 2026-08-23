@@ -17,8 +17,9 @@ import { TooltipModule } from 'primeng/tooltip';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { CheckboxModule } from 'primeng/checkbox';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api'; // 🔥 Agregado ConfirmationService
 import { TextareaModule } from 'primeng/textarea';
+import { ConfirmDialogModule } from 'primeng/confirmdialog'; // 🔥 Agregado
 
 // Clases
 import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
@@ -28,7 +29,7 @@ import { Clase, CrearClasePayload, FiltrosClase } from '../../../../core/domains
 import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
 import { Grupo } from '../../../../core/domains/academico/grupos/models/grupo.interface';
 
-// Asistencia y Estudiantes (NUEVO)
+// Asistencia y Estudiantes
 import { AsistenciaService } from '../../../../core/domains/academico/asistencias/services/asistencia.service';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
 
@@ -39,18 +40,18 @@ import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes
     CommonModule, FormsModule, TableModule, TagModule, ButtonModule, 
     DialogModule, InputTextModule, DatePickerModule, SelectModule, 
     TooltipModule, SelectButtonModule, CheckboxModule, ToastModule,
-    TextareaModule
+    TextareaModule, ConfirmDialogModule // 🔥 Importado
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService], // 🔥 Importado
   templateUrl: './clases.component.html',
-  styleUrls: ['./clases.component.css']
+  styleUrls: ['./clases.component.scss'] // 🔥 Cambiado a .scss
 })
 export class ProfesorClasesComponent implements OnInit {
   
   private claseService = inject(ClaseService);
   private grupoService = inject(GrupoService);
-  private asistenciaService = inject(AsistenciaService); // ✅ Inyectado
-  private estudianteService = inject(EstudianteService); // ✅ Inyectado
+  private asistenciaService = inject(AsistenciaService); 
+  private estudianteService = inject(EstudianteService); 
   private messageService = inject(MessageService);
   private cdr = inject(ChangeDetectorRef);
 
@@ -141,7 +142,6 @@ export class ProfesorClasesComponent implements OnInit {
   }
 
   // --- ASISTENCIA ---
-  // ✅ Modificado para cruzar datos de estudiantes y asistencia guardada
   verAsistencia(clase: Clase) {
     this.claseSeleccionadaAsistencia = clase;
     this.displayAttendanceDialog = true;
@@ -186,7 +186,6 @@ export class ProfesorClasesComponent implements OnInit {
     });
   }
 
-  // ✅ Modificado para enviar el lote al backend
   guardarAsistencia() {
     if (!this.claseSeleccionadaAsistencia || !this.claseSeleccionadaAsistencia.id) return;
 

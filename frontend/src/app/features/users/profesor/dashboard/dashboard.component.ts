@@ -3,6 +3,14 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
+// 🔥 Módulos de PrimeNG agregados
+import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
+import { ButtonModule } from 'primeng/button';
+import { MessageService, ConfirmationService } from 'primeng/api';
+
 // 🚀 SERVICIOS MODULARES (NestJS)
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
@@ -13,9 +21,18 @@ import { SesionEvaluacionService } from '../../../../core/domains/academico/eval
 @Component({
   selector: 'app-profesor-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
-  templateUrl: './dashboard.component.html', // Ajusta si se llama dashboard.component.html
-  styleUrls: ['./dashboard.component.css']   // Ajusta si se llama dashboard.component.css
+  imports: [
+    CommonModule, 
+    RouterModule,
+    ToastModule,
+    ConfirmDialogModule,
+    TagModule,
+    TooltipModule,
+    ButtonModule
+  ],
+  providers: [MessageService, ConfirmationService],
+  templateUrl: './dashboard.component.html', 
+  styleUrls: ['./dashboard.component.scss']  // 🔥 Cambiado a .scss
 })
 export class ProfessorDashboardComponent implements OnInit {
   
@@ -71,7 +88,7 @@ export class ProfessorDashboardComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      // 1. Grupos y Alumnos a cargo (El endpoint genérico que inventaste)
+      // 1. Grupos y Alumnos a cargo
       const stats = await firstValueFrom(this.estudianteService.obtenerMisEstadisticas());
       if (stats) {
         this.misGrupos = stats.totalGrupos;
@@ -94,11 +111,11 @@ export class ProfessorDashboardComponent implements OnInit {
         this.proximaClase = futuras.length > 0 ? futuras[0] : this.clasesHoy[this.clasesHoy.length - 1];
       }
 
-      // 3. Última Evaluación Finalizada (Mismo endpoint que el Admin)
+      // 3. Última Evaluación Finalizada
       const resUltimaEval = await firstValueFrom(this.evaluacionSesionService.obtenerUltimaSesionFinalizada());
       this.ultimaEvaluacion = resUltimaEval || null;
 
-      // 4. Cumpleaños Globales (Procesados en el Backend)
+      // 4. Cumpleaños Globales
       const resCumples = await firstValueFrom(this.usuarioService.obtenerCumpleanosGlobales(7));
       this.cumpleanosList = resCumples || [];
 

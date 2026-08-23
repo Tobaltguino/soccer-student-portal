@@ -1,28 +1,30 @@
-<div class="users-container fadein animation-duration-500">
+<div class="pf-admin-wrapper fadein animation-duration-500">
 
-    <header class="page-header">
+    <header class="pf-admin-header">
         <div class="header-content">
             <div>
-                <h1>Directorio de Pacientes</h1>
-                <p>Lista de jugadores de las categorías que tienes asignadas.</p>
+                <h1 class="pf-anton text-chalk m-0 text-3xl">Directorio de Pacientes</h1>
+                <p class="pf-oswald text-teal mt-1">Lista de jugadores de las categorías que tienes asignadas.</p>
             </div>
         </div>
-        <button pButton icon="pi pi-sync" class="p-button-outlined p-button-secondary btn-create" 
-                (click)="cargarDatos()" [loading]="loading" pTooltip="Actualizar lista"></button>
+        <div class="header-actions">
+            <button pButton icon="pi pi-sync" class="pf-btn-ghost" 
+                    (click)="cargarDatos()" [loading]="loading" pTooltip="Actualizar lista"></button>
+        </div>
     </header>
 
-    <div class="filter-bar card mb-3 p-3 surface-card border-round shadow-1">
+    <div class="pf-admin-card mb-4 p-3">
         <div class="filter-row">
             
             <div class="filter-item flex-grow-2">
-                <label>Buscador Global</label>
+                <label><i class="pi pi-search mr-1 text-teal"></i> Buscador Global</label>
                 <input pInputText type="text" [(ngModel)]="filtros.global" 
                        (input)="dt.filterGlobal(filtros.global, 'contains')" 
                        placeholder="Buscar por Nombre, RUT o Email..." class="w-full"/>
             </div>
 
             <div class="filter-item flex-grow-1">
-                <label>Mis Categorías</label>
+                <label><i class="pi pi-users mr-1 text-teal"></i> Mis Categorías</label>
                 <p-multiSelect [options]="listaGrupos" [(ngModel)]="filtros.grupo" 
                                optionLabel="nombre" optionValue="id" placeholder="Todas" 
                                (onChange)="dt.filter($event.value, 'grupo_id', 'in')" 
@@ -31,7 +33,7 @@
             </div>
             
             <div class="filter-item flex-grow-1">
-                <label>Posiciones</label>
+                <label><i class="pi pi-map-marker mr-1 text-teal"></i> Posiciones</label>
                 <p-multiSelect [options]="listaPosiciones" [(ngModel)]="filtros.posicion"
                                optionLabel="nombre" optionValue="id" placeholder="Todas"
                                (onChange)="dt.filter($event.value, 'posiciones', 'contienePosicion')"
@@ -40,10 +42,10 @@
             </div>
 
             <div class="filter-item w-10rem">
-                <label>Estado</label>
+                <label><i class="pi pi-tag mr-1 text-teal"></i> Estado</label>
                 <p-select [options]="opcionesEstado" [(ngModel)]="filtros.estado" 
                           placeholder="Todos" (onChange)="dt.filter($event.value, 'activo', 'equals')" 
-                          [showClear]="true" styleClass="w-full" appendTo="body">
+                          [showClear]="true" styleClass="w-full" appendTo="body" [filter]="false">
                     <ng-template let-option pTemplate="item">
                         <p-tag [value]="option.label" [severity]="option.value ? 'success' : 'danger'"></p-tag>
                     </ng-template>
@@ -52,83 +54,77 @@
 
             <div class="filter-item-btn">
                 <button pButton icon="pi pi-filter-slash" 
-                        class="p-button-outlined p-button-secondary w-full" 
+                        class="pf-btn-ghost w-full justify-content-center" 
                         (click)="limpiarFiltros()" pTooltip="Limpiar Filtros"></button>
             </div>
         </div>
     </div>
 
-    <div class="main-card">
+    <div class="pf-admin-card table-responsive p-0">
         <p-table #dt [value]="dataList" [loading]="loading" [rows]="10" [paginator]="true" 
-                 styleClass="p-datatable-sm" [rowHover]="true" responsiveLayout="stack"
+                 styleClass="p-datatable-sm pf-table w-full" [rowHover]="true" responsiveLayout="stack"
                  [globalFilterFields]="['nombre', 'apellido', 'rut', 'email']">
             
             <ng-template pTemplate="header">
                 <tr>
                     <th style="width: 4rem"></th> 
-                    <th pSortableColumn="nombre">Paciente</th>
-                    <th class="text-center">F. Nac</th>
-                    <th>Grupo</th>
-                    <th>Posiciones</th>
-                    <th class="hidden-mobile">Email</th>
-                    <th class="text-center">Estado</th>
-                    <th class="text-center">Ficha</th>
+                    <th pSortableColumn="nombre" style="width: 25%">Paciente</th>
+                    <th class="text-center" style="width: 15%">F. Nac</th>
+                    <th style="width: 15%">Grupo</th>
+                    <th style="width: 20%">Posiciones</th>
+                    <th class="text-center" style="width: 10%">Estado</th>
+                    <th class="text-center" style="width: 10%">Ficha</th>
                 </tr>
             </ng-template>
 
             <ng-template pTemplate="body" let-item>
-                <tr [ngClass]="{'row-inactive': !item.activo}">
+                <tr [ngClass]="{'opacity-50': !item.activo}">
                     
-                    <td>
-                        <div class="flex align-items-center justify-content-center sm:justify-content-start">
-                            <img [src]="item.foto_url || 'assets/images/default-user.png'" 
-                                alt="Avatar" class="avatar-img">
-                        </div>
+                    <td class="text-center">
+                        <img [src]="item.foto_url || 'assets/images/default-user.png'" 
+                             alt="Avatar" class="w-2rem h-2rem border-circle shadow-2 object-cover">
                     </td>
 
                     <td>
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Paciente:</span>
-                        <div class="text-right sm:text-left">
-                            <div class="font-bold text-main">{{ item.nombre }} {{ item.apellido }}</div>
-                            <div class="text-xs text-secondary mt-1 justify-content-end sm:justify-content-start flex align-items-center"><i class="pi pi-id-card"></i> {{ item.rut || 'Sin RUT' }}</div>
+                        <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Paciente</span>
+                        <div class="text-right sm:text-left flex flex-column">
+                            <span class="font-bold text-chalk text-lg sm:text-base" style="letter-spacing: 0.5px;">{{ item.nombre }} {{ item.apellido }}</span>
+                            <span class="text-xs text-steel mt-1 flex align-items-center justify-content-end sm:justify-content-start"><i class="pi pi-id-card mr-1"></i> {{ item.rut || 'Sin RUT' }}</span>
                         </div>
                     </td>
                     
                     <td class="text-center">
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">F. Nacimiento:</span>
-                        <div *ngIf="item.fecha_nacimiento" class="fecha-nac-container text-right sm:text-center">
-                            <span class="fecha-nac-text">{{ item.fecha_nacimiento | date:'dd/MM/yyyy' }}</span>
-                            <span class="edad-text"><i class="pi pi-calendar mr-1"></i> {{ calcularEdad(item.fecha_nacimiento) }} años</span>
+                        <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">F. Nacimiento</span>
+                        <div *ngIf="item.fecha_nacimiento" class="flex flex-column align-items-end sm:align-items-center">
+                            <span class="text-chalk font-bold">{{ item.fecha_nacimiento | date:'dd/MM/yyyy' }}</span>
+                            <span class="text-xs text-teal mt-1 pf-oswald tracking-wider"><i class="pi pi-calendar mr-1"></i> {{ calcularEdad(item.fecha_nacimiento) }} años</span>
                         </div>
-                        <span *ngIf="!item.fecha_nacimiento" class="text-secondary">-</span>
+                        <span *ngIf="!item.fecha_nacimiento" class="text-steel italic">-</span>
                     </td>
 
                     <td>
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Grupo:</span>
-                        <p-tag [value]="getGrupoNombre(item.grupo_id)" [severity]="item.grupo_id ? 'info' : 'secondary'"></p-tag>
+                        <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Grupo</span>
+                        <p-tag [value]="getGrupoNombre(item.grupo_id)" [severity]="item.grupo_id ? 'info' : 'secondary'" styleClass="font-bold"></p-tag>
                     </td>
 
                     <td>
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Posiciones:</span>
+                        <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Posiciones</span>
                         <div class="flex gap-1 flex-wrap justify-content-end sm:justify-content-start">
-                            <p-tag *ngFor="let p of item.posiciones" [value]="p | uppercase" severity="warn"></p-tag>
-                            <span *ngIf="!item.posiciones || item.posiciones.length === 0" class="text-500 text-xs italic">N/A</span>
+                            <!-- 🔥 CORRECCIÓN: 'warn' EN LUGAR DE 'warning' 🔥 -->
+                            <p-tag *ngFor="let p of item.posiciones" [value]="p | uppercase" severity="warn" styleClass="text-xs"></p-tag>
+                            <span *ngIf="!item.posiciones || item.posiciones.length === 0" class="text-steel text-xs italic">N/A</span>
                         </div>
                     </td>
 
-                    <td class="text-sm">
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Email:</span>
-                        <span class="break-email">{{ item.email || 'No registrado' }}</span>
+                    <td class="text-center">
+                        <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Estado</span>
+                        <p-tag [severity]="item.activo ? 'success' : 'danger'" [value]="item.activo ? 'ACTIVO' : 'INACTIVO'" styleClass="font-bold text-xs"></p-tag>
                     </td>
 
                     <td class="text-center">
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Estado:</span>
-                        <p-tag [severity]="item.activo ? 'success' : 'danger'" [value]="item.activo ? 'ACTIVO' : 'INACTIVO'" [rounded]="true"></p-tag>
-                    </td>
-
-                    <td class="text-center">
-                        <div class="action-buttons">
-                            <button pButton icon="pi pi-user" class="p-button-text p-button-info" 
+                        <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Ficha</span>
+                        <div class="pf-table-actions">
+                            <button pButton icon="pi pi-user" class="p-button-info" 
                                     (click)="verDetalle(item)" pTooltip="Ver Ficha Clínica"></button>
                         </div>
                     </td>
@@ -136,9 +132,9 @@
             </ng-template>
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="8" class="text-center p-5 text-secondary">
-                        <i class="pi pi-users text-400 mb-3 block" style="font-size: 2rem"></i>
-                        No se encontraron pacientes registrados en tus categorías asignadas.
+                    <td colspan="7" class="text-center p-6 text-steel">
+                        <i class="pi pi-users text-steel mb-3 block" style="font-size: 3rem"></i>
+                        <span class="pf-oswald text-lg">No se encontraron pacientes registrados en tus categorías asignadas.</span>
                     </td>
                 </tr>
             </ng-template>
@@ -146,56 +142,59 @@
     </div>
 
     <!-- MODAL FICHA CLÍNICA -->
-    <p-dialog [(visible)]="displayDetalle" header="Ficha Clínica Completa" [modal]="true" [style]="{width: '90vw', maxWidth: '650px'}" styleClass="p-fluid">
-        <div *ngIf="selectedEstudiante" class="flex flex-column pt-2 animation-fade-in">
+    <p-dialog [(visible)]="displayDetalle" header="Ficha Clínica Resumida" [modal]="true" [style]="{width: '90vw', maxWidth: '650px'}" styleClass="pf-dialog p-fluid" [draggable]="false" [resizable]="false">
+        <div *ngIf="selectedEstudiante" class="flex flex-column pt-3 animation-fade-in">
 
-            <div class="flex flex-column align-items-center mb-4 pb-3 border-bottom-1 border-300">
+            <!-- Cabecera del Estudiante -->
+            <div class="flex flex-column align-items-center mb-4 pb-4 border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
                 <img [src]="selectedEstudiante.foto_url || 'assets/images/default-user.png'" 
-                     alt="Avatar" class="avatar-preview-container shadow-2 mb-3">
-                <h2 class="m-0 text-main text-center">{{selectedEstudiante.nombre}} {{selectedEstudiante.apellido}}</h2>
+                     alt="Avatar" class="w-6rem h-6rem border-circle shadow-4 mb-3 object-cover border-2" style="border-color: var(--pf-teal);">
+                <h2 class="m-0 text-chalk pf-anton text-2xl text-center" style="letter-spacing: 0.5px;">{{selectedEstudiante.nombre}} {{selectedEstudiante.apellido}}</h2>
                 <div class="flex align-items-center gap-2 mt-2">
-                    <span class="text-secondary font-medium"><i class="pi pi-id-card mr-1 text-primary"></i> {{selectedEstudiante.rut || 'Sin RUT'}}</span>
-                    <p-tag [value]="getGrupoNombre(selectedEstudiante.grupo_id)" severity="info"></p-tag>
+                    <span class="text-steel font-medium text-sm"><i class="pi pi-id-card mr-1 text-teal"></i> {{selectedEstudiante.rut || 'Sin RUT'}}</span>
+                    <p-tag [value]="getGrupoNombre(selectedEstudiante.grupo_id)" severity="info" styleClass="text-xs font-bold"></p-tag>
                 </div>
             </div>
 
-            <div class="section-title">
-                <i class="pi pi-user mr-2 text-primary"></i> Datos Generales
+            <div class="p-3 font-bold text-chalk pf-oswald text-lg border-bottom-1 surface-border mb-3" style="background: var(--bg-main); border-color: var(--border-color) !important;">
+                <i class="pi pi-user mr-2 text-teal"></i> Datos Generales
             </div>
             
-            <div class="formgrid grid mt-3 mb-4">
-                <div class="field col-12 md:col-6">
-                    <label><i class="pi pi-calendar text-primary"></i> F. Nacimiento</label>
-                    <div class="read-only-box">{{ selectedEstudiante.fecha_nacimiento ? (selectedEstudiante.fecha_nacimiento | date:'dd/MM/yyyy') : '--/--/----' }}</div>
+            <div class="grid grid-nogutter border-1 surface-border border-round overflow-hidden mb-4" style="border-color: var(--border-color) !important; background: var(--input-bg);">
+                <div class="col-12 md:col-6 flex border-bottom-1 md:border-bottom-none md:border-right-1 surface-border" style="border-color: var(--border-color) !important;">
+                    <div class="w-5 p-3 font-bold text-steel pf-oswald flex align-items-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">F. Nacimiento</div>
+                    <div class="w-7 p-3 text-chalk font-bold flex align-items-center">{{ selectedEstudiante.fecha_nacimiento ? (selectedEstudiante.fecha_nacimiento | date:'dd/MM/yyyy') : '--/--/----' }}</div>
                 </div>
-                <div class="field col-12 md:col-6">
-                    <label><i class="pi pi-envelope text-primary"></i> Email</label>
-                    <div class="read-only-box">{{ selectedEstudiante.email || 'No registrado' }}</div>
+                <div class="col-12 md:col-6 flex">
+                    <div class="w-5 p-3 font-bold text-steel pf-oswald flex align-items-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Email</div>
+                    <div class="w-7 p-3 text-chalk font-bold flex align-items-center overflow-hidden text-overflow-ellipsis white-space-nowrap">{{ selectedEstudiante.email || 'No registrado' }}</div>
                 </div>
-                <div class="field col-12">
-                    <label><i class="pi pi-home text-primary"></i> Dirección</label>
-                    <div class="read-only-box">{{ selectedEstudiante.direccion || 'No registrada' }}</div>
+                
+                <div class="col-12 flex border-top-1 border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                    <div class="w-4 md:w-2 p-3 font-bold text-steel pf-oswald flex align-items-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Dirección</div>
+                    <div class="w-8 md:w-10 p-3 text-chalk font-bold flex align-items-center">{{ selectedEstudiante.direccion || 'No registrada' }}</div>
                 </div>
-                <div class="field col-12 md:col-4">
-                    <label><i class="pi pi-heart text-primary"></i> Previsión Médica</label>
-                    <div class="read-only-box">{{ selectedEstudiante.prevision || 'Ninguna' }}</div>
+
+                <div class="col-12 md:col-4 flex border-bottom-1 md:border-bottom-none md:border-right-1 surface-border" style="border-color: var(--border-color) !important;">
+                    <div class="w-6 p-3 font-bold text-steel pf-oswald flex align-items-center justify-content-center text-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Previsión</div>
+                    <div class="w-6 p-3 text-chalk font-bold flex align-items-center justify-content-center text-center">{{ selectedEstudiante.prevision || '-' }}</div>
                 </div>
-                <div class="field col-6 md:col-4">
-                    <label><i class="pi pi-sort-numeric-up text-primary"></i> Peso</label>
-                    <div class="read-only-box">{{ selectedEstudiante.peso ? selectedEstudiante.peso + ' kg' : '-' }}</div>
+                <div class="col-6 md:col-4 flex border-right-1 surface-border" style="border-color: var(--border-color) !important;">
+                    <div class="w-6 p-3 font-bold text-steel pf-oswald flex align-items-center justify-content-center text-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Peso</div>
+                    <div class="w-6 p-3 text-chalk font-bold flex align-items-center justify-content-center text-center">{{ selectedEstudiante.peso ? selectedEstudiante.peso + ' kg' : '-' }}</div>
                 </div>
-                <div class="field col-6 md:col-4">
-                    <label><i class="pi pi-arrows-v text-primary"></i> Altura</label>
-                    <div class="read-only-box">{{ selectedEstudiante.altura ? selectedEstudiante.altura + ' m' : '-' }}</div>
+                <div class="col-6 md:col-4 flex">
+                    <div class="w-6 p-3 font-bold text-steel pf-oswald flex align-items-center justify-content-center text-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Altura</div>
+                    <div class="w-6 p-3 text-chalk font-bold flex align-items-center justify-content-center text-center">{{ selectedEstudiante.altura ? selectedEstudiante.altura + ' m' : '-' }}</div>
                 </div>
             </div>
 
-            <div class="section-title mt-4">
-                <i class="pi pi-heart mr-2 text-red-500"></i> Historial Médico
+            <div class="p-3 font-bold text-red-400 pf-oswald text-lg border-bottom-1 surface-border mb-3 mt-2" style="background: var(--bg-main); border-color: var(--border-color) !important;">
+                <i class="pi pi-heart mr-2"></i> Resumen de Historial Médico
             </div>
 
-            <div class="mt-3">
-                <p-table [value]="historialClinico" [loading]="loadingHistorial" styleClass="p-datatable-sm" responsiveLayout="scroll">
+            <div>
+                <p-table [value]="historialClinico" [loading]="loadingHistorial" styleClass="p-datatable-sm pf-table w-full" responsiveLayout="scroll">
                     <ng-template pTemplate="header">
                         <tr>
                             <th>Fecha</th>
@@ -206,19 +205,19 @@
                     </ng-template>
                     <ng-template pTemplate="body" let-evento>
                         <tr>
-                            <td>{{ evento.fecha_evento | date:'dd/MM/yy' }}</td>
-                            <td><p-tag [value]="evento.tipo" [severity]="getSeveridadHistorial(evento.tipo)"></p-tag></td>
-                            <td class="font-bold text-main">{{ evento.diagnostico }}</td>
+                            <td class="font-bold text-chalk">{{ evento.fecha_evento | date:'dd/MM/yy' }}</td>
+                            <td><p-tag [value]="evento.tipo" [severity]="getSeveridadHistorial(evento.tipo)" styleClass="text-xs"></p-tag></td>
+                            <td class="font-bold text-chalk text-sm">{{ evento.diagnostico }}</td>
                             <td class="text-center">
-                                <p-tag [value]="evento.estado" [severity]="getSeveridadEstado(evento.estado)"></p-tag>
+                                <p-tag [value]="evento.estado" [severity]="getSeveridadEstado(evento.estado)" styleClass="text-xs"></p-tag>
                             </td>
                         </tr>
                     </ng-template>
                     <ng-template pTemplate="emptymessage">
                         <tr>
-                            <td colspan="4" class="text-center p-5 text-secondary">
-                                <i class="pi pi-check-circle text-5xl mb-3 text-green-500 block"></i>
-                                <span class="font-medium text-lg">El paciente no registra eventos médicos.</span>
+                            <td colspan="4" class="text-center p-5 text-steel">
+                                <i class="pi pi-check-circle text-4xl mb-3 text-lime block"></i>
+                                <span class="pf-oswald text-lg">El paciente no registra eventos médicos.</span>
                             </td>
                         </tr>
                     </ng-template>
@@ -227,7 +226,7 @@
             
         </div>
         <ng-template pTemplate="footer">
-            <button pButton label="Cerrar Ficha" icon="pi pi-times" class="p-button-text p-button-secondary w-full sm:w-auto" (click)="displayDetalle = false"></button>
+            <button pButton label="Cerrar Ficha" icon="pi pi-times" class="pf-btn-ghost w-full sm:w-auto justify-content-center" (click)="displayDetalle = false"></button>
         </ng-template>
     </p-dialog>
 </div>

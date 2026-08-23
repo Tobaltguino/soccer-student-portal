@@ -14,7 +14,8 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
-import { MessageService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog'; // 🔥 Agregado
+import { MessageService, ConfirmationService } from 'primeng/api'; // 🔥 Agregado ConfirmationService
 
 // Servicios de Dominio
 import { TipoEvaluacionService } from '../../../../core/domains/academico/evaluaciones/tipos/services/tipo-evaluacion.services';
@@ -31,11 +32,11 @@ import { EstadoSesion } from '../../../../shared/enums/estado-sesion.enum';
   imports: [
     CommonModule, FormsModule, TableModule, ButtonModule, DialogModule,
     InputTextModule, InputNumberModule, SelectModule, DatePickerModule,
-    TagModule, ToastModule, TooltipModule
+    TagModule, ToastModule, TooltipModule, ConfirmDialogModule // 🔥 Importado
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService], // 🔥 Importado
   templateUrl: './evaluaciones.component.html',
-  styleUrls: ['./evaluaciones.component.css']
+  styleUrls: ['./evaluaciones.component.scss'] // 🔥 Cambiado a .scss
 })
 export class KinesiologoEvaluacionesComponent implements OnInit {
 
@@ -194,7 +195,6 @@ export class KinesiologoEvaluacionesComponent implements OnInit {
           const nombre = est.perfil ? est.perfil.nombre : est.nombre;
           const apellido = est.perfil ? est.perfil.apellido : est.apellido;
 
-          // Tipamos "any" temporalmente para evitar problemas estrictos de TS
           const notaExistente: any = resultados.find((r: any) => r.estudianteId === idUsuario || r.estudiante_id === idUsuario);
           
           return {

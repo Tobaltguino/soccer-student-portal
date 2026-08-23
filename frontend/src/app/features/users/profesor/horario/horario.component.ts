@@ -36,7 +36,7 @@ import { Grupo } from '../../../../core/domains/academico/grupos/models/grupo.in
   ],
   providers: [MessageService],
   templateUrl: './horario.component.html',
-  styleUrls: ['./horario.component.css']
+  styleUrls: ['./horario.component.scss'] // 🔥 Cambiado a .scss
 })
 export class ProfesorHorarioComponent implements OnInit {
   
@@ -69,7 +69,8 @@ export class ProfesorHorarioComponent implements OnInit {
         hour12: false 
       });
       
-      return { html: `<div class="slot-range" style="font-size: 0.7rem; font-weight: 600;">${inicio} - ${fin}</div>` };
+      // 🔥 Color text-secondary para que contraste en el modo oscuro
+      return { html: `<div class="slot-range" style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);">${inicio} - ${fin}</div>` };
     },
 
     slotLabelFormat: {
@@ -141,7 +142,7 @@ export class ProfesorHorarioComponent implements OnInit {
               const end = new Date(start.getTime() + 90 * 60000); 
 
               return {
-                title: `${clase.lugar}`,
+                title: `${nombreGrupo} | ${clase.lugar}`,
                 start: start.toISOString(),
                 end: end.toISOString(),
                 extendedProps: { ...clase, grupoNombre: nombreGrupo },

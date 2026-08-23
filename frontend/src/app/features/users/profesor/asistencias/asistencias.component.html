@@ -1,49 +1,53 @@
-<div class="attendance-container fadein animation-duration-500">
+<div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
 
-    <header class="page-header">
+    <header class="pf-admin-header">
         <div class="header-content">
-            <h1 class="m-0 text-main">Seguimiento Mensual</h1>
-            <p class="text-secondary m-0 mt-1">Análisis de asistencia y participación por grupo.</p>
+            <div>
+                <h1 class="pf-anton text-chalk m-0 text-3xl">Seguimiento Mensual</h1>
+                <p class="pf-oswald text-teal mt-1">Análisis de asistencia y participación por grupo.</p>
+            </div>
         </div>
     </header>
 
-    <div class="filter-bar">
+    <div class="pf-admin-card mb-4 p-3">
         <div class="filter-row">
             <div class="filter-item flex-grow-1" style="min-width: 200px;">
-                <label><i class="pi pi-users mr-1"></i> Seleccionar Grupo</label>
+                <label><i class="pi pi-users mr-1 text-teal"></i> Seleccionar Grupo</label>
                 <p-select [options]="grupos" [(ngModel)]="grupoSeleccionado" optionLabel="nombre" optionValue="id" 
                           placeholder="Escoge un grupo" (onChange)="onFilterChange()" styleClass="w-full"
-                          appendTo="body"></p-select>
+                          appendTo="body" [filter]="false"></p-select>
             </div>
             
             <div class="filter-item flex-grow-1">
-                <label><i class="pi pi-calendar mr-1"></i> Mes</label>
+                <label><i class="pi pi-calendar mr-1 text-teal"></i> Mes</label>
                 <p-select [options]="meses" [(ngModel)]="filtroMes" (onChange)="onFilterChange()" 
-                          styleClass="w-full" appendTo="body"></p-select>
+                          styleClass="w-full" appendTo="body" [filter]="false"></p-select>
             </div>
             
             <div class="filter-item flex-grow-1">
-                <label><i class="pi pi-calendar-plus mr-1"></i> Año</label>
+                <label><i class="pi pi-calendar-plus mr-1 text-teal"></i> Año</label>
                 <p-select [options]="anios" [(ngModel)]="filtroAnio" (onChange)="onFilterChange()" 
-                          styleClass="w-full" appendTo="body"></p-select>
+                          styleClass="w-full" appendTo="body" [filter]="false"></p-select>
             </div>
         </div>
     </div>
 
-    <div *ngIf="loading" class="flex flex-column align-items-center justify-content-center p-5">
-        <i class="pi pi-spin pi-spinner text-primary mb-3" style="font-size: 3rem"></i>
-        <p class="text-secondary m-0 font-medium">Calculando estadísticas...</p>
+    <!-- ESTADO DE CARGA Y VACÍO -->
+    <div *ngIf="loading" class="pf-admin-card text-center p-6 fadein flex flex-column align-items-center justify-content-center mt-4">
+        <p-progressSpinner styleClass="w-4rem h-4rem mb-4" strokeWidth="4" animationDuration=".5s"></p-progressSpinner>
+        <h2 class="text-chalk m-0 pf-anton text-2xl" style="letter-spacing: 0.5px;">Calculando estadísticas...</h2>
     </div>
 
-    <div *ngIf="!loading && grupoSeleccionado && estudiantesAsistencia.length === 0" class="empty-state text-center p-5 mt-4">
-        <i class="pi pi-info-circle text-400 mb-3" style="font-size: 2.5rem"></i>
-        <p class="text-secondary m-0 font-medium">No se encontraron registros de asistencia para este grupo en el periodo seleccionado.</p>
+    <div *ngIf="!loading && grupoSeleccionado && estudiantesAsistencia.length === 0" class="pf-admin-card mt-4 text-center p-6 fadein flex flex-column align-items-center justify-content-center">
+        <i class="pi pi-calendar-times text-6xl text-steel mb-3"></i>
+        <h2 class="text-chalk m-0 mt-2 pf-anton text-2xl" style="letter-spacing: 0.5px;">Sin Registros</h2>
+        <p class="text-steel mt-2 pf-oswald text-lg">No se encontraron registros de asistencia para este grupo en el periodo seleccionado.</p>
     </div>
 
-    <div class="main-card" *ngIf="!loading && estudiantesAsistencia.length > 0">
+    <div class="pf-admin-card table-responsive p-0 mt-4" *ngIf="!loading && estudiantesAsistencia.length > 0">
         <p-table [value]="estudiantesAsistencia" [rows]="10" [paginator]="true" 
-                 styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="stack" [breakpoint]="'768px'">
+                 styleClass="p-datatable-sm pf-table w-full" responsiveLayout="stack" [breakpoint]="'768px'">
             
             <ng-template pTemplate="header">
                 <tr>
@@ -57,38 +61,38 @@
             <ng-template pTemplate="body" let-est>
                 <tr>
                     <td>
-                        <span class="p-column-title hidden-desktop">Estudiante</span>
-                        <div class="estudiante-profile-wrapper">
+                        <span class="p-column-title hidden-desktop pf-oswald text-steel">Estudiante</span>
+                        <div class="flex align-items-center gap-3">
                             <p-avatar 
                                 [image]="est.foto_url" 
                                 [label]="!est.foto_url ? est.nombre.charAt(0) : ''"
                                 shape="circle" 
                                 size="large" 
-                                [style]="{'background-color': 'rgba(59, 130, 246, 0.1)', 'color': 'var(--primary-color)', 'border': '2px solid var(--primary-color)', 'min-width': '3.5rem', 'min-height': '3.5rem', 'font-weight': 'bold'}">
+                                [style]="{'background-color': 'var(--hover-bg)', 'color': 'var(--pf-teal)', 'border': '1px solid var(--pf-teal)', 'min-width': '3rem', 'min-height': '3rem', 'font-weight': 'bold'}">
                             </p-avatar>
 
-                            <div class="estudiante-profile-text">
-                                <span class="est-nombre">{{est.nombre}} {{est.apellido}}</span>
-                                <span class="est-rut">
-                                    <i class="pi pi-id-card"></i>
+                            <div class="flex flex-column">
+                                <span class="font-bold text-chalk text-lg sm:text-base" style="letter-spacing: 0.5px;">{{est.nombre}} {{est.apellido}}</span>
+                                <span class="text-xs text-steel mt-1 flex align-items-center justify-content-end sm:justify-content-start">
+                                    <i class="pi pi-id-card mr-1"></i>
                                     {{ est.rut || 'Sin RUT registrado' }}
                                 </span>
                             </div>
                         </div>
                     </td>
                     <td class="text-center">
-                        <span class="p-column-title hidden-desktop">Presencias / Total</span>
-                        <span class="text-base font-bold text-main">{{est.resumen}}</span>
+                        <span class="p-column-title hidden-desktop pf-oswald text-steel">Presencias / Total</span>
+                        <span class="text-xl font-bold text-teal pf-anton" style="letter-spacing: 0.5px;">{{est.resumen}}</span>
                     </td>
                     <td class="text-center">
-                        <span class="p-column-title hidden-desktop">Rendimiento</span>
-                        <p-tag [value]="est.porcentaje + '%'" [severity]="getSeverity(est.porcentaje)" styleClass="px-3 py-1 text-xs font-bold"></p-tag>
+                        <span class="p-column-title hidden-desktop pf-oswald text-steel">Rendimiento</span>
+                        <p-tag [value]="est.porcentaje + '%'" [severity]="getSeverity(est.porcentaje)" styleClass="px-3 py-1 text-sm font-bold"></p-tag>
                     </td>
                     <td class="text-center">
-                        <span class="p-column-title hidden-desktop">Historial</span>
-                        <div class="action-buttons">
+                        <span class="p-column-title hidden-desktop pf-oswald text-steel">Historial</span>
+                        <div class="pf-table-actions">
                             <button pButton icon="pi pi-calendar" 
-                                    class="p-button-text p-button-info" 
+                                    class="p-button-info" 
                                     (click)="verHistorialIndividual(est)"
                                     pTooltip="Ver detalle diario"></button>
                         </div>
@@ -98,53 +102,63 @@
         </p-table>
     </div>
 
-    <!-- MODAL HISTORIAL ACTUALIZADO PARA LEER VARIABLES PLANAS -->
+    <!-- MODAL HISTORIAL DIARIO -->
     <p-dialog [(visible)]="displayHistorial" [header]="'Historial: ' + alumnoSeleccionado?.nombre + ' ' + alumnoSeleccionado?.apellido" 
-              [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" [draggable]="false" [resizable]="false">
+              [modal]="true" [style]="{width: '90vw', maxWidth: '600px'}" [draggable]="false" [resizable]="false" styleClass="pf-dialog p-fluid">
         
-        <div class="flex flex-column sm:flex-row gap-2 mb-4 p-3 border-round bg-main border-1 border-color mt-2">
-            <p-select [options]="meses" [(ngModel)]="filtroMes" (onChange)="cargarDetalleHistorial()" 
-                      styleClass="flex-grow-1 w-full" appendTo="body"></p-select>
-            <p-select [options]="anios" [(ngModel)]="filtroAnio" (onChange)="cargarDetalleHistorial()" 
-                      styleClass="flex-grow-1 w-full" appendTo="body"></p-select>
+        <div class="flex flex-column sm:flex-row gap-3 mb-4 mt-2">
+            <div class="flex-grow-1">
+                <label class="pf-oswald text-steel text-sm mb-2 block"><i class="pi pi-calendar mr-1 text-teal"></i> Mes</label>
+                <p-select [options]="meses" [(ngModel)]="filtroMes" (onChange)="cargarDetalleHistorial()" 
+                          styleClass="w-full" appendTo="body" [filter]="false"></p-select>
+            </div>
+            <div class="flex-grow-1">
+                <label class="pf-oswald text-steel text-sm mb-2 block"><i class="pi pi-calendar-plus mr-1 text-teal"></i> Año</label>
+                <p-select [options]="anios" [(ngModel)]="filtroAnio" (onChange)="cargarDetalleHistorial()" 
+                          styleClass="w-full" appendTo="body" [filter]="false"></p-select>
+            </div>
         </div>
 
-        <div *ngIf="loadingHistorial" class="text-center p-4"><i class="pi pi-spin pi-spinner text-4xl text-primary"></i></div>
+        <div *ngIf="loadingHistorial" class="flex justify-content-center p-5">
+            <p-progressSpinner styleClass="w-3rem h-3rem" strokeWidth="4" animationDuration=".5s"></p-progressSpinner>
+        </div>
 
-        <div *ngIf="!loadingHistorial" class="historial-scroll-area">
+        <div *ngIf="!loadingHistorial" class="animation-fade-in border-1 surface-border border-round overflow-hidden" style="border-color: var(--border-color) !important;">
             
-            <div *ngIf="historialAlumno.length > 0" class="historial-header">
-                <div class="col-fecha">Fecha</div>
-                <div class="col-lugar">Lugar</div>
-                <div class="col-estado">Estado</div>
-            </div>
+            <p-table *ngIf="historialAlumno.length > 0" [value]="historialAlumno" styleClass="pf-table p-datatable-sm w-full" [scrollable]="true" scrollHeight="400px">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 30%">Fecha</th>
+                        <th style="width: 40%">Lugar</th>
+                        <th style="width: 30%" class="text-center">Estado</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-h>
+                    <tr>
+                        <td class="font-bold text-chalk">{{ h.fecha | date:'dd/MM/yyyy' }}</td>
+                        <td>
+                            <i class="pi pi-map-marker mr-1 text-teal"></i>
+                            <span class="text-steel">{{ h.lugar || 'Sin Asignar' }}</span>
+                        </td>
+                        <td class="text-center">
+                            <p-tag [severity]="h.presente ? 'success' : 'danger'" 
+                                   [icon]="h.presente ? 'pi pi-check' : 'pi pi-times'"
+                                   [value]="h.presente ? 'PRESENTE' : 'AUSENTE'" styleClass="text-xs font-bold px-2 py-1">
+                            </p-tag>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
 
-            <div *ngFor="let h of historialAlumno" class="historial-row">
-                <div class="col-fecha text-main font-bold">
-                    <!-- ✅ Usamos h.fecha en lugar de h.clases.fecha -->
-                    {{ h.fecha | date:'dd/MM/yyyy' }}
-                </div>
-                <div class="col-lugar">
-                    <i class="pi pi-map-marker mr-1 text-500"></i>
-                    <!-- ✅ Usamos h.lugar en lugar de h.clases.lugar -->
-                    <span class="text-truncate">{{ h.lugar || 'Sin Asignar' }}</span>
-                </div>
-                <div class="col-estado">
-                    <p-tag [severity]="h.presente ? 'success' : 'danger'" 
-                           [icon]="h.presente ? 'pi pi-check' : 'pi pi-times'"
-                           [value]="h.presente ? 'PRESENTE' : 'AUSENTE'" styleClass="text-xs">
-                    </p-tag>
-                </div>
-            </div>
-
-            <div *ngIf="historialAlumno.length === 0" class="empty-state text-center p-4 mt-3">
-                <i class="pi pi-calendar-times text-400 mb-2 text-3xl"></i>
-                <p class="text-secondary m-0 font-medium">Sin clases registradas en este mes.</p>
+            <div *ngIf="historialAlumno.length === 0" class="text-center p-5" style="background: var(--input-bg);">
+                <i class="pi pi-calendar-times text-steel mb-3 text-5xl"></i>
+                <h3 class="m-0 text-chalk pf-anton text-xl" style="letter-spacing: 0.5px;">Mes sin registros</h3>
+                <p class="text-steel m-0 mt-2 pf-oswald">No hay clases registradas para este estudiante en el mes seleccionado.</p>
             </div>
         </div>
 
         <ng-template pTemplate="footer">
-            <button pButton label="Cerrar" icon="pi pi-times" class="p-button-text w-full sm:w-auto" (click)="displayHistorial = false"></button>
+            <button pButton label="Cerrar Historial" icon="pi pi-times" class="pf-btn-ghost w-full sm:w-auto justify-content-center mt-3" (click)="displayHistorial = false"></button>
         </ng-template>
     </p-dialog>
 </div>

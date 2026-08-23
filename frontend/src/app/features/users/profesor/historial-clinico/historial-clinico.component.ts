@@ -7,6 +7,7 @@ import { MessageService } from 'primeng/api';
 import { TableModule } from 'primeng/table';
 import { SelectModule } from 'primeng/select';
 import { ToastModule } from 'primeng/toast';
+import { TagModule } from 'primeng/tag'; // 🔥 Agregado para usar p-tag
 
 // Nuevos Servicios de Dominio
 import { HistorialClinicoService } from '../../../../core/domains/salud/kinesiologia/historial-clinico/services/historial-clinico.service';
@@ -22,11 +23,12 @@ import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes
     FormsModule,
     TableModule,
     SelectModule,
-    ToastModule
+    ToastModule,
+    TagModule // 🔥 Importado
   ],
   providers: [MessageService],
   templateUrl: './historial-clinico.component.html',
-  styleUrls: ['./historial-clinico.component.css']
+  styleUrls: ['./historial-clinico.component.scss'] // 🔥 Cambiado a .scss
 })
 export class ProfesorHistorialClinicoComponent implements OnInit {
 

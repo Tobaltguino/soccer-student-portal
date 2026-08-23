@@ -44,9 +44,9 @@ import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes
     TooltipModule,
     DatePickerModule
   ],
-  providers: [MessageService], 
+  providers: [MessageService], // ✅ ConfirmDialog eliminado
   templateUrl: './ficha-evolutiva.component.html',
-  styleUrls: ['./ficha-evolutiva.component.css']
+  styleUrls: ['./ficha-evolutiva.component.scss'] // 🔥 Cambiado a .scss
 })
 export class KinesiologoFichaEvolutivaComponent implements OnInit {
 
@@ -179,7 +179,6 @@ export class KinesiologoFichaEvolutivaComponent implements OnInit {
       diagnosticoMedico: fichaData.diagnostico_medico,
       observacion: fichaData.observacion,
       balanceRomberg: fichaData.balance_romberg,
-      // Inicializamos objetos por si vienen null desde la BD para no romper el ngModel
       antecedentesPersonales: fichaData.antecedentes_personales || {},
       antecedentesRemotos: fichaData.antecedentes_remotos || {},
       inspeccionEstatica: fichaData.inspeccion_estatica || {},
@@ -216,7 +215,7 @@ export class KinesiologoFichaEvolutivaComponent implements OnInit {
   }
 
   // ==========================================
-  // GUARDAR (Mapeo estricto UI -> Payload)
+  // GUARDAR
   // ==========================================
   guardarFicha() {
     if (!this.ficha.fechaEvaluacion) {
@@ -231,8 +230,6 @@ export class KinesiologoFichaEvolutivaComponent implements OnInit {
       fechaFormateada = (new Date(d.getTime() - tzOffset)).toISOString().split('T')[0];
     }
 
-    // Armamos el Payload adhiriendo 100% a las interfaces. 
-    // El backend asignará el kinesiologoId automáticamente.
     const payload: any = { 
       estudianteId: this.alumnoSeleccionado.id,
       fechaEvaluacion: fechaFormateada,

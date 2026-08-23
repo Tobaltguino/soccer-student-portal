@@ -1,96 +1,96 @@
-<div class="evolution-record-container fadein animation-duration-500">
+<div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
     
-    <header class="page-header mb-5">
+    <header class="pf-admin-header">
         <div class="header-content">
-            <h1 class="m-0 text-main">Consulta de Historial Clínico</h1>
-            <p class="text-secondary m-0 mt-1">Revise el estado médico, patologías y alergias de los estudiantes de sus grupos.</p>
+            <div>
+                <h1 class="pf-anton text-chalk m-0 text-3xl">Consulta de Historial Clínico</h1>
+                <p class="pf-oswald text-teal mt-1">Revise el estado médico, patologías y alergias de los estudiantes de sus grupos.</p>
+            </div>
         </div>
     </header>
 
-    <div class="filter-bar mb-5">
+    <div class="pf-admin-card mb-4 p-3">
         <div class="filter-row">
             <div class="filter-item flex-grow-1">
-                <label class="mb-2 text-xs font-bold text-secondary uppercase tracking-wider">MIS ALUMNOS ASIGNADOS</label>
+                <label><i class="pi pi-search mr-1 text-teal"></i> MIS ALUMNOS ASIGNADOS</label>
                 <p-select [options]="listaAlumnos" [(ngModel)]="alumnoSeleccionado" optionLabel="nombreCompleto"
                           [filter]="true" filterBy="nombreCompleto" [showClear]="true" 
                           placeholder="Buscar estudiante en mis grupos..." 
                           (onChange)="onAlumnoChange()"
-                          appendTo="body" styleClass="w-full shadow-none border-blue-100">
+                          appendTo="body" styleClass="w-full">
                 </p-select>
             </div>
         </div>
     </div>
 
-    <div class="card-table mt-4 text-center p-6 fadein" *ngIf="!alumnoSeleccionado">
-        <i class="pi pi-heart text-7xl text-300 mb-4"></i>
-        <h2 class="text-secondary m-0 mt-3" style="font-size: 1.35rem;">Seleccione un estudiante</h2>
-        <p class="text-500 mt-3 text-lg">Busque un alumno para visualizar su registro médico.</p>
+    <!-- ESTADO VACÍO (SIN SELECCIONAR) -->
+    <div class="pf-admin-card mt-4 text-center p-6 fadein flex flex-column align-items-center justify-content-center" *ngIf="!alumnoSeleccionado">
+        <i class="pi pi-heart text-6xl text-steel mb-3"></i>
+        <h2 class="text-chalk m-0 mt-2 pf-anton text-2xl" style="letter-spacing: 0.5px;">Seleccione un estudiante</h2>
+        <p class="text-steel mt-2 pf-oswald">Busque un alumno para visualizar su registro médico.</p>
     </div>
 
+    <!-- CONTENIDO HISTORIAL -->
     <div *ngIf="alumnoSeleccionado" class="animation-fade-in">
-        <div class="card-table mt-4 fadein">
-            <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-5 border-bottom-1 surface-border pb-4 gap-4">
+        <div class="pf-admin-card table-responsive p-0 mt-4 fadein">
+            
+            <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-0 p-4 border-bottom-1 surface-border gap-3" style="border-color: var(--border-color) !important; background: var(--bg-main);">
                 <div>
-                    <h2 class="m-0 text-main mb-2" style="font-size: 1.25rem; font-weight: 700;">Historial Clínico</h2>
-                    <p class="text-secondary m-0">Estudiante: <span class="font-bold text-main">{{alumnoSeleccionado.nombreCompleto}}</span></p>
+                    <h2 class="m-0 text-chalk pf-anton text-2xl" style="letter-spacing: 0.5px;">Historial Clínico</h2>
+                    <p class="text-steel m-0 mt-1 pf-oswald">Estudiante: <span class="font-bold text-teal">{{alumnoSeleccionado.nombreCompleto}}</span></p>
                 </div>
             </div>
 
-            <p-table [value]="listaLesiones" [paginator]="true" [rows]="10" styleClass="p-datatable-sm p-datatable-striped" [loading]="cargandoLesiones" [responsiveLayout]="'stack'" [breakpoint]="'960px'">
+            <p-table [value]="listaLesiones" [paginator]="true" [rows]="10" styleClass="p-datatable-sm pf-table w-full" [loading]="cargandoLesiones" responsiveLayout="stack" [breakpoint]="'960px'">
                 <ng-template pTemplate="header">
                     <tr>
-                        <th class="py-3" style="width: 20%;">Fecha</th>
-                        <th class="py-3" style="width: 20%;">Tipo</th>
-                        <th class="py-3" style="width: 40%;">Diagnóstico / Detalle</th>
-                        <th class="py-3 text-center" style="width: 20%;">Estado Actual</th>
+                        <th style="width: 20%;">Fecha</th>
+                        <th style="width: 20%;">Tipo</th>
+                        <th style="width: 40%;">Diagnóstico / Detalle</th>
+                        <th class="text-center" style="width: 20%;">Estado Actual</th>
                     </tr>
                 </ng-template>
                 
                 <ng-template pTemplate="body" let-l>
                     <tr>
-                        <td class="py-3">
-                            <span class="p-column-title font-bold text-secondary hidden-desktop">Fecha: </span>
-                            <span>{{ l.fecha_evento | date:'dd/MM/yyyy' }}</span>
+                        <td>
+                            <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Fecha: </span>
+                            <span class="font-bold text-chalk pf-anton text-lg" style="letter-spacing: 0.5px;">{{ l.fecha_evento | date:'dd/MM/yyyy' }}</span>
                         </td>
-                        <td class="py-3 font-bold">
-                            <span class="p-column-title font-bold text-secondary hidden-desktop">Tipo: </span>
-                            <span class="text-primary">{{ getTipoLabel(l.tipo) }}</span>
+                        <td>
+                            <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Tipo: </span>
+                            <span class="text-teal font-bold">{{ getTipoLabel(l.tipo) }}</span>
                         </td>
-                        <td class="py-3 text-sm">
-                            <span class="p-column-title font-bold text-secondary hidden-desktop">Diagnóstico: </span>
-                            <span *ngIf="l.diagnostico">{{ l.diagnostico }}</span>
-                            <span *ngIf="!l.diagnostico" class="text-400 italic">No especificado</span>
+                        <td>
+                            <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Diagnóstico: </span>
+                            <span *ngIf="l.diagnostico" class="text-chalk">{{ l.diagnostico }}</span>
+                            <span *ngIf="!l.diagnostico" class="text-steel italic">No especificado</span>
                             
-                            <div *ngIf="l.observaciones" class="mt-2 text-xs text-500">
-                                <strong>Obs:</strong> {{ l.observaciones }}
+                            <div *ngIf="l.observaciones" class="mt-2 text-xs text-steel">
+                                <strong class="text-teal">Obs:</strong> {{ l.observaciones }}
                             </div>
                         </td>
-                        <td class="text-center py-3">
-                            <span class="p-column-title font-bold text-secondary hidden-desktop">Estado: </span>
-                            <span class="px-2 py-1 border-round text-xs font-bold" 
-                                  [ngClass]="{
-                                      'bg-red-100 text-red-700': l.estado === EstadoHistorialClinico.EN_OBSERVACION, 
-                                      'bg-orange-100 text-orange-700': l.estado === EstadoHistorialClinico.EN_TRATAMIENTO,
-                                      'bg-blue-100 text-blue-700': l.estado === EstadoHistorialClinico.EN_REINTEGRO_DEPORTIVO,
-                                      'bg-green-100 text-green-700': l.estado === EstadoHistorialClinico.RECUPERADO
-                                  }">
-                                {{ getEstadoLabel(l.estado) }}
-                            </span>
+                        <td class="text-center">
+                            <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Estado: </span>
+                            <p-tag [value]="getEstadoLabel(l.estado)" 
+                                   [severity]="l.estado === EstadoHistorialClinico.EN_OBSERVACION ? 'danger' : 
+                                               l.estado === EstadoHistorialClinico.EN_TRATAMIENTO ? 'warn' : 
+                                               l.estado === EstadoHistorialClinico.EN_REINTEGRO_DEPORTIVO ? 'info' : 'success'">
+                            </p-tag>
                         </td>
                     </tr>
                 </ng-template>
                 
                 <ng-template pTemplate="emptymessage">
                     <tr>
-                        <td colspan="4" class="text-center p-6 text-500">
-                            <i class="pi pi-check-circle text-5xl mb-3 text-green-300"></i><br>
-                            El estudiante no registra lesiones, alergias ni patologías médicas.
+                        <td colspan="4" class="text-center p-6 text-steel">
+                            <i class="pi pi-check-circle text-5xl mb-3 block text-lime"></i>
+                            <span class="pf-oswald text-lg">El estudiante no registra lesiones, alergias ni patologías médicas.</span>
                         </td>
                     </tr>
                 </ng-template>
             </p-table>
         </div>
     </div>
-
 </div>

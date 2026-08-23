@@ -38,7 +38,7 @@ import { forkJoin } from 'rxjs';
   ],
   providers: [MessageService],
   templateUrl: './horario.component.html',
-  styleUrls: ['./horario.component.css']
+  styleUrls: ['./horario.component.scss'] // 🔥 Cambiado a .scss
 })
 export class KinesiologoHorarioComponent implements OnInit {
   
@@ -71,7 +71,7 @@ export class KinesiologoHorarioComponent implements OnInit {
         hour12: false 
       });
       
-      return { html: `<div class="slot-range" style="font-size: 0.7rem; font-weight: 600;">${inicio} - ${fin}</div>` };
+      return { html: `<div class="slot-range" style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);">${inicio} - ${fin}</div>` };
     },
 
     slotLabelFormat: {
@@ -111,7 +111,6 @@ export class KinesiologoHorarioComponent implements OnInit {
   cargarGruposYClases() {
     this.loading = true;
     
-    // 1. Llamamos a nuestro nuevo endpoint
     this.grupoService.obtenerMisGrupos().subscribe({
       next: (gruposData) => {
         this.grupos = gruposData || [];
@@ -127,16 +126,13 @@ export class KinesiologoHorarioComponent implements OnInit {
         const hoy = new Date();
         const inicioMesStr = `${hoy.getFullYear()}-${('0' + (hoy.getMonth() + 1)).slice(-2)}-01`;
 
-        // ✅ 2. Creamos un arreglo de peticiones HTTP (una por cada grupo)
         const peticionesClases = misGrupoIds.map(id => 
           this.claseService.listarClases({ grupoId: id, desde: inicioMesStr, limite: 100 })
         );
 
-        // ✅ 3. Ejecutamos todas las peticiones en paralelo con forkJoin
         forkJoin(peticionesClases).subscribe({
           next: (respuestas) => {
             
-            // respuestas es un arreglo de respuestas. Usamos flatMap para unir todos los 'registros' en un solo arreglo
             const todasLasClases = respuestas.flatMap(res => res.registros);
 
             const eventos = todasLasClases.map((clase: any) => {
@@ -180,10 +176,9 @@ export class KinesiologoHorarioComponent implements OnInit {
   }
 
   getColorPorGrupo(grupoId: number | string): string {
-    if (!grupoId) return '#3b82f6';
+    if (!grupoId) return '#3b82f6'; // Azul por defecto
     const paleta = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'];
     
-    // Usamos el ID numérico para elegir un color consistente del array
     const index = Number(grupoId) % paleta.length;
     return paleta[index];
   }

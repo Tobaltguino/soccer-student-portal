@@ -34,7 +34,7 @@ import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes
   ],
   providers: [MessageService],
   templateUrl: './nutricion.component.html',
-  styleUrls: ['./nutricion.component.css']
+  styleUrls: ['./nutricion.component.scss'] // 🔥 Cambiado a .scss
 })
 export class KineNutritionComponent implements OnInit {
   
@@ -185,9 +185,6 @@ export class KineNutritionComponent implements OnInit {
 
           return estudianteConResultados;
         });
-
-        // Opcional: Si quieres que el kinesiólogo SOLO vea a los que sí tienen pauta/resultado para que la lista no sea gigante:
-        // this.estudiantes = this.estudiantes.filter(e => e.archivo_url_previo || e.observacion);
 
         this.cargandoResultados = false;
         this.cdr.detectChanges();

@@ -45,14 +45,12 @@ import { TooltipModule } from 'primeng/tooltip';
   ],
   providers: [MessageService],
   templateUrl: './evaluaciones-kine.component.html',
-  styleUrls: ['./evaluaciones-kine.component.css'] 
+  styleUrls: ['./evaluaciones-kine.component.scss']
 })
 export class ProfesorEvaluacionesKineComponent implements OnInit {
 
-  // ✅ Exponemos el Enum para poder usarlo en el HTML
   readonly EstadoSesion = EstadoSesion;
 
-  // Inyección de Servicios
   private kineTipoService = inject(KineTipoEvaluacionService);
   private kineSubService = inject(KineSubevaluacionService);
   private kineSesionService = inject(KineSesionService);
@@ -65,6 +63,7 @@ export class ProfesorEvaluacionesKineComponent implements OnInit {
 
   // --- DATOS PRINCIPALES ---
   sesiones: any[] = [];
+  sesionesOriginales: any[] = [];
   sesionesFiltradas: any[] = [];
   grupos: any[] = []; 
   tiposEvaluacion: any[] = [];
@@ -93,9 +92,6 @@ export class ProfesorEvaluacionesKineComponent implements OnInit {
     this.cargarDatosGenerales();
   }
 
-  // ==========================================
-  // CARGA DE DATOS PRINCIPALES
-  // ==========================================
   cargarDatosGenerales() {
     this.loading = true;
 
@@ -107,7 +103,8 @@ export class ProfesorEvaluacionesKineComponent implements OnInit {
         if (misGrupoIds.length === 0) {
           this.kineTipoService.listarTiposEvaluacion().subscribe(t => {
             this.tiposEvaluacion = t || [];
-            this.sesiones = [];
+            this.sesionesOriginales = [];
+            this.sesionesFiltradas = [];
             this.loading = false;
             this.cdr.detectChanges();
           });
@@ -127,13 +124,14 @@ export class ProfesorEvaluacionesKineComponent implements OnInit {
             
             const todasLasSesiones = sesionesGrupos.flatMap(res => res.registros);
             
-            this.sesiones = todasLasSesiones.map((s: any) => ({
+            this.sesionesOriginales = todasLasSesiones.map((s: any) => ({
                 ...s,
                 grupoObj: this.grupos.find(g => g.id === (s.grupo_id || s.grupoId)) || { nombre: 'Desconocido' },
                 tipoObj: this.tiposEvaluacion.find(t => t.id === (s.tipo_evaluacion_id || s.tipoEvaluacionId)) || { nombre: 'Desconocido' }
             }));
 
             this.aplicarFiltros();
+            
             this.loading = false;
             this.cdr.detectChanges();
           },
@@ -152,9 +150,6 @@ export class ProfesorEvaluacionesKineComponent implements OnInit {
     });
   }
 
-  // ==========================================
-  // LÓGICA DE RANGOS Y COLORES
-  // ==========================================
   getSeverityPuntaje(puntaje: number | string | null, subevaluacionId: number): "success" | "secondary" | "info" | "warn" | "danger" | "contrast" | undefined {
     if (puntaje === null || puntaje === undefined || puntaje === '') return 'secondary';
     
@@ -173,11 +168,8 @@ export class ProfesorEvaluacionesKineComponent implements OnInit {
     }
   }
 
-  // ==========================================
-  // FILTROS
-  // ==========================================
   aplicarFiltros() {
-    this.sesionesFiltradas = this.sesiones.filter(sesion => {
+    this.sesionesFiltradas = this.sesionesOriginales.filter(sesion => {
       let cumpleFecha = true;
       let cumpleGrupo = true;
       let cumplePrueba = true;
@@ -214,9 +206,6 @@ export class ProfesorEvaluacionesKineComponent implements OnInit {
     return (new Date(d.getTime() - tzOffset)).toISOString().split('T')[0];
   }
 
-  // ==========================================
-  // VISTA DE RESULTADOS
-  // ==========================================
   verResultados(sesion: any) {
     this.sesionVista = { ...sesion };
     this.cargandoResultados = true;
@@ -259,7 +248,7 @@ export class ProfesorEvaluacionesKineComponent implements OnInit {
                 observacion: resGuardado ? resGuardado.observacion : '',
                 tiene_datos: !!resGuardado 
               };
-            }).filter(e => e.tiene_datos); // El profesor SOLO ve lo que ya se evaluó
+            }).filter((e: any) => e.tiene_datos); 
 
             return {
               id: idUsuario,

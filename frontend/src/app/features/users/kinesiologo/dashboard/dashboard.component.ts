@@ -3,6 +3,11 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
+// 🔥 Módulos y Servicios de PrimeNG (AQUÍ FALTABAN LOS SERVICIOS)
+import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { MessageService, ConfirmationService } from 'primeng/api'; // ✅ IMPORTANTE
+
 // 🚀 SERVICIOS MODULARES (NestJS)
 import { AuthService } from '../../../../core/auth/services/auth.service';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
@@ -13,9 +18,15 @@ import { HistorialClinicoService } from '../../../../core/domains/salud/kinesiol
 @Component({
   selector: 'app-kinesiologo-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
-  templateUrl: './dashboard.component.html', // Ajusta si tu archivo se llama dashboard.component.html
-  styleUrls: ['./dashboard.component.css']   // Ajusta si tu archivo se llama dashboard.component.css
+  imports: [
+    CommonModule, 
+    RouterModule,
+    ToastModule,
+    ConfirmDialogModule
+  ],
+  providers: [MessageService, ConfirmationService], // 🔥 ESTO ERA LO QUE FALTABA
+  templateUrl: './dashboard.component.html', 
+  styleUrls: ['./dashboard.component.scss']
 })
 export class KinesiologoDashboardComponent implements OnInit {
   
@@ -28,13 +39,13 @@ export class KinesiologoDashboardComponent implements OnInit {
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
 
-  // 🔥 KPIs ultra-optimizados (Números directos)
+  // KPIs ultra-optimizados
   misGrupos: number = 0;
   totalAlumnos: number = 0;
   clasesHoy: any[] = [];
   proximaClase: any = null;
 
-  // 🔥 KPIs Clínicos Reales
+  // KPIs Clínicos Reales
   pacientesEnTratamiento: number = 0;
   pacientesEnObservacion: number = 0;
   pacientesEnReintegro: number = 0;
@@ -75,7 +86,7 @@ export class KinesiologoDashboardComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      // 1. Grupos y Alumnos del Kinesiólogo (¡El nuevo endpoint súper rápido!)
+      // 1. Grupos y Alumnos del Kinesiólogo
       const stats = await firstValueFrom(this.estudianteService.obtenerMisEstadisticas());
       if (stats) {
         this.misGrupos = stats.totalGrupos;
@@ -95,11 +106,10 @@ export class KinesiologoDashboardComponent implements OnInit {
           horaClase.setHours(parseInt(h, 10), parseInt(m, 10), 0);
           return horaClase >= ahora;
         });
-        // Si hay clases en el futuro, toma la más próxima. Si no, muestra la última del día.
         this.proximaClase = futuras.length > 0 ? futuras[0] : this.clasesHoy[this.clasesHoy.length - 1];
       }
 
-      // 3. Cumpleaños Globales (Procesados en el Backend)
+      // 3. Cumpleaños Globales
       const resCumples = await firstValueFrom(this.usuarioService.obtenerCumpleanosGlobales(7));
       this.cumpleanosList = resCumples || [];
 

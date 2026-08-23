@@ -37,7 +37,7 @@ import { HistorialClinico } from '../../../../core/domains/salud/kinesiologia/hi
   ],
   providers: [FilterService],
   templateUrl: './ver-estudiantes.component.html',
-  styleUrls: ['./ver-estudiantes.component.css']
+  styleUrls: ['./ver-estudiantes.component.scss'] // 🔥 Cambiado a .scss
 })
 export class ProfesorVerEstudiantesComponent implements OnInit {
   @ViewChild('dt') dt: Table | undefined;
@@ -125,7 +125,6 @@ export class ProfesorVerEstudiantesComponent implements OnInit {
           };
           
           // Por defecto asumimos que están sanos si el backend no manda un estado general
-          // El profesor podrá ver el detalle exacto abriendo la ficha
           if (!flatEst.estado_salud) {
             flatEst.estado_salud = 'SANO';
           }
@@ -187,12 +186,12 @@ export class ProfesorVerEstudiantesComponent implements OnInit {
       return 'info'; 
   }
 
-  getSeveridadEstado(estado: any): any {
+  getSeveridadEstado(estado: any): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
       if (!estado || estado.toUpperCase() === 'SANO' || estado.toUpperCase() === 'RECUPERADO') return 'success';
       
       switch (estado.toUpperCase()) {
           case 'EN_REINTEGRO_DEPORTIVO': return 'info';
-          case 'EN_OBSERVACION': return 'warning'; // Asegúrate de que PrimeNG soporte 'warning' o usa 'warn'
+          case 'EN_OBSERVACION': return 'warn'; // 🔥 CORREGIDO para evitar el error de PrimeNG
           case 'EN_TRATAMIENTO': return 'danger';
           default: return 'secondary'; 
       }

@@ -1,361 +1,419 @@
-<div class="evolution-record-container fadein animation-duration-500">
+<div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
 
-    <header class="page-header">
+    <header class="pf-admin-header">
         <div class="header-content">
-            <h1>Consulta de Fichas Evolutivas Kinésicas</h1>
-            <p>Busque un estudiante de sus grupos para revisar su historial de evaluaciones físicas.</p>
+            <div>
+                <h1 class="pf-anton text-chalk m-0 text-3xl">Consulta de Fichas Evolutivas Kinésicas</h1>
+                <p class="pf-oswald text-teal mt-1">Busque un estudiante de sus grupos para revisar su historial de evaluaciones físicas.</p>
+            </div>
         </div>
     </header>
     
-    <div class="filter-bar animation-fade-in" *ngIf="!modoFormulario">
+    <!-- BUSCADOR PRINCIPAL -->
+    <div class="pf-admin-card mb-4 p-3 animation-fade-in" *ngIf="!modoFormulario">
         <div class="filter-row">
             <div class="filter-item flex-grow-1">
-                <label>BUSCADOR DE ALUMNOS ASIGNADOS</label>
+                <label><i class="pi pi-search mr-1 text-teal"></i> BUSCADOR DE ALUMNOS ASIGNADOS</label>
                 <p-select [options]="listaAlumnos" [(ngModel)]="alumnoSeleccionado" optionLabel="nombreCompleto"
                           [filter]="true" filterBy="nombreCompleto" [showClear]="true" 
                           placeholder="Selecciona un alumno para ver su historial..." 
                           (onChange)="onAlumnoChange()"
-                          appendTo="body"
-                          styleClass="w-full">
+                          appendTo="body" styleClass="w-full">
                 </p-select>
             </div>
         </div>
     </div>
 
-    <div class="card-table mt-3 text-center p-5 fadein" *ngIf="!alumnoSeleccionado && !modoFormulario">
-        <i class="pi pi-users text-6xl text-300 mb-3"></i>
-        <h2 class="text-secondary m-0 mt-3" style="font-size: 1.25rem;">Consulta de Fichas Evolutivas</h2>
-        <p class="text-500 mt-2">Seleccione un estudiante de sus grupos para revisar su historial kinésico.</p>
+    <!-- ESTADO VACÍO (SIN SELECCIONAR) -->
+    <div class="pf-admin-card mt-4 text-center p-6 fadein flex flex-column align-items-center justify-content-center" *ngIf="!alumnoSeleccionado && !modoFormulario">
+        <i class="pi pi-users text-6xl text-steel mb-3"></i>
+        <h2 class="text-chalk m-0 mt-2 pf-anton text-2xl" style="letter-spacing: 0.5px;">Consulta de Fichas Evolutivas</h2>
+        <p class="text-steel mt-2 pf-oswald">Seleccione un estudiante de sus grupos para revisar su historial kinésico.</p>
     </div>
 
-    <div class="card-table mt-3 fadein" *ngIf="alumnoSeleccionado && !modoFormulario">
-        <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-4 border-bottom-1 surface-border pb-3 gap-3">
+    <!-- HISTORIAL DE FICHAS -->
+    <div class="pf-admin-card table-responsive p-0 mt-4 fadein" *ngIf="alumnoSeleccionado && !modoFormulario">
+        
+        <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-0 p-4 border-bottom-1 surface-border gap-3" style="border-color: var(--border-color) !important; background: var(--bg-main);">
             <div>
-                <h2 class="m-0 text-main" style="font-size: 1.15rem; font-weight: 700;">Historial Clínico</h2>
-                <p class="text-secondary m-0 mt-1">Alumno: <span class="font-bold text-main">{{alumnoSeleccionado.nombreCompleto}}</span></p>
+                <h2 class="m-0 text-chalk pf-anton text-2xl" style="letter-spacing: 0.5px;">Historial Clínico</h2>
+                <p class="text-steel m-0 mt-1 pf-oswald">Alumno: <span class="font-bold text-teal">{{alumnoSeleccionado.nombreCompleto}}</span></p>
             </div>
         </div>
 
-        <p-table [value]="historialFichas" [paginator]="true" [rows]="10" styleClass="p-datatable-sm p-datatable-striped" [loading]="cargandoHistorial" [responsiveLayout]="'stack'" [breakpoint]="'960px'">
+        <p-table [value]="historialFichas" [paginator]="true" [rows]="10" styleClass="p-datatable-sm pf-table w-full" [loading]="cargandoHistorial" responsiveLayout="stack" [breakpoint]="'960px'">
             <ng-template pTemplate="header">
                 <tr>
-                    <th>Fecha de Atención</th>
-                    <th>Profesional Tratante</th>
-                    <th>Diagnóstico Principal</th>
-                    <th class="text-center" style="width: 100px">Ver</th>
+                    <th style="width: 25%">Fecha de Atención</th>
+                    <th style="width: 25%">Profesional Tratante</th>
+                    <th style="width: 35%">Diagnóstico Principal</th>
+                    <th style="width: 15%" class="text-center">Ver</th>
                 </tr>
             </ng-template>
             <ng-template pTemplate="body" let-h>
                 <tr>
                     <td>
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Fecha: </span>
-                        <span>{{ h.fecha_evaluacion | date:'dd/MM/yyyy' }}</span>
+                        <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Fecha: </span>
+                        <span class="font-bold text-chalk pf-anton text-lg" style="letter-spacing: 0.5px;">{{ h.fecha_evaluacion | date:'dd/MM/yyyy' }}</span>
                     </td>
                     <td>
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Profesional: </span>
-                        <span>{{ h.kinesiologoObj?.nombreCompleto }}</span>
+                        <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Profesional: </span>
+                        <span class="text-chalk font-bold">{{ h.kinesiologoObj?.nombreCompleto }}</span>
                     </td>
                     <td>
-                        <span class="p-column-title font-bold text-secondary hidden-desktop">Diagnóstico: </span>
-                        <span>{{ h.diagnostico_medico || 'N/A' }}</span>
+                        <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Diagnóstico: </span>
+                        <span class="text-steel italic">{{ h.diagnostico_medico || 'N/A' }}</span>
                     </td>
                     <td class="text-center">
-                        <div class="action-buttons justify-content-center">
-                            <button pButton icon="pi pi-eye" class="p-button-text p-button-rounded p-button-info" (click)="abrirVerFicha(h)" pTooltip="Ver Detalle"></button>
+                        <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Ver: </span>
+                        <div class="pf-table-actions">
+                            <button pButton icon="pi pi-eye" class="p-button-info" (click)="abrirVerFicha(h)" pTooltip="Ver Detalle"></button>
                         </div>
                     </td>
                 </tr>
             </ng-template>
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="4" class="text-center p-5 text-500">
-                        <i class="pi pi-inbox text-4xl mb-3"></i><br>El alumno no registra atenciones kinésicas previas.
+                    <td colspan="4" class="text-center p-6 text-steel">
+                        <i class="pi pi-inbox text-5xl mb-3 block text-steel"></i>
+                        <span class="pf-oswald text-lg">El alumno no registra atenciones kinésicas previas.</span>
                     </td>
                 </tr>
             </ng-template>
         </p-table>
     </div>
 
-    <div class="card-table mt-3 animation-fade-in" *ngIf="modoFormulario">
+    <!-- FORMULARIO DE FICHA CLÍNICA (SOLO LECTURA) -->
+    <div class="pf-admin-card p-4 mt-4 animation-fade-in" *ngIf="modoFormulario">
         
-        <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-4 border-bottom-1 surface-border pb-3 gap-3">
+        <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-4 border-bottom-1 surface-border pb-4 gap-3" style="border-color: var(--border-color) !important;">
             <div class="w-full md:w-auto">
-                <h2 class="m-0 text-primary" style="font-size: 1.15rem; font-weight: 700;">Detalle de la Atención</h2>
-                <p class="text-secondary m-0 mt-1">Estudiante: <span class="font-bold text-main">{{alumnoSeleccionado.nombreCompleto}}</span></p>
-                <p class="text-secondary m-0 mt-1">Evaluador: <span class="font-bold text-main">{{ficha.kinesiologoObj?.nombreCompleto}}</span></p>
+                <h2 class="m-0 text-lime pf-anton text-3xl" style="letter-spacing: 0.5px;">Detalle de la Atención</h2>
+                <p class="text-steel m-0 mt-2 pf-oswald text-lg">Paciente: <span class="font-bold text-chalk">{{alumnoSeleccionado.nombreCompleto}}</span></p>
+                <p class="text-steel m-0 mt-1 pf-oswald text-lg">Evaluador: <span class="font-bold text-teal">{{ficha.kinesiologoObj?.nombreCompleto}}</span></p>
                 
                 <div class="mt-3 flex align-items-center gap-2">
-                    <label class="font-bold text-sm text-secondary">Fecha de Evaluación:</label>
+                    <label class="font-bold text-sm text-steel pf-oswald tracking-wider uppercase"><i class="pi pi-calendar mr-1 text-teal"></i>Fecha:</label>
                     <p-datepicker [(ngModel)]="ficha.fechaEvaluacion" dateFormat="dd/mm/yy" [showIcon]="true" disabled="true" appendTo="body" styleClass="p-inputtext-sm"></p-datepicker>
                 </div>
             </div>
-            <div class="flex gap-2 w-full md:w-auto align-self-start md:align-self-end">
-                <button pButton label="Volver al Historial" icon="pi pi-arrow-left" class="p-button-outlined p-button-secondary flex-1 md:flex-none btn-create" (click)="volverAlHistorial()"></button>
+            <div class="flex flex-column sm:flex-row gap-2 w-full md:w-auto align-self-start md:align-self-end">
+                <button pButton label="Volver al Historial" icon="pi pi-arrow-left" class="pf-btn-ghost w-full sm:w-auto" (click)="volverAlHistorial()"></button>
             </div>
         </div>
 
         <div class="flex justify-content-center mb-4 mt-3">
-            <p-selectButton [options]="opcionesVistaForm" [(ngModel)]="vistaFormulario" optionLabel="label" optionValue="value"></p-selectButton>
+            <p-selectButton [options]="opcionesVistaForm" [(ngModel)]="vistaFormulario" optionLabel="label" optionValue="value">
+                <ng-template let-item pTemplate="item">
+                    <i [class]="item.icon" class="mr-2"></i><span class="pf-oswald tracking-wider">{{item.label}}</span>
+                </ng-template>
+            </p-selectButton>
         </div>
 
-        <!-- ✅ EL FIELDSET DISABLED="TRUE" BLOQUEA TODOS LOS INPUTS DENTRO -->
+        <!-- ✅ BLOQUEO DE FORMULARIO -->
         <fieldset disabled="true" class="p-0 m-0 border-none">
             
             <!-- VISTA: ANTECEDENTES -->
-            <div *ngIf="vistaFormulario === 'antecedentes'" class="animation-fade-in">
+            <div *ngIf="vistaFormulario === 'antecedentes'" class="animation-fade-in flex flex-column gap-4">
                 
-                <div class="kine-table-wrapper mb-4">
-                    <table class="kine-table">
-                        <thead><tr><th colspan="2" class="kine-header">1. Anamnesis Próxima</th></tr></thead>
-                        <tbody>
-                            <tr>
-                                <td class="kine-label-cell-fixed w-3">Mecanismo de Lesión</td>
-                                <td class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.antecedentesPersonales.mecanismoLesion" rows="2" [autoResize]="true"></textarea></td>
-                            </tr>
-                            <tr>
-                                <td class="kine-label-cell-fixed w-3">Tiempo de Evolución</td>
-                                <td class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.antecedentesPersonales.tiempoEvolucion" rows="1" [autoResize]="true"></textarea></td>
-                            </tr>
-                            <tr>
-                                <td class="kine-label-cell-fixed w-3">Tratamientos Recibidos</td>
-                                <td class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.antecedentesPersonales.tratamientosRecibidos" rows="2" [autoResize]="true"></textarea></td>
-                            </tr>
-                            <tr>
-                                <td class="kine-label-cell-fixed w-3">Exámenes Complementarios</td>
-                                <td class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.antecedentesPersonales.examenesComplementarios" rows="2" [autoResize]="true"></textarea></td>
-                            </tr>
-                            <tr>
-                                <td class="kine-label-cell-fixed w-3">Principales Síntomas</td>
-                                <td class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.antecedentesPersonales.sintomasActuales" rows="2" [autoResize]="true"></textarea></td>
-                            </tr>
-                            <tr>
-                                <td class="kine-label-cell-fixed w-3">Dolor (EVA)</td>
-                                <td class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.antecedentesPersonales.dolor" rows="1" [autoResize]="true"></textarea></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- SECCIÓN 1: ANAMNESIS PRÓXIMA -->
+                <div class="border-1 border-round overflow-hidden" style="border-color: var(--border-color) !important;">
+                    <div class="p-3 font-bold text-chalk pf-oswald text-lg border-bottom-1 surface-border" style="background: var(--bg-main); border-color: var(--border-color) !important;">1. Anamnesis Próxima</div>
+                    
+                    <div class="flex flex-column md:flex-row border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                        <div class="w-full md:w-3 p-3 font-bold text-steel pf-oswald flex align-items-center md:border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Mecanismo de Lesión</div>
+                        <div class="w-full md:w-9 p-0 bg-transparent">
+                            <textarea pTextarea class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" [(ngModel)]="ficha.antecedentesPersonales.mecanismoLesion" rows="2" [autoResize]="true"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-column md:flex-row border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                        <div class="w-full md:w-3 p-3 font-bold text-steel pf-oswald flex align-items-center md:border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Tiempo de Evolución</div>
+                        <div class="w-full md:w-9 p-0 bg-transparent">
+                            <textarea pTextarea class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" [(ngModel)]="ficha.antecedentesPersonales.tiempoEvolucion" rows="1" [autoResize]="true"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-column md:flex-row border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                        <div class="w-full md:w-3 p-3 font-bold text-steel pf-oswald flex align-items-center md:border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Tratamientos Recibidos</div>
+                        <div class="w-full md:w-9 p-0 bg-transparent">
+                            <textarea pTextarea class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" [(ngModel)]="ficha.antecedentesPersonales.tratamientosRecibidos" rows="2" [autoResize]="true"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-column md:flex-row border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                        <div class="w-full md:w-3 p-3 font-bold text-steel pf-oswald flex align-items-center md:border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Exámenes Complementarios</div>
+                        <div class="w-full md:w-9 p-0 bg-transparent">
+                            <textarea pTextarea class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" [(ngModel)]="ficha.antecedentesPersonales.examenesComplementarios" rows="2" [autoResize]="true"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-column md:flex-row border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                        <div class="w-full md:w-3 p-3 font-bold text-steel pf-oswald flex align-items-center md:border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Principales Síntomas</div>
+                        <div class="w-full md:w-9 p-0 bg-transparent">
+                            <textarea pTextarea class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" [(ngModel)]="ficha.antecedentesPersonales.sintomasActuales" rows="2" [autoResize]="true"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-column md:flex-row">
+                        <div class="w-full md:w-3 p-3 font-bold text-steel pf-oswald flex align-items-center md:border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Dolor (EVA)</div>
+                        <div class="w-full md:w-9 p-0 bg-transparent">
+                            <textarea pTextarea class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" [(ngModel)]="ficha.antecedentesPersonales.dolor" rows="1" [autoResize]="true"></textarea>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="kine-table-wrapper mb-4">
-                    <table class="kine-table">
-                        <thead><tr><th colspan="2" class="kine-header">2. Anamnesis Remota</th></tr></thead>
-                        <tbody>
-                            <tr>
-                                <td class="kine-label-cell-fixed w-3">Antecedentes Mórbidos</td>
-                                <td class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.antecedentesRemotos.antecedentesSecundarios" rows="2" [autoResize]="true"></textarea></td>
-                            </tr>
-                            <tr>
-                                <td class="kine-label-cell-fixed w-3">Ant. Quirúrgicos</td>
-                                <td class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.antecedentesRemotos.antecedentesQuirurgicos" rows="2" [autoResize]="true"></textarea></td>
-                            </tr>
-                            <tr>
-                                <td class="kine-label-cell-fixed w-3">Hábitos</td>
-                                <td class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.antecedentesRemotos.habitos" rows="2" [autoResize]="true"></textarea></td>
-                            </tr>
-                            <tr>
-                                <td class="kine-label-cell-fixed w-3">Medicamentos</td>
-                                <td class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.antecedentesRemotos.medicamentos" rows="2" [autoResize]="true"></textarea></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- SECCIÓN 2: ANAMNESIS REMOTA -->
+                <div class="border-1 border-round overflow-hidden" style="border-color: var(--border-color) !important;">
+                    <div class="p-3 font-bold text-chalk pf-oswald text-lg border-bottom-1 surface-border" style="background: var(--bg-main); border-color: var(--border-color) !important;">2. Anamnesis Remota</div>
+                    
+                    <div class="flex flex-column md:flex-row border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                        <div class="w-full md:w-3 p-3 font-bold text-steel pf-oswald flex align-items-center md:border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Antecedentes Mórbidos</div>
+                        <div class="w-full md:w-9 p-0 bg-transparent">
+                            <textarea pTextarea class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" [(ngModel)]="ficha.antecedentesRemotos.antecedentesSecundarios" rows="2" [autoResize]="true"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-column md:flex-row border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                        <div class="w-full md:w-3 p-3 font-bold text-steel pf-oswald flex align-items-center md:border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Ant. Quirúrgicos</div>
+                        <div class="w-full md:w-9 p-0 bg-transparent">
+                            <textarea pTextarea class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" [(ngModel)]="ficha.antecedentesRemotos.antecedentesQuirurgicos" rows="2" [autoResize]="true"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-column md:flex-row border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                        <div class="w-full md:w-3 p-3 font-bold text-steel pf-oswald flex align-items-center md:border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Hábitos</div>
+                        <div class="w-full md:w-9 p-0 bg-transparent">
+                            <textarea pTextarea class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" [(ngModel)]="ficha.antecedentesRemotos.habitos" rows="2" [autoResize]="true"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-column md:flex-row">
+                        <div class="w-full md:w-3 p-3 font-bold text-steel pf-oswald flex align-items-center md:border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Medicamentos</div>
+                        <div class="w-full md:w-9 p-0 bg-transparent">
+                            <textarea pTextarea class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" [(ngModel)]="ficha.antecedentesRemotos.medicamentos" rows="2" [autoResize]="true"></textarea>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="kine-table-wrapper mb-4">
-                    <table class="kine-table">
-                        <thead><tr><th class="kine-header">3. Diagnóstico Médico</th></tr></thead>
-                        <tbody>
-                            <tr><td class="p-0"><textarea pTextarea [(ngModel)]="ficha.diagnosticoMedico" class="kine-input" rows="3" [autoResize]="true"></textarea></td></tr>
-                        </tbody>
-                    </table>
+                <!-- SECCIÓN 3: DIAGNÓSTICO -->
+                <div class="border-1 border-round overflow-hidden" style="border-color: var(--border-color) !important;">
+                    <div class="p-3 font-bold text-chalk pf-oswald text-lg border-bottom-1 surface-border" style="background: var(--bg-main); border-color: var(--border-color) !important;">3. Diagnóstico Médico</div>
+                    <div class="w-full p-0 bg-transparent">
+                        <textarea pTextarea [(ngModel)]="ficha.diagnosticoMedico" class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" rows="3" [autoResize]="true"></textarea>
+                    </div>
                 </div>
             </div>
 
             <!-- VISTA: EVALUACIÓN CLÍNICA -->
-            <div *ngIf="vistaFormulario === 'evaluacion'" class="animation-fade-in">
+            <div *ngIf="vistaFormulario === 'evaluacion'" class="animation-fade-in flex flex-column gap-4">
                 
-                <div class="kine-table-wrapper mb-4">
-                    <table class="kine-table">
-                        <thead><tr><th colspan="4" class="kine-header">1. Inspección</th></tr></thead>
-                        <tbody>
-                            <tr><td colspan="4" class="kine-subheader">Estática</td></tr>
-                            <tr>
-                                <td class="kine-label-cell-fixed w-2">Anterior:</td>
-                                <td class="p-0 w-4"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.inspeccionEstatica.anterior" rows="1" [autoResize]="true"></textarea></td>
-                                <td class="kine-label-cell-fixed w-2">Posterior:</td>
-                                <td class="p-0 w-4"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.inspeccionEstatica.posterior" rows="1" [autoResize]="true"></textarea></td>
-                            </tr>
-                            <tr>
-                                <td class="kine-label-cell-fixed w-2">Sagital Der:</td>
-                                <td class="p-0 w-4"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.inspeccionEstatica.sagitalDer" rows="1" [autoResize]="true"></textarea></td>
-                                <td class="kine-label-cell-fixed w-2">Sagital Izq:</td>
-                                <td class="p-0 w-4"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.inspeccionEstatica.sagitalIzq" rows="1" [autoResize]="true"></textarea></td>
-                            </tr>
-                            
-                            <tr><td colspan="4" class="kine-subheader border-top-1 surface-border">Dinámica</td></tr>
-                            <tr>
-                                <td class="kine-label-cell-fixed w-3">Disfunción:</td>
-                                <td colspan="3" class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.inspeccionDinamica.disfuncion" rows="1" [autoResize]="true"></textarea></td>
-                            </tr>
-                            <tr>
-                                <td class="kine-label-cell-fixed w-3">Grupos Musculares:</td>
-                                <td colspan="3" class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.inspeccionDinamica.gruposMusc" rows="1" [autoResize]="true"></textarea></td>
-                            </tr>
-                            <tr>
-                                <td colspan="4" class="p-3">
-                                    <div class="flex flex-column md:flex-row gap-4">
-                                        <div class="flex align-items-center"><p-checkbox [(ngModel)]="ficha.inspeccionDinamica.sinCompensacion" [binary]="true"></p-checkbox><span class="ml-2 text-sm text-main">Sin compensaciones</span></div>
-                                        <div class="flex align-items-center"><p-checkbox [(ngModel)]="ficha.inspeccionDinamica.conCompensacion" [binary]="true"></p-checkbox><span class="ml-2 text-sm text-main">Con compensaciones</span></div>
-                                        <div class="flex align-items-center"><p-checkbox [(ngModel)]="ficha.inspeccionDinamica.noLograMov" [binary]="true"></p-checkbox><span class="ml-2 text-sm text-main">No logra movimiento</span></div>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- 1. INSPECCIÓN -->
+                <div class="border-1 border-round overflow-hidden" style="border-color: var(--border-color) !important;">
+                    <div class="p-3 font-bold text-chalk pf-oswald text-lg border-bottom-1 surface-border" style="background: var(--bg-main); border-color: var(--border-color) !important;">1. Inspección</div>
+                    
+                    <div class="p-2 font-bold text-teal pf-oswald text-sm border-bottom-1 surface-border text-center tracking-wider" style="background: var(--hover-bg); border-color: var(--border-color) !important;">ESTÁTICA</div>
+                    
+                    <div class="grid grid-nogutter border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                        <div class="col-12 md:col-6 flex border-bottom-1 md:border-bottom-none md:border-right-1 surface-border" style="border-color: var(--border-color) !important;">
+                            <div class="w-4 p-3 font-bold text-steel pf-oswald flex align-items-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Anterior</div>
+                            <div class="w-8 p-0 bg-transparent"><textarea pTextarea class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" [(ngModel)]="ficha.inspeccionEstatica.anterior" rows="1" [autoResize]="true"></textarea></div>
+                        </div>
+                        <div class="col-12 md:col-6 flex">
+                            <div class="w-4 p-3 font-bold text-steel pf-oswald flex align-items-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Posterior</div>
+                            <div class="w-8 p-0 bg-transparent"><textarea pTextarea class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" [(ngModel)]="ficha.inspeccionEstatica.posterior" rows="1" [autoResize]="true"></textarea></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-nogutter border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                        <div class="col-12 md:col-6 flex border-bottom-1 md:border-bottom-none md:border-right-1 surface-border" style="border-color: var(--border-color) !important;">
+                            <div class="w-4 p-3 font-bold text-steel pf-oswald flex align-items-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Sagital Der</div>
+                            <div class="w-8 p-0 bg-transparent"><textarea pTextarea class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" [(ngModel)]="ficha.inspeccionEstatica.sagitalDer" rows="1" [autoResize]="true"></textarea></div>
+                        </div>
+                        <div class="col-12 md:col-6 flex">
+                            <div class="w-4 p-3 font-bold text-steel pf-oswald flex align-items-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Sagital Izq</div>
+                            <div class="w-8 p-0 bg-transparent"><textarea pTextarea class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" [(ngModel)]="ficha.inspeccionEstatica.sagitalIzq" rows="1" [autoResize]="true"></textarea></div>
+                        </div>
+                    </div>
+
+                    <div class="p-2 font-bold text-teal pf-oswald text-sm border-bottom-1 surface-border text-center tracking-wider" style="background: var(--hover-bg); border-color: var(--border-color) !important;">DINÁMICA</div>
+
+                    <div class="flex flex-column md:flex-row border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                        <div class="w-full md:w-3 p-3 font-bold text-steel pf-oswald flex align-items-center md:border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Disfunción</div>
+                        <div class="w-full md:w-9 p-0 bg-transparent">
+                            <textarea pTextarea class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" [(ngModel)]="ficha.inspeccionDinamica.disfuncion" rows="1" [autoResize]="true"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-column md:flex-row border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                        <div class="w-full md:w-3 p-3 font-bold text-steel pf-oswald flex align-items-center md:border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Grupos Musculares</div>
+                        <div class="w-full md:w-9 p-0 bg-transparent">
+                            <textarea pTextarea class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" [(ngModel)]="ficha.inspeccionDinamica.gruposMusc" rows="1" [autoResize]="true"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-transparent flex flex-column md:flex-row gap-4 align-items-start md:align-items-center">
+                        <div class="flex align-items-center"><p-checkbox [(ngModel)]="ficha.inspeccionDinamica.sinCompensacion" [binary]="true"></p-checkbox><span class="ml-2 text-sm text-chalk">Sin compensaciones</span></div>
+                        <div class="flex align-items-center"><p-checkbox [(ngModel)]="ficha.inspeccionDinamica.conCompensacion" [binary]="true"></p-checkbox><span class="ml-2 text-sm text-chalk">Con compensaciones</span></div>
+                        <div class="flex align-items-center"><p-checkbox [(ngModel)]="ficha.inspeccionDinamica.noLograMov" [binary]="true"></p-checkbox><span class="ml-2 text-sm text-chalk">No logra movimiento</span></div>
+                    </div>
                 </div>
 
-                <div class="kine-table-wrapper mb-4">
-                    <table class="kine-table text-center">
-                        <thead>
-                            <tr>
-                                <th colspan="5" class="kine-header border-none border-bottom-1 surface-border">
-                                    <div class="flex justify-content-between align-items-center">
-                                        <span>2. Rango de movimiento</span>
-                                    </div>
-                                </th>
-                            </tr>
-                            <tr>
-                                <th rowspan="2" class="kine-label-cell">Articulación</th>
-                                <th colspan="2" class="kine-label-cell">Derecho</th>
-                                <th colspan="2" class="kine-label-cell">Izquierdo</th>
-                            </tr>
-                            <tr>
-                                <th class="kine-label-cell">Pasivo</th><th class="kine-label-cell">Activo</th>
-                                <th class="kine-label-cell">Pasivo</th><th class="kine-label-cell">Activo</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let art of listaArticulaciones">
-                                <td class="font-bold bg-paper-head text-secondary text-xs">{{art.nombre}}</td>
-                                <td class="p-0"><p-select [options]="opcionesROM" [(ngModel)]="art.derPasivo" appendTo="body" styleClass="w-full border-none shadow-none bg-transparent text-center"></p-select></td>
-                                <td class="p-0"><p-select [options]="opcionesROM" [(ngModel)]="art.derActivo" appendTo="body" styleClass="w-full border-none shadow-none bg-transparent text-center"></p-select></td>
-                                <td class="p-0"><p-select [options]="opcionesROM" [(ngModel)]="art.izqPasivo" appendTo="body" styleClass="w-full border-none shadow-none bg-transparent text-center"></p-select></td>
-                                <td class="p-0"><p-select [options]="opcionesROM" [(ngModel)]="art.izqActivo" appendTo="body" styleClass="w-full border-none shadow-none bg-transparent text-center"></p-select></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- 2. RANGO DE MOVIMIENTO (ROM) -->
+                <div class="border-1 border-round overflow-hidden" style="border-color: var(--border-color) !important;">
+                    <div class="p-3 font-bold text-chalk pf-oswald text-lg border-bottom-1 surface-border flex justify-content-between align-items-center" style="background: var(--bg-main); border-color: var(--border-color) !important;">
+                        <span>2. Rango de movimiento (ROM)</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-center border-collapse">
+                            <thead>
+                                <tr style="background: var(--hover-bg);">
+                                    <th rowspan="2" class="p-3 font-bold text-steel pf-oswald border-bottom-1 border-right-1 surface-border" style="border-color: var(--border-color) !important;">Articulación</th>
+                                    <th colspan="2" class="p-3 font-bold text-teal pf-oswald border-bottom-1 border-right-1 surface-border tracking-wider" style="border-color: var(--border-color) !important;">DERECHO</th>
+                                    <th colspan="2" class="p-3 font-bold text-teal pf-oswald border-bottom-1 surface-border tracking-wider" style="border-color: var(--border-color) !important;">IZQUIERDO</th>
+                                </tr>
+                                <tr style="background: var(--hover-bg);">
+                                    <th class="p-2 font-bold text-steel pf-oswald border-bottom-1 border-right-1 surface-border" style="border-color: var(--border-color) !important;">Pasivo</th>
+                                    <th class="p-2 font-bold text-steel pf-oswald border-bottom-1 border-right-1 surface-border" style="border-color: var(--border-color) !important;">Activo</th>
+                                    <th class="p-2 font-bold text-steel pf-oswald border-bottom-1 border-right-1 surface-border" style="border-color: var(--border-color) !important;">Pasivo</th>
+                                    <th class="p-2 font-bold text-steel pf-oswald border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">Activo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let art of listaArticulaciones; let last = last" [ngClass]="{'border-bottom-1': !last}" class="surface-border" style="border-color: var(--border-color) !important;">
+                                    <td class="p-3 font-bold text-steel pf-oswald border-right-1 surface-border text-left" style="background: var(--hover-bg); border-color: var(--border-color) !important;">{{art.nombre}}</td>
+                                    <td class="p-0 border-right-1 surface-border" style="border-color: var(--border-color) !important;"><p-select [options]="opcionesROM" [(ngModel)]="art.derPasivo" appendTo="body" styleClass="w-full border-none shadow-none bg-transparent text-center text-chalk"></p-select></td>
+                                    <td class="p-0 border-right-1 surface-border" style="border-color: var(--border-color) !important;"><p-select [options]="opcionesROM" [(ngModel)]="art.derActivo" appendTo="body" styleClass="w-full border-none shadow-none bg-transparent text-center text-chalk"></p-select></td>
+                                    <td class="p-0 border-right-1 surface-border" style="border-color: var(--border-color) !important;"><p-select [options]="opcionesROM" [(ngModel)]="art.izqPasivo" appendTo="body" styleClass="w-full border-none shadow-none bg-transparent text-center text-chalk"></p-select></td>
+                                    <td class="p-0"><p-select [options]="opcionesROM" [(ngModel)]="art.izqActivo" appendTo="body" styleClass="w-full border-none shadow-none bg-transparent text-center text-chalk"></p-select></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <div class="kine-table-wrapper mb-4">
-                    <table class="kine-table">
-                        <thead>
-                            <tr>
-                                <th colspan="2" class="kine-header">
-                                    <div class="flex justify-content-between align-items-center">
-                                        <span>3. Fuerza (Daniels)</span>
-                                    </div>
-                                </th>
-                            </tr>
-                            <tr *ngIf="listaFuerzas.length > 0">
-                                <th class="kine-label-cell w-6 text-center">Movimiento</th>
-                                <th class="kine-label-cell w-6 text-center">Grado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let f of listaFuerzas">
-                                <td class="p-0"><textarea pTextarea [(ngModel)]="f.movimiento" class="kine-input" rows="1" [autoResize]="true"></textarea></td>
-                                <td class="p-0"><textarea pTextarea [(ngModel)]="f.escala" class="kine-input text-center" rows="1" [autoResize]="true"></textarea></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- 3. FUERZA DANIELS -->
+                <div class="border-1 border-round overflow-hidden" style="border-color: var(--border-color) !important;">
+                    <div class="p-3 font-bold text-chalk pf-oswald text-lg border-bottom-1 surface-border flex justify-content-between align-items-center" style="background: var(--bg-main); border-color: var(--border-color) !important;">
+                        <span>3. Fuerza (Daniels)</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-center border-collapse">
+                            <thead *ngIf="listaFuerzas.length > 0">
+                                <tr style="background: var(--hover-bg);">
+                                    <th class="p-3 font-bold text-steel pf-oswald border-bottom-1 border-right-1 surface-border" style="border-color: var(--border-color) !important;">Movimiento</th>
+                                    <th class="p-3 font-bold text-steel pf-oswald border-bottom-1 surface-border w-6" style="border-color: var(--border-color) !important;">Grado / Escala</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let f of listaFuerzas; let last = last" [ngClass]="{'border-bottom-1': !last}" class="surface-border" style="border-color: var(--border-color) !important;">
+                                    <td class="p-0 border-right-1 surface-border" style="border-color: var(--border-color) !important;"><textarea pTextarea [(ngModel)]="f.movimiento" class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" rows="1" [autoResize]="true"></textarea></td>
+                                    <td class="p-0"><textarea pTextarea [(ngModel)]="f.escala" class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-center text-chalk font-bold text-teal" style="background: transparent;" rows="1" [autoResize]="true"></textarea></td>
+                                </tr>
+                                <tr *ngIf="listaFuerzas.length === 0">
+                                    <td colspan="2" class="p-4 text-steel italic text-center">No hay registros de fuerza.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <div class="kine-table-wrapper mb-4">
-                    <table class="kine-table">
-                        <thead><tr><th colspan="2" class="kine-header">4. Patrones de postura</th></tr></thead>
-                        <tbody>
-                            <tr><td class="kine-label-cell-fixed w-3">Actitud postural</td><td class="p-0"><textarea pTextarea [(ngModel)]="ficha.postura.actitud" class="kine-input" rows="2" [autoResize]="true"></textarea></td></tr>
-                            <tr><td class="kine-label-cell-fixed w-3">Patrón EESS</td><td class="p-0"><textarea pTextarea [(ngModel)]="ficha.postura.eess" class="kine-input" rows="2" [autoResize]="true"></textarea></td></tr>
-                            <tr><td class="kine-label-cell-fixed w-3">Patrón EEII</td><td class="p-0"><textarea pTextarea [(ngModel)]="ficha.postura.eeii" class="kine-input" rows="2" [autoResize]="true"></textarea></td></tr>
-                        </tbody>
-                    </table>
+                <!-- 4. POSTURA -->
+                <div class="border-1 border-round overflow-hidden" style="border-color: var(--border-color) !important;">
+                    <div class="p-3 font-bold text-chalk pf-oswald text-lg border-bottom-1 surface-border" style="background: var(--bg-main); border-color: var(--border-color) !important;">4. Patrones de Postura</div>
+                    
+                    <div class="flex flex-column md:flex-row border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                        <div class="w-full md:w-3 p-3 font-bold text-steel pf-oswald flex align-items-center md:border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Actitud Postural</div>
+                        <div class="w-full md:w-9 p-0 bg-transparent">
+                            <textarea pTextarea class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" [(ngModel)]="ficha.postura.actitud" rows="2" [autoResize]="true"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-column md:flex-row border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                        <div class="w-full md:w-3 p-3 font-bold text-steel pf-oswald flex align-items-center md:border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Patrón EESS</div>
+                        <div class="w-full md:w-9 p-0 bg-transparent">
+                            <textarea pTextarea class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" [(ngModel)]="ficha.postura.eess" rows="2" [autoResize]="true"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-column md:flex-row">
+                        <div class="w-full md:w-3 p-3 font-bold text-steel pf-oswald flex align-items-center md:border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Patrón EEII</div>
+                        <div class="w-full md:w-9 p-0 bg-transparent">
+                            <textarea pTextarea class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" [(ngModel)]="ficha.postura.eeii" rows="2" [autoResize]="true"></textarea>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="kine-table-wrapper mb-4">
-                    <table class="kine-table text-center">
-                        <thead>
-                            <tr><th colspan="5" class="kine-header border-none border-bottom-1 surface-border">5. Evaluación sensibilidad (Dermatomas / Raíz nerviosa)</th></tr>
-                            <tr>
-                                <th class="kine-label-cell w-20">Anestesia</th>
-                                <th class="kine-label-cell w-20">Hipoestesia</th>
-                                <th class="kine-label-cell w-20">Disestesia</th>
-                                <th class="kine-label-cell w-20">Hiperestesia</th>
-                                <th class="kine-label-cell w-20">Parestesia</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="p-0"><textarea pTextarea [(ngModel)]="ficha.sensibilidad.anestesia" class="kine-input text-center" rows="2" [autoResize]="true"></textarea></td>
-                                <td class="p-0"><textarea pTextarea [(ngModel)]="ficha.sensibilidad.hipoestesia" class="kine-input text-center" rows="2" [autoResize]="true"></textarea></td>
-                                <td class="p-0"><textarea pTextarea [(ngModel)]="ficha.sensibilidad.disestesia" class="kine-input text-center" rows="2" [autoResize]="true"></textarea></td>
-                                <td class="p-0"><textarea pTextarea [(ngModel)]="ficha.sensibilidad.hiperestesia" class="kine-input text-center" rows="2" [autoResize]="true"></textarea></td>
-                                <td class="p-0"><textarea pTextarea [(ngModel)]="ficha.sensibilidad.parestesia" class="kine-input text-center" rows="2" [autoResize]="true"></textarea></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- 5. SENSIBILIDAD -->
+                <div class="border-1 border-round overflow-hidden" style="border-color: var(--border-color) !important;">
+                    <div class="p-3 font-bold text-chalk pf-oswald text-lg border-bottom-1 surface-border flex justify-content-between align-items-center" style="background: var(--bg-main); border-color: var(--border-color) !important;">
+                        <span>5. Sensibilidad (Dermatomas / Raíz nerviosa)</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-center border-collapse">
+                            <thead>
+                                <tr style="background: var(--hover-bg);">
+                                    <th class="p-3 font-bold text-steel pf-oswald border-bottom-1 border-right-1 surface-border w-2" style="border-color: var(--border-color) !important;">Anestesia</th>
+                                    <th class="p-3 font-bold text-steel pf-oswald border-bottom-1 border-right-1 surface-border w-2" style="border-color: var(--border-color) !important;">Hipoestesia</th>
+                                    <th class="p-3 font-bold text-steel pf-oswald border-bottom-1 border-right-1 surface-border w-2" style="border-color: var(--border-color) !important;">Disestesia</th>
+                                    <th class="p-3 font-bold text-steel pf-oswald border-bottom-1 border-right-1 surface-border w-2" style="border-color: var(--border-color) !important;">Hiperestesia</th>
+                                    <th class="p-3 font-bold text-steel pf-oswald border-bottom-1 surface-border w-2" style="border-color: var(--border-color) !important;">Parestesia</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="p-0 border-right-1 surface-border" style="border-color: var(--border-color) !important;"><textarea pTextarea [(ngModel)]="ficha.sensibilidad.anestesia" class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-center text-chalk" style="background: transparent;" rows="2" [autoResize]="true"></textarea></td>
+                                    <td class="p-0 border-right-1 surface-border" style="border-color: var(--border-color) !important;"><textarea pTextarea [(ngModel)]="ficha.sensibilidad.hipoestesia" class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-center text-chalk" style="background: transparent;" rows="2" [autoResize]="true"></textarea></td>
+                                    <td class="p-0 border-right-1 surface-border" style="border-color: var(--border-color) !important;"><textarea pTextarea [(ngModel)]="ficha.sensibilidad.disestesia" class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-center text-chalk" style="background: transparent;" rows="2" [autoResize]="true"></textarea></td>
+                                    <td class="p-0 border-right-1 surface-border" style="border-color: var(--border-color) !important;"><textarea pTextarea [(ngModel)]="ficha.sensibilidad.hiperestesia" class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-center text-chalk" style="background: transparent;" rows="2" [autoResize]="true"></textarea></td>
+                                    <td class="p-0"><textarea pTextarea [(ngModel)]="ficha.sensibilidad.parestesia" class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-center text-chalk" style="background: transparent;" rows="2" [autoResize]="true"></textarea></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <div class="kine-table-wrapper mb-4">
-                    <table class="kine-table">
-                        <thead><tr><th class="kine-header">6. Marcha</th></tr></thead>
-                        <tbody>
-                            <tr><td class="p-0"><textarea pTextarea [(ngModel)]="ficha.marcha" class="kine-input" rows="2" [autoResize]="true"></textarea></td></tr>
-                        </tbody>
-                    </table>
+                <!-- 6. MARCHA -->
+                <div class="border-1 border-round overflow-hidden" style="border-color: var(--border-color) !important;">
+                    <div class="p-3 font-bold text-chalk pf-oswald text-lg border-bottom-1 surface-border" style="background: var(--bg-main); border-color: var(--border-color) !important;">6. Marcha</div>
+                    <div class="w-full p-0 bg-transparent">
+                        <textarea pTextarea [(ngModel)]="ficha.marcha" class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" rows="2" [autoResize]="true"></textarea>
+                    </div>
                 </div>
 
-                <div class="kine-table-wrapper mb-4">
-                    <table class="kine-table">
-                        <thead>
-                            <tr>
-                                <th colspan="4" class="kine-header">
-                                    <div class="flex justify-content-between align-items-center">
-                                        <span>7. Balance y Coordinación</span>
-                                    </div>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="kine-label-cell-fixed w-3">Coordinación</td>
-                                <td colspan="3" class="p-3">
-                                    <div class="flex flex-column md:flex-row gap-3">
-                                        <div class="flex align-items-center"><p-checkbox [(ngModel)]="ficha.coordinacion.dedoNariz" [binary]="true"></p-checkbox><span class="ml-2 text-xs text-main font-bold">1. Prueba Dedo-Nariz</span></div>
-                                        <div class="flex align-items-center"><p-checkbox [(ngModel)]="ficha.coordinacion.pinzaPulgarIndice" [binary]="true"></p-checkbox><span class="ml-2 text-xs text-main font-bold">2. Pinza Pulgar</span></div>
-                                        <div class="flex align-items-center"><p-checkbox [(ngModel)]="ficha.coordinacion.talonRodilla" [binary]="true"></p-checkbox><span class="ml-2 text-xs text-main font-bold">3. Talón-Rodilla</span></div>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="kine-label-cell-fixed w-3">Balance</td>
-                                <td colspan="3" class="p-3">
-                                    <div class="flex align-items-center flex-wrap gap-2 text-sm text-main">
-                                        <span class="font-bold">Estático:</span>
-                                        <span>Romberg</span>
-                                        <input pInputText [(ngModel)]="ficha.balanceRomberg" class="kine-input-inline w-4rem text-center" placeholder="---" />
-                                        <span>seg.</span>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- 7. BALANCE Y COORDINACIÓN -->
+                <div class="border-1 border-round overflow-hidden" style="border-color: var(--border-color) !important;">
+                    <div class="p-3 font-bold text-chalk pf-oswald text-lg border-bottom-1 surface-border" style="background: var(--bg-main); border-color: var(--border-color) !important;">7. Balance y Coordinación</div>
+                    
+                    <div class="flex flex-column md:flex-row border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                        <div class="w-full md:w-3 p-3 font-bold text-steel pf-oswald flex align-items-center md:border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Coordinación</div>
+                        <div class="w-full md:w-9 p-3 bg-transparent">
+                            <div class="flex flex-column sm:flex-row gap-4">
+                                <div class="flex align-items-center"><p-checkbox [(ngModel)]="ficha.coordinacion.dedoNariz" [binary]="true"></p-checkbox><span class="ml-2 text-sm text-chalk font-bold">1. Prueba Dedo-Nariz</span></div>
+                                <div class="flex align-items-center"><p-checkbox [(ngModel)]="ficha.coordinacion.pinzaPulgarIndice" [binary]="true"></p-checkbox><span class="ml-2 text-sm text-chalk font-bold">2. Pinza Pulgar</span></div>
+                                <div class="flex align-items-center"><p-checkbox [(ngModel)]="ficha.coordinacion.talonRodilla" [binary]="true"></p-checkbox><span class="ml-2 text-sm text-chalk font-bold">3. Talón-Rodilla</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-column md:flex-row">
+                        <div class="w-full md:w-3 p-3 font-bold text-steel pf-oswald flex align-items-center md:border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Balance</div>
+                        <div class="w-full md:w-9 p-3 bg-transparent flex align-items-center gap-3">
+                            <span class="font-bold text-teal">Estático:</span>
+                            <span class="text-chalk">Romberg</span>
+                            <input pInputText [(ngModel)]="ficha.balanceRomberg" class="w-4rem text-center p-2" placeholder="---" />
+                            <span class="text-steel">seg.</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="kine-table-wrapper mb-4">
-                    <table class="kine-table">
-                        <thead><tr><th class="kine-header">Observaciones Finales</th></tr></thead>
-                        <tbody><tr><td class="p-0"><textarea pTextarea [(ngModel)]="ficha.observacion" class="kine-input" rows="4" [autoResize]="true"></textarea></td></tr></tbody>
-                    </table>
+                <!-- 8. OBSERVACIONES FINALES -->
+                <div class="border-1 border-round overflow-hidden" style="border-color: var(--border-color) !important;">
+                    <div class="p-3 font-bold text-lime pf-oswald text-lg border-bottom-1 surface-border" style="background: var(--bg-main); border-color: var(--border-color) !important;">Observaciones Finales</div>
+                    <div class="w-full p-0 bg-transparent">
+                        <textarea pTextarea [(ngModel)]="ficha.observacion" class="w-full border-none border-noround p-3 outline-none shadow-none focus:shadow-none text-chalk" style="background: transparent;" rows="4" [autoResize]="true"></textarea>
+                    </div>
                 </div>
             </div>
 

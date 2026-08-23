@@ -41,13 +41,12 @@ import { InputNumberModule } from 'primeng/inputnumber';
     TagModule, ToastModule, ConfirmDialogModule, TooltipModule, 
     RadioButtonModule, InputNumberModule, ProgressSpinnerModule
   ],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './evaluaciones-kine.component.html',
-  styleUrl: './evaluaciones-kine.component.css',
-  providers: [MessageService, ConfirmationService]
+  styleUrls: ['./evaluaciones-kine.component.scss'] // 🔥 Cambiado a .scss
 })
 export class KinesiologoEvaluacionesKineComponent implements OnInit {
 
-  // ✅ Exponemos el Enum para poder usarlo en el HTML
   readonly EstadoSesion = EstadoSesion;
 
   // Inyección de Servicios
@@ -100,9 +99,6 @@ export class KinesiologoEvaluacionesKineComponent implements OnInit {
     this.cargarDatosGenerales();
   }
 
-  // ==========================================
-  // CARGA DE DATOS PRINCIPALES
-  // ==========================================
   cargarDatosGenerales() {
     this.loading = true;
 
@@ -159,9 +155,6 @@ export class KinesiologoEvaluacionesKineComponent implements OnInit {
     });
   }
 
-  // ==========================================
-  // LÓGICA DE RANGOS Y COLORES
-  // ==========================================
   getSeverityPuntaje(puntaje: number | string | null, subevaluacionId: number): "success" | "secondary" | "info" | "warn" | "danger" | "contrast" | undefined {
     if (puntaje === null || puntaje === undefined || puntaje === '') return 'secondary';
     
@@ -180,9 +173,6 @@ export class KinesiologoEvaluacionesKineComponent implements OnInit {
     }
   }
 
-  // ==========================================
-  // FILTROS
-  // ==========================================
   aplicarFiltros() {
     this.sesionesFiltradas = this.sesiones.filter(sesion => {
       let cumpleFecha = true;
@@ -214,9 +204,6 @@ export class KinesiologoEvaluacionesKineComponent implements OnInit {
     this.aplicarFiltros();
   }
 
-  // ==========================================
-  // MODAL: LOGÍSTICA
-  // ==========================================
   abrirNuevo() {
     this.evalLogistica = { estado: EstadoSesion.PROGRAMADA };
     this.displayMainDialog = true;
@@ -283,9 +270,6 @@ export class KinesiologoEvaluacionesKineComponent implements OnInit {
     });
   }
 
-  // ==========================================
-  // LÓGICA DE VALIDACIÓN ESTRICTA
-  // ==========================================
   verificarSiEstaEvaluado(evaluaciones: any[]): boolean {
     if (!evaluaciones || evaluaciones.length === 0) return false;
     
@@ -319,9 +303,6 @@ export class KinesiologoEvaluacionesKineComponent implements OnInit {
     this.actualizarEstadoEstudiante();
   }
 
-  // ==========================================
-  // MODAL: CALIFICADOR & VISOR CON FORKJOIN
-  // ==========================================
   abrirCalificador(sesion: any) {
     this.evalLogistica = { ...sesion };
     this.prepararModal(sesion, 'calificador');
@@ -378,7 +359,7 @@ export class KinesiologoEvaluacionesKineComponent implements OnInit {
               nombre: nombre,
               apellido: apellido,
               evaluado: this.verificarSiEstaEvaluado(evaluacionesDelAlumno),
-              evaluaciones: modo === 'visor' ? evaluacionesDelAlumno.filter(e => e.tiene_datos) : evaluacionesDelAlumno
+              evaluaciones: modo === 'visor' ? evaluacionesDelAlumno.filter((e: any) => e.tiene_datos) : evaluacionesDelAlumno
             };
           });
 

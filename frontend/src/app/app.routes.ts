@@ -73,6 +73,7 @@ import { KinesiologoClasesComponent } from './features/users/kinesiologo/clases/
 import { KinesiologoHorarioComponent } from './features/users/kinesiologo/horario/horario.component';
 import { KinesiollogoMaterialComplementarioComponent } from './features/users/kinesiologo/material-complementario/material-complementario.component';
 import { KinesiolgoVerEstudiantesComponent } from './features/users/kinesiologo/ver-estudiantes/ver-estudiantes.component';
+import { KinesiologoEvaluacionesComponent } from './features/users/kinesiologo/evaluaciones/evaluaciones.component'; // ✅ Import Añadido
 // Módulos Salud (Kine)
 import { KinesiologoEvaluacionesKineComponent } from './features/users/kinesiologo/evaluaciones-kine/evaluaciones-kine.component';
 import { KinesiologoHistorialClinicoComponent } from './features/users/kinesiologo/historial-clinico/historial-clinico.component';
@@ -104,23 +105,24 @@ export const routes: Routes = [
     // ==========================================
     {
         path: 'admin',
-        component: LayoutComponent, // ✅ LAYOUT UNIFICADO
+        component: LayoutComponent, 
         canActivate: [jwtGuard, roleGuard], 
         data: { roles: [Rol.ADMINISTRADOR] },      
         children: [
-            { path: 'dashboard', component: AdministradorDashboardComponent },
-            { path: 'users', component: AdministradorUsuariosComponent },
-            { path: 'groups', component: AdministradorGruposComponent },
-            { path: 'classes', component: AdministradorClasesComponent },
-            { path: 'evaluations', component: AdministradorEvaluacionesComponent },
-            { path: 'payments', component: AdministradorPagosComponent },
-            { path: 'guides', component: AdministradorMaterialComplementarioComponent },
-            { path: 'attendance', component: AdministradorAsistenciasComponent },
-            { path: 'home-config', component: AdminHomeConfigComponent },
+            { path: '', redirectTo: 'inicio', pathMatch: 'full' }, // ✅ Redirección base
+            { path: 'inicio', component: AdministradorDashboardComponent },
+            { path: 'usuarios', component: AdministradorUsuariosComponent },
+            { path: 'grupos', component: AdministradorGruposComponent },
+            { path: 'clases', component: AdministradorClasesComponent },
+            { path: 'evaluaciones', component: AdministradorEvaluacionesComponent },
+            { path: 'pagos', component: AdministradorPagosComponent },
+            { path: 'material', component: AdministradorMaterialComplementarioComponent },
+            { path: 'asistencias', component: AdministradorAsistenciasComponent },
+            { path: 'configuracion', component: AdminHomeConfigComponent },
             // Salud Deportiva
-            { path: 'kine-evaluaciones', component: AdministradorEvaluacionesKineComponent },
-            { path: 'kine-historial', component: AdministradorHistorialClinicoComponent },
-            { path: 'kine-fichas', component: AdminKineEvolutionComponent },
+            { path: 'evaluaciones-kine', component: AdministradorEvaluacionesKineComponent },
+            { path: 'historial-clinico', component: AdministradorHistorialClinicoComponent },
+            { path: 'fichas-evolutivas', component: AdminKineEvolutionComponent },
             { path: 'nutricion', component: AdminNutriComponent },
         ]
     },
@@ -129,22 +131,23 @@ export const routes: Routes = [
     // 3. RUTA ESTUDIANTE
     // ==========================================
     {
-        path: 'student',
-        component: LayoutComponent, // ✅ LAYOUT UNIFICADO
+        path: 'estudiante', // ✅ Convertido a español
+        component: LayoutComponent, 
         canActivate: [jwtGuard, roleGuard], 
         data: { roles: [Rol.ESTUDIANTE] },
         children: [
-            { path: 'dashboard', component: EstudianteDashboardComponent },
-            { path: 'schedule', component: EstudianteHorarioComponent },
-            { path: 'classes', component: EstudianteClasesComponent },
-            { path: 'attendance', component: EstudianteAsistenciasComponent },
-            { path: 'evaluations', component: EstudianteEvaluacionesComponent },
-            { path: 'view-professor', component: EstudianteCuerpoTecnicoComponent },
-            { path: 'guides', component: EstudianteMaterialcomplementarioComponent },
+            { path: '', redirectTo: 'inicio', pathMatch: 'full' },
+            { path: 'inicio', component: EstudianteDashboardComponent },
+            { path: 'horario', component: EstudianteHorarioComponent },
+            { path: 'clases', component: EstudianteClasesComponent },
+            { path: 'asistencias', component: EstudianteAsistenciasComponent },
+            { path: 'evaluaciones', component: EstudianteEvaluacionesComponent },
+            { path: 'cuerpo-tecnico', component: EstudianteCuerpoTecnicoComponent },
+            { path: 'material', component: EstudianteMaterialcomplementarioComponent },
             // Salud Deportiva
-            { path: 'kine-evaluaciones', component: StudentKineEvaluationComponent },
-            { path: 'kine-historial', component: EstudianteHistorialClinicoComponent },
-            { path: 'kine-fichas', component: EstudianteFichaEvolutivaComponent },
+            { path: 'evaluaciones-kine', component: StudentKineEvaluationComponent },
+            { path: 'historial-clinico', component: EstudianteHistorialClinicoComponent },
+            { path: 'fichas-evolutivas', component: EstudianteFichaEvolutivaComponent },
             { path: 'nutricion', component: StudentNutriComponent },
         ]
     },
@@ -153,22 +156,23 @@ export const routes: Routes = [
     // 4. RUTA PROFESOR
     // ==========================================
     {
-        path: 'professor',
-        component: LayoutComponent, // ✅ LAYOUT UNIFICADO
+        path: 'profesor', // ✅ Convertido a español
+        component: LayoutComponent, 
         canActivate: [jwtGuard, roleGuard], 
         data: { roles: [Rol.PROFESOR] },
         children: [
-            { path: 'dashboard', component: ProfessorDashboardComponent },
-            { path: 'attendance', component: ProfesorAsistenciasComponent },
-            { path: 'classes', component: ProfesorClasesComponent },
-            { path: 'evaluations', component: ProfesorEvaluacionesComponent },
-            { path: 'schedule', component: ProfesorHorarioComponent },
-            { path: 'guides', component: ProfesorMaterialComplementarioComponent },
-            { path: 'students', component: ProfesorVerEstudiantesComponent },
+            { path: '', redirectTo: 'inicio', pathMatch: 'full' },
+            { path: 'inicio', component: ProfessorDashboardComponent },
+            { path: 'asistencias', component: ProfesorAsistenciasComponent },
+            { path: 'clases', component: ProfesorClasesComponent },
+            { path: 'evaluaciones', component: ProfesorEvaluacionesComponent },
+            { path: 'horario', component: ProfesorHorarioComponent },
+            { path: 'material', component: ProfesorMaterialComplementarioComponent },
+            { path: 'estudiantes', component: ProfesorVerEstudiantesComponent },
             // Salud Deportiva
-            { path: 'kine-evaluaciones', component: ProfesorEvaluacionesKineComponent },
-            { path: 'kine-historial', component: ProfesorHistorialClinicoComponent },
-            { path: 'kine-fichas', component: ProfesorFichaEvolutivaComponent },
+            { path: 'evaluaciones-kine', component: ProfesorEvaluacionesKineComponent },
+            { path: 'historial-clinico', component: ProfesorHistorialClinicoComponent },
+            { path: 'fichas-evolutivas', component: ProfesorFichaEvolutivaComponent },
             { path: 'nutricion', component: ProfessorNutritionComponent },
         ]
     },
@@ -177,20 +181,22 @@ export const routes: Routes = [
     // 5. RUTA KINESIÓLOGO
     // ==========================================
     {
-        path: 'kine',
-        component: LayoutComponent, // ✅ LAYOUT UNIFICADO
+        path: 'kinesiologo', // ✅ Convertido a español
+        component: LayoutComponent, 
         canActivate: [jwtGuard, roleGuard], 
         data: { roles: [Rol.KINESIOLOGO] },
         children: [
-            { path: 'dashboard', component: KinesiologoDashboardComponent },
-            { path: 'classes', component: KinesiologoClasesComponent },
-            { path: 'schedule', component: KinesiologoHorarioComponent },
-            { path: 'guides', component: KinesiollogoMaterialComplementarioComponent },
-            { path: 'patients', component: KinesiolgoVerEstudiantesComponent },
+            { path: '', redirectTo: 'inicio', pathMatch: 'full' },
+            { path: 'inicio', component: KinesiologoDashboardComponent },
+            { path: 'clases', component: KinesiologoClasesComponent },
+            { path: 'evaluaciones', component: KinesiologoEvaluacionesComponent }, // ✅ Ruta Añadida
+            { path: 'horario', component: KinesiologoHorarioComponent },
+            { path: 'material', component: KinesiollogoMaterialComplementarioComponent },
+            { path: 'pacientes', component: KinesiolgoVerEstudiantesComponent },
             // Salud Deportiva
-            { path: 'kine-evaluaciones', component: KinesiologoEvaluacionesKineComponent },
-            { path: 'kine-historial', component: KinesiologoHistorialClinicoComponent },
-            { path: 'kine-fichas', component: KinesiologoFichaEvolutivaComponent },
+            { path: 'evaluaciones-kine', component: KinesiologoEvaluacionesKineComponent },
+            { path: 'historial-clinico', component: KinesiologoHistorialClinicoComponent },
+            { path: 'fichas-evolutivas', component: KinesiologoFichaEvolutivaComponent },
             { path: 'nutricion', component: KineNutritionComponent },
         ]
     },
@@ -199,15 +205,15 @@ export const routes: Routes = [
     // 6. RUTA NUTRICIONISTA
     // ==========================================
     {
-        path: 'nutri',
-        component: LayoutComponent, // ✅ LAYOUT UNIFICADO
+        path: 'nutricionista', // ✅ Convertido a español
+        component: LayoutComponent, 
         canActivate: [jwtGuard, roleGuard], 
         data: { roles: [Rol.NUTRICIONISTA] },
         children: [
-            { path: 'dashboard', component: NutricionistaDashboardComponent },
-            { path: 'guides', component: NutricionistaMaterialComplementarioComponent},
-            // Salud Deportiva
-            { path: 'evaluations', component: NutriEvaluationsComponent }
+            { path: '', redirectTo: 'inicio', pathMatch: 'full' },
+            { path: 'inicio', component: NutricionistaDashboardComponent },
+            { path: 'evaluaciones', component: NutriEvaluationsComponent },
+            { path: 'material', component: NutricionistaMaterialComplementarioComponent }
         ]
     },
 

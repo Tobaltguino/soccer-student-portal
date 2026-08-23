@@ -13,10 +13,11 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog'; 
 import { DatePickerModule } from 'primeng/datepicker'; 
+import { TagModule } from 'primeng/tag'; // 🔥 Agregado para usar p-tag
 
 // Nuevos Servicios de Dominio
 import { HistorialClinicoService } from '../../../../core/domains/salud/kinesiologia/historial-clinico/services/historial-clinico.service';
-import {TipoHistorialClinico, EstadoHistorialClinico } from "../../../../core/domains/salud/kinesiologia/historial-clinico/models/historial-clinico.interface";
+import { TipoHistorialClinico, EstadoHistorialClinico } from "../../../../core/domains/salud/kinesiologia/historial-clinico/models/historial-clinico.interface";
 import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
 
@@ -34,11 +35,12 @@ import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes
     ToastModule,
     TooltipModule,
     DialogModule,
-    DatePickerModule
+    DatePickerModule,
+    TagModule // 🔥 Importado
   ],
   providers: [MessageService], 
   templateUrl: './historial-clinico.component.html',
-  styleUrls: ['./historial-clinico.component.css']
+  styleUrls: ['./historial-clinico.component.scss'] // 🔥 Cambiado a .scss
 })
 export class KinesiologoHistorialClinicoComponent implements OnInit {
 
