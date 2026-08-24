@@ -11,11 +11,8 @@ import { TooltipModule } from 'primeng/tooltip';
 import { SelectModule } from 'primeng/select'; 
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { TextareaModule } from 'primeng/textarea';
-
-// 🔥 IMPORTANTE: Faltaba importar el TagModule para que funcione el <p-tag> 🔥
 import { TagModule } from 'primeng/tag';
 
-// Servicios y Modelos unificados a NestJS
 import { MaterialService } from '../../../../core/domains/academico/material-complementario/services/material-complementario.service';
 import { TipoMaterial } from '../../../../shared/enums/tipo-material.enum';
 import { Material, CrearMaterialPayload, ActualizarMaterialPayload } from '../../../../core/domains/academico/material-complementario/models/material.interface';
@@ -26,7 +23,7 @@ import { Material, CrearMaterialPayload, ActualizarMaterialPayload } from '../..
   imports: [
     CommonModule, FormsModule, TableModule, ButtonModule, 
     DialogModule, InputTextModule, ToastModule, ConfirmDialogModule, TooltipModule,
-    SelectModule, TextareaModule, TagModule // 🔥 Se agregó aquí también 🔥
+    SelectModule, TextareaModule, TagModule
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './material-complementario.component.html',
@@ -60,7 +57,6 @@ export class AdministradorMaterialComplementarioComponent implements OnInit {
   cargarDatos() {
     this.loading = true;
     
-    // Llamamos a la API de NestJS con límite alto (o sin límite si tu backend lo permite)
     this.materialService.listarMaterial({ limite: 100 }).subscribe({
       next: (response) => {
         this.guias = response.registros;
@@ -90,7 +86,7 @@ export class AdministradorMaterialComplementarioComponent implements OnInit {
   onFileSelect(event: any) {
     const file = event.target.files[0];
     if (file) {
-      if (file.size > 20 * 1024 * 1024) { // Actualizado a 20MB para coincidir con backend
+      if (file.size > 20 * 1024 * 1024) {
         this.messageService.add({ severity: 'warn', summary: 'Archivo muy grande', detail: 'El archivo no debe superar los 20MB' });
         event.target.value = '';
         return;
@@ -100,7 +96,6 @@ export class AdministradorMaterialComplementarioComponent implements OnInit {
   }
 
   guardarGuia() {
-    // Protección doble clic (usando tu variable subiendoArchivo como flag de bloqueo)
     if (this.subiendoArchivo) return;
 
     if (!this.nuevaGuia.titulo || !this.nuevaGuia.tipo_material || (!this.nuevaGuia.id && !this.archivoSeleccionado)) {
@@ -112,14 +107,14 @@ export class AdministradorMaterialComplementarioComponent implements OnInit {
     this.cdr.detectChanges();
 
     if (this.nuevaGuia.id) {
-      // ACTUALIZAR (Solo metadatos)
+      // ACTUALIZAR (metadatos + archivo opcional)
       const payload: ActualizarMaterialPayload = {
         titulo: this.nuevaGuia.titulo,
         descripcion: this.nuevaGuia.descripcion,
         tipoMaterial: this.nuevaGuia.tipo_material
       };
 
-      this.materialService.actualizarMaterial(this.nuevaGuia.id, payload).subscribe({
+      this.materialService.actualizarMaterial(this.nuevaGuia.id, payload, this.archivoSeleccionado).subscribe({
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Actualizada', detail: 'La guía se modificó correctamente.' });
           this.finalizarGuardado();

@@ -2,7 +2,6 @@ import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms'; 
 
-// PrimeNG
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
@@ -12,15 +11,15 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select'; 
 import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
-import { MessageService, ConfirmationService } from 'primeng/api'; // 🔥 Agregado ConfirmationService
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { TextareaModule } from 'primeng/textarea';
-import { TagModule } from 'primeng/tag'; // 🔥 Agregado para usar p-tag
-import { ConfirmDialogModule } from 'primeng/confirmdialog'; // 🔥 Agregado
+import { TagModule } from 'primeng/tag';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
-// Servicios y Modelos unificados a NestJS
 import { MaterialService } from '../../../../core/domains/academico/material-complementario/services/material-complementario.service';
 import { TipoMaterial } from '../../../../shared/enums/tipo-material.enum';
 import { Material, CrearMaterialPayload, ActualizarMaterialPayload } from '../../../../core/domains/academico/material-complementario/models/material.interface';
+import { UsuarioService } from '../../../../core/domains/usuarios/central/services/usuario.service';
 
 @Component({
   selector: 'app-profesor-material-complementario',
@@ -38,22 +37,29 @@ import { Material, CrearMaterialPayload, ActualizarMaterialPayload } from '../..
     ToastModule,
     DialogModule,
     TextareaModule,
-    TagModule, // 🔥 Importado
-    ConfirmDialogModule // 🔥 Importado
+    TagModule,
+    ConfirmDialogModule
   ],
-  providers: [MessageService, ConfirmationService], // 🔥 Importado
+  providers: [MessageService, ConfirmationService],
   templateUrl: './material-complementario.component.html',
-  styleUrls: ['./material-complementario.component.scss'] // 🔥 Cambiado a .scss
+  styleUrls: ['./material-complementario.component.scss']
 })
 export class ProfesorMaterialComplementarioComponent implements OnInit {
   
   private materialService = inject(MaterialService);
+  private usuarioService = inject(UsuarioService);
   private messageService = inject(MessageService);
   private cdr = inject(ChangeDetectorRef);
 
   guias: Material[] = [];
   guiasOriginales: Material[] = []; 
   loading: boolean = true;
+
+  // Id del usuario logueado, usado para saber si puede editar un material
+  usuarioActualId: string | null = null;
+
+  // Enum expuesto al template para comparar sin strings mágicos
+  readonly tipoMaterialFisico = TipoMaterial.FISICO;
 
   // --- FILTROS ---
   filtroTitulo: string = ''; 
@@ -68,19 +74,33 @@ export class ProfesorMaterialComplementarioComponent implements OnInit {
 
   // --- SUBIDA / EDICIÓN DE MATERIAL ---
   displayDialog: boolean = false;
-  nuevaGuia: any = { id: null, titulo: '', descripcion: '' };
+  nuevaGuia: any = { id: null, titulo: '', descripcion: '', archivo_url: '' };
   archivoSeleccionado: File | null = null;
   subiendoArchivo: boolean = false;
 
   ngOnInit() {
+    this.cargarUsuarioActual();
     this.cargarGuias();
+  }
+
+  cargarUsuarioActual() {
+    this.usuarioService.obtenerMiPerfil().subscribe({
+      next: (perfil: any) => {
+        // Fallback por si el campo del id viene como 'id' o 'id_usuario'
+        this.usuarioActualId = perfil.id_usuario ?? perfil.id ?? null;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        // Si falla, simplemente ningún material se mostrará como "editable propio"
+        this.usuarioActualId = null;
+      }
+    });
   }
 
   cargarGuias() {
     this.loading = true;
     this.cdr.detectChanges(); 
 
-    // ✅ Llamamos a la API con límite alto para filtrar localmente (El Profe ve todo)
     this.materialService.listarMaterial({ limite: 100 }).subscribe({
       next: (response) => {
         this.guiasOriginales = response.registros || [];
@@ -96,7 +116,6 @@ export class ProfesorMaterialComplementarioComponent implements OnInit {
     });
   }
 
-  // --- LÓGICA DE FILTRADO MÚLTIPLE ---
   aplicarFiltros() {
     this.guias = this.guiasOriginales.filter(guia => {
       const coincideTitulo = (guia.titulo || '').toLowerCase().includes(this.filtroTitulo.toLowerCase().trim());
@@ -134,9 +153,18 @@ export class ProfesorMaterialComplementarioComponent implements OnInit {
     return area ? area.label : 'General';
   }
 
+  /**
+   * Solo puede editar si el material es del área Físico Y fue creado por el profesor actual.
+   */
+  puedeEditar(guia: Material): boolean {
+    return guia.tipo_material === this.tipoMaterialFisico
+      && !!this.usuarioActualId
+      && guia.creado_por === this.usuarioActualId;
+  }
+
   // --- LÓGICA PARA CREAR / EDITAR MATERIAL ---
   abrirNuevo() {
-    this.nuevaGuia = { id: null, titulo: '', descripcion: '' };
+    this.nuevaGuia = { id: null, titulo: '', descripcion: '', archivo_url: '' };
     this.archivoSeleccionado = null;
     this.displayDialog = true;
   }
@@ -150,7 +178,7 @@ export class ProfesorMaterialComplementarioComponent implements OnInit {
   onFileSelect(event: any) {
     const file = event.target.files[0];
     if (file) {
-      if (file.size > 20 * 1024 * 1024) { // Límite de 20MB
+      if (file.size > 20 * 1024 * 1024) {
         this.messageService.add({ severity: 'warn', summary: 'Archivo muy grande', detail: 'El archivo no debe superar los 20MB' });
         event.target.value = '';
         return;
@@ -169,13 +197,13 @@ export class ProfesorMaterialComplementarioComponent implements OnInit {
     this.cdr.detectChanges();
 
     if (this.nuevaGuia.id) {
-      // ✏️ ACTUALIZAR (Solo Textos)
+      // ACTUALIZAR (metadatos + archivo opcional)
       const payload: ActualizarMaterialPayload = {
         titulo: this.nuevaGuia.titulo,
         descripcion: this.nuevaGuia.descripcion
       };
 
-      this.materialService.actualizarMaterial(this.nuevaGuia.id, payload).subscribe({
+      this.materialService.actualizarMaterial(this.nuevaGuia.id, payload, this.archivoSeleccionado).subscribe({
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Actualizado', detail: 'Documento modificado correctamente.' });
           this.finalizarGuardado();
@@ -184,11 +212,11 @@ export class ProfesorMaterialComplementarioComponent implements OnInit {
       });
 
     } else {
-      // 🚀 CREAR NUEVO
+      // CREAR NUEVO
       const payload: CrearMaterialPayload = {
         titulo: this.nuevaGuia.titulo,
         descripcion: this.nuevaGuia.descripcion,
-        tipoMaterial: TipoMaterial.FISICO // 🔒 Forzado al área Técnico / Físico
+        tipoMaterial: TipoMaterial.FISICO
       };
 
       this.materialService.crearMaterial(payload, this.archivoSeleccionado!).subscribe({

@@ -1,6 +1,5 @@
 <div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
-    <!-- 🔥 Confirm Dialog Global 🔥 -->
     <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
     
     <header class="pf-admin-header">
@@ -88,8 +87,8 @@
                             <a [href]="guia.archivo_url" target="_blank" class="no-underline">
                                 <button pButton icon="pi pi-download" class="p-button-info" pTooltip="Descargar"></button>
                             </a>
-                            <!-- ✅ Editar (SOLO si el documento es del área Físico/Técnico) -->
-                            <button *ngIf="guia.tipo_material === 'FISICO'" pButton icon="pi pi-pencil" class="p-button-warning" (click)="editarGuia(guia)" pTooltip="Editar"></button>
+                            <!-- Editar SOLO si es Físico Y fue creado por el profesor actual -->
+                            <button *ngIf="puedeEditar(guia)" pButton icon="pi pi-pencil" class="p-button-warning" (click)="editarGuia(guia)" pTooltip="Editar"></button>
                         </div>
                     </td>
                 </tr>
@@ -107,7 +106,7 @@
         </p-table>
     </div>
 
-    <!-- ✅ MODAL PARA SUBIR / EDITAR MATERIAL -->
+    <!-- MODAL PARA SUBIR / EDITAR MATERIAL -->
     <p-dialog [(visible)]="displayDialog" [header]="nuevaGuia.id ? 'Editar Material' : 'Subir Material Técnico/Físico'" [modal]="true" 
               [style]="{width: '90vw', maxWidth: '500px'}" styleClass="p-fluid pf-dialog" [closable]="!subiendoArchivo" [draggable]="false" [resizable]="false">
         
@@ -122,9 +121,22 @@
                 <textarea pTextarea [(ngModel)]="nuevaGuia.descripcion" rows="3" placeholder="Instrucciones breves sobre este material..." [disabled]="subiendoArchivo" class="w-full"></textarea>
             </div>
 
-            <!-- ✅ La subida de archivo SOLO se muestra al CREAR (!nuevaGuia.id) -->
-            <div class="field mb-2" *ngIf="!nuevaGuia.id">
-                <label class="pf-oswald text-steel mb-2 block">Archivo <span class="text-red-500 font-bold ml-1">*</span></label>
+            <div class="field mb-2">
+                <label class="pf-oswald text-steel mb-2 block">
+                    Archivo <span class="text-red-500 font-bold ml-1">{{ nuevaGuia.id ? '(Opcional)' : '*' }}</span>
+                </label>
+
+                <!-- Archivo actual, solo visible al editar y si no se ha elegido uno nuevo -->
+                <div *ngIf="nuevaGuia.id && nuevaGuia.archivo_url && !archivoSeleccionado" class="flex align-items-center justify-content-between mb-3 border-round-xl p-3" style="background: var(--input-bg); border: 1px solid var(--border-color);">
+                    <div class="flex align-items-center">
+                        <i class="pi pi-file-pdf text-3xl text-red-500 mr-3"></i>
+                        <div class="flex flex-column">
+                            <span class="font-bold text-sm text-chalk pf-oswald">Archivo actual</span>
+                            <a [href]="nuevaGuia.archivo_url" target="_blank" class="text-xs text-teal font-medium mt-1 no-underline hover:underline">Ver archivo cargado <i class="pi pi-external-link" style="font-size: 0.7rem;"></i></a>
+                        </div>
+                    </div>
+                    <button pButton icon="pi pi-sync" class="p-button-rounded p-button-info p-button-text" (click)="fileInput.click()" pTooltip="Reemplazar" tooltipPosition="left"></button>
+                </div>
                 
                 <div class="border-2 border-dashed border-round-xl p-4 text-center cursor-pointer transition-all transition-duration-200" 
                      [ngClass]="subiendoArchivo ? 'opacity-50 pointer-events-none' : 'hover:surface-hover'"
@@ -132,12 +144,14 @@
                      (click)="fileInput.click()"
                      onmouseover="this.style.borderColor='var(--pf-teal)'" onmouseout="this.style.borderColor='var(--border-color)'">
                     
-                    <input type="file" #fileInput class="hidden" (click)="$event.stopPropagation()" (change)="onFileSelect($event)" accept=".pdf,.doc,.docx,.jpg,.png" [disabled]="subiendoArchivo">
+                    <input type="file" #fileInput class="hidden" (click)="$event.stopPropagation()" (change)="onFileSelect($event)" accept=".pdf,.jpg,.jpeg,.png,.mp4" [disabled]="subiendoArchivo">
                     
                     <div *ngIf="!archivoSeleccionado" class="flex flex-column align-items-center">
                         <i class="pi pi-cloud-upload text-teal text-4xl mb-2"></i>
-                        <span class="text-chalk font-bold text-base pf-oswald" style="letter-spacing: 0.5px;">Haz clic aquí para adjuntar el archivo</span>
-                        <span class="text-steel text-sm mt-1">PDF, Word o Imágenes (Máx. 20MB)</span>
+                        <span class="text-chalk font-bold text-base pf-oswald" style="letter-spacing: 0.5px;">
+                            {{ nuevaGuia.id ? 'Haz clic para reemplazar el archivo' : 'Haz clic aquí para adjuntar el archivo' }}
+                        </span>
+                        <span class="text-steel text-sm mt-1">PDF, Imágenes (JPG/PNG) o Video MP4 (Máx. 20MB)</span>
                     </div>
 
                     <div *ngIf="archivoSeleccionado" class="flex flex-column align-items-center">

@@ -114,14 +114,14 @@
                      [class.pointer-events-none]="subiendoArchivo"
                      [ngClass]="{'mt-2': nuevaGuia.id && nuevaGuia.archivo_url}">
                     
-                    <input type="file" #fileInput style="display: none;" (click)="$event.stopPropagation()" (change)="onFileSelect($event)" accept=".pdf,.doc,.docx,.jpg,.png" [disabled]="subiendoArchivo">
+                    <input type="file" #fileInput style="display: none;" (click)="$event.stopPropagation()" (change)="onFileSelect($event)" accept=".pdf,.jpg,.jpeg,.png,.mp4" [disabled]="subiendoArchivo">
                     
                     <div *ngIf="!archivoSeleccionado" class="flex flex-column align-items-center">
                         <i class="pi text-5xl mb-3" [ngClass]="nuevaGuia.id ? 'pi-cloud-upload text-teal' : 'pi-cloud-upload text-teal'"></i>
                         <div class="text-chalk font-bold text-lg mb-1 pf-oswald">
                             {{ nuevaGuia.id ? 'Reemplazar archivo actual' : 'Haz clic para seleccionar un archivo' }}
                         </div>
-                        <div class="text-steel text-sm font-medium">PDF, Word o Imágenes (Máximo 20MB)</div>
+                        <div class="text-steel text-sm font-medium">PDF, Imágenes (JPG/PNG) o Video MP4 (Máximo 20MB)</div>
                     </div>
 
                     <div *ngIf="archivoSeleccionado" class="flex flex-column align-items-center w-full">

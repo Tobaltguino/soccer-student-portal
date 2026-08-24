@@ -20,18 +20,14 @@ export class MaterialService {
   /**
    * POST /material-complementario
    * Sube un archivo a Supabase y crea el registro en la base de datos.
-   * REQUIERE el uso de FormData porque incluye un archivo binario.
    */
   crearMaterial(payload: CrearMaterialPayload, archivo: File): Observable<Material> {
     const formData = new FormData();
-    
-    // Agregamos el archivo (Debe llamarse 'archivo' para coincidir con tu FileInterceptor)
+
     formData.append('archivo', archivo);
-    
-    // Agregamos los campos de texto
     formData.append('titulo', payload.titulo);
     formData.append('tipoMaterial', payload.tipoMaterial);
-    
+
     if (payload.descripcion) {
       formData.append('descripcion', payload.descripcion);
     }
@@ -42,7 +38,6 @@ export class MaterialService {
       formData.append('claseId', payload.claseId.toString());
     }
 
-    // Al pasar un FormData, HttpClient configura automáticamente los headers multipart
     return this.http.post<Material>(this.apiUrl, formData);
   }
 
@@ -67,7 +62,6 @@ export class MaterialService {
 
   /**
    * GET /material-complementario/:id
-   * Busca un material específico por su ID.
    */
   buscarMaterialPorId(id: string): Observable<Material> {
     return this.http.get<Material>(`${this.apiUrl}/${id}`);
@@ -75,16 +69,27 @@ export class MaterialService {
 
   /**
    * PATCH /material-complementario/:id
-   * Actualiza metadatos del material (título, descripción, asignaciones).
-   * Nota: Según el backend, no actualiza el archivo físico.
+   * Actualiza metadatos del material y, opcionalmente, reemplaza el archivo físico.
    */
-  actualizarMaterial(id: string, payload: ActualizarMaterialPayload): Observable<Material> {
+  actualizarMaterial(id: string, payload: ActualizarMaterialPayload, archivo?: File | null): Observable<Material> {
+    if (archivo) {
+      const formData = new FormData();
+      formData.append('archivo', archivo);
+
+      if (payload.titulo !== undefined) formData.append('titulo', payload.titulo);
+      if (payload.descripcion !== undefined) formData.append('descripcion', payload.descripcion);
+      if (payload.tipoMaterial !== undefined) formData.append('tipoMaterial', payload.tipoMaterial);
+      if (payload.grupoId !== undefined) formData.append('grupoId', payload.grupoId.toString());
+      if (payload.claseId !== undefined) formData.append('claseId', payload.claseId.toString());
+
+      return this.http.patch<Material>(`${this.apiUrl}/${id}`, formData);
+    }
+
     return this.http.patch<Material>(`${this.apiUrl}/${id}`, payload);
   }
 
   /**
    * DELETE /material-complementario/:id
-   * Elimina la fila en la BD y el archivo físico del bucket en Supabase.
    */
   eliminarMaterial(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);

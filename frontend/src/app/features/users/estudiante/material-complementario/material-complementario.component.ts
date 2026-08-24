@@ -91,7 +91,7 @@ export class EstudianteMaterialcomplementarioComponent implements OnInit {
   aplicarFiltros() {
     this.guiasFiltradas = this.guias.filter(guia => {
       // 1. Filtrar por Título
-      const coincideTitulo = (guia.titulo || '').toLowerCase().includes(this.filtroTitulo.toLowerCase());
+      const coincideTitulo = (guia.titulo || '').toLowerCase().includes(this.filtroTitulo.toLowerCase().trim());
       
       // 2. Filtrar por Fecha
       let coincideFecha = true;

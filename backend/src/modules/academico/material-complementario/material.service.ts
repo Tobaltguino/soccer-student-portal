@@ -8,7 +8,6 @@ import { lanzarErrorSupabaseConFk } from '../../../shared/utils/supabase-error.u
 import { randomUUID } from 'crypto';
 import { FiltrarMaterialDto } from './dto/filtrar-material.dto';
 
-// Importaciones para validación de permisos
 import { Rol } from '../../../shared/enums/rol.enum';
 import { TipoMaterial } from '../../../shared/enums/tipo-material.enum';
 import type { RequestUser } from '../../../core/auth/strategies/jwt.strategy';
@@ -28,7 +27,7 @@ export class MaterialService {
 
   async crear(
     dto: CrearMaterialDto,
-    user: RequestUser, 
+    user: RequestUser,
     archivo: Express.Multer.File,
   ): Promise<MaterialRow> {
     this.validarArchivo(archivo);
@@ -46,12 +45,15 @@ export class MaterialService {
         tipo_material: dto.tipoMaterial,
         grupo_id: dto.grupoId ?? null,
         clase_id: dto.claseId ?? null,
-        creado_por: user.id, 
+        creado_por: user.id,
       })
       .select()
       .single<MaterialRow>();
 
     if (error) {
+      // El archivo ya se subió pero el registro falló: limpiamos el huérfano en Storage
+      await this.eliminarArchivoDelBucket(archivoUrl);
+
       lanzarErrorSupabaseConFk(
         error,
         'No se pudo crear el material',
@@ -128,15 +130,36 @@ export class MaterialService {
     return data;
   }
 
-  async actualizar(id: string, dto: ActualizarMaterialDto, user: RequestUser): Promise<MaterialRow> {
+  async actualizar(
+    id: string,
+    dto: ActualizarMaterialDto,
+    user: RequestUser,
+    archivo?: Express.Multer.File,
+  ): Promise<MaterialRow> {
     const materialExistente = await this.buscarPorId(id);
 
-    // Verificamos si tiene permiso para tocar el área actual del archivo
-    this.validarPermisosArea(user.rol, materialExistente.tipo_material as TipoMaterial);
+    // Validación de propiedad: solo el creador o un Admin pueden editar
+    const esAdmin = user.rol === Rol.ADMINISTRADOR;
+    const esCreador = materialExistente.creado_por === user.id;
 
-    // Si intenta cambiar la categoría del archivo, validamos que tenga permiso para esa nueva categoría
+    if (!esAdmin && !esCreador) {
+      throw new ForbiddenException('Solo el creador del material o un administrador pueden editarlo');
+    }
+
+    // Validación de área: el rol debe tener permiso sobre la categoría actual y, si cambia, la nueva
+    this.validarPermisosArea(user.rol, materialExistente.tipo_material as TipoMaterial);
     if (dto.tipoMaterial) {
       this.validarPermisosArea(user.rol, dto.tipoMaterial);
+    }
+
+    let archivoUrl: string | undefined;
+
+    if (archivo) {
+      this.validarArchivo(archivo);
+      archivoUrl = await this.subirArchivo(archivo);
+
+      // Limpiamos el archivo anterior del bucket, ya que fue reemplazado
+      await this.eliminarArchivoDelBucket(materialExistente.archivo_url);
     }
 
     const { data, error } = await this.supabase.client
@@ -147,6 +170,7 @@ export class MaterialService {
         ...(dto.tipoMaterial !== undefined && { tipo_material: dto.tipoMaterial }),
         ...(dto.grupoId !== undefined && { grupo_id: dto.grupoId }),
         ...(dto.claseId !== undefined && { clase_id: dto.claseId }),
+        ...(archivoUrl !== undefined && { archivo_url: archivoUrl }),
       })
       .eq('id', id)
       .select()
@@ -170,10 +194,7 @@ export class MaterialService {
   async eliminar(id: string): Promise<void> {
     const material = await this.buscarPorId(id);
 
-    const path = this.extraerPathDesdeUrl(material.archivo_url);
-    if (path) {
-      await this.supabase.client.storage.from(BUCKET).remove([path]);
-    }
+    await this.eliminarArchivoDelBucket(material.archivo_url);
 
     const { error } = await this.supabase.client
       .from('material_complementario')
@@ -189,7 +210,7 @@ export class MaterialService {
    * Valida que el Rol del usuario tenga permisos sobre el Tipo de Material
    */
   private validarPermisosArea(rol: string, tipoMaterial: TipoMaterial): void {
-    if (rol === Rol.ADMINISTRADOR) return; // Admin puede todo
+    if (rol === Rol.ADMINISTRADOR) return;
 
     let tienePermiso = false;
 
@@ -247,5 +268,12 @@ export class MaterialService {
     const index = url.indexOf(marcador);
     if (index === -1) return null;
     return url.substring(index + marcador.length);
+  }
+
+  private async eliminarArchivoDelBucket(url: string): Promise<void> {
+    const path = this.extraerPathDesdeUrl(url);
+    if (path) {
+      await this.supabase.client.storage.from(BUCKET).remove([path]);
+    }
   }
 }

@@ -35,36 +35,38 @@ export class MaterialController {
   @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
   crear(
     @Body() dto: CrearMaterialDto,
-    @CurrentUser() user: RequestUser, 
+    @CurrentUser() user: RequestUser,
     @UploadedFile() archivo: Express.Multer.File,
   ) {
     return this.materialService.crear(dto, user, archivo);
   }
 
   @Get()
-  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.ESTUDIANTE)
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.NUTRICIONISTA, Rol.ESTUDIANTE)
   listar(@Query() filtros: FiltrarMaterialDto) {
     return this.materialService.listar(filtros);
   }
 
   @Get(':id')
-  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.ESTUDIANTE)
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.NUTRICIONISTA, Rol.ESTUDIANTE)
   buscarPorId(@Param('id') id: string) {
     return this.materialService.buscarPorId(id);
   }
 
   @Patch(':id')
   @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.NUTRICIONISTA)
+  @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
   actualizar(
-    @Param('id') id: string, 
+    @Param('id') id: string,
     @Body() dto: ActualizarMaterialDto,
-    @CurrentUser() user: RequestUser
+    @CurrentUser() user: RequestUser,
+    @UploadedFile() archivo: Express.Multer.File,
   ) {
-    return this.materialService.actualizar(id, dto, user);
+    return this.materialService.actualizar(id, dto, user, archivo);
   }
 
   @Delete(':id')
-  @Roles(Rol.ADMINISTRADOR) 
+  @Roles(Rol.ADMINISTRADOR)
   eliminar(@Param('id') id: string) {
     return this.materialService.eliminar(id);
   }
