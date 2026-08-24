@@ -31,7 +31,7 @@ export class ClasesController {
   ) {}
 
   @Post()
-  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
+  @Roles(Rol.PROFESOR)
   async crear(@Body() dto: CrearClaseDto, @CurrentUser() user: RequestUser) {
     const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
     return this.clasesService.crear(dto, gruposPermitidos);
@@ -70,7 +70,7 @@ export class ClasesController {
   }
 
   @Patch(':id')
-  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
+  @Roles(Rol.PROFESOR)
   async actualizar(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ActualizarClaseDto,

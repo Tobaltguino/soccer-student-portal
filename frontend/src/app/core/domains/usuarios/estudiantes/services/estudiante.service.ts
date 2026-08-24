@@ -42,8 +42,8 @@ export class EstudianteService {
    * GET /estudiantes/de-mi-grupo
    * Lista de manera rápida y sin paginación los estudiantes asignados a los grupos del usuario actual (Para Profesores y Kinesiólogos).
    */
-  obtenerEstudiantesDeMiGrupo(): Observable<Estudiante[]> {
-    return this.http.get<Estudiante[]>(`${this.apiUrl}/de-mi-grupo`);
+  obtenerEstudiantesDeMiGrupo(): Observable<EstudianteConPerfil[]> {
+    return this.http.get<EstudianteConPerfil[]>(`${this.apiUrl}/de-mi-grupo`);
   }
 
   /**

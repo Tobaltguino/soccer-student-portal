@@ -247,7 +247,9 @@ export class ProfesorClasesComponent implements OnInit {
   }
 
   guardarClase() {
-    if (!this.selectedGrupoId || !this.claseForm.fecha || !this.claseForm.hora || !this.claseForm.lugar || this.claseForm.lugar.trim() === '') {
+    const grupoIdFinal = this.isEditing ? this.claseForm.grupo_id : this.selectedGrupoId;
+
+    if (!grupoIdFinal || !this.claseForm.fecha || !this.claseForm.hora || !this.claseForm.lugar || this.claseForm.lugar.trim() === '') {
         this.messageService.add({ 
             severity: 'warn', 
             summary: 'Faltan datos', 
@@ -269,7 +271,7 @@ export class ProfesorClasesComponent implements OnInit {
     this.saving = true;
 
     const datosParaEnviar: CrearClasePayload = {
-      grupoId: this.selectedGrupoId,
+      grupoId: grupoIdFinal,
       fecha: this.formatearFecha(fechaSeleccionada),
       hora: this.claseForm.hora,
       lugar: this.claseForm.lugar?.trim() || undefined,

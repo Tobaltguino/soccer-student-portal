@@ -1429,3 +1429,88 @@ a.fc-col-header-cell-cushion,
         text-align: left !important;
     }
 }
+
+/* ==========================================================
+   🔥 22. FIX PRIMENG V21: CHECKBOX 🔥
+   ========================================================== */
+.p-checkbox {
+    width: 24px !important;
+    height: 24px !important;
+    display: inline-flex !important;
+}
+
+.p-checkbox .p-checkbox-box {
+    width: 24px !important;
+    height: 24px !important;
+    border: 2px solid var(--border-color) !important;
+    border-radius: 6px !important;
+    background: var(--input-bg) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+}
+
+.p-checkbox .p-checkbox-box:hover {
+    border-color: var(--pf-teal) !important;
+}
+
+.p-checkbox-box.p-highlight,
+.p-checkbox-box[data-p-highlight="true"] {
+    background: var(--pf-teal) !important;
+    border-color: var(--pf-teal) !important;
+}
+
+.p-checkbox-icon {
+    color: #ffffff !important;
+    font-size: 14px !important;
+}
+
+.p-checkbox.p-disabled .p-checkbox-box {
+    opacity: 0.4 !important;
+    cursor: not-allowed !important;
+}
+
+/* ==========================================================
+   🔥 22. FIX PRIMENG V21: AVATAR (CUADRADO/CIRCULAR PERFECTO) 🔥
+   ========================================================== */
+.p-avatar {
+    width: 3rem !important;
+    height: 3rem !important;
+    min-width: 3rem !important;
+    min-height: 3rem !important;
+    aspect-ratio: 1 / 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    overflow: hidden !important;
+}
+
+.p-avatar-lg,
+.p-avatar.p-avatar-lg {
+    width: 3.5rem !important;
+    height: 3.5rem !important;
+    min-width: 3.5rem !important;
+    min-height: 3.5rem !important;
+}
+
+.p-avatar img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: inherit !important;
+}
+
+.p-avatar-circle {
+    border-radius: 50% !important;
+}
+
+.p-avatar .p-avatar-text,
+.p-avatar-text {
+    font-family: var(--pf-font-label) !important;
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+}

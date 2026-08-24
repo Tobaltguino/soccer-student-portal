@@ -64,26 +64,10 @@ export class EstudianteClasesComponent implements OnInit {
   cargarClases() {
     this.loading = true;
 
-    // Ejecutamos ambas peticiones en paralelo
-    forkJoin({
-      clases: this.claseService.obtenerMisClases(),
-      asistencias: this.asistenciaService.obtenerMisAsistencias()
-    }).subscribe({
-      next: ({ clases, asistencias }) => {
-        
-        // Creamos un diccionario rápido de la asistencia del estudiante
-        const asistenciasMap = new Map();
-        asistencias.forEach(a => asistenciasMap.set(a.clase_id, a.presente));
-
-        // Mapeamos las clases y les inyectamos su estado de asistencia
-        const clasesMapeadas = clases.map(clase => ({
-          ...clase,
-          // Si el profe ya pasó lista para esta clase_id, le ponemos true/false. Si no, queda en null.
-          presente: asistenciasMap.has(clase.id) ? asistenciasMap.get(clase.id) : null
-        }));
-
+    this.claseService.obtenerMisClases().subscribe({
+      next: (clases) => {
         // Ordenamos las clases por fecha y hora (de más reciente a más antigua)
-        this.clasesOriginales = clasesMapeadas.sort((a, b) => {
+        this.clasesOriginales = [...clases].sort((a, b) => {
           const tiempoA = new Date(`${a.fecha}T${a.hora}`).getTime();
           const tiempoB = new Date(`${b.fecha}T${b.hora}`).getTime();
           return tiempoB - tiempoA;

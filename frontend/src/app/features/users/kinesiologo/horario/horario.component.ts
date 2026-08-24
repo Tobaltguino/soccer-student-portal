@@ -127,7 +127,7 @@ export class KinesiologoHorarioComponent implements OnInit {
         const inicioMesStr = `${hoy.getFullYear()}-${('0' + (hoy.getMonth() + 1)).slice(-2)}-01`;
 
         const peticionesClases = misGrupoIds.map(id => 
-          this.claseService.listarClases({ grupoId: id, desde: inicioMesStr, limite: 100 })
+          this.claseService.listarClases({ grupoId: id, desde: inicioMesStr, orden: 'asc', limite: 100 })
         );
 
         forkJoin(peticionesClases).subscribe({

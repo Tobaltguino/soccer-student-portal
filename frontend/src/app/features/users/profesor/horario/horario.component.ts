@@ -127,7 +127,7 @@ export class ProfesorHorarioComponent implements OnInit {
 
         // Generamos peticiones paralelas para todos los grupos asignados al profe
         const peticionesClases = misGrupoIds.map(id => 
-          this.claseService.listarClases({ grupoId: id, desde: inicioMesStr, limite: 100 })
+          this.claseService.listarClases({ grupoId: id, desde: inicioMesStr, orden: 'asc', limite: 100 })
         );
 
         forkJoin(peticionesClases).subscribe({

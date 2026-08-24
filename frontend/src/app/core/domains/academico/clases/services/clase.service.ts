@@ -32,6 +32,7 @@ export class ClaseService {
       if (filtros.incluirEliminadas) params = params.set('incluirEliminadas', filtros.incluirEliminadas);
       if (filtros.pagina) params = params.set('pagina', filtros.pagina);
       if (filtros.limite) params = params.set('limite', filtros.limite);
+      if (filtros.orden) params = params.set('orden', filtros.orden);
     }
 
     return this.http.get<PaginacionClases>(this.apiUrl, { params });

@@ -36,6 +36,8 @@ export interface FiltrosClase {
   incluirEliminadas?: boolean;
   pagina?: number;
   limite?: number;
+  /** 'asc' para orden cronológico (ej. calendario), 'desc' para más reciente primero (tablas de gestión, default) */
+  orden?: 'asc' | 'desc';
 }
 
 export interface PaginacionClases {

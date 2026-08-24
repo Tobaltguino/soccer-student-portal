@@ -81,22 +81,11 @@ export class EstudianteAsistenciasComponent implements OnInit {
 
   cargarDatosEstadisticos() {
     this.loading = true;
-    this.cdr.detectChanges(); 
+    this.cdr.detectChanges();
 
-    forkJoin({
-      clases: this.claseService.obtenerMisClases(),
-      asistencias: this.asistenciaService.obtenerMisAsistencias()
-    }).subscribe({
-      next: ({ clases, asistencias }) => {
-        
-        const asistenciasMap = new Map();
-        asistencias.forEach(a => asistenciasMap.set(a.clase_id, a.presente));
-
-        this.clasesCacheadas = clases.map(clase => ({
-          ...clase,
-          presente: asistenciasMap.has(clase.id) ? asistenciasMap.get(clase.id) : null
-        }));
-
+    this.claseService.obtenerMisClases().subscribe({
+      next: (clases) => {
+        this.clasesCacheadas = clases;
         this.procesarEstadisticas();
         this.loading = false;
         this.cdr.detectChanges();

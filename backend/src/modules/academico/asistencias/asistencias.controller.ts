@@ -1,5 +1,4 @@
-// modules/academico/asistencias/asistencias.controller.ts
-import { BadRequestException, Body, Controller, Get, Param, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, ForbiddenException, Get, Param, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
 import { AsistenciasService } from './asistencias.service';
 import { RegistrarAsistenciasLoteDto } from './dto/registrar-asistencias-lotes.dto';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
@@ -20,7 +19,7 @@ export class AsistenciasController {
   ) {}
 
   @Post('clases/:claseId/asistencias')
-  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
+  @Roles(Rol.PROFESOR)
   async registrarLote(
     @Param('claseId', ParseIntPipe) claseId: number,
     @Body() dto: RegistrarAsistenciasLoteDto,
@@ -57,15 +56,24 @@ export class AsistenciasController {
   }
 
   @Get('reportes/mensual')
-  @Roles(Rol.ADMINISTRADOR)
-  async reporteMensualConsolidado(@Query() filtros: FiltrosReporteMensualDto) {
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
+  async reporteMensualConsolidado(
+    @Query() filtros: FiltrosReporteMensualDto,
+    @CurrentUser() user: RequestUser,
+  ) {
     if (!filtros.grupoId) {
       throw new BadRequestException('Se requiere especificar un grupo_id para el reporte');
     }
+
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
+    if (gruposPermitidos !== null && !gruposPermitidos.includes(filtros.grupoId)) {
+      throw new ForbiddenException('No tienes acceso a este grupo');
+    }
+
     return this.asistenciasService.reporteMensualConsolidado(
-      filtros.grupoId, 
-      filtros.mes, 
-      filtros.anio
+      filtros.grupoId,
+      filtros.mes,
+      filtros.anio,
     );
   }
 
@@ -74,11 +82,14 @@ export class AsistenciasController {
   async detalleMensualEstudiante(
     @Param('estudianteId') estudianteId: string,
     @Query() filtros: FiltrosReporteMensualDto,
+    @CurrentUser() user: RequestUser,
   ) {
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
     return this.asistenciasService.detalleMensualEstudiante(
       estudianteId,
       filtros.mes,
-      filtros.anio
+      filtros.anio,
+      gruposPermitidos,
     );
   }
 }

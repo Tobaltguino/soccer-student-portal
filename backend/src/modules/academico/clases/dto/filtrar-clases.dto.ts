@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsDateString, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsBoolean, IsDateString, IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class FiltrarClasesDto {
   @IsOptional()
@@ -35,4 +35,8 @@ export class FiltrarClasesDto {
   @IsOptional()
   @IsString()
   lugar?: string;
+
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  orden?: 'asc' | 'desc';
 }

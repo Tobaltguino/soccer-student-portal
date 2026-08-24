@@ -140,7 +140,7 @@ export class KinesiologoClasesComponent implements OnInit {
 
   // ✅ Ver Asistencia (Solo Lectura)
   verAsistencia(clase: Clase) {
-    this.claseSeleccionadaAsistencia = clase; // 🔥 CORREGIDO (Antes decía this.selectedClase)
+    this.claseSeleccionadaAsistencia = clase;
     this.displayAttendanceDialog = true;
     this.loadingAsistencia = true;
     this.alumnosAsistencia = [];
@@ -151,26 +151,28 @@ export class KinesiologoClasesComponent implements OnInit {
     }
 
     forkJoin({
-      estudiantes: this.estudianteService.listarEstudiantes({ grupoIds: [clase.grupo_id], limite: 1000, activo: true }),
+      estudiantes: this.estudianteService.obtenerEstudiantesDeMiGrupo(),
       asistenciasGuardadas: this.asistenciaService.listarPorClase(clase.id)
     }).subscribe({
       next: ({ estudiantes, asistenciasGuardadas }) => {
-        
+
         const asistenciasMap = new Map();
         asistenciasGuardadas.forEach(a => asistenciasMap.set(a.estudiante_id, a.presente));
 
-        this.alumnosAsistencia = estudiantes.registros.map(est => {
-          const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id;
-          const nombre = est.perfil ? est.perfil.nombre : (est as any).nombre;
-          const apellido = est.perfil ? est.perfil.apellido : (est as any).apellido;
+        this.alumnosAsistencia = estudiantes
+          .filter((est: any) => est.grupo_id === clase.grupo_id) // 👈 de-mi-grupo trae TODOS los grupos del kine, filtramos al de esta clase
+          .map((est: any) => {
+            const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id;
+            const nombre = est.perfil ? est.perfil.nombre : est.nombre;
+            const apellido = est.perfil ? est.perfil.apellido : est.apellido;
 
-          return {
-            estudianteId: idUsuario,
-            nombre: nombre,
-            apellido: apellido,
-            presente: asistenciasMap.has(idUsuario) ? asistenciasMap.get(idUsuario) : false 
-          };
-        });
+            return {
+              estudianteId: idUsuario,
+              nombre: nombre,
+              apellido: apellido,
+              presente: asistenciasMap.has(idUsuario) ? asistenciasMap.get(idUsuario) : false
+            };
+          });
 
         this.loadingAsistencia = false;
         this.cdr.detectChanges();

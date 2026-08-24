@@ -49,7 +49,7 @@ export class EstudiantesService {
     return data ?? [];
   }
 
-  async listarPorGrupos(gruposPermitidos: number[] | null): Promise<EstudianteRow[]> {
+  async listarPorGrupos(gruposPermitidos: number[] | null): Promise<(EstudianteRow & { perfil: UsuarioPerfilRow | undefined })[]> {
     let query = this.supabase.client.from('estudiantes').select('*');
 
     if (gruposPermitidos !== null) {
@@ -62,7 +62,24 @@ export class EstudiantesService {
       lanzarErrorSupabase(error, 'No se pudo listar los estudiantes');
     }
 
-    return data ?? [];
+    const lista = (data ?? []) as EstudianteRow[];
+    if (lista.length === 0) return [];
+
+    const { data: perfiles, error: errorPerfiles } = await this.supabase.client
+      .from('usuarios_perfiles')
+      .select('*')
+      .in('id_usuario', lista.map((e) => e.usuario_id));
+
+    if (errorPerfiles) {
+      lanzarErrorSupabase(errorPerfiles, 'No se pudo obtener los perfiles de los estudiantes');
+    }
+
+    const mapaPerfiles = new Map((perfiles ?? []).map((p: any) => [p.id_usuario, p]));
+
+    return lista.map((e) => ({
+      ...e,
+      perfil: mapaPerfiles.get(e.usuario_id),
+    }));
   }
 
   async buscarPorId(usuarioId: string): Promise<EstudianteRow> {

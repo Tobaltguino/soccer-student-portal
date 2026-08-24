@@ -47,11 +47,12 @@
 
     <div class="pf-admin-card table-responsive p-0 mt-4" *ngIf="!loading && estudiantesAsistencia.length > 0">
         <p-table [value]="estudiantesAsistencia" [rows]="10" [paginator]="true" 
-                 styleClass="p-datatable-sm pf-table w-full" responsiveLayout="stack" [breakpoint]="'768px'">
+                styleClass="p-datatable-sm pf-table w-full" responsiveLayout="stack" [breakpoint]="'768px'">
             
             <ng-template pTemplate="header">
                 <tr>
-                    <th style="width: 40%">Estudiante</th>
+                    <th style="width: 10%" class="text-center">Foto</th>
+                    <th style="width: 30%">Estudiante / RUT</th>
                     <th style="width: 20%" class="text-center">Presencias / Total</th>
                     <th style="width: 20%" class="text-center">Rendimiento</th>
                     <th style="width: 20%" class="text-center">Historial</th>
@@ -60,24 +61,24 @@
 
             <ng-template pTemplate="body" let-est>
                 <tr>
+                    <td class="text-center">
+                        <span class="p-column-title hidden-desktop pf-oswald text-steel">Foto</span>
+                        <p-avatar 
+                            [image]="est.foto_url" 
+                            [label]="!est.foto_url ? est.nombre.charAt(0) : ''"
+                            shape="circle" 
+                            size="large" 
+                            [style]="{'background-color': 'var(--hover-bg)', 'color': 'var(--pf-teal)', 'border': '1px solid var(--pf-teal)', 'font-weight': 'bold'}">
+                        </p-avatar>
+                    </td>
                     <td>
-                        <span class="p-column-title hidden-desktop pf-oswald text-steel">Estudiante</span>
-                        <div class="flex align-items-center gap-3">
-                            <p-avatar 
-                                [image]="est.foto_url" 
-                                [label]="!est.foto_url ? est.nombre.charAt(0) : ''"
-                                shape="circle" 
-                                size="large" 
-                                [style]="{'background-color': 'var(--hover-bg)', 'color': 'var(--pf-teal)', 'border': '1px solid var(--pf-teal)', 'min-width': '3rem', 'min-height': '3rem', 'font-weight': 'bold'}">
-                            </p-avatar>
-
-                            <div class="flex flex-column">
-                                <span class="font-bold text-chalk text-lg sm:text-base" style="letter-spacing: 0.5px;">{{est.nombre}} {{est.apellido}}</span>
-                                <span class="text-xs text-steel mt-1 flex align-items-center justify-content-end sm:justify-content-start">
-                                    <i class="pi pi-id-card mr-1"></i>
-                                    {{ est.rut || 'Sin RUT registrado' }}
-                                </span>
-                            </div>
+                        <span class="p-column-title hidden-desktop pf-oswald text-steel">Estudiante / RUT</span>
+                        <div class="flex flex-column">
+                            <span class="font-bold text-chalk text-lg sm:text-base" style="letter-spacing: 0.5px;">{{est.nombre}} {{est.apellido}}</span>
+                            <span class="text-xs text-steel mt-1 flex align-items-center justify-content-end sm:justify-content-start">
+                                <i class="pi pi-id-card mr-1"></i>
+                                {{ est.rut || 'Sin RUT registrado' }}
+                            </span>
                         </div>
                     </td>
                     <td class="text-center">

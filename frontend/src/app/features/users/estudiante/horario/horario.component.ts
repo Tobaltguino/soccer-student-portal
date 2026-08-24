@@ -103,30 +103,20 @@ export class EstudianteHorarioComponent implements OnInit {
   cargarClasesCalendario() {
     this.loading = true;
 
-    forkJoin({
-      clases: this.claseService.obtenerMisClases(),
-      asistencias: this.asistenciaService.obtenerMisAsistencias()
-    }).subscribe({
-      next: ({ clases, asistencias }) => {
-        
-        const asistenciasMap = new Map();
-        asistencias.forEach(a => asistenciasMap.set(a.clase_id, a.presente));
-
+    this.claseService.obtenerMisClases().subscribe({
+      next: (clases) => {
         const eventos = clases.map((clase: any) => {
-            clase.presente = asistenciasMap.has(clase.id) ? asistenciasMap.get(clase.id) : null;
+          const start = new Date(`${clase.fecha}T${clase.hora}`);
+          const end = new Date(start.getTime() + 90 * 60000);
 
-            const start = new Date(`${clase.fecha}T${clase.hora}`);
-            const end = new Date(start.getTime() + 90 * 60000); 
-
-            return {
-              title: `${clase.lugar || 'Cancha'}`,
-              start: start.toISOString(),
-              end: end.toISOString(),
-              extendedProps: { ...clase },
-              backgroundColor: this.getColorEvento(clase),
-              borderColor: this.getColorEvento(clase)
-              // 🔥 textColor: '#ffffff' HA SIDO ELIMINADO AQUÍ PARA QUE FULLCALENDAR AUTO-ADAPTE
-            };
+          return {
+            title: `${clase.lugar || 'Cancha'}`,
+            start: start.toISOString(),
+            end: end.toISOString(),
+            extendedProps: { ...clase },
+            backgroundColor: this.getColorEvento(clase),
+            borderColor: this.getColorEvento(clase)
+          };
         });
 
         this.calendarOptions = { ...this.calendarOptions, events: eventos };

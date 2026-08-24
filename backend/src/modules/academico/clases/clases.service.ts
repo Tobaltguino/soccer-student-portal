@@ -63,10 +63,13 @@ import { FiltrarClasesDto } from './dto/filtrar-clases.dto';
     let query = this.supabase.client
       .from('clases')
       .select('*', { count: 'exact' })
-      .order('fecha', { ascending: false })
+      .order('fecha', { ascending: filtros.orden === 'asc' })   // 👈 antes: siempre { ascending: false }
       .range(desde, hasta);
 
     if (filtros.grupoId !== undefined) {
+      if (gruposPermitidos !== null && !gruposPermitidos.includes(filtros.grupoId)) {
+        return { registros: [], total: 0, pagina, limite };
+      }
       query = query.eq('grupo_id', filtros.grupoId);
     } else if (gruposPermitidos !== null) {
       query = query.in('grupo_id', gruposPermitidos);
@@ -206,8 +209,11 @@ import { FiltrarClasesDto } from './dto/filtrar-clases.dto';
     dto: ActualizarClaseDto,
     gruposPermitidos: number[] | null = null,
   ): Promise<ClaseRow> {
-    // Valida que el usuario tenga acceso a esta clase antes de modificarla
     await this.buscarPorId(id, gruposPermitidos);
+
+    if (dto.grupoId !== undefined && gruposPermitidos !== null && !gruposPermitidos.includes(dto.grupoId)) {
+      throw new ForbiddenException('No puedes mover la clase a un grupo que no tienes asignado');
+    }
 
     const { data, error } = await this.supabase.client
       .from('clases')
