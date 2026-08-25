@@ -178,9 +178,9 @@ export class ResultadosService {
 
     const { data: tipoEvaluacion } = await this.supabase.client
       .from('tipo_evaluacion')
-      .select('nombre, unidad_medida')
+      .select('nombre, unidad_medida, descripcion')
       .eq('id', sesion.tipo_evaluacion_id)
-      .single<{ nombre: string; unidad_medida: string }>();
+      .single<{ nombre: string; unidad_medida: string; descripcion: string | null }>();
 
     const { data: perfil } = await this.supabase.client
       .from('usuarios_perfiles')
@@ -189,12 +189,14 @@ export class ResultadosService {
       .maybeSingle<{ fecha_nacimiento: string | null }>();
 
     let rango: { nombreEtiqueta: string; colorSugerido: string | null } | null = null;
+    let edadEvaluacion: number | null = null;
 
     if (perfil?.fecha_nacimiento) {
-      const edad = this.calcularEdad(perfil.fecha_nacimiento);
+      edadEvaluacion = this.calcularEdad(perfil.fecha_nacimiento);
+
       const rangoEncontrado = await this.rangosService.encontrarRango(
         sesion.tipo_evaluacion_id,
-        edad,
+        edadEvaluacion,
         resultado.valor_numerico,
       );
       rango = rangoEncontrado
@@ -205,9 +207,11 @@ export class ResultadosService {
     return {
       ...resultado,
       rango,
+      edadEvaluacion,
       evaluacion: {
         nombre: tipoEvaluacion?.nombre ?? 'Desconocido',
         unidadMedida: tipoEvaluacion?.unidad_medida ?? '',
+        descripcion: tipoEvaluacion?.descripcion ?? null,
         fecha: sesion.fecha,
       },
     };

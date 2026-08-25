@@ -31,7 +31,7 @@ export class SesionesController {
   ) {}
 
   @Post()
-  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
+  @Roles(Rol.PROFESOR)
   async crear(@Body() dto: CrearSesionDto, @CurrentUser() user: RequestUser) {
     const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
     return this.sesionesService.crear(dto, user.id, gruposPermitidos);
@@ -46,8 +46,9 @@ export class SesionesController {
 
   @Get('ultima-finalizada')
   @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO)
-  obtenerUltima() {
-    return this.sesionesService.obtenerUltimaFinalizada();
+  async obtenerUltima(@CurrentUser() user: RequestUser) {
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
+    return this.sesionesService.obtenerUltimaFinalizada(gruposPermitidos);
   }
 
   @Get(':id')
@@ -58,7 +59,7 @@ export class SesionesController {
   }
 
   @Patch(':id')
-  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
+  @Roles(Rol.PROFESOR)
   async actualizar(
     @Param('id') id: string,
     @Body() dto: ActualizarSesionDto,
@@ -69,7 +70,7 @@ export class SesionesController {
   }
 
   @Patch(':id/estado')
-  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
+  @Roles(Rol.PROFESOR)
   async cambiarEstado(
     @Param('id') id: string,
     @Body() dto: CambiarEstadoSesionDto,

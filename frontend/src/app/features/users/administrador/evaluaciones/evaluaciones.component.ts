@@ -1,9 +1,8 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin } from 'rxjs';
 
-// PrimeNG Imports
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -16,18 +15,17 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { CheckboxModule } from 'primeng/checkbox';
-import { ToggleButtonModule } from 'primeng/togglebutton';
-import { RadioButtonModule } from 'primeng/radiobutton';
 import { TextareaModule } from 'primeng/textarea';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
-// Servicios de Dominio
 import { TipoEvaluacionService } from '../../../../core/domains/academico/evaluaciones/tipos/services/tipo-evaluacion.services';
 import { SesionEvaluacionService } from '../../../../core/domains/academico/evaluaciones/sesiones/services/sesion.service';
 import { ResultadoEvaluacionService } from '../../../../core/domains/academico/evaluaciones/resultados/services/resultado.service';
 import { RangoEvaluacionService } from '../../../../core/domains/academico/evaluaciones/rangos/services/rango.service';
 import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
+
+import { EstadoSesion } from '../../../../shared/enums/estado-sesion.enum';
 
 @Component({
   selector: 'app-administrador-evaluaciones',
@@ -36,11 +34,11 @@ import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes
     CommonModule, FormsModule, TableModule, ButtonModule, DialogModule,
     InputTextModule, InputNumberModule, SelectModule, DatePickerModule,
     TagModule, ToastModule, ConfirmDialogModule, TooltipModule, 
-    CheckboxModule, ToggleButtonModule, RadioButtonModule, TextareaModule
+    CheckboxModule, TextareaModule
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './evaluaciones.component.html',
-  styleUrls: ['./evaluaciones.component.scss'] // 🔥 Cambiado a .scss
+  styleUrls: ['./evaluaciones.component.scss']
 })
 export class AdministradorEvaluacionesComponent implements OnInit {
 
@@ -53,6 +51,9 @@ export class AdministradorEvaluacionesComponent implements OnInit {
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
   private cdr = inject(ChangeDetectorRef);
+
+  // Enum expuesto al template
+  readonly EstadoSesion = EstadoSesion;
 
   // --- DATOS ---
   sesiones: any[] = [];            
@@ -68,8 +69,10 @@ export class AdministradorEvaluacionesComponent implements OnInit {
   filtroEstado: any = null;
 
   opcionesEstadoFiltro = [
-    { label: 'Pendiente', value: 'PENDIENTE' },
-    { label: 'Finalizado', value: 'FINALIZADO' }
+    { label: 'Programada', value: EstadoSesion.PROGRAMADA },
+    { label: 'En Curso', value: EstadoSesion.EN_CURSO },
+    { label: 'Finalizada', value: EstadoSesion.FINALIZADA },
+    { label: 'Cancelada', value: EstadoSesion.CANCELADA }
   ];
 
   opcionesColor = [
@@ -83,14 +86,13 @@ export class AdministradorEvaluacionesComponent implements OnInit {
 
   // --- ESTADOS UI ---
   loading: boolean = true;
-  guardando: boolean = false; // 🔥 Variable Maestra de Bloqueo
-  displayMainDialog: boolean = false;   
+  guardando: boolean = false; // Usado solo para Configurar Test
   displayTipoDialog: boolean = false;   
-  displayGradesDialog: boolean = false; 
+  displayGradesDialog: boolean = false; // Ahora solo lectura
   
   usarRangos: boolean = false;
 
-  // --- FORMULARIOS ---
+  // --- FORMULARIOS (Configurar Test, sigue siendo Admin) ---
   tipoForm: any = { id: null, nombre: '', unidad_medida: '', descripcion: '' }; 
   rangosForm: any[] = [];
   rangosOriginalesCache: any[] = [];
@@ -104,13 +106,8 @@ export class AdministradorEvaluacionesComponent implements OnInit {
     color_sugerido: '#22c55e' 
   };
 
-  evalLogistica: any = {
-    id: null,
-    grupo_id: null,
-    tipo_evaluacion_id: null,
-    fecha: new Date(),
-    estado: 'PENDIENTE'
-  };
+  // Sesión seleccionada solo para visualizar en el informe de resultados
+  sesionSeleccionada: any = null;
 
   ngOnInit() {
     this.cargarDatosIniciales();
@@ -121,7 +118,7 @@ export class AdministradorEvaluacionesComponent implements OnInit {
   // ==========================================
   cargarDatosIniciales() {
     this.loading = true;
-    this.cdr.detectChanges(); // 🔥 Forzar renderizado
+    this.cdr.detectChanges();
     
     forkJoin({
       grupos: this.grupoService.listarGrupos(),
@@ -134,7 +131,7 @@ export class AdministradorEvaluacionesComponent implements OnInit {
         this.sesionesOriginales = data.sesiones.registros || [];
         
         this.sesiones = [...this.sesionesOriginales];
-        this.aplicarFiltrosLocales(); // Lógica sincrónica extraída
+        this.aplicarFiltrosLocales();
         this.loading = false;
         this.cdr.detectChanges();
       },
@@ -207,8 +204,22 @@ export class AdministradorEvaluacionesComponent implements OnInit {
     }
   }
 
+  /**
+   * El backend no envía el grupo/tipo de evaluación embebido en la sesión,
+   * solo los IDs. Los resolvemos localmente contra lo ya cargado.
+   */
+  obtenerNombreGrupo(sesion: any): string {
+    const grupoId = sesion.grupo_id || sesion.grupoId;
+    return this.grupos.find(g => g.id === grupoId)?.nombre || 'Grupo desconocido';
+  }
+
+  obtenerTipoEvaluacion(sesion: any): any {
+    const tipoId = sesion.tipo_evaluacion_id || sesion.tipoEvaluacionId;
+    return this.tiposEvaluacion.find(t => t.id === tipoId) || null;
+  }
+
   // ==========================================
-  // CONFIGURACIÓN DE TIPOS Y RANGOS
+  // CONFIGURACIÓN DE TIPOS Y RANGOS (SIGUE SIENDO ADMIN)
   // ==========================================
   abrirNuevoTipo() {
     this.cancelarEdicionTipo(); 
@@ -281,7 +292,6 @@ export class AdministradorEvaluacionesComponent implements OnInit {
   }
 
   guardarNuevoTipo() {
-    // 🔥 Blindaje
     if (this.guardando) return;
 
     if (!this.tipoForm.nombre || !this.tipoForm.unidad_medida) {
@@ -307,7 +317,6 @@ export class AdministradorEvaluacionesComponent implements OnInit {
         const testId = tipoGuardado.id;
         const peticionesRangos: any[] = [];
 
-        // 1. Identificar rangos eliminados
         const idsActuales = this.rangosForm.map(r => r.id).filter(id => id);
         this.rangosOriginalesCache.forEach(rOriginal => {
           if (!idsActuales.includes(rOriginal.id)) {
@@ -315,7 +324,6 @@ export class AdministradorEvaluacionesComponent implements OnInit {
           }
         });
 
-        // 2. Identificar rangos nuevos o modificados
         if (this.usarRangos) {
           this.rangosForm.forEach(rango => {
             const payloadRango = {
@@ -378,60 +386,8 @@ export class AdministradorEvaluacionesComponent implements OnInit {
   }
 
   // ==========================================
-  // GESTIÓN DE SESIONES (CRUD LOGÍSTICA)
+  // SESIONES: SOLO VER Y ELIMINAR
   // ==========================================
-  abrirNuevo() {
-    this.evalLogistica = { id: null, grupo_id: null, tipo_evaluacion_id: null, fecha: new Date(), estado: 'PENDIENTE' };
-    this.displayMainDialog = true;
-  }
-
-  editarSesion(sesion: any) {
-    let fechaObj = new Date();
-    if (sesion.fecha) {
-        const parts = (sesion.fecha as string).split('-');
-        if (parts.length === 3) fechaObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-    }
-    
-    this.evalLogistica = { ...sesion, fecha: fechaObj };
-    this.evalLogistica.grupo_id = sesion.grupo_id || sesion.grupoId;
-    this.evalLogistica.tipo_evaluacion_id = sesion.tipo_evaluacion_id || sesion.tipoEvaluacionId;
-    this.displayMainDialog = true;
-  }
-
-  crearSesionPlanificada() {
-    // 🔥 Blindaje
-    if (this.guardando) return;
-
-    if (!this.evalLogistica.grupo_id || !this.evalLogistica.tipo_evaluacion_id || !this.evalLogistica.fecha) {
-        this.messageService.add({ severity: 'warn', summary: 'Faltan datos', detail: 'Complete todos los campos obligatorios marcados con (*)' });
-        return;
-    }
-
-    this.guardando = true;
-    this.cdr.detectChanges();
-
-    const payload = {
-        grupoId: this.evalLogistica.grupo_id,
-        tipoEvaluacionId: this.evalLogistica.tipo_evaluacion_id,
-        fecha: this.formatearFecha(this.evalLogistica.fecha),
-        estado: this.evalLogistica.estado || 'PENDIENTE'
-    };
-
-    const peticion$ = this.evalLogistica.id 
-      ? this.sesionService.actualizarSesion(this.evalLogistica.id, payload)
-      : this.sesionService.crearSesion(payload);
-
-    peticion$.subscribe({
-      next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Sesión guardada' });
-        this.displayMainDialog = false;
-        this.guardando = false;
-        this.cargarDatosIniciales(); 
-      },
-      error: () => this.mostrarErrorGuardado('No se pudo guardar la sesión')
-    });
-  }
-
   eliminarSesion(id: string) {
       this.confirmationService.confirm({
           message: '¿Eliminar sesión y todas sus notas asociadas?',
@@ -452,10 +408,14 @@ export class AdministradorEvaluacionesComponent implements OnInit {
   }
 
   // ==========================================
-  // CALIFICACIÓN DE ESTUDIANTES
+  // VER RESULTADOS (SOLO LECTURA)
   // ==========================================
   abrirCalificador(sesion: any) {
-    this.evalLogistica = { ...sesion };
+    this.sesionSeleccionada = {
+      ...sesion,
+      grupoNombre: this.obtenerNombreGrupo(sesion),
+      tipoEvaluacionResuelto: this.obtenerTipoEvaluacion(sesion)
+    };
     this.loading = true;
     this.cdr.detectChanges();
     
@@ -475,7 +435,6 @@ export class AdministradorEvaluacionesComponent implements OnInit {
           const notaExistente: any = resultados.find((r: any) => r.estudianteId === idUsuario || r.estudiante_id === idUsuario);
           
           return {
-              resultado_id: notaExistente ? notaExistente.id : null, 
               estudiante_id: idUsuario,
               nombre: nombre,
               apellido: apellido,
@@ -493,52 +452,6 @@ export class AdministradorEvaluacionesComponent implements OnInit {
         this.loading = false;
         this.cdr.detectChanges();
       }
-    });
-  }
-
-  limpiarFila(estudiante: any) {
-    if (this.guardando) return;
-    estudiante.valor_numerico = null;
-    estudiante.observacion = '';
-  }
-
-  guardarNotasFinales() {
-    // 🔥 Blindaje
-    if (this.guardando) return;
-
-    const notasValidas = this.estudiantesGrupo.filter(e => e.valor_numerico !== null || (e.observacion && e.observacion.trim() !== ''));
-
-    if (notasValidas.length === 0) {
-      this.messageService.add({ severity: 'info', summary: 'Sin cambios', detail: 'No hay notas para guardar.' });
-      return;
-    }
-
-    this.guardando = true;
-    this.cdr.detectChanges();
-    
-    const peticiones = notasValidas.map(e => {
-      const payload = {
-        sesionId: this.evalLogistica.id,
-        estudianteId: e.estudiante_id,
-        valorNumerico: e.valor_numerico,
-        observacion: e.observacion || ''
-      };
-
-      if (e.resultado_id) {
-        return this.resultadoService.actualizarResultado(e.resultado_id, payload);
-      } else {
-        return this.resultadoService.crearResultado(payload);
-      }
-    });
-
-    forkJoin(peticiones).subscribe({
-      next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Resultados actualizados correctamente' });
-        this.displayGradesDialog = false;
-        this.guardando = false;
-        this.cargarDatosIniciales(); 
-      },
-      error: () => this.mostrarErrorGuardado('Fallo al guardar algunos resultados.')
     });
   }
 

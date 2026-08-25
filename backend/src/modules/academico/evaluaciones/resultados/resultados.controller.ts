@@ -29,7 +29,7 @@ export class ResultadosController {
   ) {}
 
   @Post('evaluaciones-resultados')
-  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
+  @Roles(Rol.PROFESOR)
   async crear(@Body() dto: CrearResultadoDto, @CurrentUser() user: RequestUser) {
     const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
     return this.resultadosService.crear(dto, gruposPermitidos);
@@ -60,7 +60,7 @@ export class ResultadosController {
   }
 
   @Patch('evaluaciones-resultados/:id')
-  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
+  @Roles(Rol.PROFESOR)
   async actualizar(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ActualizarResultadoDto,

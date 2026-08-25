@@ -52,7 +52,7 @@
                           (onChange)="aplicarFiltros()" [showClear]="true" 
                           styleClass="w-full" appendTo="body" [filter]="false">
                     <ng-template let-option pTemplate="item">
-                        <p-tag [value]="option.label" [severity]="option.value === 'PENDIENTE' ? 'warn' : 'success'"></p-tag>
+                        <p-tag [value]="option.label" [severity]="option.value === EstadoSesion.FINALIZADA ? 'success' : (option.value === EstadoSesion.CANCELADA ? 'danger' : 'warn')"></p-tag>
                     </ng-template>
                 </p-select>
             </div>
@@ -87,15 +87,15 @@
                     </td>
                     <td>
                         <span class="p-column-title hidden-desktop pf-oswald text-steel">Grupo</span>
-                        <p-tag [value]="sesion.grupo?.nombre || sesion.grupos?.nombre || 'Grupo'" severity="info" styleClass="text-sm font-bold"></p-tag>
+                        <p-tag [value]="obtenerNombreGrupo(sesion)" severity="info" styleClass="text-sm font-bold"></p-tag>
                     </td>
                     <td>
                         <span class="p-column-title hidden-desktop pf-oswald text-steel">Prueba</span>
-                        <span class="font-bold text-chalk">{{ sesion.tipoEvaluacion?.nombre || sesion.tipo_evaluacion?.nombre || 'Test' }}</span>
+                        <span class="font-bold text-chalk">{{ obtenerTipoEvaluacion(sesion)?.nombre || 'Prueba desconocida' }}</span>
                     </td>
                     <td class="text-center">
                         <span class="p-column-title hidden-desktop pf-oswald text-steel">Estado</span>
-                        <p-tag [value]="sesion.estado" [severity]="sesion.estado === 'PENDIENTE' ? 'warn' : 'success'"></p-tag>
+                        <p-tag [value]="sesion.estado" [severity]="sesion.estado === EstadoSesion.FINALIZADA ? 'success' : (sesion.estado === EstadoSesion.CANCELADA ? 'danger' : 'warn')"></p-tag>
                     </td>
                     <td class="text-center">
                         <span class="p-column-title hidden-desktop pf-oswald text-steel">Acciones</span>
@@ -151,14 +151,22 @@
             
             <div class="field mb-2" *ngIf="evalLogistica.id">
                 <label class="pf-oswald text-steel mb-3 block">Estado de la Sesión</label>
-                <div class="flex gap-4">
+                <div class="flex flex-wrap gap-4">
                     <div class="flex align-items-center">
-                        <p-radioButton name="estado" value="PENDIENTE" [(ngModel)]="evalLogistica.estado" inputId="st1"></p-radioButton>
-                        <label for="st1" class="ml-2 mb-0 font-normal text-chalk">Pendiente</label>
+                        <p-radioButton name="estado" [value]="EstadoSesion.PROGRAMADA" [(ngModel)]="evalLogistica.estado" inputId="st1"></p-radioButton>
+                        <label for="st1" class="ml-2 mb-0 font-normal text-chalk">Programada</label>
                     </div>
                     <div class="flex align-items-center">
-                        <p-radioButton name="estado" value="FINALIZADO" [(ngModel)]="evalLogistica.estado" inputId="st2"></p-radioButton>
-                        <label for="st2" class="ml-2 mb-0 font-normal text-chalk">Finalizado</label>
+                        <p-radioButton name="estado" [value]="EstadoSesion.EN_CURSO" [(ngModel)]="evalLogistica.estado" inputId="st2"></p-radioButton>
+                        <label for="st2" class="ml-2 mb-0 font-normal text-chalk">En Curso</label>
+                    </div>
+                    <div class="flex align-items-center">
+                        <p-radioButton name="estado" [value]="EstadoSesion.FINALIZADA" [(ngModel)]="evalLogistica.estado" inputId="st3"></p-radioButton>
+                        <label for="st3" class="ml-2 mb-0 font-normal text-chalk">Finalizada</label>
+                    </div>
+                    <div class="flex align-items-center">
+                        <p-radioButton name="estado" [value]="EstadoSesion.CANCELADA" [(ngModel)]="evalLogistica.estado" inputId="st4"></p-radioButton>
+                        <label for="st4" class="ml-2 mb-0 font-normal text-chalk">Cancelada</label>
                     </div>
                 </div>
             </div>
@@ -179,11 +187,11 @@
             <div class="surface-hover p-4 border-round mb-4 flex justify-content-between align-items-center flex-wrap gap-3 mt-2 border-1 surface-border" style="border-color: var(--border-color) !important;">
                 <div class="flex flex-column">
                     <span class="pf-oswald text-steel text-sm tracking-wider">Evaluación Seleccionada</span>
-                    <span class="pf-anton text-chalk text-2xl mt-1" style="letter-spacing: 0.5px;">{{evalLogistica.tipoEvaluacion?.nombre || evalLogistica.tipo_evaluacion?.nombre}}</span>
+                    <span class="pf-anton text-chalk text-2xl mt-1" style="letter-spacing: 0.5px;">{{evalLogistica.tipoEvaluacionResuelto?.nombre}}</span>
                 </div>
                 <div class="flex flex-column sm:align-items-end">
                     <span class="pf-oswald text-steel text-sm tracking-wider mb-2">Grupo Evaluado</span>
-                    <p-tag [value]="evalLogistica.grupo?.nombre || evalLogistica.grupos?.nombre" severity="info" styleClass="text-base font-bold"></p-tag>
+                    <p-tag [value]="evalLogistica.grupoNombre" severity="info" styleClass="text-base font-bold"></p-tag>
                 </div>
             </div>
 
@@ -194,7 +202,7 @@
                 <ng-template pTemplate="header">
                     <tr>
                         <th style="width: 30%">Estudiante</th>
-                        <th style="width: 25%">Resultado ({{evalLogistica.tipoEvaluacion?.unidad_medida || evalLogistica.tipo_evaluacion?.unidad_medida || evalLogistica.tipoEvaluacion?.unidadMedida}})</th>
+                        <th style="width: 25%">Resultado ({{evalLogistica.tipoEvaluacionResuelto?.unidad_medida}})</th>
                         <th style="width: 35%">Observación</th>
                         <th style="width: 10%" class="text-center">Borrar</th>
                     </tr>

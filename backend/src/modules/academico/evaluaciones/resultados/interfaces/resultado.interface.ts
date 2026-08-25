@@ -22,9 +22,11 @@ export interface ResultadoConDetalle extends ResultadoRow {
     nombreEtiqueta: string;
     colorSugerido: string | null;
   } | null;
+  edadEvaluacion: number | null;
   evaluacion: {
     nombre: string;
     unidadMedida: string;
+    descripcion: string | null;
     fecha: string;
   };
 }

@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 
-// PrimeNG Imports
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -18,12 +17,12 @@ import { TooltipModule } from 'primeng/tooltip';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
-// Servicios de Dominio
 import { TipoEvaluacionService } from '../../../../core/domains/academico/evaluaciones/tipos/services/tipo-evaluacion.services';
 import { SesionEvaluacionService } from '../../../../core/domains/academico/evaluaciones/sesiones/services/sesion.service';
 import { ResultadoEvaluacionService } from '../../../../core/domains/academico/evaluaciones/resultados/services/resultado.service';
 import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
+import { EstadoSesion } from '../../../../shared/enums/estado-sesion.enum';
 
 @Component({
   selector: 'app-profesor-evaluaciones',
@@ -35,7 +34,7 @@ import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './evaluaciones.component.html',
-  styleUrls: ['./evaluaciones.component.scss'] // 🔥 Cambiado a .scss
+  styleUrls: ['./evaluaciones.component.scss']
 })
 export class ProfesorEvaluacionesComponent implements OnInit {
 
@@ -45,7 +44,11 @@ export class ProfesorEvaluacionesComponent implements OnInit {
   private grupoService = inject(GrupoService);
   private estudianteService = inject(EstudianteService);
   private messageService = inject(MessageService);
+  private confirmationService = inject(ConfirmationService);
   private cdr = inject(ChangeDetectorRef);
+
+  // Enum expuesto al template
+  readonly EstadoSesion = EstadoSesion;
 
   // --- DATOS ---
   sesiones: any[] = [];            
@@ -61,8 +64,10 @@ export class ProfesorEvaluacionesComponent implements OnInit {
   filtroEstado: any = null;
 
   opcionesEstadoFiltro = [
-    { label: 'Pendiente', value: 'PENDIENTE' },
-    { label: 'Finalizado', value: 'FINALIZADO' }
+    { label: 'Programada', value: EstadoSesion.PROGRAMADA },
+    { label: 'En Curso', value: EstadoSesion.EN_CURSO },
+    { label: 'Finalizada', value: EstadoSesion.FINALIZADA },
+    { label: 'Cancelada', value: EstadoSesion.CANCELADA }
   ];
 
   // --- ESTADOS UI ---
@@ -75,7 +80,7 @@ export class ProfesorEvaluacionesComponent implements OnInit {
     grupo_id: null,
     tipo_evaluacion_id: null,
     fecha: null,
-    estado: 'PENDIENTE'
+    estado: EstadoSesion.PROGRAMADA
   };
 
   ngOnInit() {
@@ -88,14 +93,12 @@ export class ProfesorEvaluacionesComponent implements OnInit {
   cargarDatosIniciales() {
     this.loading = true;
     
-    // 1. Obtenemos los grupos del profesor
     this.grupoService.obtenerMisGrupos().subscribe({
       next: (gruposData) => {
         this.grupos = gruposData || [];
         const misGrupoIds = this.grupos.map(g => g.id).filter(id => id !== undefined) as number[];
 
         if (misGrupoIds.length === 0) {
-          // Si no tiene grupos, cargamos al menos los tipos de evaluación para que los selects no fallen
           this.tipoEvalService.listarTiposEvaluacion().subscribe(t => {
             this.tiposEvaluacion = t || [];
             this.sesionesOriginales = [];
@@ -106,22 +109,17 @@ export class ProfesorEvaluacionesComponent implements OnInit {
           return;
         }
 
-        // 2. Armamos peticiones de sesiones (1 por cada grupo para no depender del filtrado global)
         const peticionesSesiones = misGrupoIds.map(id => 
           this.sesionService.listarSesiones({ grupoId: id, limite: 1000 })
         );
 
-        // 3. Ejecutamos Tipos + Todas las peticiones de Sesiones en paralelo
         forkJoin({
           tipos: this.tipoEvalService.listarTiposEvaluacion(),
           sesionesGrupos: forkJoin(peticionesSesiones)
         }).subscribe({
           next: ({ tipos, sesionesGrupos }) => {
             this.tiposEvaluacion = tipos || [];
-            
-            // Juntamos todos los registros de los diferentes grupos
             this.sesionesOriginales = sesionesGrupos.flatMap(res => res.registros);
-            
             this.sesiones = [...this.sesionesOriginales];
             this.aplicarFiltros();
             this.loading = false;
@@ -199,7 +197,7 @@ export class ProfesorEvaluacionesComponent implements OnInit {
       grupo_id: null, 
       tipo_evaluacion_id: null, 
       fecha: null, 
-      estado: 'PENDIENTE' 
+      estado: EstadoSesion.PROGRAMADA
     };
     this.displayMainDialog = true;
   }
@@ -207,7 +205,6 @@ export class ProfesorEvaluacionesComponent implements OnInit {
   editarSesion(sesion: any) {
     const fechaObj = new Date(sesion.fecha + 'T00:00:00');
     this.evalLogistica = { ...sesion, fecha: fechaObj };
-    // Ajustes preventivos para camelCase vs snake_case
     this.evalLogistica.grupo_id = sesion.grupo_id || sesion.grupoId;
     this.evalLogistica.tipo_evaluacion_id = sesion.tipo_evaluacion_id || sesion.tipoEvaluacionId;
     this.displayMainDialog = true;
@@ -229,7 +226,7 @@ export class ProfesorEvaluacionesComponent implements OnInit {
         grupoId: this.evalLogistica.grupo_id,
         tipoEvaluacionId: this.evalLogistica.tipo_evaluacion_id,
         fecha: fechaSeleccionada.toISOString().split('T')[0],
-        estado: this.evalLogistica.estado || 'PENDIENTE'
+        estado: this.evalLogistica.estado || EstadoSesion.PROGRAMADA
     };
 
     const peticion$ = this.evalLogistica.id 
@@ -250,8 +247,13 @@ export class ProfesorEvaluacionesComponent implements OnInit {
   // 4. CALIFICACIÓN DE ESTUDIANTES
   // ==========================================
   abrirCalificador(sesion: any) {
-    this.evalLogistica = { ...sesion };
+    this.evalLogistica = { 
+      ...sesion,
+      grupoNombre: this.obtenerNombreGrupo(sesion),
+      tipoEvaluacionResuelto: this.obtenerTipoEvaluacion(sesion)
+    };
     this.loading = true;
+
     
     const grupoIdToFetch = sesion.grupo_id || sesion.grupoId;
 
@@ -266,7 +268,6 @@ export class ProfesorEvaluacionesComponent implements OnInit {
           const nombre = est.perfil ? est.perfil.nombre : est.nombre;
           const apellido = est.perfil ? est.perfil.apellido : est.apellido;
 
-          // Tipado "any" para evitar ts(2551) de validación estricta de interfaz
           const notaExistente: any = resultados.find((r: any) => r.estudianteId === idUsuario || r.estudiante_id === idUsuario);
           
           return {
@@ -292,8 +293,33 @@ export class ProfesorEvaluacionesComponent implements OnInit {
   }
 
   limpiarFila(estudiante: any) {
-    estudiante.valor_numerico = null;
-    estudiante.observacion = '';
+    if (estudiante.resultado_id) {
+      this.confirmationService.confirm({
+        message: '¿Eliminar la nota guardada de este estudiante?',
+        header: 'Confirmar',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Sí, eliminar',
+        rejectLabel: 'Cancelar',
+        acceptButtonStyleClass: 'p-button-danger',
+        accept: () => {
+          this.resultadoService.eliminarResultado(estudiante.resultado_id).subscribe({
+            next: () => {
+              estudiante.resultado_id = null;
+              estudiante.valor_numerico = null;
+              estudiante.observacion = '';
+              this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Nota eliminada correctamente.' });
+              this.cdr.detectChanges();
+            },
+            error: () => {
+              this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar la nota.' });
+            }
+          });
+        }
+      });
+    } else {
+      estudiante.valor_numerico = null;
+      estudiante.observacion = '';
+    }
   }
 
   guardarNotasFinales() {
@@ -306,7 +332,6 @@ export class ProfesorEvaluacionesComponent implements OnInit {
 
     this.loading = true;
     
-    // Armamos un arreglo de peticiones en paralelo
     const peticiones = notasValidas.map(e => {
       const payload = {
         sesionId: this.evalLogistica.id,
@@ -334,5 +359,19 @@ export class ProfesorEvaluacionesComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  /**
+   * El backend no envía el grupo/tipo de evaluación embebido en la sesión,
+   * solo los IDs. Los resolvemos localmente contra lo ya cargado.
+   */
+  obtenerNombreGrupo(sesion: any): string {
+    const grupoId = sesion.grupo_id || sesion.grupoId;
+    return this.grupos.find(g => g.id === grupoId)?.nombre || 'Grupo desconocido';
+  }
+
+  obtenerTipoEvaluacion(sesion: any): any {
+    const tipoId = sesion.tipo_evaluacion_id || sesion.tipoEvaluacionId;
+    return this.tiposEvaluacion.find(t => t.id === tipoId) || null;
   }
 }

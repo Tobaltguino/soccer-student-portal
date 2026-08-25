@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
-// PrimeNG Imports
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -14,10 +13,9 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
-import { ConfirmDialogModule } from 'primeng/confirmdialog'; // 🔥 Agregado
-import { MessageService, ConfirmationService } from 'primeng/api'; // 🔥 Agregado ConfirmationService
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { MessageService, ConfirmationService } from 'primeng/api';
 
-// Servicios de Dominio
 import { TipoEvaluacionService } from '../../../../core/domains/academico/evaluaciones/tipos/services/tipo-evaluacion.services';
 import { SesionEvaluacionService } from '../../../../core/domains/academico/evaluaciones/sesiones/services/sesion.service';
 import { ResultadoEvaluacionService } from '../../../../core/domains/academico/evaluaciones/resultados/services/resultado.service';
@@ -32,11 +30,11 @@ import { EstadoSesion } from '../../../../shared/enums/estado-sesion.enum';
   imports: [
     CommonModule, FormsModule, TableModule, ButtonModule, DialogModule,
     InputTextModule, InputNumberModule, SelectModule, DatePickerModule,
-    TagModule, ToastModule, TooltipModule, ConfirmDialogModule // 🔥 Importado
+    TagModule, ToastModule, TooltipModule, ConfirmDialogModule
   ],
-  providers: [MessageService, ConfirmationService], // 🔥 Importado
+  providers: [MessageService, ConfirmationService],
   templateUrl: './evaluaciones.component.html',
-  styleUrls: ['./evaluaciones.component.scss'] // 🔥 Cambiado a .scss
+  styleUrls: ['./evaluaciones.component.scss']
 })
 export class KinesiologoEvaluacionesComponent implements OnInit {
 
@@ -48,19 +46,16 @@ export class KinesiologoEvaluacionesComponent implements OnInit {
   private messageService = inject(MessageService);
   private cdr = inject(ChangeDetectorRef);
 
-  // --- DATOS ---
   sesiones: any[] = [];            
   sesionesOriginales: any[] = [];  
   grupos: any[] = [];
   tiposEvaluacion: any[] = [];
   estudiantesGrupo: any[] = [];    
 
-  // --- FILTROS ---
   filtroFecha: Date | null = null;
   filtroGrupo: any = null;
   filtroPrueba: any = null;
 
-  // --- ESTADOS UI ---
   loading: boolean = true; 
   displayGradesDialog: boolean = false; 
 
@@ -70,13 +65,9 @@ export class KinesiologoEvaluacionesComponent implements OnInit {
     this.cargarDatosIniciales();
   }
 
-  // ==========================================
-  // 1. CARGA DE DATOS (SOLO SUS GRUPOS Y FINALIZADAS)
-  // ==========================================
   cargarDatosIniciales() {
     this.loading = true;
 
-    // 1. Obtenemos los grupos del kinesiólogo
     this.grupoService.obtenerMisGrupos().subscribe({
       next: (gruposData) => {
         this.grupos = gruposData || [];
@@ -93,12 +84,10 @@ export class KinesiologoEvaluacionesComponent implements OnInit {
           return;
         }
 
-        // 2. Armamos las peticiones para todos sus grupos
         const peticionesSesiones = misGrupoIds.map(id => 
           this.sesionService.listarSesiones({ grupoId: id, limite: 1000 })
         );
 
-        // 3. Ejecutamos en paralelo Tipos de Evaluación + Sesiones
         forkJoin({
           tipos: this.tipoEvalService.listarTiposEvaluacion(),
           sesionesGrupos: forkJoin(peticionesSesiones)
@@ -106,7 +95,6 @@ export class KinesiologoEvaluacionesComponent implements OnInit {
           next: ({ tipos, sesionesGrupos }) => {
             this.tiposEvaluacion = tipos || [];
             
-            // Juntamos todas las sesiones y filtramos SOLO las FINALIZADAS
             const todasLasSesiones = sesionesGrupos.flatMap(res => res.registros);
             this.sesionesOriginales = todasLasSesiones.filter(s => s.estado === EstadoSesion.FINALIZADA);
             
@@ -130,9 +118,6 @@ export class KinesiologoEvaluacionesComponent implements OnInit {
     });
   }
 
-  // ==========================================
-  // 2. LÓGICA DE FILTRADO
-  // ==========================================
   aplicarFiltros() {
     this.sesiones = this.sesionesOriginales.filter(sesion => {
         let cumpleFecha = true;
@@ -175,35 +160,52 @@ export class KinesiologoEvaluacionesComponent implements OnInit {
     return [year, month, day].join('-');
   }
 
-  // ==========================================
-  // 3. VISUALIZACIÓN DE RESULTADOS (SOLO LECTURA)
-  // ==========================================
+  /**
+   * El backend no envía el grupo/tipo de evaluación embebido en la sesión,
+   * solo los IDs. Los resolvemos localmente contra lo ya cargado.
+   */
+  obtenerNombreGrupo(sesion: any): string {
+    const grupoId = sesion.grupo_id || sesion.grupoId;
+    return this.grupos.find(g => g.id === grupoId)?.nombre || 'Grupo desconocido';
+  }
+
+  obtenerTipoEvaluacion(sesion: any): any {
+    const tipoId = sesion.tipo_evaluacion_id || sesion.tipoEvaluacionId;
+    return this.tiposEvaluacion.find(t => t.id === tipoId) || null;
+  }
+
   abrirCalificador(sesion: any) {
-    this.evalLogistica = { ...sesion };
+    this.evalLogistica = { 
+      ...sesion, 
+      grupoNombre: this.obtenerNombreGrupo(sesion),
+      tipoEvaluacionResuelto: this.obtenerTipoEvaluacion(sesion)
+    };
     this.loading = true;
     
     const grupoIdToFetch = sesion.grupo_id || sesion.grupoId;
 
     forkJoin({
-      alumnos: this.estudianteService.listarEstudiantes({ grupoIds: [grupoIdToFetch], limite: 1000, activo: true }),
+      alumnos: this.estudianteService.obtenerEstudiantesDeMiGrupo(),
       resultados: this.resultadoService.listarResultadosPorSesion(sesion.id)
     }).subscribe({
       next: ({ alumnos, resultados }) => {
-        
-        this.estudiantesGrupo = alumnos.registros.map((est: any) => {
-          const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id;
-          const nombre = est.perfil ? est.perfil.nombre : est.nombre;
-          const apellido = est.perfil ? est.perfil.apellido : est.apellido;
 
-          const notaExistente: any = resultados.find((r: any) => r.estudianteId === idUsuario || r.estudiante_id === idUsuario);
-          
-          return {
-              nombre: nombre,
-              apellido: apellido,
-              valor_numerico: notaExistente ? (notaExistente.valorNumerico || notaExistente.valor_numerico) : null,
-              observacion: notaExistente ? notaExistente.observacion : ''
-          };
-        });
+        this.estudiantesGrupo = (alumnos as any[])
+          .filter((est: any) => est.grupo_id === grupoIdToFetch)
+          .map((est: any) => {
+            const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id;
+            const nombre = est.perfil ? est.perfil.nombre : est.nombre;
+            const apellido = est.perfil ? est.perfil.apellido : est.apellido;
+
+            const notaExistente: any = resultados.find((r: any) => r.estudianteId === idUsuario || r.estudiante_id === idUsuario);
+
+            return {
+                nombre: nombre,
+                apellido: apellido,
+                valor_numerico: notaExistente ? (notaExistente.valorNumerico || notaExistente.valor_numerico) : null,
+                observacion: notaExistente ? notaExistente.observacion : ''
+            };
+          });
         
         this.displayGradesDialog = true;
         this.loading = false;

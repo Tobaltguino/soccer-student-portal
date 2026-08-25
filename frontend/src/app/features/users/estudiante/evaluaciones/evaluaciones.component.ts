@@ -55,33 +55,28 @@ export class EstudianteEvaluacionesComponent implements OnInit {
   cargarEvaluaciones() {
     this.loading = true;
     
-    // ✅ 1. Llamamos al endpoint que ya filtra por el JWT del estudiante
     this.resultadoService.listarMisResultados().subscribe({
       next: (data) => {
-        // ✅ 2. Mapeamos la data de NestJS al formato plano que tu HTML espera
         this.evaluacionesOriginales = (data || []).map((r: any) => {
-            const sesion = r.sesion || r.sesion_evaluacion || {};
-            const tipo = sesion.tipoEvaluacion || sesion.tipo_evaluacion || {};
+            const evaluacion = r.evaluacion || {};
             const rango = r.rango || {};
 
             return {
-                fecha: sesion.fecha,
-                test_nombre: tipo.nombre || 'Evaluación',
-                edad_evaluacion: r.edadEvaluacion || r.edad_evaluacion || 0,
+                fecha: evaluacion.fecha,
+                test_nombre: evaluacion.nombre || 'Evaluación',
+                edad_evaluacion: r.edadEvaluacion ?? 0,
                 resultado: r.valorNumerico || r.valor_numerico,
-                unidad: tipo.unidadMedida || tipo.unidad_medida || '',
+                unidad: evaluacion.unidadMedida || evaluacion.unidad_medida || '',
                 nivel: rango.nombreEtiqueta || rango.nombre_etiqueta || 'Registrado',
-                color: rango.colorSugerido || rango.color_sugerido || '#3b82f6', // Color por defecto (Azul)
-                test_descripcion: tipo.descripcion || '',
+                color: rango.colorSugerido || rango.color_sugerido || '#3b82f6',
+                test_descripcion: evaluacion.descripcion || '',
                 observacion: r.observacion || '',
                 created_at: r.createdAt || r.created_at || new Date().toISOString()
             };
         });
 
-        // ✅ 3. Ordenamos desde la más reciente a la más antigua
         this.evaluacionesOriginales.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-        // ✅ 4. Llenar selector de filtros
         const nombresUnicos = [...new Set(this.evaluacionesOriginales.map(e => e.test_nombre))];
         this.tiposTests = nombresUnicos.map(nombre => ({ nombre: nombre }));
 
