@@ -83,16 +83,18 @@
             <ng-template pTemplate="body" let-item>
                 <tr [ngClass]="{'opacity-50': !item.activo}">
                     
-                    <td class="text-center">
-                        <img [src]="item.foto_url || 'assets/images/default-user.png'" 
-                             alt="Avatar" class="w-2rem h-2rem border-circle shadow-2 object-cover border-1" style="border-color: var(--pf-teal);">
+                    <td>
+                        <div class="flex align-items-center justify-content-center sm:justify-content-start">
+                            <img [src]="item.foto_url || 'assets/images/default-user.png'" 
+                                alt="Avatar" class="avatar-img" [class.pf-img-invert]="!item.foto_url">
+                        </div>
                     </td>
 
                     <td>
-                        <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Jugador</span>
-                        <div class="text-right sm:text-left flex flex-column">
-                            <span class="font-bold text-chalk text-lg sm:text-base" style="letter-spacing: 0.5px;">{{ item.nombre }} {{ item.apellido }}</span>
-                            <span class="text-xs text-steel mt-1 flex align-items-center justify-content-end sm:justify-content-start"><i class="pi pi-id-card mr-1"></i> {{ item.rut || 'Sin RUT' }}</span>
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Jugador:</span>
+                        <div class="text-right sm:text-left">
+                            <div class="pf-anton text-chalk" style="font-size: 15px; letter-spacing: 0.5px;">{{ item.nombre }} {{ item.apellido }}</div>
+                            <div class="text-xs text-steel mt-1 justify-content-end sm:justify-content-start flex align-items-center"><i class="pi pi-id-card mr-1"></i> {{ item.rut || 'Sin RUT' }}</div>
                         </div>
                     </td>
                     
@@ -198,39 +200,23 @@
                 </div>
             </div>
 
-            <div class="p-3 font-bold text-red-400 pf-oswald text-lg border-bottom-1 surface-border mb-3 mt-2" style="background: var(--bg-main); border-color: var(--border-color) !important;">
-                <i class="pi pi-heart mr-2"></i> Resumen de Historial Médico
+            <!-- ESTADO DE SALUD GENERAL (sin diagnóstico ni detalle clínico) -->
+            <div class="p-3 font-bold text-chalk pf-oswald text-lg border-bottom-1 surface-border mb-3 mt-2" style="background: var(--bg-main); border-color: var(--border-color) !important;">
+                <i class="pi pi-heart mr-2 text-teal"></i> Estado de Salud General
             </div>
 
-            <div>
-                <p-table [value]="historialClinico" [loading]="loadingHistorial" styleClass="p-datatable-sm pf-table w-full" responsiveLayout="scroll">
-                    <ng-template pTemplate="header">
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Tipo</th>
-                            <th>Diagnóstico</th>
-                            <th class="text-center">Estado</th>
-                        </tr>
-                    </ng-template>
-                    <ng-template pTemplate="body" let-evento>
-                        <tr>
-                            <td class="font-bold text-chalk">{{ evento.fecha_evento | date:'dd/MM/yy' }}</td>
-                            <td><p-tag [value]="evento.tipo" [severity]="getSeveridadHistorial(evento.tipo)" styleClass="text-xs font-bold"></p-tag></td>
-                            <td class="font-bold text-chalk text-sm">{{ evento.diagnostico }}</td>
-                            <td class="text-center">
-                                <p-tag [value]="formatEstadoSalud(evento.estado)" [severity]="getSeveridadEstado(evento.estado)" styleClass="text-xs font-bold"></p-tag>
-                            </td>
-                        </tr>
-                    </ng-template>
-                    <ng-template pTemplate="emptymessage">
-                        <tr>
-                            <td colspan="4" class="text-center p-5 text-steel">
-                                <i class="pi pi-check-circle text-4xl mb-3 text-lime block"></i>
-                                <span class="pf-oswald text-lg">El alumno no registra eventos médicos.</span>
-                            </td>
-                        </tr>
-                    </ng-template>
-                </p-table>
+            <div class="text-center p-4 border-1 border-round surface-border" style="border-color: var(--border-color) !important; background: var(--input-bg);">
+                <div *ngIf="loadingEstadoSalud" class="text-steel pf-oswald">
+                    <i class="pi pi-spin pi-spinner mr-2"></i> Consultando...
+                </div>
+                <p-tag *ngIf="!loadingEstadoSalud" 
+                       [value]="formatEstadoSalud(estadoSaludDetalle)" 
+                       [severity]="getSeveridadEstado(estadoSaludDetalle)" 
+                       styleClass="text-base font-bold px-4 py-2">
+                </p-tag>
+                <p class="text-steel text-xs mt-3 mb-0 pf-oswald" *ngIf="!loadingEstadoSalud">
+                    Para el detalle clínico completo, consulta con el equipo de Kinesiología.
+                </p>
             </div>
             
         </div>

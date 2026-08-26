@@ -40,6 +40,24 @@ export class HistorialClinicoService {
   }
 
   /**
+ * GET /estudiantes/:estudianteId/estado-salud
+ * Devuelve solo el estado de salud general del estudiante (sin diagnóstico
+ * ni observaciones médicas). Pensado para roles no médicos como Profesor.
+ */
+  obtenerEstadoSalud(estudianteId: string): Observable<{ estado: string }> {
+    return this.http.get<{ estado: string }>(`${this.baseUrl}/estudiantes/${estudianteId}/estado-salud`);
+  }
+
+  /**
+   * GET /estado-salud-estudiantes
+   * Devuelve un mapa { usuarioId: estado } con el estado de salud general
+   * de todos los estudiantes dentro del alcance del usuario actual.
+   */
+  obtenerEstadoSaludGrupal(): Observable<Record<string, string>> {
+    return this.http.get<Record<string, string>>(`${this.baseUrl}/estado-salud-estudiantes`);
+  }
+
+  /**
    * GET /kine-historial-clinico/:id
    * Obtiene el detalle de un registro de historial clínico específico.
    */

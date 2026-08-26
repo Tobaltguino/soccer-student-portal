@@ -48,6 +48,23 @@ export class HistorialClinicoController {
     return this.historialService.obtenerEstadisticasDashboard();
   }
 
+  @Get('estado-salud-estudiantes')
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO)
+  async estadoSaludGrupal(@CurrentUser() user: RequestUser) {
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
+    return this.historialService.obtenerEstadoSaludGrupal(gruposPermitidos);
+  }
+
+  @Get('estudiantes/:estudianteId/estado-salud')
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO)
+  async estadoSaludEstudiante(
+    @Param('estudianteId') estudianteId: string,
+    @CurrentUser() user: RequestUser,
+  ) {
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
+    return this.historialService.obtenerEstadoSalud(estudianteId, gruposPermitidos);
+  }
+
   @Get('estudiantes/:estudianteId/historial-clinico')
   @Roles(Rol.ADMINISTRADOR, Rol.KINESIOLOGO)
   async listarPorEstudiante(

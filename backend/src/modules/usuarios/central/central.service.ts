@@ -422,7 +422,7 @@ private async tieneActividadRelacionada(usuarioId: string): Promise<boolean> {
   return false;
   }
 
-  async miEquipoTecnico(estudianteId: string): Promise<UsuarioPerfilRow[]> {
+  async miEquipoTecnico(estudianteId: string): Promise<any[]> {
     const { data: estudiante, error: errorEstudiante } = await this.supabase.client
       .from('estudiantes')
       .select('grupo_id')
@@ -430,7 +430,7 @@ private async tieneActividadRelacionada(usuarioId: string): Promise<boolean> {
       .single<{ grupo_id: number | null }>();
 
     if (errorEstudiante || !estudiante || !estudiante.grupo_id) {
-      return []; // sin grupo asignado, no tiene equipo técnico aún
+      return [];
     }
 
     const [profesoresIds, kinesiologosIds] = await Promise.all([
@@ -451,7 +451,18 @@ private async tieneActividadRelacionada(usuarioId: string): Promise<boolean> {
       throw new InternalServerErrorException(`No se pudo obtener el equipo técnico: ${error.message}`);
     }
 
-    return perfiles ?? [];
+    const listaPerfiles = (perfiles ?? []) as UsuarioPerfilRow[];
+
+    // Enriquecemos a los profesores con su tipo_profesor (Físico, Táctico, etc.)
+    const datosProfesores = await this.profesoresService.buscarPorIds(profesoresIds);
+    const mapaTipoProfesor = new Map(datosProfesores.map((p) => [p.usuario_id, p.tipo_profesor]));
+
+    return listaPerfiles.map((perfil) => ({
+      ...perfil,
+      ...(mapaTipoProfesor.has(perfil.id_usuario) && {
+        tipo_profesor: mapaTipoProfesor.get(perfil.id_usuario),
+      }),
+    }));
   }
 
   private async obtenerIdsPorGrupo(

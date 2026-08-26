@@ -1514,3 +1514,18 @@ a.fc-col-header-cell-cushion,
     font-weight: 700 !important;
     line-height: 1 !important;
 }
+
+/* ==========================================================
+   🔥 23. FIX: AVATAR DE TABLA (img plano, no p-avatar) 🔥
+   ========================================================== */
+.avatar-img {
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+    min-width: 2.25rem !important;
+    min-height: 2.25rem !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    display: block !important;
+    flex-shrink: 0 !important;
+    background: var(--input-bg);
+}

@@ -80,16 +80,18 @@
             <ng-template pTemplate="body" let-item>
                 <tr [ngClass]="{'opacity-50': !item.activo}">
                     
-                    <td class="text-center">
-                        <img [src]="item.foto_url || 'assets/images/default-user.png'" 
-                             alt="Avatar" class="w-2rem h-2rem border-circle shadow-2 object-cover">
+                    <td>
+                        <div class="flex align-items-center justify-content-center sm:justify-content-start">
+                            <img [src]="item.foto_url || 'assets/images/default-user.png'" 
+                                alt="Avatar" class="avatar-img" [class.pf-img-invert]="!item.foto_url">
+                        </div>
                     </td>
 
                     <td>
-                        <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Paciente</span>
-                        <div class="text-right sm:text-left flex flex-column">
-                            <span class="font-bold text-chalk text-lg sm:text-base" style="letter-spacing: 0.5px;">{{ item.nombre }} {{ item.apellido }}</span>
-                            <span class="text-xs text-steel mt-1 flex align-items-center justify-content-end sm:justify-content-start"><i class="pi pi-id-card mr-1"></i> {{ item.rut || 'Sin RUT' }}</span>
+                        <span class="p-column-title pf-oswald text-steel hidden-desktop">Jugador:</span>
+                        <div class="text-right sm:text-left">
+                            <div class="pf-anton text-chalk" style="font-size: 15px; letter-spacing: 0.5px;">{{ item.nombre }} {{ item.apellido }}</div>
+                            <div class="text-xs text-steel mt-1 justify-content-end sm:justify-content-start flex align-items-center"><i class="pi pi-id-card mr-1"></i> {{ item.rut || 'Sin RUT' }}</div>
                         </div>
                     </td>
                     

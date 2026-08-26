@@ -2,7 +2,6 @@ import { Component, OnInit, ChangeDetectorRef, ViewChild, inject } from '@angula
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-// PrimeNG Imports
 import { TableModule, Table } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -13,12 +12,10 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { FilterService } from 'primeng/api';
 
-// Nuevos Servicios de Dominio
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
 import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
 import { HistorialClinicoService } from '../../../../core/domains/salud/kinesiologia/historial-clinico/services/historial-clinico.service';
 import { Grupo } from '../../../../core/domains/academico/grupos/models/grupo.interface';
-import { HistorialClinico } from '../../../../core/domains/salud/kinesiologia/historial-clinico/models/historial-clinico.interface';
 
 @Component({
   selector: 'app-profesor-ver-estudiantes',
@@ -37,19 +34,17 @@ import { HistorialClinico } from '../../../../core/domains/salud/kinesiologia/hi
   ],
   providers: [FilterService],
   templateUrl: './ver-estudiantes.component.html',
-  styleUrls: ['./ver-estudiantes.component.scss'] // 🔥 Cambiado a .scss
+  styleUrls: ['./ver-estudiantes.component.scss']
 })
 export class ProfesorVerEstudiantesComponent implements OnInit {
   @ViewChild('dt') dt: Table | undefined;
 
-  // --- SERVICIOS INYECTADOS ---
   private estudianteService = inject(EstudianteService);
   private grupoService = inject(GrupoService);
   private historialClinicoService = inject(HistorialClinicoService);
   private cdr = inject(ChangeDetectorRef);
   private filterService = inject(FilterService);
 
-  // --- DATOS ---
   dataList: any[] = []; 
   listaGrupos: Grupo[] = [];
   listaPosiciones: any[] = [
@@ -59,13 +54,11 @@ export class ProfesorVerEstudiantesComponent implements OnInit {
     { id: 'delantero', nombre: 'Delantero' }
   ];
   
-  // --- CONFIGURACIÓN DE VISTA ---
   opcionesEstado = [
     { label: 'Activos', value: true },
     { label: 'Inactivos', value: false }
   ];
 
-  // --- FILTROS ---
   filtros: any = {
     global: '',
     grupo: null,
@@ -73,14 +66,13 @@ export class ProfesorVerEstudiantesComponent implements OnInit {
     estado: null
   };
 
-  // --- ESTADOS UI ---
   loading: boolean = false;
   displayDetalle: boolean = false;
   selectedEstudiante: any = null;
 
-  // --- VARIABLES PARA LA FICHA MÉDICA ---
-  historialClinico: HistorialClinico[] = [];
-  loadingHistorial: boolean = false;
+  // Ahora solo estado general, sin detalle clínico
+  loadingEstadoSalud: boolean = false;
+  estadoSaludDetalle: string = 'SANO';
 
   ngOnInit() {
     this.configurarFiltrosPersonalizados();
@@ -114,25 +106,33 @@ export class ProfesorVerEstudiantesComponent implements OnInit {
     this.loading = true;
     this.dataList = [];
 
-    // Llamamos al endpoint veloz que devuelve solo los estudiantes del profesor
     this.estudianteService.obtenerEstudiantesDeMiGrupo().subscribe({
       next: (data) => {
-        // Aplanamos la data si viene estructurada como EstudianteConPerfil
-        this.dataList = data.map((est: any) => {
-          const flatEst = {
-            ...est,
-            ...(est.perfil ? est.perfil : {})
-          };
-          
-          // Por defecto asumimos que están sanos si el backend no manda un estado general
-          if (!flatEst.estado_salud) {
-            flatEst.estado_salud = 'SANO';
-          }
-          return flatEst;
-        });
+        const listaBase = data.map((est: any) => ({
+          ...est,
+          ...(est.perfil ? est.perfil : {})
+        }));
 
-        this.loading = false;
-        this.cdr.detectChanges();
+        // Traemos el estado de salud general real de todos de una vez
+        this.historialClinicoService.obtenerEstadoSaludGrupal().subscribe({
+          next: (mapaEstados) => {
+            this.dataList = listaBase.map((est: any) => {
+              const userId = est.id_usuario || est.usuario_id || est.id;
+              return {
+                ...est,
+                estado_salud: mapaEstados[userId] || 'SANO'
+              };
+            });
+            this.loading = false;
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            // Si falla el estado de salud, igual mostramos la lista con "SANO" por defecto
+            this.dataList = listaBase.map((est: any) => ({ ...est, estado_salud: 'SANO' }));
+            this.loading = false;
+            this.cdr.detectChanges();
+          }
+        });
       },
       error: (err) => {
         console.error('Error al cargar alumnos del profesor:', err);
@@ -155,21 +155,21 @@ export class ProfesorVerEstudiantesComponent implements OnInit {
   verDetalle(estudiante: any) {
     this.selectedEstudiante = estudiante;
     this.displayDetalle = true;
-    this.loadingHistorial = true;
-    this.historialClinico = [];
+    this.loadingEstadoSalud = true;
+    this.estadoSaludDetalle = 'SANO';
     this.cdr.detectChanges();
 
     const userId = estudiante.id_usuario || estudiante.usuario_id || estudiante.id;
 
-    this.historialClinicoService.listarHistorialPorEstudiante(userId).subscribe({
-      next: (data) => {
-        this.historialClinico = data || [];
-        this.loadingHistorial = false;
+    this.historialClinicoService.obtenerEstadoSalud(userId).subscribe({
+      next: (res) => {
+        this.estadoSaludDetalle = res.estado || 'SANO';
+        this.loadingEstadoSalud = false;
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error("Error cargando historial", err);
-        this.loadingHistorial = false;
+        console.error("Error cargando estado de salud", err);
+        this.loadingEstadoSalud = false;
         this.cdr.detectChanges();
       }
     });
@@ -180,18 +180,12 @@ export class ProfesorVerEstudiantesComponent implements OnInit {
     return grupo ? grupo.nombre : 'Sin Grupo';
   }
 
-  getSeveridadHistorial(tipo: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
-      if (tipo === 'LESION') return 'danger';
-      if (tipo === 'ALERGIA') return 'warn';
-      return 'info'; 
-  }
-
   getSeveridadEstado(estado: any): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
       if (!estado || estado.toUpperCase() === 'SANO' || estado.toUpperCase() === 'RECUPERADO') return 'success';
       
       switch (estado.toUpperCase()) {
           case 'EN_REINTEGRO_DEPORTIVO': return 'info';
-          case 'EN_OBSERVACION': return 'warn'; // 🔥 CORREGIDO para evitar el error de PrimeNG
+          case 'EN_OBSERVACION': return 'warn';
           case 'EN_TRATAMIENTO': return 'danger';
           default: return 'secondary'; 
       }

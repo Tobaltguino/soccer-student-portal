@@ -52,7 +52,7 @@ export class HistorialClinicoService {
     incluirEliminados: boolean = false,
   ): Promise<HistorialClinicoRow[]> {
     if (gruposPermitidos !== null) {
-      await this.verificarEstudianteEnAlcance(estudianteId, gruposPermitidos);
+      await this.verificarEstudianteEnAlcance(estudianteId, gruposPermitidos, true); // 👈 true agregado
     }
 
     let query = this.supabase.client
@@ -222,5 +222,85 @@ export class HistorialClinicoService {
       }
       throw new ForbiddenException('El estudiante no pertenece a tu grupo asignado');
     }
+  }
+
+  /**
+   * Devuelve solo el estado de salud general de un estudiante (sin diagnóstico
+   * ni observaciones), calculado a partir de sus eventos clínicos activos.
+   * Prioridad de severidad: EN_TRATAMIENTO > EN_OBSERVACION > EN_REINTEGRO_DEPORTIVO > SANO.
+   */
+  async obtenerEstadoSalud(
+    estudianteId: string,
+    gruposPermitidos: number[] | null,
+  ): Promise<{ estado: string }> {
+    if (gruposPermitidos !== null) {
+      await this.verificarEstudianteEnAlcance(estudianteId, gruposPermitidos, true);
+    }
+
+    const { data, error } = await this.supabase.client
+      .from('kine_historial_clinico')
+      .select('estado')
+      .eq('estudiante_id', estudianteId)
+      .is('eliminado_at', null)
+      .neq('estado', 'RECUPERADO');
+
+    if (error) {
+      throw new InternalServerErrorException(`No se pudo obtener el estado de salud: ${error.message}`);
+    }
+
+    const estados = (data ?? []).map((r: any) => r.estado);
+
+    let estado = 'SANO';
+    if (estados.includes('EN_TRATAMIENTO')) estado = 'EN_TRATAMIENTO';
+    else if (estados.includes('EN_OBSERVACION')) estado = 'EN_OBSERVACION';
+    else if (estados.includes('EN_REINTEGRO_DEPORTIVO')) estado = 'EN_REINTEGRO_DEPORTIVO';
+
+    return { estado };
+  }
+
+  /**
+   * Igual que obtenerEstadoSalud, pero para todos los estudiantes dentro
+   * del alcance del usuario de una sola vez (para poblar listados/tablas).
+   */
+  async obtenerEstadoSaludGrupal(gruposPermitidos: number[] | null): Promise<Record<string, string>> {
+    let queryEstudiantes = this.supabase.client.from('estudiantes').select('usuario_id');
+    if (gruposPermitidos !== null) {
+      queryEstudiantes = queryEstudiantes.in('grupo_id', gruposPermitidos);
+    }
+
+    const { data: estudiantes, error: errorEst } = await queryEstudiantes;
+    if (errorEst) {
+      throw new InternalServerErrorException(`No se pudo obtener los estudiantes: ${errorEst.message}`);
+    }
+
+    const ids = (estudiantes ?? []).map((e: any) => e.usuario_id);
+    const mapa: Record<string, string> = {};
+    ids.forEach((id) => (mapa[id] = 'SANO'));
+
+    if (ids.length === 0) return mapa;
+
+    const { data, error } = await this.supabase.client
+      .from('kine_historial_clinico')
+      .select('estudiante_id, estado')
+      .in('estudiante_id', ids)
+      .is('eliminado_at', null)
+      .neq('estado', 'RECUPERADO');
+
+    if (error) {
+      throw new InternalServerErrorException(`No se pudo obtener el estado de salud grupal: ${error.message}`);
+    }
+
+    const prioridad = ['EN_TRATAMIENTO', 'EN_OBSERVACION', 'EN_REINTEGRO_DEPORTIVO'];
+
+    (data ?? []).forEach((row: any) => {
+      const actual = mapa[row.estudiante_id];
+      const indexNuevo = prioridad.indexOf(row.estado);
+      const indexActual = prioridad.indexOf(actual);
+      if (indexNuevo !== -1 && (indexActual === -1 || indexNuevo < indexActual)) {
+        mapa[row.estudiante_id] = row.estado;
+      }
+    });
+
+    return mapa;
   }
 }
