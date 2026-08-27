@@ -2,7 +2,6 @@ import { Component, OnInit, ChangeDetectorRef, ViewChild, inject } from '@angula
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-// PrimeNG Imports
 import { TableModule, Table } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -18,13 +17,11 @@ import { TooltipModule } from 'primeng/tooltip';
 import { DatePickerModule } from 'primeng/datepicker'; 
 import { FileUploadModule } from 'primeng/fileupload'; 
 
-// Services & Directives
 import { FilterService, ConfirmationService, MessageService } from 'primeng/api';
 import { HistorialClinicoService } from '../../../../core/domains/salud/kinesiologia/historial-clinico/services/historial-clinico.service';
 import { RutFormatDirective } from '../../../../shared/directives/rut-format.directive';
 import { RutValidator } from '../../../../shared/directives/rut-validator.directive';
 
-// Nuevos Servicios de Dominio
 import { UsuarioService } from '../../../../core/domains/usuarios/central/services/usuario.service';
 import { Rol, CrearUsuarioPayload, ActualizarUsuarioPayload } from '../../../../core/domains/usuarios/central/models/usuario.interface'
 import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
@@ -45,7 +42,6 @@ import { GrupoService } from '../../../../core/domains/academico/grupos/services
 export class AdministradorUsuariosComponent implements OnInit {
   @ViewChild('dt') dt: Table | undefined;
 
-  // --- SERVICIOS ---
   private usuarioService = inject(UsuarioService);
   private grupoService = inject(GrupoService);
   private historialClinicoService = inject(HistorialClinicoService);
@@ -54,7 +50,6 @@ export class AdministradorUsuariosComponent implements OnInit {
   private confirmationService = inject(ConfirmationService);
   private filterService = inject(FilterService);
 
-  // --- DATOS ---
   dataList: any[] = []; 
   listaGrupos: any[] = [];
   listaPosiciones: any[] = [
@@ -64,7 +59,6 @@ export class AdministradorUsuariosComponent implements OnInit {
     { id: 'delantero', nombre: 'Delantero' }
   ];
   
-  // --- CONFIGURACIÓN DE VISTA ---
   vistaActual: Rol = Rol.ESTUDIANTE;
   
   opcionesVista = [
@@ -87,26 +81,22 @@ export class AdministradorUsuariosComponent implements OnInit {
 
   filtros: any = { global: '', grupo: null, posicion: null, tipoProfesor: null, estado: null };
 
-  // --- ESTADOS UI ---
   loading: boolean = false;
-  guardando: boolean = false; // 🔥 Variable Maestra de Bloqueo
+  guardando: boolean = false;
   displayDialog: boolean = false;
   isEditing: boolean = false;
   tituloDialogo: string = '';
   maxDate: Date = new Date(); 
 
-  // --- VARIABLES PARA FOTOS ---
   archivoSeleccionado: File | null = null;
   previewUrl: string | null = null;
   uploadingFoto: boolean = false;
 
-  // --- VARIABLES PARA LA FICHA MÉDICA ---
   displayFicha: boolean = false;
   selectedEstudianteFicha: any = null;
   historialClinico: any[] = [];
   loadingHistorial: boolean = false;
 
-  // --- FORMULARIO ---
   userForm: any = this.getFormularioVacio();
 
   ngOnInit() {
@@ -236,7 +226,6 @@ export class AdministradorUsuariosComponent implements OnInit {
   }
 
   guardar() {
-    // 🔥 Protección de doble clic
     if (this.guardando) return;
 
     if (this.isEditing && this.userForm.rut === '1-1') return;
@@ -255,10 +244,8 @@ export class AdministradorUsuariosComponent implements OnInit {
         this.messageService.add({ severity: 'error', summary: 'RUT Inválido', detail: 'El RUT ingresado no es válido.' }); return;
     }
 
-    // 🔥 Activamos el bloqueo
     this.guardando = true;
 
-    // 1. Armamos el Payload de Datos
     const payload: Partial<CrearUsuarioPayload> = {
       rut: rutLimpio,
       nombre: this.userForm.nombre,
@@ -279,7 +266,6 @@ export class AdministradorUsuariosComponent implements OnInit {
       payload.tipoProfesor = this.userForm.tipo_profesor;
     }
 
-    // 2. Ejecutamos la creación o actualización de los datos básicos
     if (this.isEditing) {
       this.usuarioService.actualizarUsuario(this.userForm.id, payload as ActualizarUsuarioPayload).subscribe({
         next: (res) => this.procesarFotoYFinalizar(res.id_usuario, 'Usuario actualizado con éxito'),
@@ -294,7 +280,6 @@ export class AdministradorUsuariosComponent implements OnInit {
     }
   }
 
-  // 3. Flujo Secuencial: Sube/Elimina foto después de guardar el usuario
   private procesarFotoYFinalizar(userId: string, mensaje: string) {
     if (this.archivoSeleccionado) {
       this.uploadingFoto = true;
@@ -313,7 +298,6 @@ export class AdministradorUsuariosComponent implements OnInit {
   }
 
   private finalizarGuardado(mensaje: string) {
-    // 🔥 Desactivamos el bloqueo
     this.guardando = false;
     this.uploadingFoto = false;
     this.displayDialog = false;
@@ -322,7 +306,6 @@ export class AdministradorUsuariosComponent implements OnInit {
   }
 
   private mostrarErrorGuardado(err: any) {
-    // 🔥 Desactivamos el bloqueo
     this.guardando = false;
     this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Error al procesar la solicitud' });
     this.cdr.detectChanges();
@@ -409,16 +392,16 @@ export class AdministradorUsuariosComponent implements OnInit {
     });
   }
 
-  getSeveridadHistorial(tipo: string): any { 
+  getSeveridadHistorial(tipo: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' { 
     if (tipo === 'LESION') return 'danger';
-    if (tipo === 'ALERGIA') return 'warning';
+    if (tipo === 'ALERGIA') return 'warn';
     return 'info'; 
   }
   
-  getSeveridadEstado(estado: string): any { 
+  getSeveridadEstado(estado: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' { 
     if (estado === 'RECUPERADO') return 'success';
-    if (estado === 'EN_OBSERVACION') return 'warning';
+    if (estado === 'EN_OBSERVACION') return 'warn';
     if (estado === 'EN_REINTEGRO_DEPORTIVO') return 'info';
-    return 'danger'; 
+    return 'danger'; // EN_TRATAMIENTO
   }
 }
