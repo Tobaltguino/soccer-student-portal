@@ -70,11 +70,7 @@
                         </td>
                         <td class="text-center">
                             <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Estado: </span>
-                            <p-tag [value]="getEstadoLabel(l.estado)" 
-                                   [severity]="l.estado === EstadoHistorialClinico.EN_OBSERVACION ? 'danger' : 
-                                               l.estado === EstadoHistorialClinico.EN_TRATAMIENTO ? 'warn' : 
-                                               l.estado === EstadoHistorialClinico.EN_REINTEGRO_DEPORTIVO ? 'info' : 'success'">
-                            </p-tag>
+                            <p-tag [value]="getEstadoLabel(l.estado)" [severity]="getSeveridadEstado(l.estado)"></p-tag>
                         </td>
                         <td class="text-center">
                             <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Acciones: </span>
@@ -127,11 +123,7 @@
             <label class="pf-oswald text-steel mb-2 block">Estado Actual</label>
             <p-select [options]="opcionesEstadoLesion" [(ngModel)]="lesionActual.estado" optionLabel="label" optionValue="value" styleClass="w-full" appendTo="body" [filter]="false">
                 <ng-template let-option pTemplate="item">
-                    <p-tag [value]="option.label" 
-                           [severity]="option.value === EstadoHistorialClinico.EN_OBSERVACION ? 'danger' : 
-                                       option.value === EstadoHistorialClinico.EN_TRATAMIENTO ? 'warn' : 
-                                       option.value === EstadoHistorialClinico.EN_REINTEGRO_DEPORTIVO ? 'info' : 'success'">
-                    </p-tag>
+                    <p-tag [value]="option.label" [severity]="getSeveridadEstado(option.value)"></p-tag>
                 </ng-template>
             </p-select>
         </div>

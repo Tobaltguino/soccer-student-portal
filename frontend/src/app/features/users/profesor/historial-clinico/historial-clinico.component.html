@@ -4,93 +4,52 @@
     <header class="pf-admin-header">
         <div class="header-content">
             <div>
-                <h1 class="pf-anton text-chalk m-0 text-3xl">Consulta de Historial Clínico</h1>
-                <p class="pf-oswald text-teal mt-1">Revise el estado médico, patologías y alergias de los estudiantes de sus grupos.</p>
+                <h1 class="pf-anton text-chalk m-0 text-3xl">Estado de Salud de mis Alumnos</h1>
+                <p class="pf-oswald text-teal mt-1">Consulta rápida del estado de salud general de los estudiantes de tus grupos.</p>
             </div>
         </div>
     </header>
 
-    <div class="pf-admin-card mb-4 p-3">
-        <div class="filter-row">
-            <div class="filter-item flex-grow-1">
-                <label><i class="pi pi-search mr-1 text-teal"></i> MIS ALUMNOS ASIGNADOS</label>
-                <p-select [options]="listaAlumnos" [(ngModel)]="alumnoSeleccionado" optionLabel="nombreCompleto"
-                          [filter]="true" filterBy="nombreCompleto" [showClear]="true" 
-                          placeholder="Buscar estudiante en mis grupos..." 
-                          (onChange)="onAlumnoChange()"
-                          appendTo="body" styleClass="w-full">
-                </p-select>
-            </div>
-        </div>
+    <div class="pf-admin-card table-responsive p-0">
+        <p-table [value]="listaAlumnos" [paginator]="true" [rows]="15" styleClass="p-datatable-sm pf-table w-full" [loading]="loading" responsiveLayout="stack" [breakpoint]="'768px'">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width: 40%;">Alumno</th>
+                    <th style="width: 30%;">RUT</th>
+                    <th class="text-center" style="width: 30%;">Estado de Salud</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-a>
+                <tr>
+                    <td>
+                        <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Alumno: </span>
+                        <span class="font-bold text-chalk pf-anton" style="letter-spacing: 0.5px;">{{ a.nombreCompleto }}</span>
+                    </td>
+                    <td>
+                        <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">RUT: </span>
+                        <span class="text-steel">{{ a.rut || 'Sin RUT' }}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Estado: </span>
+                        <p-tag [value]="formatEstado(a.estado)" [severity]="getSeveridadEstado(a.estado)" styleClass="font-bold"></p-tag>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="3" class="text-center p-6 text-steel">
+                        <i class="pi pi-users text-5xl mb-3 block text-steel"></i>
+                        <span class="pf-oswald text-lg">No hay estudiantes registrados en tus grupos.</span>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
     </div>
 
-    <!-- ESTADO VACÍO (SIN SELECCIONAR) -->
-    <div class="pf-admin-card mt-4 text-center p-6 fadein flex flex-column align-items-center justify-content-center" *ngIf="!alumnoSeleccionado">
-        <i class="pi pi-heart text-6xl text-steel mb-3"></i>
-        <h2 class="text-chalk m-0 mt-2 pf-anton text-2xl" style="letter-spacing: 0.5px;">Seleccione un estudiante</h2>
-        <p class="text-steel mt-2 pf-oswald">Busque un alumno para visualizar su registro médico.</p>
-    </div>
-
-    <!-- CONTENIDO HISTORIAL -->
-    <div *ngIf="alumnoSeleccionado" class="animation-fade-in">
-        <div class="pf-admin-card table-responsive p-0 mt-4 fadein">
-            
-            <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-0 p-4 border-bottom-1 surface-border gap-3" style="border-color: var(--border-color) !important; background: var(--bg-main);">
-                <div>
-                    <h2 class="m-0 text-chalk pf-anton text-2xl" style="letter-spacing: 0.5px;">Historial Clínico</h2>
-                    <p class="text-steel m-0 mt-1 pf-oswald">Estudiante: <span class="font-bold text-teal">{{alumnoSeleccionado.nombreCompleto}}</span></p>
-                </div>
-            </div>
-
-            <p-table [value]="listaLesiones" [paginator]="true" [rows]="10" styleClass="p-datatable-sm pf-table w-full" [loading]="cargandoLesiones" responsiveLayout="stack" [breakpoint]="'960px'">
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th style="width: 20%;">Fecha</th>
-                        <th style="width: 20%;">Tipo</th>
-                        <th style="width: 40%;">Diagnóstico / Detalle</th>
-                        <th class="text-center" style="width: 20%;">Estado Actual</th>
-                    </tr>
-                </ng-template>
-                
-                <ng-template pTemplate="body" let-l>
-                    <tr>
-                        <td>
-                            <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Fecha: </span>
-                            <span class="font-bold text-chalk pf-anton text-lg" style="letter-spacing: 0.5px;">{{ l.fecha_evento | date:'dd/MM/yyyy' }}</span>
-                        </td>
-                        <td>
-                            <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Tipo: </span>
-                            <span class="text-teal font-bold">{{ getTipoLabel(l.tipo) }}</span>
-                        </td>
-                        <td>
-                            <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Diagnóstico: </span>
-                            <span *ngIf="l.diagnostico" class="text-chalk">{{ l.diagnostico }}</span>
-                            <span *ngIf="!l.diagnostico" class="text-steel italic">No especificado</span>
-                            
-                            <div *ngIf="l.observaciones" class="mt-2 text-xs text-steel">
-                                <strong class="text-teal">Obs:</strong> {{ l.observaciones }}
-                            </div>
-                        </td>
-                        <td class="text-center">
-                            <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Estado: </span>
-                            <p-tag [value]="getEstadoLabel(l.estado)" 
-                                   [severity]="l.estado === EstadoHistorialClinico.EN_OBSERVACION ? 'danger' : 
-                                               l.estado === EstadoHistorialClinico.EN_TRATAMIENTO ? 'warn' : 
-                                               l.estado === EstadoHistorialClinico.EN_REINTEGRO_DEPORTIVO ? 'info' : 'success'">
-                            </p-tag>
-                        </td>
-                    </tr>
-                </ng-template>
-                
-                <ng-template pTemplate="emptymessage">
-                    <tr>
-                        <td colspan="4" class="text-center p-6 text-steel">
-                            <i class="pi pi-check-circle text-5xl mb-3 block text-lime"></i>
-                            <span class="pf-oswald text-lg">El estudiante no registra lesiones, alergias ni patologías médicas.</span>
-                        </td>
-                    </tr>
-                </ng-template>
-            </p-table>
-        </div>
+    <div class="pf-admin-card mt-4 p-4 flex align-items-center gap-3" style="background: rgba(15, 140, 130, 0.08); border-color: var(--pf-teal) !important;">
+        <i class="pi pi-info-circle text-teal text-2xl"></i>
+        <span class="text-steel text-sm pf-oswald">Para el detalle clínico completo (diagnósticos, tipo de lesión), consulta con el equipo de Kinesiología.</span>
     </div>
 </div>

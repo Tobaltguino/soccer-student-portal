@@ -1,9 +1,8 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api'; 
 
-// Módulos de PrimeNG
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
@@ -13,12 +12,10 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog'; 
 import { DatePickerModule } from 'primeng/datepicker'; 
-import { TagModule } from 'primeng/tag'; // 🔥 Agregado para usar p-tag
+import { TagModule } from 'primeng/tag';
 
-// Nuevos Servicios de Dominio
 import { HistorialClinicoService } from '../../../../core/domains/salud/kinesiologia/historial-clinico/services/historial-clinico.service';
 import { TipoHistorialClinico, EstadoHistorialClinico } from "../../../../core/domains/salud/kinesiologia/historial-clinico/models/historial-clinico.interface";
-import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
 
 @Component({
@@ -36,22 +33,21 @@ import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes
     TooltipModule,
     DialogModule,
     DatePickerModule,
-    TagModule // 🔥 Importado
+    TagModule
   ],
   providers: [MessageService], 
   templateUrl: './historial-clinico.component.html',
-  styleUrls: ['./historial-clinico.component.scss'] // 🔥 Cambiado a .scss
+  styleUrls: ['./historial-clinico.component.scss']
 })
 export class KinesiologoHistorialClinicoComponent implements OnInit {
 
-  // ✅ Exponemos los Enums para usarlos en el HTML
   readonly TipoHistorialClinico = TipoHistorialClinico;
   readonly EstadoHistorialClinico = EstadoHistorialClinico;
 
   private historialService = inject(HistorialClinicoService);
-  private grupoService = inject(GrupoService);
   private estudianteService = inject(EstudianteService);
   private messageService = inject(MessageService);
+  private cdr = inject(ChangeDetectorRef);
 
   listaAlumnos: any[] = [];
   alumnoSeleccionado: any = null;
@@ -61,7 +57,6 @@ export class KinesiologoHistorialClinicoComponent implements OnInit {
   mostrarDialogoLesion: boolean = false;
   lesionActual: any = {};
 
-  // ✅ Opciones fuertemente tipadas basadas en el Enum
   opcionesTipoLesion = [
     { label: 'Lesión', value: TipoHistorialClinico.LESION },
     { label: 'Patología', value: TipoHistorialClinico.PATOLOGIA },
@@ -83,37 +78,24 @@ export class KinesiologoHistorialClinicoComponent implements OnInit {
   // CARGA DE ALUMNOS (SOLO SUS GRUPOS)
   // ==========================================
   cargarAlumnosDelKine() {
-    // 1. Obtenemos los grupos asignados a este Kinesiólogo vía JWT
-    this.grupoService.obtenerMisGrupos().subscribe({
-      next: (grupos) => {
-        const misGrupoIds = grupos.map(g => g.id).filter(id => id !== undefined) as number[];
-        
-        if (misGrupoIds.length === 0) {
-          this.listaAlumnos = [];
-          return;
-        }
+    this.estudianteService.obtenerEstudiantesDeMiGrupo().subscribe({
+      next: (alumnosBD: any) => {
+        this.listaAlumnos = (alumnosBD || []).map((a: any) => {
+          const nombre = a.perfil ? a.perfil.nombre : a.nombre;
+          const apellido = a.perfil ? a.perfil.apellido : a.apellido;
+          const rut = a.perfil?.rut || a.rut;
+          const idUsuario = a.perfil ? a.perfil.id_usuario : a.usuario_id || a.id;
 
-        // 2. Buscamos solo a los estudiantes que pertenezcan a esos grupos
-        this.estudianteService.listarEstudiantes({ grupoIds: misGrupoIds, limite: 2000, activo: true }).subscribe({
-          next: (res) => {
-            const alumnosBD = res.registros || [];
-            this.listaAlumnos = alumnosBD.map((a: any) => {
-              const nombre = a.perfil ? a.perfil.nombre : a.nombre;
-              const apellido = a.perfil ? a.perfil.apellido : a.apellido;
-              const rut = a.perfil?.rut || a.rut;
-              const idUsuario = a.perfil ? a.perfil.id_usuario : a.usuario_id || a.id;
-              
-              return {
-                id: idUsuario,
-                nombreCompleto: `${nombre} ${apellido} ${rut ? '('+rut+')' : ''}`
-              };
-            });
-          },
-          error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar tus pacientes.' })
+          return {
+            id: idUsuario,
+            nombreCompleto: `${nombre} ${apellido} ${rut ? '(' + rut + ')' : ''}`
+          };
         });
+        this.cdr.detectChanges();
       },
       error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar tus grupos.' });
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar tus pacientes.' });
+        this.cdr.detectChanges();
       }
     });
   }
@@ -123,19 +105,24 @@ export class KinesiologoHistorialClinicoComponent implements OnInit {
       this.cargarListaLesiones();
     } else {
       this.listaLesiones = [];
+      this.cdr.detectChanges();
     }
   }
 
   cargarListaLesiones() {
     this.cargandoLesiones = true;
+    this.cdr.detectChanges();
+
     this.historialService.listarHistorialPorEstudiante(this.alumnoSeleccionado.id).subscribe({
       next: (data) => {
         this.listaLesiones = data || [];
         this.cargandoLesiones = false;
+        this.cdr.detectChanges();
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el historial clínico.' });
         this.cargandoLesiones = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -150,18 +137,19 @@ export class KinesiologoHistorialClinicoComponent implements OnInit {
       fecha_evento: new Date() 
     };
     this.mostrarDialogoLesion = true;
+    this.cdr.detectChanges();
   }
 
   abrirEditarLesion(lesion: any) {
     this.lesionActual = { ...lesion };
     
-    // Convertimos la fecha (string) a Date para el DatePicker
     if (this.lesionActual.fecha_evento) {
       const [year, month, day] = this.lesionActual.fecha_evento.split('T')[0].split('-');
       this.lesionActual.fecha_evento = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
     }
     
     this.mostrarDialogoLesion = true;
+    this.cdr.detectChanges();
   }
 
   guardarLesion() {
@@ -177,7 +165,6 @@ export class KinesiologoHistorialClinicoComponent implements OnInit {
       fechaFormateada = (new Date(d.getTime() - tzOffset)).toISOString().split('T')[0];
     }
 
-    // Adaptamos el payload a la nueva interfaz
     const payload = {
       estudianteId: this.alumnoSeleccionado.id,
       tipo: this.lesionActual.tipo,
@@ -196,9 +183,11 @@ export class KinesiologoHistorialClinicoComponent implements OnInit {
         this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Registro actualizado correctamente.' });
         this.mostrarDialogoLesion = false;
         this.cargarListaLesiones();
+        this.cdr.detectChanges();
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar el registro.' });
+        this.cdr.detectChanges();
       }
     });
   }
@@ -214,5 +203,14 @@ export class KinesiologoHistorialClinicoComponent implements OnInit {
   getEstadoLabel(estado: string): string {
     const opt = this.opcionesEstadoLesion.find(o => o.value === estado);
     return opt ? opt.label : estado;
+  }
+
+  getSeveridadEstado(estado: string): 'success' | 'info' | 'warn' | 'danger' {
+    switch (estado) {
+      case EstadoHistorialClinico.EN_TRATAMIENTO: return 'danger';
+      case EstadoHistorialClinico.EN_OBSERVACION: return 'warn';
+      case EstadoHistorialClinico.EN_REINTEGRO_DEPORTIVO: return 'info';
+      default: return 'success'; // RECUPERADO
+    }
   }
 }

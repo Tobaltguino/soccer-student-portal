@@ -1,7 +1,5 @@
 <div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
-    <!-- 🔥 Confirm Dialog Global 🔥 -->
-    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
     
     <header class="pf-admin-header">
         <div class="header-content">
@@ -50,15 +48,7 @@
                     
                     <td class="text-center py-3">
                         <span class="p-column-title pf-oswald text-steel hidden-desktop">Estado: </span>
-                        <span class="px-2 py-1 border-round text-xs pf-oswald font-bold" 
-                              [ngClass]="{
-                                  'bg-red-900 text-red-200 border-1 border-red-500': l.estado === EstadoHistorialClinico.EN_OBSERVACION, 
-                                  'bg-orange-900 text-orange-200 border-1 border-orange-500': l.estado === EstadoHistorialClinico.EN_TRATAMIENTO,
-                                  'bg-blue-900 text-blue-200 border-1 border-blue-500': l.estado === EstadoHistorialClinico.EN_REINTEGRO_DEPORTIVO,
-                                  'bg-green-900 text-green-200 border-1 border-green-500': l.estado === EstadoHistorialClinico.RECUPERADO
-                              }">
-                            {{ getEstadoLabel(l.estado) }}
-                        </span>
+                        <p-tag [value]="getEstadoLabel(l.estado)" [severity]="getSeveridadEstado(l.estado)"></p-tag>
                     </td>
                 </tr>
             </ng-template>

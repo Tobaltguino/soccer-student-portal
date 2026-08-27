@@ -1,14 +1,16 @@
+// historial-clinico.interface.ts
+
 export enum TipoHistorialClinico {
   ALERGIA = 'ALERGIA',
   PATOLOGIA = 'PATOLOGIA',
-  LESION = 'LESION'
+  LESION = 'LESION',
 }
 
 export enum EstadoHistorialClinico {
   EN_OBSERVACION = 'EN_OBSERVACION',
   EN_TRATAMIENTO = 'EN_TRATAMIENTO',
   EN_REINTEGRO_DEPORTIVO = 'EN_REINTEGRO_DEPORTIVO',
-  RECUPERADO = 'RECUPERADO'
+  RECUPERADO = 'RECUPERADO',
 }
 
 export interface HistorialClinico {

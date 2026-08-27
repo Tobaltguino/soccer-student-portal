@@ -3,20 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MessageService, ConfirmationService } from 'primeng/api'; 
 
-// Módulos de PrimeNG
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { TextareaModule } from 'primeng/textarea';
 import { TableModule } from 'primeng/table';
 import { SelectModule } from 'primeng/select';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
-import { DialogModule } from 'primeng/dialog'; 
-import { DatePickerModule } from 'primeng/datepicker'; 
 import { ConfirmDialogModule } from 'primeng/confirmdialog'; 
-import { TagModule } from 'primeng/tag'; // 🔥 Añadido para los tags de estado
+import { TagModule } from 'primeng/tag';
 
-// Nuevos Servicios y Enums
 import { HistorialClinicoService } from '../../../../core/domains/salud/kinesiologia/historial-clinico/services/historial-clinico.service';
 import { TipoHistorialClinico, EstadoHistorialClinico } from "../../../../core/domains/salud/kinesiologia/historial-clinico/models/historial-clinico.interface";
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
@@ -27,25 +20,19 @@ import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes
   imports: [
     CommonModule,
     FormsModule,
-    ButtonModule,
-    InputTextModule,
-    TextareaModule,
     TableModule,
     SelectModule,
     ToastModule,
     TooltipModule,
-    DialogModule,
-    DatePickerModule,
     ConfirmDialogModule,
     TagModule
   ],
   providers: [MessageService, ConfirmationService], 
   templateUrl: './historial-clinico.component.html',
-  styleUrls: ['./historial-clinico.component.scss'] // 🔥 Asegúrate de que sea .scss
+  styleUrls: ['./historial-clinico.component.scss']
 })
 export class AdministradorHistorialClinicoComponent implements OnInit {
 
-  // ✅ Exponemos los Enums para usarlos en el HTML
   readonly TipoHistorialClinico = TipoHistorialClinico;
   readonly EstadoHistorialClinico = EstadoHistorialClinico;
 
@@ -60,14 +47,7 @@ export class AdministradorHistorialClinicoComponent implements OnInit {
 
   listaLesiones: any[] = [];
   cargandoLesiones: boolean = false;
-  
-  // 🔥 Variables de Bloqueo
-  mostrarDialogoLesion: boolean = false;
-  guardando: boolean = false;
-  
-  lesionActual: any = {};
 
-  // ✅ Opciones fuertemente tipadas basadas en el Enum
   opcionesTipoLesion = [
     { label: 'Lesión', value: TipoHistorialClinico.LESION },
     { label: 'Patología', value: TipoHistorialClinico.PATOLOGIA },
@@ -104,6 +84,7 @@ export class AdministradorHistorialClinicoComponent implements OnInit {
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los pacientes.' });
+        this.cdr.detectChanges();
       }
     });
   }
@@ -113,6 +94,7 @@ export class AdministradorHistorialClinicoComponent implements OnInit {
       this.cargarListaLesiones();
     } else {
       this.listaLesiones = [];
+      this.cdr.detectChanges();
     }
   }
 
@@ -134,74 +116,6 @@ export class AdministradorHistorialClinicoComponent implements OnInit {
     });
   }
 
-  abrirNuevaLesion() {
-    this.lesionActual = { 
-      tipo: TipoHistorialClinico.LESION, 
-      estado: EstadoHistorialClinico.EN_OBSERVACION, 
-      fecha_evento: new Date() 
-    };
-    this.mostrarDialogoLesion = true;
-  }
-
-  abrirEditarLesion(lesion: any) {
-    this.lesionActual = { ...lesion };
-    
-    if (this.lesionActual.fecha_evento) {
-      const parts = this.lesionActual.fecha_evento.split('T')[0].split('-');
-      if (parts.length === 3) {
-          this.lesionActual.fecha_evento = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-      }
-    }
-    
-    this.mostrarDialogoLesion = true;
-  }
-
-  guardarLesion() {
-    if (this.guardando) return; // 🔥 Protección Doble Clic
-
-    if (!this.lesionActual.tipo || !this.lesionActual.fecha_evento) {
-      this.messageService.add({ severity: 'warn', summary: 'Requerido', detail: 'Complete fecha y tipo de registro.' });
-      return;
-    }
-
-    this.guardando = true;
-    this.cdr.detectChanges();
-
-    let fechaFormateada = this.lesionActual.fecha_evento;
-    if (this.lesionActual.fecha_evento instanceof Date) {
-      const d = this.lesionActual.fecha_evento;
-      const tzOffset = d.getTimezoneOffset() * 60000;
-      fechaFormateada = (new Date(d.getTime() - tzOffset)).toISOString().split('T')[0];
-    }
-
-    const payload = {
-      estudianteId: this.alumnoSeleccionado.id,
-      tipo: this.lesionActual.tipo,
-      diagnostico: this.lesionActual.diagnostico || '',
-      fechaEvento: fechaFormateada,
-      estado: this.lesionActual.estado,
-      observaciones: this.lesionActual.observaciones || ''
-    };
-
-    const peticion$ = this.lesionActual.id 
-      ? this.historialService.actualizarHistorial(this.lesionActual.id, payload)
-      : this.historialService.crearHistorial(payload);
-
-    peticion$.subscribe({
-      next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Registro actualizado correctamente.' });
-        this.mostrarDialogoLesion = false;
-        this.guardando = false;
-        this.cargarListaLesiones();
-      },
-      error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar el registro.' });
-        this.guardando = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
-  
   confirmarEliminarLesion(lesion: any) {
     this.confirmationService.confirm({
       message: `¿Estás seguro de que deseas eliminar este registro de ${this.getTipoLabel(lesion.tipo)}?`,
@@ -237,12 +151,12 @@ export class AdministradorHistorialClinicoComponent implements OnInit {
     return opt ? opt.label : estado;
   }
 
-  getSeveridadEstado(estado: string): any {
+  getSeveridadEstado(estado: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
     switch (estado) {
         case EstadoHistorialClinico.RECUPERADO: return 'success';
         case EstadoHistorialClinico.EN_REINTEGRO_DEPORTIVO: return 'info';
-        case EstadoHistorialClinico.EN_TRATAMIENTO: return 'warn';
-        case EstadoHistorialClinico.EN_OBSERVACION: return 'danger';
+        case EstadoHistorialClinico.EN_TRATAMIENTO: return 'danger';
+        case EstadoHistorialClinico.EN_OBSERVACION: return 'warn';
         default: return 'secondary';
     }
   }

@@ -1,13 +1,11 @@
-import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core'; // 🔥 Agregado ChangeDetectorRef
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MessageService, ConfirmationService } from 'primeng/api'; 
+import { MessageService } from 'primeng/api'; 
 
-// Módulos de PrimeNG
 import { TableModule } from 'primeng/table';
 import { ToastModule } from 'primeng/toast';
-import { ConfirmDialogModule } from 'primeng/confirmdialog'; 
+import { TagModule } from 'primeng/tag';
 
-// Nuevos Servicios de Dominio
 import { HistorialClinicoService } from '../../../../core/domains/salud/kinesiologia/historial-clinico/services/historial-clinico.service';
 import { TipoHistorialClinico, EstadoHistorialClinico, HistorialClinico } from "../../../../core/domains/salud/kinesiologia/historial-clinico/models/historial-clinico.interface";
 
@@ -18,9 +16,9 @@ import { TipoHistorialClinico, EstadoHistorialClinico, HistorialClinico } from "
     CommonModule,
     TableModule,
     ToastModule,
-    ConfirmDialogModule 
+    TagModule
   ],
-  providers: [MessageService, ConfirmationService], 
+  providers: [MessageService], 
   templateUrl: './historial-clinico.component.html',
   styleUrls: ['./historial-clinico.component.scss'] 
 })
@@ -31,7 +29,7 @@ export class EstudianteHistorialClinicoComponent implements OnInit {
 
   private historialService = inject(HistorialClinicoService);
   private messageService = inject(MessageService);
-  private cdr = inject(ChangeDetectorRef); // 🔥 Inyectado
+  private cdr = inject(ChangeDetectorRef);
 
   listaLesiones: HistorialClinico[] = [];
   cargandoLesiones: boolean = false;
@@ -55,18 +53,18 @@ export class EstudianteHistorialClinicoComponent implements OnInit {
 
   cargarListaLesiones() {
     this.cargandoLesiones = true;
-    this.cdr.detectChanges(); // 🔥 Forzamos detección al iniciar carga
+    this.cdr.detectChanges();
     
     this.historialService.listarMiHistorial().subscribe({
       next: (data) => {
         this.listaLesiones = data || [];
         this.cargandoLesiones = false;
-        this.cdr.detectChanges(); // 🔥 Forzamos detección al recibir datos
+        this.cdr.detectChanges();
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar tu historial médico.' });
         this.cargandoLesiones = false;
-        this.cdr.detectChanges(); // 🔥 Forzamos detección en caso de error
+        this.cdr.detectChanges();
       }
     });
   }
@@ -79,5 +77,15 @@ export class EstudianteHistorialClinicoComponent implements OnInit {
   getEstadoLabel(estado: string): string {
     const opt = this.opcionesEstadoLesion.find(o => o.value === estado);
     return opt ? opt.label : estado;
+  }
+
+  getSeveridadEstado(estado: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
+    switch (estado) {
+        case EstadoHistorialClinico.RECUPERADO: return 'success';
+        case EstadoHistorialClinico.EN_REINTEGRO_DEPORTIVO: return 'info';
+        case EstadoHistorialClinico.EN_TRATAMIENTO: return 'danger';
+        case EstadoHistorialClinico.EN_OBSERVACION: return 'warn';
+        default: return 'secondary';
+    }
   }
 }
