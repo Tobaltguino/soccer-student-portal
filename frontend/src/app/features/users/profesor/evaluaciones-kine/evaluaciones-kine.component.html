@@ -83,7 +83,7 @@
                     </td>
                     <td>
                         <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Prueba</span>
-                        <span class="font-bold text-chalk">{{ sesion.tipoObj?.nombre }}</span>
+                        <span class="font-bold text-chalk">{{ sesion.tipoObj.nombre }}</span>
                     </td>
                     <td>
                         <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Estado</span>
@@ -122,11 +122,11 @@
                 <div class="surface-hover p-4 border-round mb-4 flex justify-content-between align-items-center border-1 surface-border" *ngIf="sesionVista" style="border-color: var(--border-color) !important;">
                     <div class="flex flex-column">
                         <span class="pf-oswald text-steel text-sm tracking-wider">Evaluación</span>
-                        <span class="pf-anton text-chalk text-2xl mt-1" style="letter-spacing: 0.5px;">{{sesionVista.tipoObj?.nombre}}</span>
+                        <span class="pf-anton text-chalk text-2xl mt-1" style="letter-spacing: 0.5px;">{{sesionVista.tipoObj.nombre}}</span>
                     </div>
                     <div class="text-right flex flex-column">
                         <span class="pf-oswald text-steel text-sm tracking-wider mb-2">Grupo</span>
-                        <p-tag [value]="sesionVista.grupoObj?.nombre" severity="info" styleClass="text-base font-bold"></p-tag>
+                        <p-tag value="{{ sesionVista.grupoObj.nombre }}" severity="info" styleClass="text-base font-bold"></p-tag>
                     </div>
                 </div>
 
@@ -178,7 +178,13 @@
                                     </ng-template>
                                     <ng-template pTemplate="body" let-sub>
                                         <tr>
-                                            <td class="font-bold text-sm text-chalk">{{sub.nombre_parametro}}</td>
+                                            <td class="font-bold text-sm text-chalk">
+                                                {{sub.nombre_parametro}}
+                                                <p-tag *ngIf="sub.evalua_lados && sub.rango"
+                                                       [value]="sub.rango.etiqueta"
+                                                       [style]="sub.rango.color ? {'background-color': sub.rango.color} : {}"
+                                                       styleClass="ml-2"></p-tag>
+                                            </td>
                                             <td class="text-center">
                                                 <p-tag *ngIf="sub.resultado_unico !== null" [value]="sub.resultado_unico" [severity]="getSeverityPuntaje(sub.resultado_unico, sub.subevaluacion_id)"></p-tag>
                                                 <span *ngIf="sub.resultado_unico === null" class="text-steel">-</span>

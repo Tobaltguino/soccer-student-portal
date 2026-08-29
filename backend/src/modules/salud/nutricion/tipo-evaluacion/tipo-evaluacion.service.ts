@@ -3,7 +3,7 @@ import { SupabaseService } from '../../../../core/supabase/supabase.service';
 import { CrearTipoEvaluacionDto } from './dto/crear-tipo-evaluacion.dto';
 import { ActualizarTipoEvaluacionDto } from './dto/actualizar-tipo-evaluacion.dto';
 import type { NutriTipoEvaluacionRow } from './interfaces/tipo-evaluacion.interface';
-import { lanzarErrorSupabase } from '../../../../shared/utils/supabase-error.util';
+import { lanzarErrorSupabase, lanzarErrorSupabaseConFk } from '../../../../shared/utils/supabase-error.util';
 
 @Injectable()
 export class TipoEvaluacionService {
@@ -89,7 +89,12 @@ export class TipoEvaluacionService {
       .eq('id', id);
 
     if (error) {
-      lanzarErrorSupabase(error, 'No se pudo eliminar el tipo de evaluación');
+      // FIX: Atrapamos el error de llave foránea por si el tipo ya está siendo usado en una sesión
+      lanzarErrorSupabaseConFk(
+        error, 
+        'No se pudo eliminar el tipo de evaluación', 
+        'No se puede eliminar porque existen sesiones asociadas a este tipo de evaluación'
+      );
     }
   }
 }

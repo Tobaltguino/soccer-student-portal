@@ -4,7 +4,7 @@ import { SupabaseService } from '../../../../../core/supabase/supabase.service';
 import { CrearSubevaluacionDto } from './dto/crear-subevaluacion.dto';
 import { ActualizarSubevaluacionDto } from './dto/actualizar-subevaluacion.dto';
 import type { SubevaluacionRow } from './interfaces/subevaluacion.interface';
-import { lanzarErrorSupabaseConFk } from '../../../../../shared/utils/supabase-error.util';
+import { lanzarErrorSupabase, lanzarErrorSupabaseConFk } from '../../../../../shared/utils/supabase-error.util';
 
 @Injectable()
 export class SubevaluacionesService {
@@ -44,7 +44,7 @@ export class SubevaluacionesService {
       .order('nombre');
 
     if (error) {
-      throw new InternalServerErrorException(`No se pudo listar las subevaluaciones: ${error.message}`);
+      lanzarErrorSupabase(error, 'No se pudo listar las subevaluaciones');
     }
 
     return data ?? [];
@@ -98,7 +98,7 @@ export class SubevaluacionesService {
       .eq('id', id);
 
     if (error) {
-      throw new InternalServerErrorException(`No se pudo eliminar la subevaluación: ${error.message}`);
+      lanzarErrorSupabase(error, 'No se pudo eliminar la subevaluación');
     }
   }
 }

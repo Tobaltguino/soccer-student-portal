@@ -1,3 +1,5 @@
+import type { CriterioPrioridad } from '../../subevaluaciones/interfaces/subevaluacion.interface';
+
 export interface KineResultadoRow {
   id: number;
   sesion_id: string;
@@ -15,6 +17,7 @@ export interface KineResultadoConDetalle extends KineResultadoRow {
   subevaluacion: {
     nombre: string;
     evaluaLados: boolean;
+    prioridad: CriterioPrioridad | null;
   };
   rango: {
     etiqueta: string;

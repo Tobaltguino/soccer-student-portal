@@ -4,7 +4,7 @@ import { CrearSesionDto } from './dto/crear-sesion.dto';
 import { ActualizarSesionDto } from './dto/actualizar-sesion.dto';
 import { CambiarEstadoSesionDto } from './dto/cambiar-estado-sesion.dto';
 import type { KineSesionRow } from './interfaces/sesion.interface';
-import { lanzarErrorSupabaseConFk } from '../../../../../shared/utils/supabase-error.util';
+import { lanzarErrorSupabase, lanzarErrorSupabaseConFk } from '../../../../../shared/utils/supabase-error.util';
 import { FiltrarSesionesDto } from './dto/filtrar-sesiones.dto';
 
 @Injectable()
@@ -64,6 +64,9 @@ export class SesionesService {
       .range(desde, hasta);
 
     if (filtros.grupoId !== undefined) {
+      if (gruposPermitidos !== null && !gruposPermitidos.includes(filtros.grupoId)) {
+        return { registros: [], total: 0, pagina, limite };
+      }
       query = query.eq('grupo_id', filtros.grupoId);
     } else if (gruposPermitidos !== null) {
       query = query.in('grupo_id', gruposPermitidos);
@@ -84,7 +87,7 @@ export class SesionesService {
     const { data, error, count } = await query;
 
     if (error) {
-      throw new InternalServerErrorException(`No se pudo listar las sesiones: ${error.message}`);
+      lanzarErrorSupabase(error, 'No se pudo listar las sesiones');
     }
 
     return { registros: data ?? [], total: count ?? 0, pagina, limite };
@@ -127,7 +130,7 @@ export class SesionesService {
       .single<KineSesionRow>();
 
     if (error) {
-      throw new InternalServerErrorException(`No se pudo actualizar la sesión: ${error.message}`);
+      lanzarErrorSupabase(error, 'No se pudo actualizar la sesión');
     }
 
     if (!data) {
@@ -152,7 +155,7 @@ export class SesionesService {
       .single<KineSesionRow>();
 
     if (error) {
-      throw new InternalServerErrorException(`No se pudo cambiar el estado: ${error.message}`);
+      lanzarErrorSupabase(error, 'No se pudo cambiar el estado de la sesión');
     }
 
     if (!data) {
@@ -171,7 +174,7 @@ export class SesionesService {
       .single<KineSesionRow>();
 
     if (error) {
-      throw new InternalServerErrorException(`No se pudo eliminar la sesión: ${error.message}`);
+      lanzarErrorSupabase(error, 'No se pudo eliminar la sesión');
     }
 
     if (!data) {
@@ -190,7 +193,7 @@ export class SesionesService {
       .single<KineSesionRow>();
 
     if (error) {
-      throw new InternalServerErrorException(`No se pudo restaurar la sesión: ${error.message}`);
+      lanzarErrorSupabase(error, 'No se pudo restaurar la sesión');
     }
 
     if (!data) {

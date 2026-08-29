@@ -32,11 +32,9 @@ export class ResultadosService {
     archivo?: Express.Multer.File,
     gruposPermitidos?: number[] | null,
   ): Promise<NutriResultadoConDetalle> {
-    // Si es nutricionista (no admin), solo puede cargar resultados en SUS PROPIAS sesiones
     const soloDeNutricionista = esAdmin ? null : solicitanteId;
     await this.sesionesService.buscarPorId(dto.evaluacionId, soloDeNutricionista);
 
-    // Verifica que el estudiante esté dentro del alcance de grupo (si aplica)
     if (gruposPermitidos !== undefined && gruposPermitidos !== null) {
       await this.verificarEstudianteEnAlcance(dto.estudianteId, gruposPermitidos);
     }
@@ -117,9 +115,15 @@ export class ResultadosService {
   async actualizar(
     id: string,
     dto: ActualizarResultadoDto,
+    solicitanteId: string,
+    esAdmin: boolean,
     archivo?: Express.Multer.File,
   ): Promise<NutriResultadoConDetalle> {
     const actual = await this.buscarPorId(id);
+    
+    // FIX Seguridad: Validamos que quien actualiza sea Admin o el Nutricionista dueño
+    const soloDeNutricionista = esAdmin ? null : solicitanteId;
+    await this.sesionesService.buscarPorId(actual.evaluacion_id, soloDeNutricionista);
 
     let archivoUrl: string | undefined;
     if (archivo) {
@@ -150,16 +154,12 @@ export class ResultadosService {
     return this.enriquecerConDetalle(data);
   }
 
-  async eliminar(id: string): Promise<void> {
-    const { data: resultado, error: errorBusqueda } = await this.supabase.client
-      .from('nutri_evaluacion_resultados')
-      .select('archivo_url')
-      .eq('id', id)
-      .single<{ archivo_url: string | null }>();
+  async eliminar(id: string, solicitanteId: string, esAdmin: boolean): Promise<void> {
+    const resultado = await this.buscarPorId(id);
 
-    if (errorBusqueda || !resultado) {
-      throw new NotFoundException('Resultado no encontrado');
-    }
+    // FIX Seguridad: Validamos que quien elimina sea Admin o el Nutricionista dueño
+    const soloDeNutricionista = esAdmin ? null : solicitanteId;
+    await this.sesionesService.buscarPorId(resultado.evaluacion_id, soloDeNutricionista);
 
     if (resultado.archivo_url) {
       await this.borrarArchivo(resultado.archivo_url);

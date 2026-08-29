@@ -7,6 +7,7 @@ import { lanzarErrorSupabase } from '../../../shared/utils/supabase-error.util';
 import { FiltrarEstudiantesDto } from './dto/flitrar-estudiante.dto';
 import { UsuarioPerfilRow } from 'src/shared/interfaces/usuario-perfil.interface';
 
+
 @Injectable()
 export class EstudiantesService {
   constructor(private readonly supabase: SupabaseService) {}

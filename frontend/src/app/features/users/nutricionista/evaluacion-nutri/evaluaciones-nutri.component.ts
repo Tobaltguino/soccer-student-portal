@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core'; 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { forkJoin, switchMap, of } from 'rxjs'; // Añadidos operadores RxJS
 
 // Enum
 import { EstadoSesion } from '../../../../shared/enums/estado-sesion.enum';
@@ -37,7 +37,7 @@ import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './evaluaciones-nutri.component.html',
-  styleUrls: ['./evaluaciones-nutri.component.scss'] // 🔥 Cambiado a .scss
+  styleUrls: ['./evaluaciones-nutri.component.scss']
 })
 export class NutriEvaluationsComponent implements OnInit {
   
@@ -94,11 +94,11 @@ export class NutriEvaluationsComponent implements OnInit {
       next: (data) => {
         this.tiposEvaluacion = data.tipos || [];
         
-        // Mapeamos las sesiones de este nutricionista
         const regs = data.sesiones.registros || [];
         this.sesiones = regs.map((s: any) => ({
           ...s,
-          tipoObj: this.tiposEvaluacion.find(t => t.id === (s.tipo_evaluacion_id || s.tipoEvaluacionId)) || { nombre: 'Desconocido' }
+          // FIX: Utilizar 'tipo_id' que es la propiedad exacta de la base de datos
+          tipoObj: this.tiposEvaluacion.find(t => t.id === s.tipo_id) || { nombre: 'Desconocido' }
         }));
 
         this.aplicarFiltros();
@@ -122,7 +122,8 @@ export class NutriEvaluationsComponent implements OnInit {
       let cumplePrueba = true;
       let cumpleEstado = true;
 
-      const tId = s.tipo_evaluacion_id || s.tipoEvaluacionId;
+      // FIX: Propiedad corregida a tipo_id
+      const tId = s.tipo_id;
 
       if (this.filtroFecha) {
         const dFiltro = this.formatearFechaIso(this.filtroFecha);
@@ -172,7 +173,7 @@ export class NutriEvaluationsComponent implements OnInit {
     const fechaObj = new Date(sesion.fecha + 'T00:00:00');
     this.evalLogistica = { 
       ...sesion,
-      tipo_id: sesion.tipo_evaluacion_id || sesion.tipoEvaluacionId,
+      tipo_id: sesion.tipo_id, // FIX: Propiedad corregida
       fecha: fechaObj
     };
     this.displayMainDialog = true;
@@ -188,28 +189,48 @@ export class NutriEvaluationsComponent implements OnInit {
     this.loading = true;
     const fechaSeleccionada = new Date(this.evalLogistica.fecha);
     
+    // Payload base (ActualizarSesionDto y CrearSesionDto lo aceptan)
     const payload = {
       tipoId: this.evalLogistica.tipo_id,
-      fecha: fechaSeleccionada.toISOString().split('T')[0],
-      estado: this.evalLogistica.estado || EstadoSesion.PROGRAMADA
+      fecha: fechaSeleccionada.toISOString().split('T')[0]
     };
 
-    const peticion$ = this.evalLogistica.id 
-      ? this.nutriSesionService.actualizarSesion(this.evalLogistica.id, payload as any)
-      : this.nutriSesionService.crearSesion(payload as any);
-
-    peticion$.subscribe({
-      next: () => {
-        this.mostrarExito(this.evalLogistica.id ? 'Sesión actualizada' : 'Sesión creada');
-        this.displayMainDialog = false;
-        this.cargarDatosBase();
-      },
-      error: () => {
-        this.mostrarError('Error al guardar la sesión');
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    });
+    if (this.evalLogistica.id) {
+      // FIX: Modo Edición -> Actualiza datos logísticos Y encadena la actualización de estado
+      this.nutriSesionService.actualizarSesion(this.evalLogistica.id, payload).pipe(
+        switchMap(() => {
+          if (this.evalLogistica.estado) {
+            return this.nutriSesionService.cambiarEstado(this.evalLogistica.id, { estado: this.evalLogistica.estado });
+          }
+          return of(null);
+        })
+      ).subscribe({
+        next: () => {
+          this.mostrarExito('Sesión actualizada correctamente');
+          this.displayMainDialog = false;
+          this.cargarDatosBase();
+        },
+        error: () => {
+          this.mostrarError('Error al actualizar la sesión');
+          this.loading = false;
+          this.cdr.detectChanges();
+        }
+      });
+    } else {
+      // Modo Creación (el backend por defecto la setea en PROGRAMADA)
+      this.nutriSesionService.crearSesion(payload as any).subscribe({
+        next: () => {
+          this.mostrarExito('Sesión creada correctamente');
+          this.displayMainDialog = false;
+          this.cargarDatosBase();
+        },
+        error: () => {
+          this.mostrarError('Error al crear la sesión');
+          this.loading = false;
+          this.cdr.detectChanges();
+        }
+      });
+    }
   }
 
   // ==========================================

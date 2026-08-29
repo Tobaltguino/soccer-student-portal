@@ -14,6 +14,8 @@ import {
 export class NutriResultadoService {
   private http = inject(HttpClient);
   private baseUrl = environment.apiUrl;
+  // Agrupamos la URL base para resultados
+  private apiUrl = `${this.baseUrl}/nutri-evaluacion-resultados`;
 
   /**
    * POST /nutri-evaluacion-resultados
@@ -33,23 +35,23 @@ export class NutriResultadoService {
       formData.append('archivo', archivo);
     }
 
-    return this.http.post<NutriResultadoConDetalle>(`${this.baseUrl}/nutri-evaluacion-resultados`, formData);
+    return this.http.post<NutriResultadoConDetalle>(this.apiUrl, formData);
   }
 
   /**
-   * GET /estudiantes/me/nutri-resultados
+   * GET /nutri-evaluacion-resultados/mis-resultados
    * Lista los resultados nutricionales del estudiante autenticado (solo de sesiones FINALIZADAS).
    */
   listarMisResultados(): Observable<NutriResultadoConDetalle[]> {
-    return this.http.get<NutriResultadoConDetalle[]>(`${this.baseUrl}/estudiantes/me/nutri-resultados`);
+    return this.http.get<NutriResultadoConDetalle[]>(`${this.apiUrl}/mis-resultados`);
   }
 
   /**
-   * GET /nutri-evaluacion-sesiones/:evaluacionId/resultados
+   * GET /nutri-evaluacion-resultados/sesion/:evaluacionId
    * Lista todos los resultados asociados a una sesión nutricional específica.
    */
   listarResultadosPorSesion(evaluacionId: string): Observable<NutriResultadoConDetalle[]> {
-    return this.http.get<NutriResultadoConDetalle[]>(`${this.baseUrl}/nutri-evaluacion-sesiones/${evaluacionId}/resultados`);
+    return this.http.get<NutriResultadoConDetalle[]>(`${this.apiUrl}/sesion/${evaluacionId}`);
   }
 
   /**
@@ -67,14 +69,14 @@ export class NutriResultadoService {
       formData.append('archivo', archivo);
     }
 
-    return this.http.patch<NutriResultadoConDetalle>(`${this.baseUrl}/nutri-evaluacion-resultados/${id}`, formData);
+    return this.http.patch<NutriResultadoConDetalle>(`${this.apiUrl}/${id}`, formData);
   }
 
   /**
    * DELETE /nutri-evaluacion-resultados/:id
-   * Elimina permanentemente un resultado y su archivo asociado del bucket (Solo Admin).
+   * Elimina permanentemente un resultado y su archivo asociado del bucket.
    */
   eliminarResultado(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/nutri-evaluacion-resultados/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }

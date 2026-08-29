@@ -1,24 +1,43 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../../../../../core/supabase/supabase.service';
 import { SesionesService } from '../sesiones/sesiones.service';
+// AJUSTA esta ruta a la ubicación real de tu EstudiantesService en el proyecto
+import { EstudiantesService } from '../../../../../modules/usuarios/estudiantes/estudiantes.service';
 import { CrearResultadoDto } from './dto/crear-resultado.dto';
 import { ActualizarResultadoDto } from './dto/actualizar-resultado.dto';
 import type { KineResultadoRow, KineResultadoConDetalle } from './interfaces/resultado.interface';
+import type { CriterioPrioridad } from '../subevaluaciones/interfaces/subevaluacion.interface';
 import { lanzarErrorSupabaseConFk } from '../../../../../shared/utils/supabase-error.util';
+
+type SubevaluacionInfo = {
+  nombre: string;
+  evalua_lados: boolean;
+  prioridad: CriterioPrioridad | null;
+};
 
 @Injectable()
 export class ResultadosService {
   constructor(
     private readonly supabase: SupabaseService,
     private readonly sesionesService: SesionesService,
+    private readonly estudiantesService: EstudiantesService,
   ) {}
 
   async crear(
     dto: CrearResultadoDto,
     gruposPermitidos: number[] | null,
   ): Promise<KineResultadoConDetalle> {
-    // Valida acceso a la sesión (y por lo tanto al grupo)
-    await this.sesionesService.buscarPorId(dto.sesionId, gruposPermitidos);
+    // Valida acceso a la sesión (y por lo tanto al grupo) y obtiene sus datos
+    const sesion = await this.sesionesService.buscarPorId(dto.sesionId, gruposPermitidos);
+
+    // Valida que el estudiante exista y pertenezca al mismo grupo que la sesión
+    const estudiante = await this.estudiantesService.buscarPorId(dto.estudianteId);
+
+    if (estudiante.grupo_id !== sesion.grupo_id) {
+      throw new BadRequestException(
+        'El estudiante indicado no pertenece al grupo de esta sesión',
+      );
+    }
 
     // Valida que el resultado calce con si la subevaluación mide lados o no
     const subevaluacion = await this.obtenerSubevaluacion(dto.subevaluacionId);
@@ -80,7 +99,8 @@ export class ResultadosService {
     }
 
     const resultados = (data ?? []) as KineResultadoRow[];
-    return Promise.all(resultados.map((r) => this.enriquecerConDetalle(r)));
+    const cacheSubevaluaciones = new Map<number, SubevaluacionInfo>();
+    return Promise.all(resultados.map((r) => this.enriquecerConDetalle(r, cacheSubevaluaciones)));
   }
 
   async listarPorEstudianteFinalizados(estudianteId: string): Promise<KineResultadoConDetalle[]> {
@@ -99,7 +119,8 @@ export class ResultadosService {
       ({ kine_evaluaciones_sesiones, ...resto }: any) => resto,
     ) as KineResultadoRow[];
 
-    return Promise.all(resultados.map((r) => this.enriquecerConDetalle(r)));
+    const cacheSubevaluaciones = new Map<number, SubevaluacionInfo>();
+    return Promise.all(resultados.map((r) => this.enriquecerConDetalle(r, cacheSubevaluaciones)));
   }
 
   async actualizar(
@@ -166,41 +187,76 @@ export class ResultadosService {
 
   private async obtenerSubevaluacion(
     id: number,
-  ): Promise<{ nombre: string; evalua_lados: boolean }> {
+    cache?: Map<number, SubevaluacionInfo>,
+  ): Promise<SubevaluacionInfo> {
+    if (cache?.has(id)) {
+      return cache.get(id) as SubevaluacionInfo;
+    }
+
     const { data, error } = await this.supabase.client
       .from('kine_subevaluaciones')
-      .select('nombre, evalua_lados')
+      .select('nombre, evalua_lados, prioridad')
       .eq('id', id)
-      .single<{ nombre: string; evalua_lados: boolean }>();
+      .single<SubevaluacionInfo>();
 
     if (error || !data) {
       throw new BadRequestException('La subevaluación indicada no existe');
     }
 
+    cache?.set(id, data);
     return data;
   }
 
-  private async enriquecerConDetalle(resultado: KineResultadoRow): Promise<KineResultadoConDetalle> {
-    const subevaluacion = await this.obtenerSubevaluacion(resultado.subevaluacion_id);
+  /**
+   * Determina el puntaje contra el cual se busca el rango.
+   * - Si la subevaluación NO evalúa lados: usa resultado_unico.
+   * - Si SÍ evalúa lados: usa el MENOR o MAYOR puntaje entre izquierdo y derecho,
+   *   según lo configurado en `prioridad` de la subevaluación.
+   */
+  private calcularPuntajeParaRango(
+    subevaluacion: SubevaluacionInfo,
+    resultado: KineResultadoRow,
+  ): number | null {
+    if (subevaluacion.evalua_lados) {
+      const candidatos = [resultado.resultado_izquierdo, resultado.resultado_derecho]
+        .map((v) => (v !== null ? Number(v) : NaN))
+        .filter((v) => !Number.isNaN(v));
+
+      if (candidatos.length === 0) return null;
+
+      return subevaluacion.prioridad === 'MAYOR'
+        ? Math.max(...candidatos)
+        : Math.min(...candidatos);
+    }
+
+    if (resultado.resultado_unico === null) return null;
+
+    const puntaje = Number(resultado.resultado_unico);
+    return Number.isNaN(puntaje) ? null : puntaje;
+  }
+
+  private async enriquecerConDetalle(
+    resultado: KineResultadoRow,
+    cacheSubevaluaciones?: Map<number, SubevaluacionInfo>,
+  ): Promise<KineResultadoConDetalle> {
+    const subevaluacion = await this.obtenerSubevaluacion(
+      resultado.subevaluacion_id,
+      cacheSubevaluaciones,
+    );
 
     let rango: { etiqueta: string; color: string | null } | null = null;
 
-    const valorParaRango = subevaluacion.evalua_lados
-      ? null // con lados, no hay un "puntaje único" directo para buscar rango automáticamente
-      : resultado.resultado_unico;
+    const puntajeParaRango = this.calcularPuntajeParaRango(subevaluacion, resultado);
 
-    if (valorParaRango !== null) {
-      const puntajeNumerico = Number(valorParaRango);
-      if (!Number.isNaN(puntajeNumerico)) {
-        const { data: rangoData } = await this.supabase.client
-          .from('kine_evaluacion_rangos')
-          .select('etiqueta, color')
-          .eq('subevaluacion_id', resultado.subevaluacion_id)
-          .eq('puntaje', puntajeNumerico)
-          .maybeSingle<{ etiqueta: string; color: string | null }>();
+    if (puntajeParaRango !== null) {
+      const { data: rangoData } = await this.supabase.client
+        .from('kine_evaluacion_rangos')
+        .select('etiqueta, color')
+        .eq('subevaluacion_id', resultado.subevaluacion_id)
+        .eq('puntaje', puntajeParaRango)
+        .maybeSingle<{ etiqueta: string; color: string | null }>();
 
-        rango = rangoData ?? null;
-      }
+      rango = rangoData ?? null;
     }
 
     return {
@@ -208,6 +264,7 @@ export class ResultadosService {
       subevaluacion: {
         nombre: subevaluacion.nombre,
         evaluaLados: subevaluacion.evalua_lados,
+        prioridad: subevaluacion.prioridad,
       },
       rango,
     };

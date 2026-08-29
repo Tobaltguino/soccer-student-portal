@@ -1,6 +1,5 @@
 <div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
-    <!-- 🔥 CLASE pf-confirm-dialog AGREGADA AQUÍ 🔥 -->
     <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
 
     <header class="pf-admin-header">
@@ -42,7 +41,8 @@
                           (onChange)="aplicarFiltros()" [showClear]="true" 
                           styleClass="w-full" appendTo="body" [filter]="false">
                     <ng-template let-option pTemplate="item">
-                        <p-tag [value]="option.label" [severity]="option.value === 'PENDIENTE' ? 'warn' : 'success'"></p-tag>
+                        <!-- FIX: Alineado al Enum -->
+                        <p-tag [value]="option.label" [severity]="option.value === EstadoSesion.PROGRAMADA ? 'warn' : 'success'"></p-tag>
                     </ng-template>
                 </p-select>
             </div>
@@ -75,11 +75,14 @@
                     </td>
                     <td>
                         <span class="p-column-title pf-oswald text-steel hidden-desktop">Evaluación</span>
-                        <span class="font-bold text-chalk">{{ sesion.tipo_evaluacion?.nombre }}</span>
+                        <!-- FIX: Propiedad correcta (tipoObj en lugar de tipo_evaluacion) -->
+                        <span class="font-bold text-chalk">{{ sesion.tipoObj?.nombre }}</span>
                     </td>
                     <td class="text-center">
                         <span class="p-column-title pf-oswald text-steel hidden-desktop">Estado</span>
-                        <p-tag [value]="sesion.estado" [severity]="sesion.estado === 'PENDIENTE' ? 'warn' : 'success'"></p-tag>
+                        <!-- FIX: Verificamos contra el Enum -->
+                        <p-tag [value]="sesion.estado === EstadoSesion.PROGRAMADA ? 'Pendiente' : 'Finalizado'" 
+                               [severity]="sesion.estado === EstadoSesion.PROGRAMADA ? 'warn' : 'success'"></p-tag>
                     </td>
                     <td class="text-center">
                         <span class="p-column-title pf-oswald text-steel hidden-desktop">Acciones</span>
@@ -172,11 +175,12 @@
                 <label class="pf-oswald mb-3 block">Estado de la Sesión</label>
                 <div class="flex gap-4">
                     <div class="flex align-items-center">
-                        <p-radioButton name="estado" value="PENDIENTE" [(ngModel)]="evalLogistica.estado" inputId="st1" [disabled]="guardando"></p-radioButton>
+                        <!-- FIX: Enums para los RadioButtons -->
+                        <p-radioButton name="estado" [value]="EstadoSesion.PROGRAMADA" [(ngModel)]="evalLogistica.estado" inputId="st1" [disabled]="guardando"></p-radioButton>
                         <label for="st1" class="ml-2 cursor-pointer text-chalk font-bold">Pendiente</label>
                     </div>
                     <div class="flex align-items-center">
-                        <p-radioButton name="estado" value="FINALIZADO" [(ngModel)]="evalLogistica.estado" inputId="st2" [disabled]="guardando"></p-radioButton>
+                        <p-radioButton name="estado" [value]="EstadoSesion.FINALIZADA" [(ngModel)]="evalLogistica.estado" inputId="st2" [disabled]="guardando"></p-radioButton>
                         <label for="st2" class="ml-2 cursor-pointer text-chalk font-bold">Finalizado</label>
                     </div>
                 </div>
@@ -196,7 +200,8 @@
             <div class="p-3 border-round mb-3 flex justify-content-between align-items-center mt-2 flex-wrap gap-2" style="background-color: var(--input-bg); border: 1px solid var(--border-color);">
                 <div class="flex flex-column">
                     <span class="pf-oswald text-steel text-xs">Evaluación Seleccionada</span>
-                    <span class="text-xl pf-anton text-chalk mt-1" style="letter-spacing: 1px;">{{evalLogistica.tipo_evaluacion?.nombre}}</span>
+                    <!-- FIX: Propiedad correcta para el header del modal -->
+                    <span class="text-xl pf-anton text-chalk mt-1" style="letter-spacing: 1px;">{{evalLogistica.tipoObj?.nombre}}</span>
                 </div>
                 <div class="text-right">
                     <span class="pf-oswald text-steel text-xs block mb-1">Total Estudiantes</span>
@@ -273,7 +278,7 @@
         </ng-template>
     </p-dialog>
 
-    <!-- 🔥 OVERLAY DE CARGA GLOBAL DE PANTALLA COMPLETA 🔥 -->
+    <!-- OVERLAY DE CARGA GLOBAL DE PANTALLA COMPLETA -->
     <div class="pf-loading-overlay fadein" *ngIf="guardando">
         <div class="pf-spinner"></div>
         <div class="pf-loading-text">Guardando Archivos PDF...</div>

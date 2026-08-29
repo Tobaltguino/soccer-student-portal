@@ -1,17 +1,18 @@
+<!-- evaluaciones-kine.component.html (Administrador) -->
 <div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
-    <!-- 🔥 CLASE pf-confirm-dialog AGREGADA AQUÍ 🔥 -->
     <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
 
     <header class="pf-admin-header">
         <div class="header-content">
             <div>
                 <h1 class="pf-anton text-chalk m-0 text-3xl">Evaluaciones Kinésicas</h1>
-                <p class="pf-oswald text-teal mt-1">Gestión de pruebas preventivas y funcionales de todos los grupos.</p>
+                <p class="pf-oswald text-teal mt-1">Consulta y administración de las sesiones de todos los grupos.</p>
             </div>
         </div>
         <div class="flex gap-2 header-actions">
-            <button pButton label="Nueva Sesión" icon="pi pi-plus" class="pf-btn-primary" (click)="abrirNuevo()"></button>
+            <button pButton icon="pi pi-sync" class="pf-btn-ghost"
+                    (click)="cargarDatosGenerales()" [loading]="loading" pTooltip="Actualizar lista" tooltipPosition="left"></button>
         </div>
     </header>
 
@@ -62,11 +63,11 @@
         <p-table [value]="sesionesFiltradas" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm pf-table w-full" responsiveLayout="stack" [breakpoint]="'768px'">    
             <ng-template pTemplate="header">
                 <tr>
-                    <th style="width: 20%">Fecha</th>
+                    <th style="width: 25%">Fecha</th>
                     <th style="width: 30%">Grupo</th>
                     <th style="width: 25%">Prueba</th>
                     <th style="width: 10%" class="text-center">Estado</th>
-                    <th style="width: 15%" class="text-center">Acciones</th>
+                    <th style="width: 10%" class="text-center">Acciones</th>
                 </tr>
             </ng-template>
             <ng-template pTemplate="body" let-sesion>
@@ -92,8 +93,6 @@
                         <span class="p-column-title pf-oswald text-steel hidden-desktop">Acciones:</span>
                         <div class="pf-table-actions">
                             <button pButton icon="pi pi-eye" class="p-button-info" (click)="verResultados(sesion)" pTooltip="Ver Resultados"></button>
-                            <button pButton icon="pi pi-pencil" class="p-button-warning" (click)="editarSesion(sesion)" pTooltip="Editar Logística"></button>
-                            <button pButton icon="pi pi-chart-line" class="p-button-success" (click)="abrirCalificador(sesion)" pTooltip="Calificar Alumnos"></button>
                             <button pButton icon="pi pi-trash" class="p-button-danger" (click)="confirmarEliminarSesion(sesion)" pTooltip="Eliminar"></button>
                         </div>
                     </td>
@@ -110,263 +109,106 @@
         </p-table>
     </div>
 
-    <!-- MODAL: LOGÍSTICA DE LA SESIÓN -->
-    <p-dialog [(visible)]="displayMainDialog" [header]="evalLogistica.id ? 'Editar Sesión' : 'Nueva Sesión'" 
-              [modal]="true" [style]="{width: '450px'}" styleClass="p-fluid pf-dialog" [closable]="!guardando" [draggable]="false" [resizable]="false">
-        <ng-template pTemplate="content">
-            
-            <div class="pf-field-group mt-3">
-                <label class="pf-oswald">Fecha <span class="text-pink-500 font-bold">*</span></label>
-                <p-datepicker [(ngModel)]="evalLogistica.fecha" appendTo="body" dateFormat="dd/mm/yy" [showIcon]="true" [disabled]="guardando"></p-datepicker>
-            </div>
-            
-            <div class="pf-field-group">
-                <label class="pf-oswald">Grupo <span class="text-pink-500 font-bold">*</span></label>
-                <p-select [options]="grupos" [(ngModel)]="evalLogistica.grupo_id" optionLabel="nombre" optionValue="id" 
-                          placeholder="Selecciona el grupo" appendTo="body" [filter]="false" [disabled]="guardando"></p-select>
-            </div>
-            
-            <div class="pf-field-group">
-                <label class="pf-oswald">Tipo de Evaluación <span class="text-pink-500 font-bold">*</span></label>
-                <p-select [options]="tiposEvaluacion" [(ngModel)]="evalLogistica.tipo_evaluacion_id" optionLabel="nombre" optionValue="id" 
-                          placeholder="Selecciona la prueba" appendTo="body" [filter]="false" [disabled]="guardando"></p-select>
-            </div>
-
-            <div class="pf-field-group">
-                <label class="pf-oswald">Kinesiólogo a cargo <span class="text-pink-500 font-bold">*</span></label>
-                <p-select [options]="kinesiologos" [(ngModel)]="evalLogistica.kinesiologo_id" 
-                          optionLabel="nombreCompleto" optionValue="id" 
-                          placeholder="Asignar Kinesiólogo..." appendTo="body" [filter]="true" filterBy="nombreCompleto" [disabled]="guardando">
-                </p-select>
-            </div>
-            
-            <div class="pf-field-group" *ngIf="evalLogistica.id">
-                <label class="pf-oswald mb-3 block">Estado de la Sesión</label>
-                <div class="flex gap-4">
-                    <div class="flex align-items-center">
-                        <p-radioButton name="estado" [value]="EstadoSesion.PROGRAMADA" [(ngModel)]="evalLogistica.estado" inputId="st1" [disabled]="guardando"></p-radioButton>
-                        <label for="st1" class="ml-2 cursor-pointer pf-oswald text-chalk font-bold">Pendiente</label>
-                    </div>
-                    <div class="flex align-items-center">
-                        <p-radioButton name="estado" [value]="EstadoSesion.FINALIZADA" [(ngModel)]="evalLogistica.estado" inputId="st2" [disabled]="guardando"></p-radioButton>
-                        <label for="st2" class="ml-2 cursor-pointer pf-oswald text-chalk font-bold">Finalizado</label>
-                    </div>
-                </div>
-            </div>
-
-        </ng-template>
-        <ng-template pTemplate="footer">
-            <button pButton label="Cancelar" icon="pi pi-times" class="pf-btn-ghost" (click)="displayMainDialog = false" [disabled]="guardando"></button>
-            <button pButton label="Guardar" icon="pi pi-check" class="pf-btn-primary ml-2" (click)="guardarSesionLogistica()" [loading]="guardando"></button>
-        </ng-template>
-    </p-dialog>
-
-    <!-- MODAL: CALIFICADOR -->
-    <p-dialog [(visible)]="displayGradesDialog" header="Registro de Resultados Kinésicos" 
-              [modal]="true" [style]="{width: '95vw', maxWidth: '1200px'}" [maximizable]="true" styleClass="p-fluid pf-dialog" [closable]="!guardando">
-        <ng-template pTemplate="content">
-            
-            <div class="p-3 border-round mb-3 flex justify-content-between align-items-center mt-2" style="background-color: var(--input-bg); border: 1px solid var(--border-color);">
-                <div class="flex flex-column">
-                    <span class="pf-oswald text-steel text-xs">Evaluación Seleccionada</span>
-                    <span class="text-xl pf-anton text-chalk mt-1" style="letter-spacing: 1px;">{{evalLogistica.tipoObj?.nombre}}</span>
-                </div>
-                <div class="text-right">
-                    <span class="pf-oswald text-steel text-xs block mb-1">Grupo</span>
-                    <p-tag [value]="evalLogistica.grupoObj?.nombre" severity="info" styleClass="text-sm px-3"></p-tag>
-                </div>
-            </div>
-
-            <div class="split-layout mt-4">
-                
-                <div class="split-sidebar custom-scrollbar">
-                    <div class="sidebar-header pf-oswald text-teal">
-                        Estudiantes ({{estudiantesGrupo.length}})
-                    </div>
-
-                    <div *ngFor="let estudiante of estudiantesGrupo"
-                         (click)="estudianteSeleccionado = estudiante"
-                         class="student-item"
-                         [ngClass]="{'active': estudianteSeleccionado?.id === estudiante.id}">
-                        
-                        <div class="student-info">
-                            <span class="student-name pf-anton" style="letter-spacing: 0.5px;">{{estudiante.apellido}}</span>
-                            <span class="student-sub pf-oswald text-steel">{{estudiante.nombre}}</span>
-                        </div>
-                        
-                        <div class="student-status">
-                            <i class="pi pi-check-circle text-xl" style="color: var(--pf-lime);" *ngIf="estudiante.evaluado" pTooltip="Completado"></i>
-                            <i class="pi pi-circle text-xl text-steel" *ngIf="!estudiante.evaluado" pTooltip="Pendiente"></i>
-                            <i class="pi pi-angle-right" style="opacity: 0.6; color: var(--text-steel);"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="split-content custom-scrollbar">
-                    <div *ngIf="estudianteSeleccionado">
-                        <div class="content-header border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
-                            <h3 class="m-0 pf-oswald text-steel text-lg">
-                                Evaluando a: <span class="pf-anton text-chalk ml-2 text-xl" style="letter-spacing: 0.5px;">{{estudianteSeleccionado.nombre}} {{estudianteSeleccionado.apellido}}</span>
-                            </h3>
-                        </div>
-
-                        <div class="content-body">
-                            <p-table [value]="estudianteSeleccionado.evaluaciones" styleClass="p-datatable-sm pf-table custom-grades-table">
-                                <ng-template pTemplate="header">
-                                    <tr>
-                                        <th style="width: 25%">Parámetro</th>
-                                        <th style="width: 15%" class="text-center">Único</th>
-                                        <th style="width: 15%" class="text-center">Izquierdo</th>
-                                        <th style="width: 15%" class="text-center">Derecho</th>
-                                        <th style="width: 25%">Observación</th>
-                                        <th style="width: 5%" class="text-center">Limpiar</th>
-                                    </tr>
-                                </ng-template>
-                                <ng-template pTemplate="body" let-sub>
-                                    <tr>
-                                        <td class="font-medium text-sm text-chalk">
-                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                                {{sub.nombre_parametro}}
-                                                <p-tag *ngIf="sub.evalua_lados" value="L/R" severity="secondary" styleClass="text-xs font-normal" [rounded]="true"></p-tag>
-                                            </div>
-                                        </td>
-                                        <td class="text-center">
-                                            <div *ngIf="!sub.evalua_lados" style="display: flex; flex-direction: column; align-items: center; gap: 0.3rem;">
-                                                <p-inputNumber [(ngModel)]="sub.resultado_unico" (ngModelChange)="actualizarEstadoEstudiante()" placeholder="0" styleClass="w-full text-center" [disabled]="guardando"></p-inputNumber>
-                                                <p-tag *ngIf="sub.resultado_unico !== null" [severity]="getSeverityPuntaje(sub.resultado_unico, sub.subevaluacion_id)" value="●"></p-tag>
-                                            </div>
-                                            <span *ngIf="sub.evalua_lados" class="text-steel">-</span>
-                                        </td>
-                                        <td class="text-center">
-                                            <div *ngIf="sub.evalua_lados" style="display: flex; flex-direction: column; align-items: center; gap: 0.3rem;">
-                                                <p-inputNumber [(ngModel)]="sub.resultado_izquierdo" (ngModelChange)="actualizarEstadoEstudiante()" placeholder="0" styleClass="w-full text-center" [disabled]="guardando"></p-inputNumber>
-                                                <p-tag *ngIf="sub.resultado_izquierdo !== null" [severity]="getSeverityPuntaje(sub.resultado_izquierdo, sub.subevaluacion_id)" value="●"></p-tag>
-                                            </div>
-                                            <span *ngIf="!sub.evalua_lados" class="text-steel">-</span>
-                                        </td>
-                                        <td class="text-center">
-                                            <div *ngIf="sub.evalua_lados" style="display: flex; flex-direction: column; align-items: center; gap: 0.3rem;">
-                                                <p-inputNumber [(ngModel)]="sub.resultado_derecho" (ngModelChange)="actualizarEstadoEstudiante()" placeholder="0" styleClass="w-full text-center" [disabled]="guardando"></p-inputNumber>
-                                                <p-tag *ngIf="sub.resultado_derecho !== null" [severity]="getSeverityPuntaje(sub.resultado_derecho, sub.subevaluacion_id)" value="●"></p-tag>
-                                            </div>
-                                            <span *ngIf="!sub.evalua_lados" class="text-steel">-</span>
-                                        </td>
-                                        <td>
-                                            <input pInputText [(ngModel)]="sub.observacion" style="width: 100%;" placeholder="Opcional..." [disabled]="guardando">
-                                        </td>
-                                        <td class="text-center">
-                                            <button pButton icon="pi pi-eraser" class="p-button-rounded p-button-text p-button-secondary p-0" style="width: 2rem; height: 2rem;" 
-                                                    (click)="limpiarFila(sub)" pTooltip="Limpiar fila" [disabled]="guardando"></button>
-                                        </td>
-                                    </tr>
-                                </ng-template>
-                            </p-table>
-                        </div>
-                    </div>
-                    
-                    <div *ngIf="!estudianteSeleccionado" class="empty-state">
-                        <i class="pi pi-user-edit text-steel" style="font-size: 3.5rem;"></i>
-                        <h2 class="m-0 text-center pf-anton text-chalk text-2xl mt-3" style="letter-spacing: 0.5px;">Selecciona un estudiante</h2>
-                        <p class="m-0 text-center pf-oswald text-steel text-lg">Haz clic en un nombre de la lista izquierda para registrar sus notas.</p>
-                    </div>
-                </div>
-            </div>
-        </ng-template>
-        
-        <ng-template pTemplate="footer">
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding-top: 1rem;">
-                <small class="text-steel pf-oswald"><i class="pi pi-info-circle mr-2 text-teal"></i> Se guardarán los registros de todos los estudiantes modificados.</small>
-                <div style="display: flex; gap: 0.5rem;">
-                    <button pButton label="Cerrar" icon="pi pi-times" class="pf-btn-ghost" (click)="displayGradesDialog = false" [disabled]="guardando"></button>
-                    <button pButton label="Guardar Todo" icon="pi pi-save" class="pf-btn-primary" (click)="guardarNotasFinales()" [loading]="guardando"></button>
-                </div>
-            </div>
-        </ng-template>
-    </p-dialog>
-
     <!-- MODAL: VISOR DE RESULTADOS (MODO LECTURA) -->
     <p-dialog [(visible)]="displayViewDialog" header="Resultados de la Sesión" [modal]="true" [style]="{width: '90vw', maxWidth: '1200px'}" [maximizable]="true" styleClass="p-fluid pf-dialog">
         <ng-template pTemplate="content">
-            <div class="p-3 border-round mb-3 flex justify-content-between align-items-center mt-2" style="background-color: var(--input-bg); border: 1px solid var(--border-color);" *ngIf="sesionVista">
-                <div style="display: flex; flex-direction: column;">
-                    <span class="pf-oswald text-steel text-xs">Evaluación</span>
-                    <span class="text-xl pf-anton text-chalk mt-1" style="letter-spacing: 1px;">{{sesionVista.tipoObj?.nombre}}</span>
-                </div>
-                <div style="display: flex; flex-direction: column; align-items: flex-end;">
-                    <span class="pf-oswald text-steel text-xs block mb-1">Grupo</span>
-                    <p-tag [value]="sesionVista.grupoObj?.nombre" severity="info" styleClass="text-sm px-3"></p-tag>
-                </div>
+            <div *ngIf="loading" class="flex flex-column align-items-center justify-content-center p-5">
+                <p-progressSpinner styleClass="w-4rem h-4rem" strokeWidth="4" animationDuration=".5s"></p-progressSpinner>
+                <span class="pf-oswald text-teal mt-3 text-lg" style="letter-spacing: 0.5px;">Cargando resultados...</span>
             </div>
 
-            <div class="split-layout mt-4">
-                
-                <div class="split-sidebar custom-scrollbar">
-                    <div class="sidebar-header pf-oswald text-teal">
-                        Evaluados ({{resultadosVista.length}})
+            <ng-container *ngIf="!loading">
+                <div class="p-3 border-round mb-3 flex justify-content-between align-items-center mt-2" style="background-color: var(--input-bg); border: 1px solid var(--border-color);" *ngIf="sesionVista">
+                    <div style="display: flex; flex-direction: column;">
+                        <span class="pf-oswald text-steel text-xs">Evaluación</span>
+                        <!-- FIX NG8107: Usamos el punto directo -->
+                        <span class="text-xl pf-anton text-chalk mt-1" style="letter-spacing: 1px;">{{sesionVista.tipoObj.nombre}}</span>
                     </div>
-
-                    <div *ngFor="let alumno of resultadosVista"
-                         (click)="estudianteVistaSeleccionado = alumno"
-                         class="student-item"
-                         [ngClass]="{'active': estudianteVistaSeleccionado?.id === alumno.id}">
-                        
-                        <div class="student-info">
-                            <span class="student-name pf-anton" style="letter-spacing: 0.5px;">{{alumno.apellido}}</span>
-                            <span class="student-sub pf-oswald text-steel">{{alumno.nombre}}</span>
-                        </div>
-                        <i class="pi pi-angle-right" style="opacity: 0.6; color: var(--text-steel);"></i>
+                    <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                        <span class="pf-oswald text-steel text-xs block mb-1">Grupo</span>
+                        <!-- FIX NG8107: Usamos interpolación directa -->
+                        <p-tag value="{{ sesionVista.grupoObj.nombre }}" severity="info" styleClass="text-sm px-3"></p-tag>
                     </div>
                 </div>
 
-                <div class="split-content custom-scrollbar">
-                    <div *ngIf="estudianteVistaSeleccionado">
-                        <div class="content-header border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
-                            <h3 class="m-0 pf-oswald text-steel text-lg">
-                                Resultados de: <span class="pf-anton text-chalk ml-2 text-xl" style="letter-spacing: 0.5px;">{{estudianteVistaSeleccionado.nombre}} {{estudianteVistaSeleccionado.apellido}}</span>
-                            </h3>
-                        </div>
-
-                        <div class="content-body">
-                            <p-table [value]="estudianteVistaSeleccionado.evaluaciones" styleClass="p-datatable-sm pf-table custom-grades-table">
-                                <ng-template pTemplate="header">
-                                    <tr>
-                                        <th style="width: 25%">Parámetro</th>
-                                        <th style="width: 15%" class="text-center">Único</th>
-                                        <th style="width: 15%" class="text-center">Izquierdo</th>
-                                        <th style="width: 15%" class="text-center">Derecho</th>
-                                        <th style="width: 30%">Observación</th>
-                                    </tr>
-                                </ng-template>
-                                <ng-template pTemplate="body" let-sub>
-                                    <tr>
-                                        <td class="font-medium text-sm text-chalk">{{sub.nombre_parametro}}</td>
-                                        <td class="text-center">
-                                            <p-tag *ngIf="sub.resultado_unico !== null" [value]="sub.resultado_unico" [severity]="getSeverityPuntaje(sub.resultado_unico, sub.subevaluacion_id)"></p-tag>
-                                            <span *ngIf="sub.resultado_unico === null" class="text-steel">-</span>
-                                        </td>
-                                        <td class="text-center">
-                                            <p-tag *ngIf="sub.resultado_izquierdo !== null" [value]="sub.resultado_izquierdo" [severity]="getSeverityPuntaje(sub.resultado_izquierdo, sub.subevaluacion_id)"></p-tag>
-                                            <span *ngIf="sub.resultado_izquierdo === null" class="text-steel">-</span>
-                                        </td>
-                                        <td class="text-center">
-                                            <p-tag *ngIf="sub.resultado_derecho !== null" [value]="sub.resultado_derecho" [severity]="getSeverityPuntaje(sub.resultado_derecho, sub.subevaluacion_id)"></p-tag>
-                                            <span *ngIf="sub.resultado_derecho === null" class="text-steel">-</span>
-                                        </td>
-                                        <td class="text-sm text-steel italic">{{sub.observacion || '-'}}</td>
-                                    </tr>
-                                </ng-template>
-                            </p-table>
-                        </div>
-                    </div>
+                <div class="split-layout mt-4">
                     
-                    <div *ngIf="!estudianteVistaSeleccionado" class="empty-state">
-                        <i class="pi pi-list text-steel" style="font-size: 3.5rem;"></i>
-                        <h2 class="m-0 text-center pf-anton text-chalk text-2xl mt-3" style="letter-spacing: 0.5px;">Selecciona un estudiante</h2>
-                        <p class="m-0 text-center pf-oswald text-steel text-lg">Elige un nombre de la lista para ver sus resultados detallados.</p>
+                    <div class="split-sidebar custom-scrollbar">
+                        <div class="sidebar-header pf-oswald text-teal">
+                            Evaluados ({{resultadosVista.length}})
+                        </div>
+
+                        <div *ngFor="let alumno of resultadosVista"
+                             (click)="estudianteVistaSeleccionado = alumno"
+                             class="student-item"
+                             [ngClass]="{'active': estudianteVistaSeleccionado?.id === alumno.id}">
+                            
+                            <div class="student-info">
+                                <span class="student-name pf-anton" style="letter-spacing: 0.5px;">{{alumno.apellido}}</span>
+                                <span class="student-sub pf-oswald text-steel">{{alumno.nombre}}</span>
+                            </div>
+                            <i class="pi pi-angle-right" style="opacity: 0.6; color: var(--text-steel);"></i>
+                        </div>
+                    </div>
+
+                    <div class="split-content custom-scrollbar">
+                        <div *ngIf="estudianteVistaSeleccionado">
+                            <div class="content-header border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                                <h3 class="m-0 pf-oswald text-steel text-lg">
+                                    Resultados de: <span class="pf-anton text-chalk ml-2 text-xl" style="letter-spacing: 0.5px;">{{estudianteVistaSeleccionado.nombre}} {{estudianteVistaSeleccionado.apellido}}</span>
+                                </h3>
+                            </div>
+
+                            <div class="content-body">
+                                <p-table [value]="estudianteVistaSeleccionado.evaluaciones" styleClass="p-datatable-sm pf-table custom-grades-table">
+                                    <ng-template pTemplate="header">
+                                        <tr>
+                                            <th style="width: 25%">Parámetro</th>
+                                            <th style="width: 15%" class="text-center">Único</th>
+                                            <th style="width: 15%" class="text-center">Izquierdo</th>
+                                            <th style="width: 15%" class="text-center">Derecho</th>
+                                            <th style="width: 30%">Observación</th>
+                                        </tr>
+                                    </ng-template>
+                                    <ng-template pTemplate="body" let-sub>
+                                        <tr>
+                                            <td class="font-medium text-sm text-chalk">
+                                                {{sub.nombre_parametro}}
+                                                <p-tag *ngIf="sub.evalua_lados && sub.rango"
+                                                       [value]="sub.rango.etiqueta"
+                                                       [style]="sub.rango.color ? {'background-color': sub.rango.color} : {}"
+                                                       styleClass="ml-2"></p-tag>
+                                            </td>
+                                            <td class="text-center">
+                                                <!-- FIX TS2322: Interpolación para asegurar tipo String -->
+                                                <p-tag *ngIf="sub.resultado_unico !== null" value="{{ sub.resultado_unico }}" [severity]="getSeverityPuntaje(sub.resultado_unico, sub.subevaluacion_id)"></p-tag>
+                                                <span *ngIf="sub.resultado_unico === null" class="text-steel">-</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <!-- FIX TS2322: Interpolación -->
+                                                <p-tag *ngIf="sub.resultado_izquierdo !== null" value="{{ sub.resultado_izquierdo }}" [severity]="getSeverityPuntaje(sub.resultado_izquierdo, sub.subevaluacion_id)"></p-tag>
+                                                <span *ngIf="sub.resultado_izquierdo === null" class="text-steel">-</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <!-- FIX TS2322: Interpolación -->
+                                                <p-tag *ngIf="sub.resultado_derecho !== null" value="{{ sub.resultado_derecho }}" [severity]="getSeverityPuntaje(sub.resultado_derecho, sub.subevaluacion_id)"></p-tag>
+                                                <span *ngIf="sub.resultado_derecho === null" class="text-steel">-</span>
+                                            </td>
+                                            <td class="text-sm text-steel italic">{{sub.observacion || '-'}}</td>
+                                        </tr>
+                                    </ng-template>
+                                </p-table>
+                            </div>
+                        </div>
+                        
+                        <div *ngIf="!estudianteVistaSeleccionado" class="empty-state">
+                            <i class="pi pi-list text-steel" style="font-size: 3.5rem;"></i>
+                            <h2 class="m-0 text-center pf-anton text-chalk text-2xl mt-3" style="letter-spacing: 0.5px;">Selecciona un estudiante</h2>
+                            <p class="m-0 text-center pf-oswald text-steel text-lg">Elige un nombre de la lista para ver sus resultados detallados.</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-
+            </ng-container>
         </ng-template>
         <ng-template pTemplate="footer">
             <div style="padding-top: 1rem;">
@@ -374,10 +216,4 @@
             </div>
         </ng-template>
     </p-dialog>
-
-    <!-- 🔥 OVERLAY DE CARGA GLOBAL DE PANTALLA COMPLETA (SOLO AL GUARDAR) 🔥 -->
-    <div class="pf-loading-overlay fadein" *ngIf="guardando">
-        <div class="pf-spinner"></div>
-        <div class="pf-loading-text">Guardando Resultados...</div>
-    </div>
 </div>

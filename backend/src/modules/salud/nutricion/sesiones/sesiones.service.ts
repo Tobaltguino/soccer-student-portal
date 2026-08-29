@@ -109,22 +109,17 @@ export class SesionesService {
     soloDeNutricionista: string | null,
     esAdmin: boolean,
   ): Promise<NutriSesionRow> {
-    
-    // Primero validamos que la sesión exista y que el nutricionista tenga permisos sobre ella
     const sesionActual = await this.buscarPorId(id, soloDeNutricionista);
 
-    // Preparamos los datos a actualizar dinámicamente
     const updates: Partial<NutriSesionRow> = {};
 
     if (dto.tipoId) updates.tipo_id = dto.tipoId;
     if (dto.fecha) updates.fecha = dto.fecha;
     
-    // Solo permitimos cambiar el nutricionista_id si es Administrador
     if (esAdmin && dto.nutricionistaId) {
       updates.nutricionista_id = dto.nutricionistaId;
     }
 
-    // Si no hay nada que actualizar, devolvemos la sesión como está
     if (Object.keys(updates).length === 0) {
       return sesionActual;
     }
@@ -223,7 +218,8 @@ export class SesionesService {
         estado,
         tipo_evaluacion:tipo_id ( nombre ) 
       `)
-      .eq('estado', 'FINALIZADO') // Asegúrate de que el estado coincida con tu BD (puede ser 'FINALIZADA')
+      // FIX: Corregido de 'FINALIZADO' a 'FINALIZADA'
+      .eq('estado', 'FINALIZADA')
       .is('eliminado_at', null)
       .order('fecha', { ascending: false })
       .limit(1)
@@ -238,7 +234,6 @@ export class SesionesService {
     return {
       id: data.id,
       fecha: data.fecha,
-      // Usamos as any para evitar el error de TypeScript si Supabase lo detecta como Array
       tipoEvaluacion: (data.tipo_evaluacion as any)?.nombre || 'Evaluación Nutricional'
     };
   }

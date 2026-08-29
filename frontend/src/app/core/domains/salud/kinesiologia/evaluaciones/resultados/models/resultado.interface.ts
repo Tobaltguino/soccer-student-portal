@@ -1,3 +1,6 @@
+// AJUSTA esta ruta a donde tengas realmente el modelo de subevaluación en tu proyecto
+import { CriterioPrioridad } from '../../subevaluaciones/models/subevaluacion.interface';
+
 export interface KineResultado {
   id: number;
   sesion_id: string;
@@ -15,6 +18,7 @@ export interface KineResultadoConDetalle extends KineResultado {
   subevaluacion: {
     nombre: string;
     evaluaLados: boolean;
+    prioridad: CriterioPrioridad | null;
   };
   rango: {
     etiqueta: string;

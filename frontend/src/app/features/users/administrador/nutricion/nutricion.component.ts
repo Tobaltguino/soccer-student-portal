@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core'; 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, Observable, of } from 'rxjs';
+import { forkJoin, Observable, of, switchMap } from 'rxjs'; // 🔥 Agregado switchMap
 
 // Enum
 import { EstadoSesion } from '../../../../shared/enums/estado-sesion.enum';
@@ -38,7 +38,7 @@ import { UsuarioService } from '../../../../core/domains/usuarios/central/servic
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './nutricion.component.html',
-  styleUrls: ['./nutricion.component.scss'] // 🔥 Cambiado a .scss
+  styleUrls: ['./nutricion.component.scss']
 })
 export class AdminNutriComponent implements OnInit {
   
@@ -73,7 +73,7 @@ export class AdminNutriComponent implements OnInit {
   displayTiposDialog = false;
   
   loading = false;
-  guardando = false; // 🔥 Bloqueo maestro
+  guardando = false;
 
   evalLogistica: any = {};
   nuevoTipo = { nombre: '', descripcion: '' };
@@ -108,8 +108,9 @@ export class AdminNutriComponent implements OnInit {
         const regs = data.sesiones.registros || [];
         this.sesiones = regs.map((s: any) => ({
           ...s,
-          tipoObj: this.tiposEvaluacion.find(t => t.id === (s.tipo_evaluacion_id || s.tipoEvaluacionId)) || { nombre: 'Desconocido' },
-          nutriObj: this.nutricionistas.find(n => n.id === (s.nutricionista_id || s.nutricionistaId)) || { nombreCompleto: 'No asignado' }
+          // FIX: Mapeo exacto con tipo_id y nutricionista_id
+          tipoObj: this.tiposEvaluacion.find(t => t.id === s.tipo_id) || { nombre: 'Desconocido' },
+          nutriObj: this.nutricionistas.find(n => n.id === s.nutricionista_id) || { nombreCompleto: 'No asignado' }
         }));
 
         this.aplicarFiltros();
@@ -133,7 +134,7 @@ export class AdminNutriComponent implements OnInit {
   }
 
   guardarNuevoTipo() {
-    if (this.guardando) return; // 🔥 Protección
+    if (this.guardando) return;
     if (!this.nuevoTipo.nombre) return;
     
     this.guardando = true;
@@ -213,14 +214,14 @@ export class AdminNutriComponent implements OnInit {
     this.evalLogistica = { 
       ...sesion,
       fecha: fechaObj,
-      tipo_id: sesion.tipo_evaluacion_id || sesion.tipoEvaluacionId,
-      nutricionista_id: sesion.nutricionista_id || sesion.nutricionistaId
+      tipo_id: sesion.tipo_id,
+      nutricionista_id: sesion.nutricionista_id
     };
     this.displayMainDialog = true;
   }
 
   guardarSesionPlanificada() {
-    if (this.guardando) return; // 🔥 Protección
+    if (this.guardando) return;
     if (!this.evalLogistica.fecha || !this.evalLogistica.tipo_id || !this.evalLogistica.nutricionista_id) {
       this.mostrarError('Faltan campos obligatorios');
       return;
@@ -229,30 +230,51 @@ export class AdminNutriComponent implements OnInit {
     this.guardando = true;
     this.cdr.detectChanges();
     
+    // Payload compatible con Crear y Actualizar
     const payload = {
       tipoId: this.evalLogistica.tipo_id,
       nutricionistaId: this.evalLogistica.nutricionista_id,
-      fecha: this.formatearFechaIso(this.evalLogistica.fecha),
-      estado: this.evalLogistica.estado || EstadoSesion.PROGRAMADA
+      fecha: this.formatearFechaIso(this.evalLogistica.fecha)
     };
 
-    const peticion$ = this.evalLogistica.id 
-      ? this.nutriSesionService.actualizarSesion(this.evalLogistica.id, payload)
-      : this.nutriSesionService.crearSesion(payload as any);
-
-    peticion$.subscribe({
-      next: () => {
-        this.mostrarExito(this.evalLogistica.id ? 'Sesión actualizada' : 'Sesión creada');
-        this.displayMainDialog = false;
-        this.guardando = false;
-        this.cargarDatosBase();
-      },
-      error: () => {
-        this.mostrarError('Error al guardar la sesión');
-        this.guardando = false;
-        this.cdr.detectChanges();
-      }
-    });
+    if (this.evalLogistica.id) {
+      // FIX: Modo Edición -> Actualiza logística y luego el estado
+      this.nutriSesionService.actualizarSesion(this.evalLogistica.id, payload).pipe(
+        switchMap(() => {
+          if (this.evalLogistica.estado) {
+            return this.nutriSesionService.cambiarEstado(this.evalLogistica.id, { estado: this.evalLogistica.estado });
+          }
+          return of(null);
+        })
+      ).subscribe({
+        next: () => {
+          this.mostrarExito('Sesión actualizada correctamente');
+          this.displayMainDialog = false;
+          this.guardando = false;
+          this.cargarDatosBase();
+        },
+        error: () => {
+          this.mostrarError('Error al actualizar la sesión');
+          this.guardando = false;
+          this.cdr.detectChanges();
+        }
+      });
+    } else {
+      // Modo Creación
+      this.nutriSesionService.crearSesion(payload as any).subscribe({
+        next: () => {
+          this.mostrarExito('Sesión creada correctamente');
+          this.displayMainDialog = false;
+          this.guardando = false;
+          this.cargarDatosBase();
+        },
+        error: () => {
+          this.mostrarError('Error al crear la sesión');
+          this.guardando = false;
+          this.cdr.detectChanges();
+        }
+      });
+    }
   }
 
   eliminarSesion(sesion: any) {
@@ -339,7 +361,6 @@ export class AdminNutriComponent implements OnInit {
     });
   }
 
-  // 🔥 Fuerza la detección de cambios al seleccionar el archivo PDF
   onFileSelected(event: any, estudiante: any) {
     if (this.guardando) return;
     const file = event.target.files[0];
@@ -412,7 +433,7 @@ export class AdminNutriComponent implements OnInit {
   aplicarFiltros() {
     this.sesionesFiltradas = this.sesiones.filter(s => {
       let f = true, p = true, e = true;
-      const tId = s.tipo_evaluacion_id || s.tipoEvaluacionId;
+      const tId = s.tipo_id; // FIX: Uso correcto
 
       if (this.filtroFecha) f = (s.fecha || '').substring(0, 10) === this.formatearFechaIso(this.filtroFecha);
       if (this.filtroPrueba) p = tId === this.filtroPrueba.id;
@@ -442,5 +463,4 @@ export class AdminNutriComponent implements OnInit {
 
   mostrarExito(m: string) { this.messageService.add({ severity: 'success', summary: 'Éxito', detail: m }); }
   mostrarError(m: string) { this.messageService.add({ severity: 'error', summary: 'Error', detail: m }); }
-  mostrarAdvertencia(m: string) { this.messageService.add({ severity: 'warn', summary: 'Atención', detail: m }); }
 }

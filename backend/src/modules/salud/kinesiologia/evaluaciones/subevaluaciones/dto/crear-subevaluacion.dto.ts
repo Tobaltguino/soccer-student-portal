@@ -1,4 +1,9 @@
-import { IsBoolean, IsInt, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
+
+export enum CriterioPrioridad {
+  MENOR = 'MENOR',
+  MAYOR = 'MAYOR',
+}
 
 export class CrearSubevaluacionDto {
   @IsInt()
@@ -10,4 +15,8 @@ export class CrearSubevaluacionDto {
   @IsOptional()
   @IsBoolean()
   evaluaLados?: boolean;
+
+  @IsOptional()
+  @IsEnum(CriterioPrioridad)
+  prioridad?: CriterioPrioridad;
 }

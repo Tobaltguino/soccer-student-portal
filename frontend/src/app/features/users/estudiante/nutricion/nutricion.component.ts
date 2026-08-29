@@ -10,8 +10,8 @@ import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { ConfirmDialogModule } from 'primeng/confirmdialog'; // 🔥 Agregado
-import { MessageService, ConfirmationService } from 'primeng/api'; // 🔥 Agregado ConfirmationService
+import { ConfirmDialogModule } from 'primeng/confirmdialog'; 
+import { MessageService, ConfirmationService } from 'primeng/api'; 
 
 // Nuevo Servicio
 import { NutriResultadoService } from '../../../../core/domains/salud/nutricion/resultados/services/resultado.service';
@@ -22,11 +22,11 @@ import { NutriResultadoService } from '../../../../core/domains/salud/nutricion/
   imports: [
     CommonModule, FormsModule, TableModule, ButtonModule, 
     DatePickerModule, SelectModule, TooltipModule, ToastModule, ProgressSpinnerModule,
-    ConfirmDialogModule // 🔥 Importado
+    ConfirmDialogModule
   ],
-  providers: [MessageService, ConfirmationService], // 🔥 Importado
+  providers: [MessageService, ConfirmationService],
   templateUrl: './nutricion.component.html',
-  styleUrls: ['./nutricion.component.scss'] // 🔥 Cambiado a .scss
+  styleUrls: ['./nutricion.component.scss']
 })
 export class StudentNutriComponent implements OnInit {
   
@@ -56,12 +56,11 @@ export class StudentNutriComponent implements OnInit {
         const rawData = data || [];
 
         this.misResultados = rawData.map((r: any) => {
-          // Normalizamos la relación (evaluacion o sesion dependiendo del backend)
-          const ev = r.evaluacion || r.sesion || r.sesionEvaluacion || {};
-          const tipoEv = ev.tipo_evaluacion || ev.tipoEvaluacion || {};
+          // FIX: El backend envía "evaluacion" directamente con "nombre" y "fecha"
+          const ev = r.evaluacion || {};
           
-          // Limpiar nombre de URL para mostrar el nombre del archivo PDF
-          const archivoUrl = r.archivo_url || r.archivoUrl;
+          // FIX: Propiedad estricta de base de datos
+          const archivoUrl = r.archivo_url;
           let nombreLimpio = 'Documento PDF';
           
           if (archivoUrl) {
@@ -73,8 +72,9 @@ export class StudentNutriComponent implements OnInit {
 
           return {
             fecha: ev.fecha,
-            tipo_nombre: tipoEv.nombre || 'Evaluación Nutricional',
-            observacion: r.observaciones || r.observacion || '',
+            tipo_nombre: ev.nombre || 'Evaluación Nutricional',
+            // FIX: Propiedad estricta "observaciones" del DTO/BD
+            observacion: r.observaciones || '',
             archivo_url: archivoUrl,
             nombre_archivo: nombreLimpio
           };
@@ -105,12 +105,9 @@ export class StudentNutriComponent implements OnInit {
       let cumplePrueba = true;
 
       if (this.filtroFecha) {
-        // Formateo manual para evitar desfases de zona horaria
-        const anio = this.filtroFecha.getFullYear();
-        const mes = ('0' + (this.filtroFecha.getMonth() + 1)).slice(-2);
-        const dia = ('0' + this.filtroFecha.getDate()).slice(-2);
-        const dFiltro = `${anio}-${mes}-${dia}`;
-        cumpleFecha = r.fecha === dFiltro;
+        const dFiltro = this.formatearFechaIso(this.filtroFecha);
+        // FIX: Evitamos error si r.fecha incluye hora en BD (ISO completo)
+        cumpleFecha = (r.fecha || '').substring(0, 10) === dFiltro;
       }
       if (this.filtroPrueba) {
         cumplePrueba = r.tipo_nombre === this.filtroPrueba.nombre;
@@ -125,5 +122,13 @@ export class StudentNutriComponent implements OnInit {
     this.filtroFecha = null;
     this.filtroPrueba = null;
     this.aplicarFiltros();
+  }
+
+  // FIX: Unificamos el formateo de fecha para evitar desfases horarios
+  private formatearFechaIso(fecha: any): string {
+    if (!fecha) return '';
+    const d = new Date(fecha);
+    const tzOffset = d.getTimezoneOffset() * 60000;
+    return (new Date(d.getTime() - tzOffset)).toISOString().split('T')[0];
   }
 }

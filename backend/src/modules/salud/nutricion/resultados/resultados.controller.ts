@@ -24,7 +24,8 @@ import { CurrentUser } from '../../../../core/auth/decorators/current-user.decor
 import type { RequestUser } from '../../../../core/auth/strategies/jwt.strategy';
 import { AlcanceGruposService } from '../../../../shared/services/alcance-grupos.service';
 
-@Controller()
+// FIX: Patrón de enrutamiento agrupado correctamente
+@Controller('nutri-evaluacion-resultados')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ResultadosController {
   constructor(
@@ -32,7 +33,7 @@ export class ResultadosController {
     private readonly alcanceService: AlcanceGruposService,
   ) {}
 
-  @Post('nutri-evaluacion-resultados')
+  @Post()
   @Roles(Rol.ADMINISTRADOR, Rol.NUTRICIONISTA)
   @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
   async crear(
@@ -50,14 +51,13 @@ export class ResultadosController {
     );
   }
 
-  // "me" antes que ":evaluacionId", por el patrón que ya conocemos
-  @Get('estudiantes/me/nutri-resultados')
+  @Get('mis-resultados')
   @Roles(Rol.ESTUDIANTE)
   misResultados(@CurrentUser() user: RequestUser) {
     return this.resultadosService.listarPorEstudianteFinalizados(user.id);
   }
 
-  @Get('nutri-evaluacion-sesiones/:evaluacionId/resultados')
+  @Get('sesion/:evaluacionId')
   @Roles(Rol.ADMINISTRADOR, Rol.NUTRICIONISTA, Rol.PROFESOR, Rol.KINESIOLOGO)
   async listarPorSesion(
     @Param('evaluacionId') evaluacionId: string,
@@ -67,20 +67,23 @@ export class ResultadosController {
     return this.resultadosService.listarPorSesion(evaluacionId, gruposPermitidos);
   }
 
-  @Patch('nutri-evaluacion-resultados/:id')
+  @Patch(':id')
   @Roles(Rol.ADMINISTRADOR, Rol.NUTRICIONISTA)
   @UseInterceptors(FileInterceptor('archivo', { storage: memoryStorage() }))
   actualizar(
     @Param('id') id: string,
     @Body() dto: ActualizarResultadoDto,
+    @CurrentUser() user: RequestUser,
     @UploadedFile() archivo?: Express.Multer.File,
   ) {
-    return this.resultadosService.actualizar(id, dto, archivo);
+    // Pasamos el usuario para validar seguridad
+    return this.resultadosService.actualizar(id, dto, user.id, user.rol === Rol.ADMINISTRADOR, archivo);
   }
 
-  @Delete('nutri-evaluacion-resultados/:id')
-  @Roles(Rol.ADMINISTRADOR)
-  eliminar(@Param('id') id: string) {
-    return this.resultadosService.eliminar(id);
+  @Delete(':id')
+  @Roles(Rol.ADMINISTRADOR, Rol.NUTRICIONISTA) // Permitido a Nutricionista para borrar los suyos
+  eliminar(@Param('id') id: string, @CurrentUser() user: RequestUser) {
+    // Pasamos el usuario para validar seguridad
+    return this.resultadosService.eliminar(id, user.id, user.rol === Rol.ADMINISTRADOR);
   }
 }

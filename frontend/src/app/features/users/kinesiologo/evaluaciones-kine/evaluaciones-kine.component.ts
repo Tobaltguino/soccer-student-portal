@@ -1,202 +1,244 @@
-import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, Observable, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 
-// Enum
-import { EstadoSesion } from '../../../../shared/enums/estado-sesion.enum';
-
-// Servicios de Dominio
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
+import { DialogModule } from 'primeng/dialog';
+import { SelectModule } from 'primeng/select';
+import { DatePickerModule } from 'primeng/datepicker';
+import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { TextareaModule } from 'primeng/textarea';
+import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { CheckboxModule } from 'primeng/checkbox';
+import { RadioButtonModule } from 'primeng/radiobutton';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { KineTipoEvaluacionService } from '../../../../core/domains/salud/kinesiologia/evaluaciones/tipos/services/tipo-evaluacion.service';
-import { KineSubevaluacionService } from '../../../../core/domains/salud/kinesiologia/evaluaciones/subevaluaciones/services/subevaluacion.service';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ToastModule } from 'primeng/toast';
+
 import { KineSesionService } from '../../../../core/domains/salud/kinesiologia/evaluaciones/sesiones/service/sesion.service';
+import { KineSubevaluacionService } from '../../../../core/domains/salud/kinesiologia/evaluaciones/subevaluaciones/services/subevaluacion.service';
 import { KineResultadoService } from '../../../../core/domains/salud/kinesiologia/evaluaciones/resultados/service/resultado.service';
 import { KineRangoService } from '../../../../core/domains/salud/kinesiologia/evaluaciones/rangos/services/rango.service';
+import { KineTipoEvaluacionService } from '../../../../core/domains/salud/kinesiologia/evaluaciones/tipos/services/tipo-evaluacion.service';
 import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
 
-// Módulos de PrimeNG
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { DialogModule } from 'primeng/dialog';
-import { InputTextModule } from 'primeng/inputtext';
-import { TextareaModule } from 'primeng/textarea';
-import { SelectModule } from 'primeng/select';
-import { DatePickerModule } from 'primeng/datepicker';
-import { TagModule } from 'primeng/tag';
-import { ToastModule } from 'primeng/toast';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { TooltipModule } from 'primeng/tooltip';
-import { RadioButtonModule } from 'primeng/radiobutton';
-import { InputNumberModule } from 'primeng/inputnumber';
+import { KineSesion } from '../../../../core/domains/salud/kinesiologia/evaluaciones/sesiones/models/sesion.interface';
+import {
+  CrearKineSesionPayload,
+  ActualizarKineSesionPayload,
+} from '../../../../core/domains/salud/kinesiologia/evaluaciones/sesiones/models/sesion.interface';
+import { KineSubevaluacion } from '../../../../core/domains/salud/kinesiologia/evaluaciones/subevaluaciones/models/subevaluacion.interface';
+import { KineResultadoConDetalle } from '../../../../core/domains/salud/kinesiologia/evaluaciones/resultados/models/resultado.interface';
+import { KineRango } from '../../../../core/domains/salud/kinesiologia/evaluaciones/rangos/models/rango.interface';
+import { KineTipoEvaluacion } from '../../../../core/domains/salud/kinesiologia/evaluaciones/tipos/models/tipo-evaluacion.interface';
+import { EstadoSesion } from '../../../../shared/enums/estado-sesion.enum';
+
+type Severity = 'success' | 'warn' | 'danger' | 'info' | 'secondary';
+
+interface GrupoOption {
+  id: number;
+  nombre: string;
+}
+
+interface KineSesionVista extends KineSesion {
+  grupoObj?: GrupoOption;
+  tipoObj?: KineTipoEvaluacion;
+}
+
+type SesionFormModel = Omit<Partial<KineSesion>, 'fecha'> & {
+  fecha?: Date | string | null;
+  grupoObj?: GrupoOption;
+  tipoObj?: KineTipoEvaluacion;
+};
+
+interface EvaluacionParametro {
+  resultado_id: number | null;
+  subevaluacion_id: number;
+  nombre_parametro: string;
+  evalua_lados: boolean;
+  resultado_unico: number | null;
+  resultado_izquierdo: number | null;
+  resultado_derecho: number | null;
+  observacion: string;
+  tiene_datos: boolean;
+  rango: { etiqueta: string; color: string | null } | null;
+}
+
+interface AlumnoEvaluacion {
+  id: string;
+  nombre: string;
+  apellido: string;
+  evaluado: boolean;
+  evaluaciones: EvaluacionParametro[];
+}
 
 @Component({
   selector: 'app-kinesiologo-evaluaciones-kine',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, TableModule, ButtonModule, DialogModule,
-    InputTextModule, TextareaModule, SelectModule, DatePickerModule,
-    TagModule, ToastModule, ConfirmDialogModule, TooltipModule, 
-    RadioButtonModule, InputNumberModule, ProgressSpinnerModule
+    CommonModule,
+    FormsModule,
+    ButtonModule,
+    TableModule,
+    DialogModule,
+    SelectModule,
+    DatePickerModule,
+    InputTextModule,
+    InputNumberModule,
+    TextareaModule,
+    TagModule,
+    TooltipModule,
+    ProgressSpinnerModule,
+    CheckboxModule,
+    RadioButtonModule,
+    ConfirmDialogModule,
+    ToastModule,
   ],
-  providers: [MessageService, ConfirmationService],
+  providers: [ConfirmationService, MessageService],
   templateUrl: './evaluaciones-kine.component.html',
-  styleUrls: ['./evaluaciones-kine.component.scss'] // 🔥 Cambiado a .scss
 })
 export class KinesiologoEvaluacionesKineComponent implements OnInit {
+  loading = false;
 
-  readonly EstadoSesion = EstadoSesion;
+  EstadoSesion = EstadoSesion;
 
-  // Inyección de Servicios
-  private kineTipoService = inject(KineTipoEvaluacionService);
-  private kineSubService = inject(KineSubevaluacionService);
-  private kineSesionService = inject(KineSesionService);
-  private kineResultadoService = inject(KineResultadoService);
-  private kineRangoService = inject(KineRangoService);
-  private grupoService = inject(GrupoService);
-  private estudianteService = inject(EstudianteService);
-  private messageService = inject(MessageService);
-  private confirmationService = inject(ConfirmationService);
-  private cdr = inject(ChangeDetectorRef);
+  grupos: GrupoOption[] = [];
+  tiposEvaluacion: KineTipoEvaluacion[] = [];
+  subevaluacionesPorTipo = new Map<number, KineSubevaluacion[]>();
+  rangos: KineRango[] = [];
 
-  // --- DATOS PRINCIPALES ---
-  sesiones: any[] = [];
-  sesionesFiltradas: any[] = [];
-  grupos: any[] = [];
-  tiposEvaluacion: any[] = [];
-  loading: boolean = false;
-  rangos: any[] = [];
+  sesiones: KineSesionVista[] = [];
+  sesionesFiltradas: KineSesionVista[] = [];
 
-  // --- FILTROS ---
   filtroFecha: Date | null = null;
-  filtroGrupo: any = null;
-  filtroPrueba: any = null;
+  filtroGrupo: number | null = null;
+  filtroPrueba: number | null = null;
   filtroEstado: EstadoSesion | null = null;
-  
+  filtroIncluirEliminadas = false;
+
   opcionesEstadoFiltro = [
-    { label: 'Programada (Pendiente)', value: EstadoSesion.PROGRAMADA },
-    { label: 'Finalizada', value: EstadoSesion.FINALIZADA }
+    { label: 'Programada', value: EstadoSesion.PROGRAMADA },
+    { label: 'En curso', value: EstadoSesion.EN_CURSO },
+    { label: 'Finalizada', value: EstadoSesion.FINALIZADA },
+    { label: 'Cancelada', value: EstadoSesion.CANCELADA },
   ];
 
-  // --- MODAL LOGÍSTICA ---
-  displayMainDialog: boolean = false;
-  evalLogistica: any = {};
+  displayMainDialog = false;
+  evalLogistica: SesionFormModel = {};
+  private estadoOriginal: EstadoSesion | null = null;
 
-  // --- MODAL CALIFICADOR & VISOR ---
-  displayGradesDialog: boolean = false;
-  displayViewDialog: boolean = false;
-  
-  estudiantesGrupo: any[] = [];
-  estudianteSeleccionado: any = null;
-  
-  sesionVista: any = null;
-  resultadosVista: any[] = [];
-  estudianteVistaSeleccionado: any = null;
+  displayGradesDialog = false;
+  estudiantesGrupo: AlumnoEvaluacion[] = [];
+  estudianteSeleccionado: AlumnoEvaluacion | null = null;
 
-  ngOnInit() {
+  displayViewDialog = false;
+  sesionVista: KineSesionVista | null = null;
+  resultadosVista: AlumnoEvaluacion[] = [];
+  estudianteVistaSeleccionado: AlumnoEvaluacion | null = null;
+
+  constructor(
+    private kineSesionService: KineSesionService,
+    private kineSubevaluacionService: KineSubevaluacionService,
+    private kineResultadoService: KineResultadoService,
+    private kineRangoService: KineRangoService,
+    private kineTipoEvaluacionService: KineTipoEvaluacionService,
+    private grupoService: GrupoService,
+    private estudianteService: EstudianteService,
+    private confirmationService: ConfirmationService,
+    private messageService: MessageService,
+    private cdr: ChangeDetectorRef,
+  ) {}
+
+  ngOnInit(): void {
     this.cargarDatosGenerales();
   }
 
-  cargarDatosGenerales() {
+  cargarDatosGenerales(): void {
     this.loading = true;
 
     this.grupoService.obtenerMisGrupos().subscribe({
-      next: (gruposData) => {
-        this.grupos = gruposData || [];
-        const misGrupoIds = this.grupos.map(g => g.id).filter(id => id !== undefined) as number[];
+      next: (grupos: GrupoOption[]) => {
+        this.grupos = grupos || [];
 
-        if (misGrupoIds.length === 0) {
-          this.kineTipoService.listarTiposEvaluacion().subscribe(t => {
-            this.tiposEvaluacion = t || [];
-            this.sesiones = [];
-            this.loading = false;
-            this.cdr.detectChanges();
-          });
+        if (this.grupos.length === 0) {
+          this.sesiones = [];
+          this.sesionesFiltradas = [];
+          this.loading = false;
+          this.cdr.detectChanges();
           return;
         }
 
-        const peticionesSesiones = misGrupoIds.map(id => 
-          this.kineSesionService.listarSesiones({ grupoId: id, limite: 1000 })
+        const misGrupoIds = this.grupos.map((g) => g.id);
+
+        const peticionesSesiones = misGrupoIds.map((id) =>
+          this.kineSesionService.listarSesiones({
+            grupoId: id,
+            limite: 1000,
+            incluirEliminadas: this.filtroIncluirEliminadas,
+          }),
         );
 
-        forkJoin({
-          tipos: this.kineTipoService.listarTiposEvaluacion(),
-          sesionesGrupos: forkJoin(peticionesSesiones)
-        }).subscribe({
-          next: ({ tipos, sesionesGrupos }) => {
+        forkJoin([
+          this.kineTipoEvaluacionService.listarTiposEvaluacion(),
+          forkJoin(peticionesSesiones),
+        ]).subscribe({
+          next: ([tipos, resultadosPorGrupo]) => {
             this.tiposEvaluacion = tipos || [];
-            
-            const todasLasSesiones = sesionesGrupos.flatMap(res => res.registros);
-            
-            this.sesiones = todasLasSesiones.map((s: any) => ({
-                ...s,
-                grupoObj: this.grupos.find(g => g.id === (s.grupo_id || s.grupoId)) || { nombre: 'Desconocido' },
-                tipoObj: this.tiposEvaluacion.find(t => t.id === (s.tipo_evaluacion_id || s.tipoEvaluacionId)) || { nombre: 'Desconocido' }
-            }));
+
+            const mapaGrupos = new Map(this.grupos.map((g) => [g.id, g]));
+            const mapaTipos = new Map(this.tiposEvaluacion.map((t) => [t.id, t]));
+
+            const todasLasSesiones = resultadosPorGrupo.flatMap((r) => r.registros);
+
+            this.sesiones = todasLasSesiones
+              .map((sesion) => ({
+                ...sesion,
+                grupoObj: mapaGrupos.get(sesion.grupo_id),
+                tipoObj: mapaTipos.get(sesion.tipo_evaluacion_id),
+              }))
+              .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
 
             this.aplicarFiltros();
             this.loading = false;
             this.cdr.detectChanges();
           },
           error: () => {
-            this.mostrarError('Error al cargar datos iniciales.');
+            this.mostrarError('No se pudieron cargar las sesiones.');
             this.loading = false;
-            this.cdr.detectChanges();
-          }
+          },
         });
       },
       error: () => {
         this.mostrarError('No se pudieron cargar tus grupos.');
         this.loading = false;
-        this.cdr.detectChanges();
-      }
+      },
     });
   }
 
-  getSeverityPuntaje(puntaje: number | string | null, subevaluacionId: number): "success" | "secondary" | "info" | "warn" | "danger" | "contrast" | undefined {
-    if (puntaje === null || puntaje === undefined || puntaje === '') return 'secondary';
-    
-    const puntajeNum = Number(puntaje);
-    const rango = this.rangos.find(r => 
-      (r.puntaje === puntajeNum || r.valor_min === puntajeNum) && 
-      (r.subevaluacion_id === subevaluacionId || r.subevaluacionId === subevaluacionId)
-    );
-    
-    const color = rango?.color || rango?.color_sugerido || rango?.colorSugerido;
-    switch (color) {
-      case 'rojo': case '#ef4444': return 'danger';
-      case 'amarillo': case '#eab308': return 'warn';
-      case 'verde': case '#22c55e': return 'success';
-      default: return 'info';
-    }
-  }
-
-  aplicarFiltros() {
-    this.sesionesFiltradas = this.sesiones.filter(sesion => {
-      let cumpleFecha = true;
-      let cumpleGrupo = true;
-      let cumplePrueba = true;
-      let cumpleEstado = true;
-
-      const gId = sesion.grupo_id || sesion.grupoId;
-      const tId = sesion.tipo_evaluacion_id || sesion.tipoEvaluacionId;
+  aplicarFiltros(): void {
+    this.sesionesFiltradas = this.sesiones.filter((sesion) => {
+      if (this.filtroGrupo && sesion.grupo_id !== this.filtroGrupo) return false;
+      if (this.filtroPrueba && sesion.tipo_evaluacion_id !== this.filtroPrueba) return false;
+      if (this.filtroEstado && sesion.estado !== this.filtroEstado) return false;
 
       if (this.filtroFecha) {
-        const fechaFiltroStr = this.formatearFechaIso(this.filtroFecha);
-        const fechaSesionStr = (sesion.fecha || '').substring(0, 10);
-        cumpleFecha = fechaSesionStr === fechaFiltroStr;
+        const fechaSesion = new Date(sesion.fecha).toDateString();
+        const fechaFiltro = new Date(this.filtroFecha).toDateString();
+        if (fechaSesion !== fechaFiltro) return false;
       }
-      if (this.filtroGrupo) cumpleGrupo = gId === this.filtroGrupo.id;
-      if (this.filtroPrueba) cumplePrueba = tId === this.filtroPrueba.id;
-      if (this.filtroEstado) cumpleEstado = sesion.estado === this.filtroEstado;
 
-      return cumpleFecha && cumpleGrupo && cumplePrueba && cumpleEstado;
+      return true;
     });
   }
 
-  limpiarFiltros() {
+  limpiarFiltros(): void {
     this.filtroFecha = null;
     this.filtroGrupo = null;
     this.filtroPrueba = null;
@@ -204,284 +246,446 @@ export class KinesiologoEvaluacionesKineComponent implements OnInit {
     this.aplicarFiltros();
   }
 
-  abrirNuevo() {
+  toggleIncluirEliminadas(): void {
+    this.cargarDatosGenerales();
+  }
+
+  getSeverityPuntaje(puntaje: number | string | null, subevaluacionId: number): Severity {
+    if (puntaje === null || puntaje === undefined || puntaje === ('' as unknown)) {
+      return 'secondary';
+    }
+
+    const puntajeNum = Number(puntaje);
+    if (Number.isNaN(puntajeNum)) return 'secondary';
+
+    const rango = this.rangos.find(
+      (r) => r.puntaje === puntajeNum && r.subevaluacion_id === subevaluacionId,
+    );
+
+    if (!rango) return 'secondary';
+
+    switch (rango.color) {
+      case 'rojo':
+      case '#ef4444':
+        return 'danger';
+      case 'amarillo':
+      case '#eab308':
+        return 'warn';
+      case 'verde':
+      case '#22c55e':
+        return 'success';
+      default:
+        return 'info';
+    }
+  }
+
+  abrirNuevo(): void {
     this.evalLogistica = { estado: EstadoSesion.PROGRAMADA };
+    this.estadoOriginal = null;
     this.displayMainDialog = true;
   }
 
-  editarSesion(sesion: any) {
-    this.evalLogistica = { 
+  editarSesion(sesion: KineSesionVista): void {
+    this.evalLogistica = {
       ...sesion,
-      grupo_id: sesion.grupo_id || sesion.grupoId,
-      tipo_evaluacion_id: sesion.tipo_evaluacion_id || sesion.tipoEvaluacionId,
-      fecha: this.convertirStringADate(sesion.fecha)
+      fecha: this.convertirStringADate(sesion.fecha),
     };
+    this.estadoOriginal = sesion.estado;
     this.displayMainDialog = true;
   }
 
-  guardarSesionLogistica() {
-    if (!this.evalLogistica.fecha) return this.mostrarAdvertencia('Selecciona una fecha.');
-    if (!this.evalLogistica.grupo_id) return this.mostrarAdvertencia('Selecciona un grupo.');
-    if (!this.evalLogistica.tipo_evaluacion_id) return this.mostrarAdvertencia('Selecciona el tipo de prueba.');
+  guardarSesionLogistica(): void {
+    if (!this.evalLogistica.fecha) {
+      this.mostrarAdvertencia('Selecciona una fecha para la sesión.');
+      return;
+    }
 
-    this.loading = true;
-    const payload = {
-      fecha: this.formatearFechaIso(this.evalLogistica.fecha),
-      grupoId: this.evalLogistica.grupo_id,
-      tipoEvaluacionId: this.evalLogistica.tipo_evaluacion_id, 
-      estado: this.evalLogistica.estado || EstadoSesion.PROGRAMADA
-    };
+    const fechaIso = this.formatearFechaIso(this.evalLogistica.fecha);
 
-    const peticion$ = this.evalLogistica.id 
-      ? this.kineSesionService.actualizarSesion(this.evalLogistica.id, payload)
-      : this.kineSesionService.crearSesion(payload);
+    if (this.evalLogistica.id) {
+      const payload: ActualizarKineSesionPayload = {
+        fecha: fechaIso,
+        observacion: this.evalLogistica.observacion || undefined,
+      };
 
-    peticion$.subscribe({
-      next: () => {
-        this.mostrarExito('Sesión guardada correctamente.');
-        this.displayMainDialog = false;
-        this.cargarDatosGenerales();
-      },
-      error: () => {
-        this.mostrarError('Ocurrió un error al guardar la sesión.');
-        this.loading = false;
-        this.cdr.detectChanges();
+      const estadoCambio =
+        !!this.evalLogistica.estado && this.evalLogistica.estado !== this.estadoOriginal;
+
+      this.loading = true;
+
+      const actualizar$ = this.kineSesionService.actualizarSesion(this.evalLogistica.id, payload);
+
+      const flujo$: Observable<unknown> = estadoCambio
+        ? actualizar$.pipe(
+            switchMap(() =>
+              this.kineSesionService.cambiarEstado(this.evalLogistica.id as string, {
+                estado: this.evalLogistica.estado as EstadoSesion,
+              }),
+            ),
+          )
+        : actualizar$;
+
+      flujo$.subscribe({
+        next: () => {
+          this.mostrarExito('Sesión guardada correctamente.');
+          this.displayMainDialog = false;
+          this.loading = false;
+          this.cargarDatosGenerales();
+        },
+        error: () => {
+          this.mostrarError('Ocurrió un error al guardar la sesión.');
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
+      });
+    } else {
+      if (!this.evalLogistica.grupo_id) {
+        this.mostrarAdvertencia('Selecciona un grupo.');
+        return;
       }
-    });
+      if (!this.evalLogistica.tipo_evaluacion_id) {
+        this.mostrarAdvertencia('Selecciona el tipo de prueba.');
+        return;
+      }
+
+      const payload: CrearKineSesionPayload = {
+        fecha: fechaIso,
+        grupoId: this.evalLogistica.grupo_id,
+        tipoEvaluacionId: this.evalLogistica.tipo_evaluacion_id,
+        observacion: this.evalLogistica.observacion || undefined,
+      };
+
+      this.loading = true;
+
+      this.kineSesionService.crearSesion(payload).subscribe({
+        next: () => {
+          this.mostrarExito('Sesión creada correctamente.');
+          this.displayMainDialog = false;
+          this.loading = false;
+          this.cargarDatosGenerales();
+        },
+        error: () => {
+          this.mostrarError('Ocurrió un error al crear la sesión.');
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
+      });
+    }
   }
 
-  confirmarEliminarSesion(sesion: any) {
+  confirmarEliminarSesion(sesion: KineSesionVista): void {
     this.confirmationService.confirm({
-      message: '¿Deseas eliminar permanentemente esta sesión? Esto borrará todas las notas.',
-      header: 'Confirmar Eliminación',
+      message:
+        'Esta sesión quedará marcada como eliminada. Sus resultados dejarán de aparecer mientras esté así, ' +
+        'pero puedes restaurarla después desde el filtro "Mostrar eliminadas".',
+      header: 'Eliminar sesión',
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Sí, Eliminar',
+      acceptLabel: 'Sí, eliminar',
       rejectLabel: 'Cancelar',
-      acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
         this.kineSesionService.eliminarSesion(sesion.id).subscribe({
           next: () => {
-            this.mostrarExito('La sesión fue eliminada exitosamente.');
-            this.cargarDatosGenerales(); 
+            this.mostrarExito('Sesión eliminada.');
+            this.cargarDatosGenerales();
           },
-          error: () => this.mostrarError('No se pudo eliminar la sesión.')
+          error: () => this.mostrarError('No se pudo eliminar la sesión.'),
         });
-      }
+      },
     });
   }
 
-  verificarSiEstaEvaluado(evaluaciones: any[]): boolean {
-    if (!evaluaciones || evaluaciones.length === 0) return false;
-    
-    return evaluaciones.every(sub => {
-      const evaluaLados = sub.evalua_lados === true || sub.evalua_lados === 'true' || sub.evaluaLados === true;
-
-      if (evaluaLados) {
-        const izqLleno = sub.resultado_izquierdo !== null && sub.resultado_izquierdo !== undefined && sub.resultado_izquierdo !== '';
-        const derLleno = sub.resultado_derecho !== null && sub.resultado_derecho !== undefined && sub.resultado_derecho !== '';
-        return izqLleno && derLleno;
-      } else {
-        const unicoLleno = sub.resultado_unico !== null && sub.resultado_unico !== undefined && sub.resultado_unico !== '';
-        return unicoLleno;
-      }
+  restaurarSesion(sesion: KineSesionVista): void {
+    this.confirmationService.confirm({
+      message: '¿Deseas restaurar esta sesión eliminada?',
+      header: 'Restaurar sesión',
+      icon: 'pi pi-refresh',
+      acceptLabel: 'Sí, restaurar',
+      rejectLabel: 'Cancelar',
+      accept: () => {
+        this.kineSesionService.restaurarSesion(sesion.id).subscribe({
+          next: () => {
+            this.mostrarExito('Sesión restaurada.');
+            this.cargarDatosGenerales();
+          },
+          error: () => this.mostrarError('No se pudo restaurar la sesión.'),
+        });
+      },
     });
   }
 
-  actualizarEstadoEstudiante() {
-    setTimeout(() => {
-      if (this.estudianteSeleccionado) {
-        this.estudianteSeleccionado.evaluado = this.verificarSiEstaEvaluado(this.estudianteSeleccionado.evaluaciones);
-      }
-    }, 50);
+  verificarSiEstaEvaluado(alumno: AlumnoEvaluacion): boolean {
+    return alumno.evaluaciones.every((sub) =>
+      sub.evalua_lados
+        ? sub.resultado_izquierdo !== null && sub.resultado_derecho !== null
+        : sub.resultado_unico !== null,
+    );
   }
 
-  limpiarFila(sub: any) {
+  actualizarEstadoEstudiante(alumno: AlumnoEvaluacion): void {
+    alumno.evaluado = this.verificarSiEstaEvaluado(alumno);
+  }
+
+  limpiarFila(sub: EvaluacionParametro): void {
     sub.resultado_unico = null;
     sub.resultado_izquierdo = null;
     sub.resultado_derecho = null;
     sub.observacion = '';
-    this.actualizarEstadoEstudiante();
   }
 
-  abrirCalificador(sesion: any) {
+  abrirCalificador(sesion: KineSesionVista): void {
     this.evalLogistica = { ...sesion };
-    this.prepararModal(sesion, 'calificador');
+    this.prepararModal(sesion, 'calificar');
   }
 
-  verResultados(sesion: any) {
-    this.sesionVista = { ...sesion };
-    this.prepararModal(sesion, 'visor');
+  verResultados(sesion: KineSesionVista): void {
+    this.sesionVista = sesion;
+    this.prepararModal(sesion, 'ver');
   }
 
-  private prepararModal(sesion: any, modo: 'calificador' | 'visor') {
+  private prepararModal(sesion: KineSesionVista, modo: 'calificar' | 'ver'): void {
     this.loading = true;
-    const sGrupoId = sesion.grupo_id || sesion.grupoId;
-    const sTipoId = sesion.tipo_evaluacion_id || sesion.tipoEvaluacionId;
+
+    const sGrupoId = sesion.grupo_id;
+    const sTipoId = sesion.tipo_evaluacion_id;
 
     forkJoin({
-      alumnos: this.estudianteService.listarEstudiantes({ grupoIds: [sGrupoId], limite: 1000, activo: true }),
-      subevaluaciones: this.kineSubService.listarSubevaluacionesPorTipo(sTipoId),
-      resultados: this.kineResultadoService.listarResultadosPorSesion(sesion.id)
+      subevaluaciones: this.kineSubevaluacionService.listarSubevaluacionesPorTipo(sTipoId),
+      estudiantes: this.estudianteService.listarEstudiantes({
+        grupoIds: [sGrupoId],
+        limite: 1000,
+        activo: true,
+      }),
+      resultados: this.kineResultadoService.listarResultadosPorSesion(sesion.id),
     }).subscribe({
-      next: (res) => {
-        const subevaluacionesDefinidas = res.subevaluaciones || [];
-        const resultadosPrevios = res.resultados || [];
-        
-        const peticionesRangos = subevaluacionesDefinidas.map((sub: any) => this.kineRangoService.listarRangosPorSubevaluacion(sub.id));
-        
-        const procesarDatos = () => {
-          const procesados = res.alumnos.registros.map((alumno: any) => {
-            const idUsuario = alumno.perfil ? alumno.perfil.id_usuario : alumno.usuario_id || alumno.id;
-            const nombre = alumno.perfil ? alumno.perfil.nombre : alumno.nombre;
-            const apellido = alumno.perfil ? alumno.perfil.apellido : alumno.apellido;
+      next: ({ subevaluaciones, estudiantes, resultados }) => {
+        const listaSubevaluaciones: KineSubevaluacion[] = subevaluaciones || [];
+        this.subevaluacionesPorTipo.set(sTipoId, listaSubevaluaciones);
 
-            const evaluacionesDelAlumno = subevaluacionesDefinidas.map((sub: any) => {
-              const resGuardado: any = resultadosPrevios.find((r: any) => 
-                (r.estudiante_id === idUsuario || r.estudianteId === idUsuario) && 
-                (r.subevaluacion_id === sub.id || r.subevaluacionId === sub.id)
-              );
+        const idsSubevaluaciones = listaSubevaluaciones.map((s) => s.id);
 
-              return {
-                resultado_id: resGuardado ? resGuardado.id : null,
-                subevaluacion_id: sub.id,
-                nombre_parametro: sub.nombre,
-                evalua_lados: sub.evalua_lados || sub.evaluaLados,
-                resultado_unico: (resGuardado && (resGuardado.resultado_unico != null || resGuardado.resultadoUnico != null)) ? Number(resGuardado.resultado_unico || resGuardado.resultadoUnico) : null,
-                resultado_izquierdo: (resGuardado && (resGuardado.resultado_izquierdo != null || resGuardado.resultadoIzquierdo != null)) ? Number(resGuardado.resultado_izquierdo || resGuardado.resultadoIzquierdo) : null,
-                resultado_derecho: (resGuardado && (resGuardado.resultado_derecho != null || resGuardado.resultadoDerecho != null)) ? Number(resGuardado.resultado_derecho || resGuardado.resultadoDerecho) : null,
-                observacion: resGuardado ? resGuardado.observacion : '',
-                tiene_datos: !!resGuardado 
-              };
-            });
+        const peticionesRangos = idsSubevaluaciones.map((id) =>
+          this.kineRangoService.listarRangosPorSubevaluacion(id),
+        );
 
-            return {
-              id: idUsuario,
-              nombre: nombre,
-              apellido: apellido,
-              evaluado: this.verificarSiEstaEvaluado(evaluacionesDelAlumno),
-              evaluaciones: modo === 'visor' ? evaluacionesDelAlumno.filter((e: any) => e.tiene_datos) : evaluacionesDelAlumno
-            };
+        const cargarRangos$ =
+          peticionesRangos.length > 0 ? forkJoin(peticionesRangos) : of([] as KineRango[][]);
+
+        cargarRangos$.subscribe((rangosPorSub) => {
+          this.rangos = rangosPorSub.flat();
+
+          const resultadosPorAlumnoYSub = new Map<string, KineResultadoConDetalle>();
+          (resultados || []).forEach((r: KineResultadoConDetalle) => {
+            resultadosPorAlumnoYSub.set(`${r.estudiante_id}-${r.subevaluacion_id}`, r);
           });
 
-          if (modo === 'calificador') {
-            this.estudiantesGrupo = procesados;
-            this.estudianteSeleccionado = this.estudiantesGrupo.length > 0 ? this.estudiantesGrupo[0] : null;
+          const alumnos: AlumnoEvaluacion[] = (estudiantes?.registros || estudiantes || []).map(
+            (alumno: any) => {
+              const idAlumno = alumno.usuario_id ?? alumno.id;
+              const nombre = alumno.perfil?.nombre ?? alumno.nombre ?? '';
+              const apellido = alumno.perfil?.apellido ?? alumno.apellido ?? '';
+
+              const evaluaciones: EvaluacionParametro[] = listaSubevaluaciones.map((sub) => {
+                const resGuardado = resultadosPorAlumnoYSub.get(`${idAlumno}-${sub.id}`);
+
+                return {
+                  resultado_id: resGuardado?.id ?? null,
+                  subevaluacion_id: sub.id,
+                  nombre_parametro: sub.nombre,
+                  evalua_lados: sub.evalua_lados,
+                  resultado_unico:
+                    resGuardado?.resultado_unico != null ? Number(resGuardado.resultado_unico) : null,
+                  resultado_izquierdo:
+                    resGuardado?.resultado_izquierdo != null
+                      ? Number(resGuardado.resultado_izquierdo)
+                      : null,
+                  resultado_derecho:
+                    resGuardado?.resultado_derecho != null
+                      ? Number(resGuardado.resultado_derecho)
+                      : null,
+                  observacion: resGuardado?.observacion ?? '',
+                  tiene_datos: !!resGuardado,
+                  rango: resGuardado?.rango ?? null,
+                };
+              });
+
+              const alumnoEvaluacion: AlumnoEvaluacion = {
+                id: idAlumno,
+                nombre,
+                apellido,
+                evaluado: false,
+                evaluaciones,
+              };
+              alumnoEvaluacion.evaluado = this.verificarSiEstaEvaluado(alumnoEvaluacion);
+              return alumnoEvaluacion;
+            },
+          );
+
+          if (modo === 'calificar') {
+            this.estudiantesGrupo = alumnos;
+            this.estudianteSeleccionado = alumnos[0] ?? null;
             this.displayGradesDialog = true;
           } else {
-            this.resultadosVista = procesados.filter((a: any) => a.evaluaciones.length > 0); 
-            this.estudianteVistaSeleccionado = this.resultadosVista.length > 0 ? this.resultadosVista[0] : null;
+            this.resultadosVista = alumnos;
+            this.estudianteVistaSeleccionado = alumnos[0] ?? null;
             this.displayViewDialog = true;
           }
-          
+
           this.loading = false;
           this.cdr.detectChanges();
-        };
-
-        if (peticionesRangos.length > 0) {
-          forkJoin(peticionesRangos as Observable<any[]>[]).subscribe((rangosArrays: any[]) => {
-            this.rangos = rangosArrays.flat();
-            procesarDatos();
-          });
-        } else {
-          this.rangos = [];
-          procesarDatos();
-        }
+        });
       },
       error: () => {
-        this.mostrarError('Error al cargar la planilla.');
+        this.mostrarError('No se pudieron cargar los datos de la sesión.');
         this.loading = false;
-        this.cdr.detectChanges();
-      }
+      },
     });
   }
 
-  guardarNotasFinales() {
-    const peticionesAGuardar: any[] = [];
+  guardarNotasFinales(): void {
+    const filasIncompletas: string[] = [];
 
-    this.estudiantesGrupo.forEach(estudiante => {
-      estudiante.evaluaciones.forEach((sub: any) => {
-        if (
-          sub.resultado_unico !== null || 
-          sub.resultado_izquierdo !== null || 
-          sub.resultado_derecho !== null || 
-          (sub.observacion && sub.observacion.trim() !== '')
-        ) {
-          const payload = {
-            sesionId: this.evalLogistica.id,
-            estudianteId: estudiante.id,
-            subevaluacionId: sub.subevaluacion_id,
-            resultadoUnico: sub.resultado_unico !== null ? String(sub.resultado_unico) : undefined,
-            resultadoIzquierdo: sub.resultado_izquierdo !== null ? String(sub.resultado_izquierdo) : undefined,
-            resultadoDerecho: sub.resultado_derecho !== null ? String(sub.resultado_derecho) : undefined,
-            observacion: sub.observacion || ''
-          };
+    interface PeticionInfo {
+      alumno: AlumnoEvaluacion;
+      sub: EvaluacionParametro;
+      esCreacion: boolean;
+      request$: Observable<KineResultadoConDetalle>;
+    }
 
-          if (sub.resultado_id) {
-            peticionesAGuardar.push(this.kineResultadoService.actualizarResultado(sub.resultado_id, payload));
-          } else {
-            peticionesAGuardar.push(this.kineResultadoService.crearResultado(payload));
-          }
+    const peticiones: PeticionInfo[] = [];
+
+    this.estudiantesGrupo.forEach((alumno) => {
+      alumno.evaluaciones.forEach((sub) => {
+        const tieneAlgo =
+          sub.resultado_unico !== null ||
+          sub.resultado_izquierdo !== null ||
+          sub.resultado_derecho !== null ||
+          (sub.observacion && sub.observacion.trim() !== '');
+
+        if (!tieneAlgo) return;
+
+        if (sub.evalua_lados && (sub.resultado_izquierdo === null || sub.resultado_derecho === null)) {
+          filasIncompletas.push(`${alumno.apellido}, ${alumno.nombre} — ${sub.nombre_parametro}`);
+          return;
         }
+
+        const payload = {
+          sesionId: this.evalLogistica.id as string,
+          estudianteId: alumno.id,
+          subevaluacionId: sub.subevaluacion_id,
+          resultadoUnico: sub.resultado_unico !== null ? String(sub.resultado_unico) : undefined,
+          resultadoIzquierdo:
+            sub.resultado_izquierdo !== null ? String(sub.resultado_izquierdo) : undefined,
+          resultadoDerecho:
+            sub.resultado_derecho !== null ? String(sub.resultado_derecho) : undefined,
+          observacion: sub.observacion || undefined,
+        };
+
+        const esCreacion = !sub.resultado_id;
+        const request$ = esCreacion
+          ? this.kineResultadoService.crearResultado(payload)
+          : this.kineResultadoService.actualizarResultado(sub.resultado_id as number, payload);
+
+        peticiones.push({ alumno, sub, esCreacion, request$ });
       });
     });
 
-    if (peticionesAGuardar.length === 0) {
-      this.mostrarAdvertencia('No has ingresado ningún dato para guardar.');
+    if (filasIncompletas.length > 0) {
+      this.mostrarAdvertencia(
+        `Estos parámetros miden ambos lados y les falta un valor. Complétalos o límpialos antes de guardar: ${filasIncompletas.join(' · ')}`,
+      );
+      return;
+    }
+
+    if (peticiones.length === 0) {
+      this.mostrarAdvertencia('No hay datos nuevos para guardar.');
       return;
     }
 
     this.loading = true;
-    forkJoin(peticionesAGuardar).subscribe({
-      next: () => {
-        if (this.evalLogistica.estado === EstadoSesion.PROGRAMADA) {
-          this.confirmationService.confirm({
-            message: '¿Deseas marcar esta sesión como FINALIZADA?',
-            header: 'Sesión Completada',
-            icon: 'pi pi-check-circle',
-            acceptLabel: 'Sí, finalizar',
-            rejectLabel: 'No, dejar pendiente',
-            accept: () => {
-                this.kineSesionService.cambiarEstado(this.evalLogistica.id, { estado: EstadoSesion.FINALIZADA }).subscribe(() => {
-                  this.mostrarExito('Resultados guardados y sesión finalizada.');
-                  this.displayGradesDialog = false;
-                  this.cargarDatosGenerales();
-                });
-            },
-            reject: () => {
-                this.mostrarExito('Resultados guardados correctamente.');
-                this.displayGradesDialog = false;
-            }
-          });
-        } else {
-          this.mostrarExito('Resultados guardados correctamente.');
-          this.displayGradesDialog = false;
+
+    const peticionesConManejo = peticiones.map((info) =>
+      info.request$.pipe(
+        map((resultado) => ({ ok: true as const, info, resultado })),
+        catchError((error) => of({ ok: false as const, info, error })),
+      ),
+    );
+
+    forkJoin(peticionesConManejo).subscribe((resultados) => {
+      const exitosos = resultados.filter((r) => r.ok) as Array<{
+        ok: true;
+        info: PeticionInfo;
+        resultado: KineResultadoConDetalle;
+      }>;
+      const fallidos = resultados.filter((r) => !r.ok);
+
+      exitosos.forEach((r) => {
+        if (r.info.esCreacion) {
+          r.info.sub.resultado_id = r.resultado.id;
+          r.info.sub.rango = r.resultado.rango;
         }
-      },
-      error: () => {
-        this.mostrarError('Error al guardar los resultados.');
-        this.loading = false;
+      });
+
+      this.loading = false;
+
+      if (fallidos.length > 0) {
+        const detalle = fallidos
+          .map((f) => `${f.info.alumno.apellido} — ${f.info.sub.nombre_parametro}`)
+          .join(' · ');
+        this.mostrarError(
+          `Se guardaron ${exitosos.length} de ${resultados.length} registros. Revisa y reintenta: ${detalle}`,
+        );
         this.cdr.detectChanges();
+        return;
+      }
+
+      if (this.evalLogistica.estado === EstadoSesion.PROGRAMADA) {
+        this.confirmationService.confirm({
+          message: '¿Deseas marcar esta sesión como FINALIZADA?',
+          header: 'Sesión completada',
+          icon: 'pi pi-check-circle',
+          acceptLabel: 'Sí, finalizar',
+          rejectLabel: 'No, dejar pendiente',
+          accept: () => {
+            this.kineSesionService
+              .cambiarEstado(this.evalLogistica.id as string, { estado: EstadoSesion.FINALIZADA })
+              .subscribe(() => {
+                this.mostrarExito('Resultados guardados y sesión finalizada.');
+                this.displayGradesDialog = false;
+                this.cargarDatosGenerales();
+              });
+          },
+          reject: () => {
+            this.mostrarExito('Resultados guardados correctamente.');
+            this.displayGradesDialog = false;
+            this.cargarDatosGenerales();
+          },
+        });
+      } else {
+        this.mostrarExito('Resultados guardados correctamente.');
+        this.displayGradesDialog = false;
+        this.cargarDatosGenerales();
       }
     });
   }
 
-  // ==========================================
-  // UTILIDADES
-  // ==========================================
-  private formatearFechaIso(fecha: any): string {
-    if (!fecha) return '';
-    const d = new Date(fecha);
-    const tzOffset = d.getTimezoneOffset() * 60000;
-    return (new Date(d.getTime() - tzOffset)).toISOString().split('T')[0];
+  private formatearFechaIso(fecha: Date | string): string {
+    const d = fecha instanceof Date ? fecha : new Date(fecha);
+    return d.toISOString();
   }
 
-  private convertirStringADate(fechaStr: string): Date | null {
-    if (!fechaStr) return null;
-    const [year, month, day] = fechaStr.split('T')[0].split('-');
-    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  private convertirStringADate(fecha: string | null | undefined): Date | null {
+    return fecha ? new Date(fecha) : null;
   }
 
-  private mostrarExito(mensaje: string) { this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje }); }
-  private mostrarError(mensaje: string) { this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje }); }
-  private mostrarAdvertencia(mensaje: string) { this.messageService.add({ severity: 'warn', summary: 'Atención', detail: mensaje }); }
+  private mostrarExito(detail: string): void {
+    this.messageService.add({ severity: 'success', summary: 'Listo', detail });
+  }
+
+  private mostrarError(detail: string): void {
+    this.messageService.add({ severity: 'error', summary: 'Error', detail, life: 6000 });
+  }
+
+  private mostrarAdvertencia(detail: string): void {
+    this.messageService.add({ severity: 'warn', summary: 'Atención', detail, life: 5000 });
+  }
 }

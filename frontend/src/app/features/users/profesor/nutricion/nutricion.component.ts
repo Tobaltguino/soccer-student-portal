@@ -35,7 +35,7 @@ import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes
   ],
   providers: [MessageService],
   templateUrl: './nutricion.component.html',
-  styleUrls: ['./nutricion.component.scss'] // 🔥 Cambiado a .scss
+  styleUrls: ['./nutricion.component.scss']
 })
 export class ProfessorNutritionComponent implements OnInit {
   
@@ -94,7 +94,6 @@ export class ProfessorNutritionComponent implements OnInit {
           return;
         }
 
-        // ✅ Las sesiones de Nutrición son globales, así que hacemos 1 sola petición general
         forkJoin({
           tipos: this.nutriTipoService.listarTiposEvaluacion(),
           sesionesData: this.nutriSesionService.listarSesiones({ limite: 1000 }) 
@@ -109,7 +108,8 @@ export class ProfessorNutritionComponent implements OnInit {
 
             this.sesiones = sesionesFinalizadas.map((s: any) => ({
                 ...s,
-                tipoObj: this.tiposEvaluacion.find(t => t.id === (s.tipo_evaluacion_id || s.tipoEvaluacionId)) || { nombre: 'Desconocido' }
+                // FIX: Mapeo correcto de tipo_id coincidiendo con la base de datos
+                tipoObj: this.tiposEvaluacion.find(t => t.id === s.tipo_id) || { nombre: 'Desconocido' }
             }));
 
             this.aplicarFiltros();
@@ -139,7 +139,8 @@ export class ProfessorNutritionComponent implements OnInit {
       let cumpleFecha = true;
       let cumplePrueba = true;
 
-      const tId = s.tipo_evaluacion_id || s.tipoEvaluacionId;
+      // FIX: Uso correcto de tipo_id
+      const tId = s.tipo_id;
 
       if (this.filtroFecha) {
         const dFiltro = this.formatearFechaIso(this.filtroFecha);
@@ -176,7 +177,6 @@ export class ProfessorNutritionComponent implements OnInit {
     this.displayGradesDialog = true;
     this.cdr.detectChanges();
 
-    // ✅ Buscamos a los estudiantes que pertenezcan a los grupos de ESTE profesor
     const misGrupoIds = this.grupos.map(g => g.id).filter(id => id !== undefined) as number[];
 
     forkJoin({
@@ -192,13 +192,15 @@ export class ProfessorNutritionComponent implements OnInit {
           const nombre = est.perfil ? est.perfil.nombre : est.nombre;
           const apellido = est.perfil ? est.perfil.apellido : est.apellido;
 
+          // FIX: Búsqueda correcta asegurando mapeo (estudiante_id vs estudianteId)
           const resultadoGuardado: any = resultadosPrevios.find((r: any) => r.estudianteId === idUsuario || r.estudiante_id === idUsuario);
 
           const estudianteConResultados = {
             id: idUsuario,
             nombre: nombre,
             apellido: apellido,
-            archivo_url_previo: resultadoGuardado ? (resultadoGuardado.archivoUrl || resultadoGuardado.archivo_url) : null,
+            // FIX: Priorizar nomenclatura exacta de la BD/Backend
+            archivo_url_previo: resultadoGuardado ? (resultadoGuardado.archivo_url || resultadoGuardado.archivoUrl) : null,
             nombre_archivo_previo: null as string | null,
             observacion: resultadoGuardado ? (resultadoGuardado.observaciones || resultadoGuardado.observacion) : ''
           };
@@ -214,7 +216,7 @@ export class ProfessorNutritionComponent implements OnInit {
           return estudianteConResultados;
         });
 
-        // ✅ Opcional: Solo mostramos alumnos que SI fueron evaluados por el nutri en esta sesión
+        // ✅ Solo mostramos alumnos que SI fueron evaluados por el nutri en esta sesión
         this.estudiantes = this.estudiantes.filter(e => e.archivo_url_previo || e.observacion);
 
         this.cargandoResultados = false;
