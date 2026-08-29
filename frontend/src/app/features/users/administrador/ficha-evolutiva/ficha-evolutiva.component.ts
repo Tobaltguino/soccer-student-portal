@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 
-// Módulos de PrimeNG
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -16,17 +15,15 @@ import { SelectModule } from 'primeng/select';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
-import { forkJoin, Observable, of } from 'rxjs';
 
-// Nuevos Servicios y Modelos
 import { FichaEvolutivaService } from '../../../../core/domains/salud/kinesiologia/ficha-evolutiva/services/ficha-evolutiva.service';
 import { FichaEvolutiva, 
-  CrearFichaPayload,
   ArticulacionRom,
   FuerzaMovimiento
 } from '../../../../core/domains/salud/kinesiologia/ficha-evolutiva/models/ficha-evolutiva.interface';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
 import { UsuarioService } from '../../../../core/domains/usuarios/central/services/usuario.service';
+import { Rol } from '../../../../core/domains/usuarios/central/models/usuario.interface';
 
 @Component({
   selector: 'app-admin-kine-evolution',
@@ -48,7 +45,7 @@ import { UsuarioService } from '../../../../core/domains/usuarios/central/servic
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './ficha-evolutiva.component.html',
-  styleUrls: ['./ficha-evolutiva.component.scss'] // 🔥 OJO: Cambiar a .scss
+  styleUrls: ['./ficha-evolutiva.component.scss']
 })
 export class AdminKineEvolutionComponent implements OnInit {
 
@@ -58,33 +55,24 @@ export class AdminKineEvolutionComponent implements OnInit {
   private messageService = inject(MessageService);
   private cdr = inject(ChangeDetectorRef);
 
-  // ==========================================
-  // ESTADOS DE LA VISTA E HISTORIAL
-  // ==========================================
   listaAlumnos: any[] = [];
   alumnoSeleccionado: any = null;
   listaKinesiologos: any[] = []; 
   
   cargandoHistorial: boolean = false;
-  guardando: boolean = false; // 🔥 Variable maestra de bloqueo
+  guardando: boolean = false;
   historialFichas: any[] = []; 
 
   modoFormulario: boolean = false;
   editandoId: string | null = null;
   modoSoloLectura: boolean = false;
 
-  // ==========================================
-  // CONTROL DEL SWITCHER
-  // ==========================================
   vistaFormulario: string = 'antecedentes';
   opcionesVistaForm: any[] = [
     { label: 'Antecedentes', value: 'antecedentes', icon: 'pi pi-info-circle' },
     { label: 'Evaluación Clínica', value: 'evaluacion', icon: 'pi pi-heartbeat' }
   ];
 
-  // ==========================================
-  // MODELO ESTRICTO DE LA FICHA MÉDICA
-  // ==========================================
   ficha: any = this.obtenerFichaVacia();
   opcionesROM: string[] = ['Normal', 'Bueno', 'Moderado', 'Limitado'];
   listaArticulaciones: ArticulacionRom[] = this.obtenerArticulacionesVacias();
@@ -95,16 +83,9 @@ export class AdminKineEvolutionComponent implements OnInit {
   }
 
   cargarDatosGenerales() {
-    const kinesiologosReq: Observable<any[]> = (this.usuarioService as any).listarKinesiologos 
-      ? (this.usuarioService as any).listarKinesiologos() 
-      : of([]);
-
-    forkJoin({
-      alumnos: this.estudianteService.listarEstudiantes({ limite: 2000, activo: true }),
-      kines: kinesiologosReq
-    }).subscribe({
-      next: (res) => {
-        const alumnosBD = res.alumnos.registros || [];
+    this.estudianteService.listarEstudiantes({ limite: 2000, activo: true }).subscribe({
+      next: (resAlumnos) => {
+        const alumnosBD = resAlumnos.registros || [];
         this.listaAlumnos = alumnosBD.map((a: any) => {
           const nombre = a.perfil ? a.perfil.nombre : a.nombre;
           const apellido = a.perfil ? a.perfil.apellido : a.apellido;
@@ -112,14 +93,20 @@ export class AdminKineEvolutionComponent implements OnInit {
           const idUsuario = a.perfil ? a.perfil.id_usuario : a.usuario_id || a.id;
           return { id: idUsuario, nombreCompleto: `${nombre} ${apellido} ${rut ? '('+rut+')' : ''}` };
         });
+        this.cdr.detectChanges();
+      },
+      error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los estudiantes' })
+    });
 
-        this.listaKinesiologos = (res.kines || []).map((k: any) => ({
-            id: k.id,
-            nombreCompleto: `${k.nombre} ${k.apellido}`
+    this.usuarioService.listarUsuarios({ rol: Rol.KINESIOLOGO, limite: 200 }).subscribe({
+      next: (resKines) => {
+        this.listaKinesiologos = (resKines.registros || []).map((k: any) => ({
+          id: k.id_usuario,
+          nombreCompleto: `${k.nombre} ${k.apellido}`
         }));
         this.cdr.detectChanges();
       },
-      error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos base' })
+      error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los kinesiólogos' })
     });
   }
 
@@ -129,6 +116,7 @@ export class AdminKineEvolutionComponent implements OnInit {
       this.cargarHistorial();
     } else {
       this.historialFichas = [];
+      this.cdr.detectChanges();
     }
   }
 
@@ -138,10 +126,7 @@ export class AdminKineEvolutionComponent implements OnInit {
 
     this.fichaService.listarFichasPorEstudiante(this.alumnoSeleccionado.id).subscribe({
       next: (data) => {
-        this.historialFichas = (data || []).map(f => ({
-          ...f,
-          kinesiologoObj: this.listaKinesiologos.find(k => k.id === f.kinesiologo_id) || { nombreCompleto: 'Desconocido' }
-        }));
+        this.historialFichas = data || [];
         this.cargandoHistorial = false;
         this.cdr.detectChanges();
       },
@@ -159,6 +144,7 @@ export class AdminKineEvolutionComponent implements OnInit {
     this.vistaFormulario = 'antecedentes'; 
     this.modoFormulario = true;
     this.modoSoloLectura = false;
+    this.cdr.detectChanges();
   }
 
   volverAlHistorial() {
@@ -166,9 +152,10 @@ export class AdminKineEvolutionComponent implements OnInit {
     this.editandoId = null;
     this.modoSoloLectura = false;
     this.resetearFormulario();
+    this.cdr.detectChanges();
   }
 
-  abrirEditarFicha(fichaData: FichaEvolutiva) {
+  abrirEditarFicha(fichaData: any) {
     this.editandoId = fichaData.id;
     this.vistaFormulario = 'antecedentes';
     
@@ -178,6 +165,7 @@ export class AdminKineEvolutionComponent implements OnInit {
       diagnosticoMedico: fichaData.diagnostico_medico,
       observacion: fichaData.observacion,
       balanceRomberg: fichaData.balance_romberg,
+      marcha: fichaData.marcha || '',
       antecedentesPersonales: fichaData.antecedentes_personales || {},
       antecedentesRemotos: fichaData.antecedentes_remotos || {},
       inspeccionEstatica: fichaData.inspeccion_estatica || {},
@@ -190,7 +178,7 @@ export class AdminKineEvolutionComponent implements OnInit {
     this.listaArticulaciones = this.obtenerArticulacionesVacias();
     if (fichaData.rango_movimiento && fichaData.rango_movimiento.length > 0) {
       this.listaArticulaciones.forEach(art => {
-        const guardado = fichaData.rango_movimiento!.find(r => r.nombre === art.nombre);
+        const guardado = fichaData.rango_movimiento.find((r: any) => r.nombre === art.nombre);
         if (guardado) {
           art.derActivo = guardado.derActivo;
           art.derPasivo = guardado.derPasivo;
@@ -204,15 +192,16 @@ export class AdminKineEvolutionComponent implements OnInit {
     
     this.modoFormulario = true;
     this.modoSoloLectura = false;
+    this.cdr.detectChanges();
   }
 
-  abrirVerFicha(fichaData: FichaEvolutiva) {
+  abrirVerFicha(fichaData: any) {
     this.abrirEditarFicha(fichaData); 
-    this.modoSoloLectura = true;      
+    this.modoSoloLectura = true;
+    this.cdr.detectChanges();
   }
 
   guardarFicha() {
-    // 🔥 Blindaje anti-clics
     if (this.guardando) return;
 
     if (!this.ficha.kinesiologoId) {
@@ -220,13 +209,19 @@ export class AdminKineEvolutionComponent implements OnInit {
       return;
     }
 
-    // 🔥 Activamos estado de guardado
+    if (!this.ficha.fechaEvaluacion) {
+      this.messageService.add({ severity: 'warn', summary: 'Requerido', detail: 'Debe seleccionar una fecha para la evaluación.' });
+      return;
+    }
+
     this.guardando = true;
     this.cdr.detectChanges();
 
     let fechaFormateada = this.ficha.fechaEvaluacion;
     if (this.ficha.fechaEvaluacion instanceof Date) {
-      fechaFormateada = this.ficha.fechaEvaluacion.toISOString().split('T')[0];
+      const d = this.ficha.fechaEvaluacion;
+      const tzOffset = d.getTimezoneOffset() * 60000;
+      fechaFormateada = (new Date(d.getTime() - tzOffset)).toISOString().split('T')[0];
     }
 
     const payload: any = { 
@@ -236,6 +231,7 @@ export class AdminKineEvolutionComponent implements OnInit {
       diagnosticoMedico: this.ficha.diagnosticoMedico,
       observacion: this.ficha.observacion,
       balanceRomberg: this.ficha.balanceRomberg,
+      marcha: this.ficha.marcha,
       antecedentesPersonales: this.ficha.antecedentesPersonales,
       antecedentesRemotos: this.ficha.antecedentesRemotos,
       inspeccionEstatica: this.ficha.inspeccionEstatica,
@@ -282,6 +278,7 @@ export class AdminKineEvolutionComponent implements OnInit {
       diagnosticoMedico: '',
       observacion: '',
       balanceRomberg: null,
+      marcha: '',
       antecedentesPersonales: {},
       antecedentesRemotos: {},
       inspeccionEstatica: {},

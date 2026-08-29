@@ -63,7 +63,7 @@ export class FichasEvolutivasService {
     incluirEliminadas: boolean = false,
   ): Promise<FichaEvolutivaRow[]> {
     if (gruposPermitidos !== null) {
-      await this.verificarEstudianteEnAlcance(estudianteId, gruposPermitidos);
+      await this.verificarEstudianteEnAlcance(estudianteId, gruposPermitidos, true);   // 👈 agregado
     }
 
     let query = this.supabase.client

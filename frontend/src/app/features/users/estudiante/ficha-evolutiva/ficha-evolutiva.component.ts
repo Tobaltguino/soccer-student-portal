@@ -1,9 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, Observable, of } from 'rxjs';
 
-// Módulos de PrimeNG
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
@@ -16,18 +14,13 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { DatePickerModule } from 'primeng/datepicker'; 
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { ConfirmDialogModule } from 'primeng/confirmdialog'; // 🔥 Agregado
-import { MessageService, ConfirmationService } from 'primeng/api'; // 🔥 Agregado ConfirmationService
+import { MessageService } from 'primeng/api';
 
-// Nuevos Servicios y Modelos
 import { FichaEvolutivaService } from '../../../../core/domains/salud/kinesiologia/ficha-evolutiva/services/ficha-evolutiva.service';
 import { FichaEvolutiva, 
-  CrearFichaPayload,
   ArticulacionRom,
   FuerzaMovimiento
 } from '../../../../core/domains/salud/kinesiologia/ficha-evolutiva/models/ficha-evolutiva.interface';
-
-import { UsuarioService } from '../../../../core/domains/usuarios/central/services/usuario.service';
 
 @Component({
   selector: 'app-estudiante-ficha-evolutiva',
@@ -46,23 +39,20 @@ import { UsuarioService } from '../../../../core/domains/usuarios/central/servic
     ToastModule,
     TooltipModule,
     DatePickerModule,
-    ProgressSpinnerModule,
-    ConfirmDialogModule // 🔥 Importado
+    ProgressSpinnerModule
   ],
-  providers: [MessageService, ConfirmationService], // 🔥 Importado
+  providers: [MessageService],
   templateUrl: './ficha-evolutiva.component.html',
-  styleUrls: ['./ficha-evolutiva.component.scss'] // 🔥 Cambiado a .scss
+  styleUrls: ['./ficha-evolutiva.component.scss']
 })
 export class EstudianteFichaEvolutivaComponent implements OnInit {
 
   private fichaService = inject(FichaEvolutivaService);
-  private usuarioService = inject(UsuarioService);
   private messageService = inject(MessageService);
   private cdr = inject(ChangeDetectorRef);
 
   cargandoHistorial: boolean = false;
   historialFichas: any[] = [];
-  listaKinesiologos: any[] = [];
   modoFormulario: boolean = false;
 
   vistaFormulario: string = 'antecedentes';
@@ -82,26 +72,11 @@ export class EstudianteFichaEvolutivaComponent implements OnInit {
 
   cargarMisDatos() {
     this.cargandoHistorial = true;
+    this.cdr.detectChanges();
 
-    const kinesiologosReq: Observable<any[]> = (this.usuarioService as any).listarKinesiologos 
-      ? (this.usuarioService as any).listarKinesiologos() 
-      : of([]);
-
-    forkJoin({
-      kines: kinesiologosReq,
-      fichas: this.fichaService.listarMisFichas()
-    }).subscribe({
-      next: (res) => {
-        this.listaKinesiologos = (res.kines || []).map((k: any) => ({
-          id: k.id,
-          nombreCompleto: `${k.nombre} ${k.apellido}`
-        }));
-
-        this.historialFichas = (res.fichas || []).map(f => ({
-          ...f,
-          kinesiologoObj: this.listaKinesiologos.find(k => k.id === f.kinesiologo_id) || { nombreCompleto: 'Desconocido' }
-        }));
-
+    this.fichaService.listarMisFichas().subscribe({
+      next: (data) => {
+        this.historialFichas = data || [];
         this.cargandoHistorial = false;
         this.cdr.detectChanges();
       },
@@ -113,12 +88,14 @@ export class EstudianteFichaEvolutivaComponent implements OnInit {
     });
   }
 
-  abrirVerFicha(fichaData: FichaEvolutiva) {
+  abrirVerFicha(fichaData: any) {
     this.vistaFormulario = 'antecedentes';
     
     this.ficha = {
       fechaEvaluacion: new Date(fichaData.fecha_evaluacion + 'T00:00:00'),
-      kinesiologoObj: this.listaKinesiologos.find(k => k.id === fichaData.kinesiologo_id) || { nombreCompleto: 'Desconocido' },
+      kinesiologoNombre: fichaData.kinesiologo 
+        ? `${fichaData.kinesiologo.nombre} ${fichaData.kinesiologo.apellido}` 
+        : 'Desconocido',
       diagnosticoMedico: fichaData.diagnostico_medico,
       observacion: fichaData.observacion,
       balanceRomberg: fichaData.balance_romberg,
@@ -135,7 +112,7 @@ export class EstudianteFichaEvolutivaComponent implements OnInit {
     this.listaArticulaciones = this.obtenerArticulacionesVacias();
     if (fichaData.rango_movimiento && fichaData.rango_movimiento.length > 0) {
       this.listaArticulaciones.forEach(art => {
-        const guardado = fichaData.rango_movimiento!.find(r => r.nombre === art.nombre);
+        const guardado = fichaData.rango_movimiento.find((r: any) => r.nombre === art.nombre);
         if (guardado) {
           art.derActivo = guardado.derActivo;
           art.derPasivo = guardado.derPasivo;
@@ -154,6 +131,7 @@ export class EstudianteFichaEvolutivaComponent implements OnInit {
   volverAlHistorial() {
     this.modoFormulario = false;
     this.resetearFormulario();
+    this.cdr.detectChanges();
   }
 
   resetearFormulario() {
@@ -165,6 +143,7 @@ export class EstudianteFichaEvolutivaComponent implements OnInit {
   obtenerFichaVacia() {
     return {
       fechaEvaluacion: new Date(),
+      kinesiologoNombre: '',
       diagnosticoMedico: '',
       observacion: '',
       balanceRomberg: null,

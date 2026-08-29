@@ -1,8 +1,6 @@
 <div class="pf-admin-wrapper fadein animation-duration-500">
 
     <p-toast position="top-right"></p-toast>
-    <!-- 🔥 Confirm Dialog Global 🔥 -->
-    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
     
     <!-- VISTA 1: LISTADO DE HISTORIAL -->
     <div *ngIf="!modoFormulario">
@@ -35,7 +33,7 @@
                         </td>
                         <td class="py-3">
                             <span class="p-column-title pf-oswald text-steel hidden-desktop">Profesional: </span>
-                            <span class="text-steel font-bold">{{ h.kinesiologoObj?.nombreCompleto }}</span>
+                            <span class="text-steel font-bold">{{ h.kinesiologo?.nombre }} {{ h.kinesiologo?.apellido }}</span>
                         </td>
                         <td class="py-3">
                             <span class="p-column-title pf-oswald text-steel hidden-desktop">Diagnóstico: </span>
@@ -63,7 +61,7 @@
                 <h2 class="m-0 text-teal pf-anton text-2xl" style="letter-spacing: 0.5px;">Detalle de mi Atención</h2>
                 <div class="flex flex-wrap gap-4 mt-2">
                     <span class="pf-oswald text-steel text-sm">Fecha: <span class="text-chalk">{{ ficha.fechaEvaluacion | date:'dd/MM/yyyy' }}</span></span>
-                    <span class="pf-oswald text-steel text-sm">Evaluador: <span class="text-chalk">{{ficha.kinesiologoObj?.nombreCompleto}}</span></span>
+                    <span class="pf-oswald text-steel text-sm">Evaluador: <span class="text-chalk">{{ficha.kinesiologoNombre}}</span></span>
                 </div>
             </div>
             <div class="w-full md:w-auto mt-3 md:mt-0">

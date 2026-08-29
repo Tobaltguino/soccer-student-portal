@@ -42,7 +42,7 @@ export class FichasEvolutivasController {
   }
 
   @Get('estudiantes/:estudianteId/fichas-evolutivas')
-  @Roles(Rol.ADMINISTRADOR, Rol.KINESIOLOGO)
+  @Roles(Rol.ADMINISTRADOR, Rol.KINESIOLOGO, Rol.PROFESOR)
   async listarPorEstudiante(
     @Param('estudianteId') estudianteId: string,
     @CurrentUser() user: RequestUser,
@@ -52,7 +52,7 @@ export class FichasEvolutivasController {
   }
 
   @Get('kine-fichas-evolutivas/:id')
-  @Roles(Rol.ADMINISTRADOR, Rol.KINESIOLOGO)
+  @Roles(Rol.ADMINISTRADOR, Rol.KINESIOLOGO, Rol.PROFESOR)
   async buscarPorId(@Param('id') id: string, @CurrentUser() user: RequestUser) {
     const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
     return this.fichasService.buscarPorId(id, gruposPermitidos);

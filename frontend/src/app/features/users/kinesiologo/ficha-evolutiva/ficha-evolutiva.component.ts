@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api'; 
 
-// Módulos de PrimeNG
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
@@ -16,14 +15,12 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { DatePickerModule } from 'primeng/datepicker'; 
 
-// Nuevos Servicios y Modelos
 import { FichaEvolutivaService } from '../../../../core/domains/salud/kinesiologia/ficha-evolutiva/services/ficha-evolutiva.service';
 import { FichaEvolutiva, 
   CrearFichaPayload,
   ArticulacionRom,
   FuerzaMovimiento
 } from '../../../../core/domains/salud/kinesiologia/ficha-evolutiva/models/ficha-evolutiva.interface';
-import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
 
 @Component({
@@ -44,14 +41,13 @@ import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes
     TooltipModule,
     DatePickerModule
   ],
-  providers: [MessageService], // ✅ ConfirmDialog eliminado
+  providers: [MessageService],
   templateUrl: './ficha-evolutiva.component.html',
-  styleUrls: ['./ficha-evolutiva.component.scss'] // 🔥 Cambiado a .scss
+  styleUrls: ['./ficha-evolutiva.component.scss']
 })
 export class KinesiologoFichaEvolutivaComponent implements OnInit {
 
   private fichaService = inject(FichaEvolutivaService);
-  private grupoService = inject(GrupoService);
   private estudianteService = inject(EstudianteService);
   private messageService = inject(MessageService);
   private cdr = inject(ChangeDetectorRef);
@@ -94,35 +90,22 @@ export class KinesiologoFichaEvolutivaComponent implements OnInit {
   // CARGA DE DATOS (MIS ALUMNOS)
   // ==========================================
   cargarAlumnosDelKine() {
-    this.grupoService.obtenerMisGrupos().subscribe({
-      next: (grupos) => {
-        const misGrupoIds = grupos.map(g => g.id).filter(id => id !== undefined) as number[];
-        
-        if (misGrupoIds.length === 0) {
-          this.listaAlumnos = [];
-          return;
-        }
-
-        this.estudianteService.listarEstudiantes({ grupoIds: misGrupoIds, limite: 2000, activo: true }).subscribe({
-          next: (res) => {
-            const alumnosBD = res.registros || [];
-            this.listaAlumnos = alumnosBD.map((a: any) => {
-              const nombre = a.perfil ? a.perfil.nombre : a.nombre;
-              const apellido = a.perfil ? a.perfil.apellido : a.apellido;
-              const rut = a.perfil?.rut || a.rut;
-              const idUsuario = a.perfil ? a.perfil.id_usuario : a.usuario_id || a.id;
-              
-              return {
-                id: idUsuario,
-                nombreCompleto: `${nombre} ${apellido} ${rut ? '('+rut+')' : ''}`
-              };
-            });
-            this.cdr.detectChanges();
-          },
-          error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar tus pacientes.' })
+    this.estudianteService.obtenerEstudiantesDeMiGrupo().subscribe({
+      next: (alumnosBD: any) => {
+        this.listaAlumnos = (alumnosBD || []).map((a: any) => {
+          const nombre = a.perfil ? a.perfil.nombre : a.nombre;
+          const apellido = a.perfil ? a.perfil.apellido : a.apellido;
+          const rut = a.perfil?.rut || a.rut;
+          const idUsuario = a.perfil ? a.perfil.id_usuario : a.usuario_id || a.id;
+          
+          return {
+            id: idUsuario,
+            nombreCompleto: `${nombre} ${apellido} ${rut ? '('+rut+')' : ''}`
+          };
         });
+        this.cdr.detectChanges();
       },
-      error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar tus grupos.' })
+      error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar tus pacientes.' })
     });
   }
 
@@ -132,11 +115,14 @@ export class KinesiologoFichaEvolutivaComponent implements OnInit {
       this.cargarHistorial();
     } else {
       this.historialFichas = [];
+      this.cdr.detectChanges();
     }
   }
 
   cargarHistorial() {
     this.cargandoHistorial = true;
+    this.cdr.detectChanges();
+
     this.fichaService.listarFichasPorEstudiante(this.alumnoSeleccionado.id).subscribe({
       next: (data) => {
         this.historialFichas = data || [];
@@ -160,6 +146,7 @@ export class KinesiologoFichaEvolutivaComponent implements OnInit {
     this.vistaFormulario = 'antecedentes'; 
     this.modoFormulario = true;
     this.modoSoloLectura = false;
+    this.cdr.detectChanges();
   }
 
   volverAlHistorial() {
@@ -167,6 +154,7 @@ export class KinesiologoFichaEvolutivaComponent implements OnInit {
     this.editandoId = null;
     this.modoSoloLectura = false;
     this.resetearFormulario();
+    this.cdr.detectChanges();
   }
 
   abrirEditarFicha(fichaData: FichaEvolutiva) {
@@ -179,6 +167,7 @@ export class KinesiologoFichaEvolutivaComponent implements OnInit {
       diagnosticoMedico: fichaData.diagnostico_medico,
       observacion: fichaData.observacion,
       balanceRomberg: fichaData.balance_romberg,
+      marcha: fichaData.marcha,
       antecedentesPersonales: fichaData.antecedentes_personales || {},
       antecedentesRemotos: fichaData.antecedentes_remotos || {},
       inspeccionEstatica: fichaData.inspeccion_estatica || {},
@@ -207,11 +196,13 @@ export class KinesiologoFichaEvolutivaComponent implements OnInit {
     
     this.modoFormulario = true;
     this.modoSoloLectura = false;
+    this.cdr.detectChanges();
   }
 
   abrirVerFicha(fichaData: FichaEvolutiva) {
     this.abrirEditarFicha(fichaData); 
     this.modoSoloLectura = true;      
+    this.cdr.detectChanges();
   }
 
   // ==========================================
@@ -236,6 +227,7 @@ export class KinesiologoFichaEvolutivaComponent implements OnInit {
       diagnosticoMedico: this.ficha.diagnosticoMedico,
       observacion: this.ficha.observacion,
       balanceRomberg: this.ficha.balanceRomberg,
+      marcha: this.ficha.marcha,
       antecedentesPersonales: this.ficha.antecedentesPersonales,
       antecedentesRemotos: this.ficha.antecedentesRemotos,
       inspeccionEstatica: this.ficha.inspeccionEstatica,
@@ -279,6 +271,7 @@ export class KinesiologoFichaEvolutivaComponent implements OnInit {
       diagnosticoMedico: '',
       observacion: '',
       balanceRomberg: null,
+      marcha: '',
       antecedentesPersonales: {},
       antecedentesRemotos: {},
       inspeccionEstatica: {},
