@@ -1,28 +1,43 @@
 import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../../../../core/supabase/supabase.service';
 import { ActualizarWebConfiguracionDto } from './dto/actualizar-web-configuracion.dto';
-import type { WebConfiguracionRow } from './interfaces/web-configuracion.interface';
 import { lanzarErrorSupabase } from '../../../../shared/utils/supabase-error.util';
 
 @Injectable()
 export class WebConfiguracionService {
   constructor(private readonly supabase: SupabaseService) {}
 
-  async obtener(): Promise<WebConfiguracionRow> {
+  private mapearConfiguracion(row: any) {
+    if (!row) return null;
+    return {
+      id: row.id,
+      telefono: row.telefono,
+      correo: row.correo,
+      instagramNombre: row.instagram_nombre,
+      instagramUrl: row.instagram_url,
+      facebookNombre: row.facebook_nombre,
+      facebookUrl: row.facebook_url,
+      whatsappMensaje: row.whatsapp_mensaje,
+      heroTitulo: row.hero_titulo,
+      heroSubtitulo: row.hero_subtitulo,
+    };
+  }
+
+  async obtener(): Promise<any> {
     const { data, error } = await this.supabase.client
       .from('web_configuracion')
       .select('*')
       .eq('id', 1)
-      .single<WebConfiguracionRow>();
+      .single();
 
     if (error || !data) {
       throw new NotFoundException('Configuración web no encontrada');
     }
 
-    return data;
+    return this.mapearConfiguracion(data);
   }
 
-  async obtenerDatosLanding() {
+  async obtenerDatosLanding(): Promise<any> {
     const [config, metodologias, programas, auspiciadores, beneficios] = await Promise.all([
       this.supabase.client.from('web_configuracion').select('*').eq('id', 1).single(),
       this.supabase.client.from('web_metodologias').select('*').order('orden'),
@@ -31,18 +46,16 @@ export class WebConfiguracionService {
       this.supabase.client.from('web_beneficios').select('*').order('orden'),
     ]);
 
-    // Devolvemos un solo objeto consolidado
     return {
-      configuracion: config.data ?? null,
-      metodologias: metodologias.data ?? [],
-      programas: programas.data ?? [],
-      auspiciadores: auspiciadores.data ?? [],
-      beneficios: beneficios.data ?? [],
+      configuracion: this.mapearConfiguracion(config.data),
+      metodologias: (metodologias.data ?? []).map(m => ({ id: m.id, icono: m.icono, titulo: m.titulo, descripcion: m.descripcion, orden: m.orden })),
+      programas: (programas.data ?? []).map(p => ({ id: p.id, icono: p.icono, titulo: p.titulo, descripcion: p.descripcion, orden: p.orden, colorFondo: p.color_fondo, colorTexto: p.color_texto })),
+      auspiciadores: (auspiciadores.data ?? []).map(a => ({ id: a.id, nombre: a.nombre, descripcion: a.descripcion, orden: a.orden, imagenUrl: a.imagen_url, instagramUrl: a.instagram_url })),
+      beneficios: (beneficios.data ?? []).map(b => ({ id: b.id, nombre: b.nombre, descripcion: b.descripcion, orden: b.orden, imagenUrl: b.imagen_url, instagramUrl: b.instagram_url })),
     };
   }
 
-  async actualizar(dto: ActualizarWebConfiguracionDto): Promise<WebConfiguracionRow> {
-    // ... tu código de actualizar se mantiene igual ...
+  async actualizar(dto: ActualizarWebConfiguracionDto): Promise<any> {
     const { data, error } = await this.supabase.client
       .from('web_configuracion')
       .upsert({
@@ -58,11 +71,11 @@ export class WebConfiguracionService {
         ...(dto.heroSubtitulo !== undefined && { hero_subtitulo: dto.heroSubtitulo }),
       })
       .select()
-      .single<WebConfiguracionRow>();
+      .single();
 
     if (error) lanzarErrorSupabase(error, 'No se pudo actualizar la configuración web');
     if (!data) throw new InternalServerErrorException('No se recibió la configuración actualizada');
 
-    return data;
+    return this.mapearConfiguracion(data);
   }
 }

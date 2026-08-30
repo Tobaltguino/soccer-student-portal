@@ -2,14 +2,24 @@ import { Injectable, InternalServerErrorException, NotFoundException } from '@ne
 import { SupabaseService } from '../../../../core/supabase/supabase.service';
 import { CrearWebMetodologiaDto } from './dto/crear-web-metodologia.dto';
 import { ActualizarWebMetodologiaDto } from './dto/actualizar-web-metodologia.dto';
-import type { WebMetodologiaRow } from './interfaces/web-metodologia.interface';
 import { lanzarErrorSupabase } from '../../../../shared/utils/supabase-error.util';
 
 @Injectable()
 export class WebMetodologiasService {
   constructor(private readonly supabase: SupabaseService) {}
 
-  async crear(dto: CrearWebMetodologiaDto): Promise<WebMetodologiaRow> {
+  private mapear(row: any) {
+    if (!row) return null;
+    return {
+      id: row.id,
+      icono: row.icono,
+      titulo: row.titulo,
+      descripcion: row.descripcion,
+      orden: row.orden,
+    };
+  }
+
+  async crear(dto: CrearWebMetodologiaDto): Promise<any> {
     const { data, error } = await this.supabase.client
       .from('web_metodologias')
       .insert({
@@ -19,47 +29,38 @@ export class WebMetodologiasService {
         orden: dto.orden ?? 0,
       })
       .select()
-      .single<WebMetodologiaRow>();
+      .single();
 
-    if (error) {
-      lanzarErrorSupabase(error, 'No se pudo crear la metodología');
-    }
+    if (error) lanzarErrorSupabase(error, 'No se pudo crear la metodología');
+    if (!data) throw new InternalServerErrorException('No se recibió la metodología creada');
 
-    if (!data) {
-      throw new InternalServerErrorException('No se recibió la metodología creada');
-    }
-
-    return data;
+    return this.mapear(data);
   }
 
-  async listar(): Promise<WebMetodologiaRow[]> {
+  async listar(): Promise<any[]> {
     const { data, error } = await this.supabase.client
       .from('web_metodologias')
       .select('*')
       .order('orden');
 
-    if (error) {
-      lanzarErrorSupabase(error, 'No se pudo listar las metodologías');
-    }
+    if (error) lanzarErrorSupabase(error, 'No se pudo listar las metodologías');
 
-    return data ?? [];
+    return (data ?? []).map(row => this.mapear(row));
   }
 
-  async buscarPorId(id: number): Promise<WebMetodologiaRow> {
+  async buscarPorId(id: number): Promise<any> {
     const { data, error } = await this.supabase.client
       .from('web_metodologias')
       .select('*')
       .eq('id', id)
-      .single<WebMetodologiaRow>();
+      .single();
 
-    if (error || !data) {
-      throw new NotFoundException('Metodología no encontrada');
-    }
+    if (error || !data) throw new NotFoundException('Metodología no encontrada');
 
-    return data;
+    return this.mapear(data);
   }
 
-  async actualizar(id: number, dto: ActualizarWebMetodologiaDto): Promise<WebMetodologiaRow> {
+  async actualizar(id: number, dto: ActualizarWebMetodologiaDto): Promise<any> {
     const { data, error } = await this.supabase.client
       .from('web_metodologias')
       .update({
@@ -70,27 +71,16 @@ export class WebMetodologiasService {
       })
       .eq('id', id)
       .select()
-      .single<WebMetodologiaRow>();
+      .single();
 
-    if (error) {
-      lanzarErrorSupabase(error, 'No se pudo actualizar la metodología');
-    }
+    if (error) lanzarErrorSupabase(error, 'No se pudo actualizar la metodología');
+    if (!data) throw new InternalServerErrorException('No se recibió la metodología actualizada');
 
-    if (!data) {
-      throw new InternalServerErrorException('No se recibió la metodología actualizada');
-    }
-
-    return data;
+    return this.mapear(data);
   }
 
   async eliminar(id: number): Promise<void> {
-    const { error } = await this.supabase.client
-      .from('web_metodologias')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      lanzarErrorSupabase(error, 'No se pudo eliminar la metodología');
-    }
+    const { error } = await this.supabase.client.from('web_metodologias').delete().eq('id', id);
+    if (error) lanzarErrorSupabase(error, 'No se pudo eliminar la metodología');
   }
 }

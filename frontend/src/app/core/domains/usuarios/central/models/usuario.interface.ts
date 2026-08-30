@@ -1,17 +1,8 @@
-export enum Rol {
-  ESTUDIANTE = 'estudiante',
-  PROFESOR = 'profesor',
-  KINESIOLOGO = 'kinesiologo',
-  NUTRICIONISTA = 'nutricionista',
-  ADMINISTRADOR = 'administrador',
-}
+// Agrega esta línea arriba con tus otros imports compartidos
+import { Posicion } from "../../../../../shared/enums/posicion.enum";
+import { Rol } from "../../../../../shared/enums/rol.enum";
 
-export enum Posicion {
-  PORTERO = 'portero',
-  DEFENSA = 'defensa',
-  MEDIOCAMPISTA = 'mediocampista',
-  DELANTERO = 'delantero',
-}
+export { Posicion, Rol };
 
 export interface UsuarioPerfil {
   id_usuario: string;

@@ -23,8 +23,11 @@ import { RutFormatDirective } from '../../../../shared/directives/rut-format.dir
 import { RutValidator } from '../../../../shared/directives/rut-validator.directive';
 
 import { UsuarioService } from '../../../../core/domains/usuarios/central/services/usuario.service';
-import { Rol, CrearUsuarioPayload, ActualizarUsuarioPayload } from '../../../../core/domains/usuarios/central/models/usuario.interface'
+import { CrearUsuarioPayload, ActualizarUsuarioPayload } from '../../../../core/domains/usuarios/central/models/usuario.interface'
 import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
+
+import { Rol } from '../../../../shared/enums/rol.enum';
+import { Posicion } from '../../../../shared/enums/posicion.enum';
 
 @Component({
   selector: 'app-administrador-usuarios',
@@ -53,10 +56,15 @@ export class AdministradorUsuariosComponent implements OnInit {
   dataList: any[] = []; 
   listaGrupos: any[] = [];
   listaPosiciones: any[] = [
-    { id: 'portero', nombre: 'Portero' },
-    { id: 'defensa', nombre: 'Defensa' },
-    { id: 'mediocampista', nombre: 'Mediocampista' },
-    { id: 'delantero', nombre: 'Delantero' }
+    { id: Posicion.PORTERO, nombre: 'Portero' },
+    { id: Posicion.DEFENSA_CENTRAL, nombre: 'Defensa Central' },
+    { id: Posicion.LATERAL_DERECHO, nombre: 'Lateral Derecho' },
+    { id: Posicion.LATERAL_IZQUIERDO, nombre: 'Lateral Izquierdo' },
+    { id: Posicion.MEDIOCAMPISTA_DEFENSIVO, nombre: 'Mediocampista Defensivo' },
+    { id: Posicion.MEDIOCAMPISTA_CENTRAL, nombre: 'Mediocampista Central' },
+    { id: Posicion.MEDIOCAMPISTA_OFENSIVO, nombre: 'Mediocampista Ofensivo' },
+    { id: Posicion.EXTREMO, nombre: 'Extremo' },
+    { id: Posicion.DELANTERO_CENTRO, nombre: 'Delantero Centro' }
   ];
   
   vistaActual: Rol = Rol.ESTUDIANTE;
@@ -115,7 +123,13 @@ export class AdministradorUsuariosComponent implements OnInit {
 
   cargarMaestros() {
     this.grupoService.listarGrupos().subscribe({
-      next: (data) => this.listaGrupos = data,
+      next: (data) => {
+        // 🔥 FIX NG0100: Diferimos la asignación al siguiente micro-tick de Angular
+        Promise.resolve().then(() => {
+            this.listaGrupos = data;
+            this.cdr.detectChanges();
+        });
+      },
       error: () => this.messageService.add({ severity: 'error', summary: 'Aviso', detail: 'No se pudieron cargar los grupos' })
     });
   }
@@ -246,24 +260,36 @@ export class AdministradorUsuariosComponent implements OnInit {
 
     this.guardando = true;
 
-    const payload: Partial<CrearUsuarioPayload> = {
+    // Construimos el payload de forma segura (sin nulls ni strings vacíos)
+    // Construimos el payload de forma segura
+    const payload: any = {
       rut: rutLimpio,
       nombre: this.userForm.nombre,
       apellido: this.userForm.apellido,
       email: this.userForm.email.toLowerCase(),
-      rol: this.vistaActual,
-      fechaNacimiento: this.userForm.fecha_nacimiento ? this.formatearFecha(this.userForm.fecha_nacimiento) : undefined
     };
 
+    // 🔥 FIX: Solo adjuntamos el ROL si es un usuario nuevo (Creación)
+    if (!this.isEditing) {
+      payload.rol = this.vistaActual;
+    }
+
+    if (this.userForm.fecha_nacimiento) {
+      payload.fechaNacimiento = this.formatearFecha(this.userForm.fecha_nacimiento);
+    }
+
+    // Limpiamos la basura (nulls o strings vacíos) antes de enviar al backend
     if (this.vistaActual === Rol.ESTUDIANTE) {
-      payload.peso = this.userForm.peso;
-      payload.altura = this.userForm.altura;
-      payload.posiciones = this.userForm.posicionesIds;
-      payload.grupoId = this.userForm.grupo_id;
-      payload.direccion = this.userForm.direccion;
-      payload.prevision = this.userForm.prevision;
+      if (this.userForm.peso !== null && this.userForm.peso !== '') payload.peso = this.userForm.peso;
+      if (this.userForm.altura !== null && this.userForm.altura !== '') payload.altura = this.userForm.altura;
+      if (this.userForm.posicionesIds && this.userForm.posicionesIds.length > 0) payload.posiciones = this.userForm.posicionesIds;
+      if (this.userForm.grupo_id !== null && this.userForm.grupo_id !== '') payload.grupoId = this.userForm.grupo_id;
+      if (this.userForm.direccion && this.userForm.direccion.trim() !== '') payload.direccion = this.userForm.direccion;
+      if (this.userForm.prevision && this.userForm.prevision.trim() !== '') payload.prevision = this.userForm.prevision;
     } else if (this.vistaActual === Rol.PROFESOR) {
-      payload.tipoProfesor = this.userForm.tipo_profesor;
+      if (this.userForm.tipo_profesor && this.userForm.tipo_profesor.trim() !== '') {
+        payload.tipoProfesor = this.userForm.tipo_profesor;
+      }
     }
 
     if (this.isEditing) {
@@ -305,9 +331,28 @@ export class AdministradorUsuariosComponent implements OnInit {
     this.cargarDatos();
   }
 
+  // Parseo inteligente del error de Class-Validator
   private mostrarErrorGuardado(err: any) {
     this.guardando = false;
-    this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Error al procesar la solicitud' });
+    
+    let errorDetalle = 'Error al procesar la solicitud';
+    
+    if (err.error?.message) {
+      // Si NestJS devuelve un array de errores de validación, los unimos
+      if (Array.isArray(err.error.message)) {
+        errorDetalle = err.error.message.join(' · ');
+      } else {
+        errorDetalle = err.error.message;
+      }
+    }
+
+    this.messageService.add({ 
+      severity: 'error', 
+      summary: 'Error de Validación', 
+      detail: errorDetalle,
+      life: 6000 // Le damos más tiempo para que puedas leerlo
+    });
+    
     this.cdr.detectChanges();
   }
 

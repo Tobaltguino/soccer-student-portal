@@ -138,7 +138,7 @@
     </div>
   </section>
 
-  <!-- AUSPICIADORES (Sin modificar la imagen) -->
+  <!-- AUSPICIADORES -->
   <section id="auspiciadores" class="pf-section pf-section--bordered" *ngIf="auspiciadores.length > 0">
     <div class="pf-container">
       <div class="pf-section__head">
@@ -148,16 +148,17 @@
 
       <div class="pf-grid-3">
         <div class="pf-card pf-staff h-full flex flex-column" *ngFor="let au of auspiciadores">
-          <!-- Se mantiene el estilo inline original -->
-          <img [src]="au.imagen_url || 'assets/images/default-sponsor.png'" [alt]="au.nombre" style="height: 50px; object-fit: contain; filter: grayscale(1) invert(1); opacity: 0.8; margin-bottom: 1rem; align-self: flex-start;">
+          <!-- 🔥 FIX: Actualizado a camelCase (imagenUrl) 🔥 -->
+          <img [src]="au.imagenUrl || 'assets/images/default-sponsor.png'" [alt]="au.nombre" style="height: 50px; object-fit: contain; filter: grayscale(1) invert(1); opacity: 0.8; margin-bottom: 1rem; align-self: flex-start;">
 
           <div class="flex-grow-1">
             <h3 class="pf-anton pf-staff__title">{{ au.nombre }}</h3>
             <p class="pf-staff__desc">{{ au.descripcion }}</p>
           </div>
 
-          <div class="mt-4" *ngIf="au.instagram_url">
-            <button class="pf-btn-instagram" (click)="irA(au.instagram_url)">
+          <!-- 🔥 FIX: Actualizado a camelCase (instagramUrl) 🔥 -->
+          <div class="mt-4" *ngIf="au.instagramUrl">
+            <button class="pf-btn-instagram" (click)="irA(au.instagramUrl)">
               <i class="pi pi-instagram"></i> Ver Instagram
             </button>
           </div>
@@ -181,8 +182,9 @@
             <p class="pf-staff__desc">{{ a.descripcion }}</p>
           </div>
 
-          <div class="mt-4" *ngIf="a.instagram_url">
-            <button class="pf-btn-instagram" (click)="irA(a.instagram_url)">
+          <!-- 🔥 FIX: Actualizado a camelCase (instagramUrl) 🔥 -->
+          <div class="mt-4" *ngIf="a.instagramUrl">
+            <button class="pf-btn-instagram" (click)="irA(a.instagramUrl)">
               <i class="pi pi-instagram"></i> Ver Instagram
             </button>
           </div>

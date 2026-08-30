@@ -168,7 +168,6 @@ import { FiltrarClasesDto } from './dto/filtrar-clases.dto';
                    String(hoyDate.getDate()).padStart(2, '0');
 
     // 2. Buscamos las clases que coincidan con la fecha de hoy
-    // Nota: Agregamos relaciones comunes como grupos, ajusta el select según tu BD
     const { data, error } = await this.supabase.client
       .from('clases')
       .select(`
@@ -176,7 +175,8 @@ import { FiltrarClasesDto } from './dto/filtrar-clases.dto';
         grupos ( nombre )
       `)
       .eq('fecha', hoyStr)
-      .order('hora_inicio', { ascending: true }); // Ordenamos de más temprano a más tarde
+      // 🔥 FIX: Cambiado de 'hora_inicio' a 'hora' que es el nombre real de tu columna
+      .order('hora', { ascending: true }); 
 
     if (error) {
       lanzarErrorSupabase(error, 'No se pudieron obtener las clases de hoy');

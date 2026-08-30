@@ -2,14 +2,26 @@ import { Injectable, InternalServerErrorException, NotFoundException } from '@ne
 import { SupabaseService } from '../../../../core/supabase/supabase.service';
 import { CrearWebProgramaDto } from './dto/crear-web-programa.dto';
 import { ActualizarWebProgramaDto } from './dto/actualizar-web-programa.dto';
-import type { WebProgramaRow } from './interfaces/web-programa.interface';
 import { lanzarErrorSupabase } from '../../../../shared/utils/supabase-error.util';
 
 @Injectable()
 export class WebProgramasService {
   constructor(private readonly supabase: SupabaseService) {}
 
-  async crear(dto: CrearWebProgramaDto): Promise<WebProgramaRow> {
+  private mapear(row: any) {
+    if (!row) return null;
+    return {
+      id: row.id,
+      icono: row.icono,
+      titulo: row.titulo,
+      descripcion: row.descripcion,
+      orden: row.orden,
+      colorFondo: row.color_fondo,
+      colorTexto: row.color_texto,
+    };
+  }
+
+  async crear(dto: CrearWebProgramaDto): Promise<any> {
     const { data, error } = await this.supabase.client
       .from('web_programas')
       .insert({
@@ -21,47 +33,38 @@ export class WebProgramasService {
         orden: dto.orden ?? 0,
       })
       .select()
-      .single<WebProgramaRow>();
+      .single();
 
-    if (error) {
-      lanzarErrorSupabase(error, 'No se pudo crear el programa');
-    }
+    if (error) lanzarErrorSupabase(error, 'No se pudo crear el programa');
+    if (!data) throw new InternalServerErrorException('No se recibió el programa creado');
 
-    if (!data) {
-      throw new InternalServerErrorException('No se recibió el programa creado');
-    }
-
-    return data;
+    return this.mapear(data);
   }
 
-  async listar(): Promise<WebProgramaRow[]> {
+  async listar(): Promise<any[]> {
     const { data, error } = await this.supabase.client
       .from('web_programas')
       .select('*')
       .order('orden');
 
-    if (error) {
-      lanzarErrorSupabase(error, 'No se pudo listar los programas');
-    }
+    if (error) lanzarErrorSupabase(error, 'No se pudo listar los programas');
 
-    return data ?? [];
+    return (data ?? []).map(row => this.mapear(row));
   }
 
-  async buscarPorId(id: number): Promise<WebProgramaRow> {
+  async buscarPorId(id: number): Promise<any> {
     const { data, error } = await this.supabase.client
       .from('web_programas')
       .select('*')
       .eq('id', id)
-      .single<WebProgramaRow>();
+      .single();
 
-    if (error || !data) {
-      throw new NotFoundException('Programa no encontrado');
-    }
+    if (error || !data) throw new NotFoundException('Programa no encontrado');
 
-    return data;
+    return this.mapear(data);
   }
 
-  async actualizar(id: number, dto: ActualizarWebProgramaDto): Promise<WebProgramaRow> {
+  async actualizar(id: number, dto: ActualizarWebProgramaDto): Promise<any> {
     const { data, error } = await this.supabase.client
       .from('web_programas')
       .update({
@@ -74,27 +77,16 @@ export class WebProgramasService {
       })
       .eq('id', id)
       .select()
-      .single<WebProgramaRow>();
+      .single();
 
-    if (error) {
-      lanzarErrorSupabase(error, 'No se pudo actualizar el programa');
-    }
+    if (error) lanzarErrorSupabase(error, 'No se pudo actualizar el programa');
+    if (!data) throw new InternalServerErrorException('No se recibió el programa actualizado');
 
-    if (!data) {
-      throw new InternalServerErrorException('No se recibió el programa actualizado');
-    }
-
-    return data;
+    return this.mapear(data);
   }
 
   async eliminar(id: number): Promise<void> {
-    const { error } = await this.supabase.client
-      .from('web_programas')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      lanzarErrorSupabase(error, 'No se pudo eliminar el programa');
-    }
+    const { error } = await this.supabase.client.from('web_programas').delete().eq('id', id);
+    if (error) lanzarErrorSupabase(error, 'No se pudo eliminar el programa');
   }
 }

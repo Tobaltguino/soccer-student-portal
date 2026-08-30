@@ -69,15 +69,16 @@ export class HomeComponent implements OnInit {
     this.webConfigService.obtenerDatosLanding().subscribe({
       next: (res) => {
         if (res.configuracion) {
+          // 🔥 Todo actualizado a camelCase 🔥
           this.telefonoAcademia = res.configuracion.telefono || this.telefonoAcademia;
           this.correoAcademia = res.configuracion.correo || this.correoAcademia;
-          this.nombreInstagram = res.configuracion.instagram_nombre || this.nombreInstagram;
-          this.linkInstagram = res.configuracion.instagram_url || this.linkInstagram;
-          this.nombreFacebook = res.configuracion.facebook_nombre || this.nombreFacebook;
-          this.linkFacebook = res.configuracion.facebook_url || this.linkFacebook;
-          this.mensajeWhatsApp = res.configuracion.whatsapp_mensaje || this.mensajeWhatsApp;
-          this.heroTitulo = res.configuracion.hero_titulo || this.heroTitulo;
-          this.heroSubtitulo = res.configuracion.hero_subtitulo || this.heroSubtitulo;
+          this.nombreInstagram = res.configuracion.instagramNombre || this.nombreInstagram;
+          this.linkInstagram = res.configuracion.instagramUrl || this.linkInstagram;
+          this.nombreFacebook = res.configuracion.facebookNombre || this.nombreFacebook;
+          this.linkFacebook = res.configuracion.facebookUrl || this.linkFacebook;
+          this.mensajeWhatsApp = res.configuracion.whatsappMensaje || this.mensajeWhatsApp;
+          this.heroTitulo = res.configuracion.heroTitulo || this.heroTitulo;
+          this.heroSubtitulo = res.configuracion.heroSubtitulo || this.heroSubtitulo;
         }
 
         if (res.metodologias?.length > 0) this.metodologias = res.metodologias;
@@ -100,7 +101,6 @@ export class HomeComponent implements OnInit {
   irA(url: string) { if(url) window.open(url, '_blank'); }
   
   scrollTo(index: number) {
-    // Mapeo simple de los navLinks a los IDs de las secciones
     const sections = ['metodologia', 'categorias', 'auspiciadores', 'beneficios'];
     const element = document.getElementById(sections[index]);
     if (element) {

@@ -2,15 +2,13 @@ export interface WebConfiguracion {
   id: number;
   telefono: string | null;
   correo: string | null;
-  instagram_nombre: string | null;
-  instagram_url: string | null;
-  facebook_nombre: string | null;
-  facebook_url: string | null;
-  whatsapp_mensaje: string | null;
-  hero_titulo: string | null;
-  hero_subtitulo: string | null;
-  created_at: string;
-  updated_at: string;
+  instagramNombre: string | null; // 🔥 Todo a camelCase
+  instagramUrl: string | null;
+  facebookNombre: string | null;
+  facebookUrl: string | null;
+  whatsappMensaje: string | null;
+  heroTitulo: string | null;
+  heroSubtitulo: string | null;
 }
 
 export interface ActualizarWebConfiguracionPayload {
@@ -26,7 +24,7 @@ export interface ActualizarWebConfiguracionPayload {
 }
 
 export interface LandingData {
-  configuracion: any;
+  configuracion: WebConfiguracion;
   metodologias: any[];
   programas: any[];
   auspiciadores: any[];

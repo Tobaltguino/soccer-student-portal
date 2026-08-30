@@ -1,6 +1,5 @@
 <div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
-    <!-- 🔥 CLASE pf-confirm-dialog AGREGADA AQUÍ 🔥 -->
     <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
 
     <!-- ENCABEZADO -->
@@ -158,8 +157,8 @@
                         <ng-template pTemplate="body" let-item>
                             <tr>
                                 <td class="text-center">
-                                    <div class="{{item.colorFondo || item.color_fondo}} p-2 border-round mx-auto" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                                        <i class="pi {{item.icono}} {{item.colorTexto || item.color_texto}} text-xl"></i>
+                                    <div class="{{item.colorFondo}} p-2 border-round mx-auto" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="pi {{item.icono}} {{item.colorTexto}} text-xl"></i>
                                     </div>
                                 </td>
                                 <td class="pf-anton text-chalk text-lg" style="letter-spacing: 1px;">{{item.titulo}}</td>
@@ -195,8 +194,7 @@
                         <ng-template pTemplate="body" let-item>
                             <tr>
                                 <td class="text-center"> 
-                                    <!-- 🔥 FIX: Tamaño fijo para que siempre se vea en la tabla 🔥 -->
-                                    <img [src]="item.imagenUrl || item.imagen_url || 'assets/images/default-sponsor.png'" 
+                                    <img [src]="item.imagenUrl || 'assets/images/default-sponsor.png'" 
                                          alt="Logo" class="pf-img-invert" style="width: 50px; height: 50px; object-fit: contain;">
                                 </td>
                                 <td class="pf-anton text-chalk text-lg" style="letter-spacing: 1px;">{{item.nombre}}</td>
@@ -232,16 +230,15 @@
                         <ng-template pTemplate="body" let-item>
                             <tr>
                                 <td class="text-center"> 
-                                    <!-- 🔥 FIX: Tamaño fijo para que siempre se vea en la tabla 🔥 -->
-                                    <img [src]="item.imagenUrl || item.imagen_url || 'assets/images/default-sponsor.png'" 
+                                    <img [src]="item.imagenUrl || 'assets/images/default-sponsor.png'" 
                                          alt="Logo" class="pf-img-invert" style="width: 50px; height: 50px; object-fit: contain;">
                                 </td>
                                 <td class="pf-anton text-chalk text-lg" style="letter-spacing: 1px;">{{item.nombre}}</td>
                                 <td>
-                                    <a *ngIf="item.instagramUrl || item.instagram_url" [href]="item.instagramUrl || item.instagram_url" target="_blank" class="pf-social-link text-teal no-underline font-bold">
+                                    <a *ngIf="item.instagramUrl" [href]="item.instagramUrl" target="_blank" class="pf-social-link text-teal no-underline font-bold">
                                         <i class="pi pi-instagram mr-1"></i> Ver Instagram
                                     </a>
-                                    <span *ngIf="!item.instagramUrl && !item.instagram_url" class="text-steel"><i class="pi pi-minus-circle mr-1"></i> Sin enlace</span>
+                                    <span *ngIf="!item.instagramUrl" class="text-steel"><i class="pi pi-minus-circle mr-1"></i> Sin enlace</span>
                                 </td>
                                 <td>
                                     <div class="pf-table-actions">
@@ -342,7 +339,6 @@
         <div class="pf-field-group flex flex-column mt-3">
             <label class="text-center pf-oswald mb-2">Logo de la Alianza</label>
             <div class="sponsor-preview-container text-center mb-3">
-                <!-- 🔥 FIX: Clase limpia para la preview 🔥 -->
                 <img *ngIf="previewUrl" [src]="previewUrl" alt="Logo" class="pf-img-preview">
                 <i *ngIf="!previewUrl" class="pi pi-image text-4xl text-steel"></i>
             </div>
@@ -367,7 +363,6 @@
         <div class="pf-field-group flex flex-column mt-3">
             <label class="text-center pf-oswald mb-2">Logo del Auspiciador</label>
             <div class="sponsor-preview-container text-center mb-3">
-                <!-- 🔥 FIX: Clase limpia para la preview 🔥 -->
                 <img *ngIf="previewUrl" [src]="previewUrl" alt="Logo" class="pf-img-preview">
                 <i *ngIf="!previewUrl" class="pi pi-image text-4xl text-steel"></i>
             </div>
@@ -391,7 +386,7 @@
         </ng-template>
     </p-dialog>
 
-    <!-- 🔥 OVERLAY DE CARGA GLOBAL DE PANTALLA COMPLETA 🔥 -->
+    <!-- OVERLAY DE CARGA GLOBAL -->
     <div class="pf-loading-overlay fadein" *ngIf="guardando">
         <div class="pf-spinner"></div>
         <div class="pf-loading-text">Procesando...</div>

@@ -18,9 +18,9 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SelectModule } from 'primeng/select'; 
 import { FileUploadModule } from 'primeng/fileupload';
 
-// Nuevos Servicios Web de Dominio
+// Servicios
 import { WebConfiguracionService } from '../../../../core/domains/administracion/web/web-configuracion/services/web-configuracion.service';
-import { WebMetodologiaService } from '../../../../core/domains/administracion/web/web-metodologias/services/web-metodologia.sevice';
+import { WebMetodologiaService } from '../../../../core/domains/administracion/web/web-metodologias/services/web-metodologia.service';
 import { WebProgramaService } from '../../../../core/domains/administracion/web/web-programas/services/web-programa.service';
 import { WebBeneficioService } from '../../../../core/domains/administracion/web/web-beneficios/services/web-beneficio.service';
 import { WebAuspiciadorService } from '../../../../core/domains/administracion/web/web-auspiciadores/services/web-auspiciador.service';
@@ -42,7 +42,7 @@ export class AdminHomeConfigComponent implements OnInit {
   private webConfigService = inject(WebConfiguracionService);
   private webMetodologiaService = inject(WebMetodologiaService);
   private webProgramaService = inject(WebProgramaService);
-  private webBeneficioService = inject(WebBeneficioService); // Alianzas
+  private webBeneficioService = inject(WebBeneficioService); 
   private webAuspiciadorService = inject(WebAuspiciadorService);
 
   private messageService = inject(MessageService);
@@ -50,34 +50,24 @@ export class AdminHomeConfigComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
 
   loading = false;
-  
-  // 🔥 Variable Maestra de Bloqueo
   guardando = false;
 
-  // Datos Generales
   config: any = {};
-
-  // Listas
   metodologias: any[] = [];
   programas: any[] = [];
   alianzas: any[] = [];
   auspiciadores: any[] = []; 
 
-  // Dialogos
   displayDialogMetodologia = false;
   displayDialogPrograma = false;
   displayDialogAlianza = false;
   displayDialogAuspiciador = false; 
 
-  // Formularios temporales
   itemForm: any = {};
   isEditing = false;
-
-  // Variables para imágenes
   archivoSeleccionado: File | null = null;
   previewUrl: string | null = null;
 
-  // Lista de iconos
   listaIconos = [
     { label: 'Estrella Rellena', value: 'pi-star-fill' },
     { label: 'Estrella', value: 'pi-star' },
@@ -96,7 +86,7 @@ export class AdminHomeConfigComponent implements OnInit {
     { label: 'Check / Verificado', value: 'pi-check-circle' },
     { label: 'Sol / Brillo', value: 'pi-sun' },        
     { label: 'Premio / Marcador', value: 'pi-bookmark-fill' }, 
-    { label: 'Salud / Más', value: 'pi-plus' }         
+    { label: 'Salud / Más', value: 'pi-plus' }        
   ];
 
   ngOnInit() {
@@ -120,6 +110,7 @@ export class AdminHomeConfigComponent implements OnInit {
         this.programas = data.programas || [];
         this.alianzas = data.alianzas || [];
         this.auspiciadores = data.auspiciadores || [];
+        
         this.loading = false;
         this.cdr.detectChanges();
       },
@@ -131,26 +122,41 @@ export class AdminHomeConfigComponent implements OnInit {
     });
   }
 
-  // --- GUARDAR CONFIGURACIÓN GENERAL ---
   guardarConfigGeneral() {
-    if (this.guardando) return; // Protección doble clic
+    if (this.guardando) return;
     this.guardando = true;
+
+    // Ya no necesitamos buscar el snake_case, solo enviamos el objeto purgado del ID
+    const payload = {
+      telefono: this.config.telefono,
+      correo: this.config.correo,
+      instagramNombre: this.config.instagramNombre,
+      instagramUrl: this.config.instagramUrl,
+      facebookNombre: this.config.facebookNombre,
+      facebookUrl: this.config.facebookUrl,
+      whatsappMensaje: this.config.whatsappMensaje,
+      heroTitulo: this.config.heroTitulo,
+      heroSubtitulo: this.config.heroSubtitulo,
+    };
     
-    this.webConfigService.actualizarConfiguracion(this.config).subscribe({
+    this.webConfigService.actualizarConfiguracion(payload).subscribe({
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Configuración actualizada' });
         this.guardando = false;
         this.cdr.detectChanges();
       },
-      error: () => {
-        this.mostrarError('No se pudo actualizar la configuración');
+      error: (err) => {
+        let errorDetalle = 'No se pudo actualizar la configuración';
+        if (err.error?.message) {
+          errorDetalle = Array.isArray(err.error.message) ? err.error.message.join(' · ') : err.error.message;
+        }
+        this.messageService.add({ severity: 'error', summary: 'Error de Validación', detail: errorDetalle, life: 6000 });
         this.guardando = false;
         this.cdr.detectChanges();
       }
     });
   }
 
-  // --- MANEJO DE LISTAS Y MODALES ---
   abrirNuevo(tipo: string) {
     this.isEditing = false;
     this.itemForm = { orden: 0 };
@@ -167,8 +173,8 @@ export class AdminHomeConfigComponent implements OnInit {
     this.itemForm = { ...item };
     this.limpiarImagen();
     
+    // Adiós al item.imagen_url
     if (item.imagenUrl) this.previewUrl = item.imagenUrl;
-    if (item.imagen_url) this.previewUrl = item.imagen_url;
 
     if (tipo === 'metodologia') this.displayDialogMetodologia = true;
     if (tipo === 'programa') this.displayDialogPrograma = true;
@@ -184,7 +190,6 @@ export class AdminHomeConfigComponent implements OnInit {
     this.limpiarImagen();
   }
 
-  // --- SUBIDA DE IMAGEN ---
   onFileSelected(event: any) {
     const file: File = event.files[0];
     if (file) {
@@ -200,15 +205,21 @@ export class AdminHomeConfigComponent implements OnInit {
     this.previewUrl = null;
   }
 
-  // --- GUARDADO DE METODOLOGIAS ---
   guardarMetodologia() {
     if (this.guardando) return;
     if (!this.itemForm.titulo) { this.mostrarError('El título es obligatorio'); return; }
-    
     this.guardando = true;
+
+    const payload = {
+      titulo: this.itemForm.titulo,
+      descripcion: this.itemForm.descripcion,
+      icono: this.itemForm.icono,
+      orden: this.itemForm.orden
+    };
+
     const obs$ = this.isEditing 
-      ? this.webMetodologiaService.actualizarMetodologia(this.itemForm.id, this.itemForm)
-      : this.webMetodologiaService.crearMetodologia(this.itemForm);
+      ? this.webMetodologiaService.actualizarMetodologia(this.itemForm.id, payload)
+      : this.webMetodologiaService.crearMetodologia(payload);
 
     obs$.subscribe({
       next: () => {
@@ -217,19 +228,32 @@ export class AdminHomeConfigComponent implements OnInit {
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Metodología guardada' });
         this.guardando = false;
       },
-      error: () => { this.mostrarError('Error al guardar'); this.guardando = false; }
+      error: (err) => { 
+        let msg = 'Error al guardar';
+        if (err.error?.message) msg = Array.isArray(err.error.message) ? err.error.message.join(' · ') : err.error.message;
+        this.mostrarError(msg); 
+        this.guardando = false; 
+      }
     });
   }
 
-  // --- GUARDADO DE PROGRAMAS (CATEGORÍAS) ---
   guardarPrograma() {
     if (this.guardando) return;
     if (!this.itemForm.titulo) { this.mostrarError('El título es obligatorio'); return; }
-
     this.guardando = true;
+
+    const payload = {
+      titulo: this.itemForm.titulo,
+      descripcion: this.itemForm.descripcion,
+      icono: this.itemForm.icono,
+      colorFondo: this.itemForm.colorFondo,
+      colorTexto: this.itemForm.colorTexto,
+      orden: this.itemForm.orden
+    };
+
     const obs$ = this.isEditing 
-      ? this.webProgramaService.actualizarPrograma(this.itemForm.id, this.itemForm)
-      : this.webProgramaService.crearPrograma(this.itemForm);
+      ? this.webProgramaService.actualizarPrograma(this.itemForm.id, payload)
+      : this.webProgramaService.crearPrograma(payload);
 
     obs$.subscribe({
       next: () => {
@@ -238,11 +262,15 @@ export class AdminHomeConfigComponent implements OnInit {
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Categoría guardada' });
         this.guardando = false;
       },
-      error: () => { this.mostrarError('Error al guardar'); this.guardando = false; }
+      error: (err) => { 
+        let msg = 'Error al guardar';
+        if (err.error?.message) msg = Array.isArray(err.error.message) ? err.error.message.join(' · ') : err.error.message;
+        this.mostrarError(msg); 
+        this.guardando = false; 
+      }
     });
   }
 
-  // --- GUARDADO DE ALIANZAS (BENEFICIOS) ---
   guardarAlianza() {
     if (this.guardando) return;
     if (!this.itemForm.nombre) { this.mostrarError('El nombre de la marca es obligatorio'); return; }
@@ -265,7 +293,6 @@ export class AdminHomeConfigComponent implements OnInit {
     });
   }
 
-  // --- GUARDADO DE AUSPICIADORES ---
   guardarAuspiciador() {
     if (this.guardando) return;
     if (!this.itemForm.nombre) { this.mostrarError('El nombre del auspiciador es obligatorio'); return; }
@@ -288,7 +315,6 @@ export class AdminHomeConfigComponent implements OnInit {
     });
   }
 
-  // --- ELIMINAR ELEMENTOS ---
   confirmarEliminar(tipo: string, id: number) {
     this.confirmationService.confirm({
       message: '¿Estás seguro de que deseas eliminar este elemento? Desaparecerá de la web pública.',
