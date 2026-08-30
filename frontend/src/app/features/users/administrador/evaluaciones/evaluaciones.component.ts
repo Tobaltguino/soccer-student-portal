@@ -326,14 +326,15 @@ export class AdministradorEvaluacionesComponent implements OnInit {
 
         if (this.usarRangos) {
           this.rangosForm.forEach(rango => {
+            // 🔥 FIX: Cambiamos || por ?? para que el número 0 no sea ignorado
             const payloadRango = {
               tipoEvaluacionId: testId,
-              edadMin: rango.edad_min || rango.edadMin,
-              edadMax: rango.edad_max || rango.edadMax,
-              nombreEtiqueta: rango.nombre_etiqueta || rango.nombreEtiqueta,
-              valorMin: rango.valor_min || rango.valorMin,
-              valorMax: rango.valor_max || rango.valorMax,
-              colorSugerido: rango.color_sugerido || rango.colorSugerido
+              edadMin: rango.edad_min ?? rango.edadMin,
+              edadMax: rango.edad_max ?? rango.edadMax,
+              nombreEtiqueta: rango.nombre_etiqueta ?? rango.nombreEtiqueta,
+              valorMin: rango.valor_min ?? rango.valorMin,
+              valorMax: rango.valor_max ?? rango.valorMax,
+              colorSugerido: rango.color_sugerido ?? rango.colorSugerido
             };
 
             if (rango.id) {
