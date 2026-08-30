@@ -1,10 +1,12 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core'; 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, Observable, of, switchMap } from 'rxjs'; // 🔥 Agregado switchMap
+import { forkJoin, Observable, of, switchMap } from 'rxjs';
 
 // Enum
 import { EstadoSesion } from '../../../../shared/enums/estado-sesion.enum';
+import { map } from 'rxjs/operators';
+import { Rol } from '../../../../shared/enums/rol.enum';
 
 // PrimeNG Imports
 import { TableModule } from 'primeng/table';
@@ -21,7 +23,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
-// Nuevos Servicios de Dominio
+// Servicios de Dominio
 import { NutriTipoEvaluacionService } from '../../../../core/domains/salud/nutricion/tipos/services/tipo-evaluacion.service';
 import { NutriSesionService } from '../../../../core/domains/salud/nutricion/sesiones/services/sesion.service';
 import { NutriResultadoService } from '../../../../core/domains/salud/nutricion/resultados/services/resultado.service';
@@ -63,9 +65,12 @@ export class AdminNutriComponent implements OnInit {
   filtroPrueba: any = null;
   filtroEstado: EstadoSesion | null = null;
   
+  // 🔥 FIX: Ahora el filtro soporta todos los estados
   opcionesEstadoFiltro = [
-    { label: 'Pendientes', value: EstadoSesion.PROGRAMADA },
-    { label: 'Finalizadas', value: EstadoSesion.FINALIZADA }
+    { label: 'Programada', value: EstadoSesion.PROGRAMADA },
+    { label: 'En Curso', value: EstadoSesion.EN_CURSO },
+    { label: 'Finalizada', value: EstadoSesion.FINALIZADA },
+    { label: 'Cancelada', value: EstadoSesion.CANCELADA }
   ];
 
   displayMainDialog = false;
@@ -89,9 +94,9 @@ export class AdminNutriComponent implements OnInit {
     this.loading = true;
     this.cdr.detectChanges();
 
-    const nutricionistasReq: Observable<any[]> = (this.usuarioService as any).listarNutricionistas 
-      ? (this.usuarioService as any).listarNutricionistas() 
-      : of([]);
+    const nutricionistasReq = this.usuarioService.listarUsuarios({ rol: Rol.NUTRICIONISTA, limite: 1000 }).pipe(
+      map((res: any) => res.registros || [])
+    );
 
     forkJoin({
       tipos: this.nutriTipoService.listarTiposEvaluacion(),
@@ -100,18 +105,28 @@ export class AdminNutriComponent implements OnInit {
     }).subscribe({
       next: (data) => {
         this.tiposEvaluacion = data.tipos || [];
+        
+        // 👇 AQUÍ ESTÁ EL CAMBIO DE LOS NUTRICIONISTAS 👇
         this.nutricionistas = (data.nutris || []).map((n: any) => ({
           ...n,
+          id_usuario: n.id_usuario || n.id, // 🔥 Seguro para que el modal no falle
           nombreCompleto: `${n.nombre} ${n.apellido}`
         }));
         
         const regs = data.sesiones.registros || [];
-        this.sesiones = regs.map((s: any) => ({
-          ...s,
-          // FIX: Mapeo exacto con tipo_id y nutricionista_id
-          tipoObj: this.tiposEvaluacion.find(t => t.id === s.tipo_id) || { nombre: 'Desconocido' },
-          nutriObj: this.nutricionistas.find(n => n.id === s.nutricionista_id) || { nombreCompleto: 'No asignado' }
-        }));
+        this.sesiones = regs.map((s: any) => {
+          const tipoId = s.tipo_id || s.tipoId;
+          const nutriId = s.nutricionista_id || s.nutricionistaId;
+
+          return {
+            ...s,
+            tipo_id: tipoId,
+            nutricionista_id: nutriId,
+            tipoObj: this.tiposEvaluacion.find(t => t.id === tipoId) || { nombre: 'Desconocido' },
+            // 🔥 Y aquí también aseguramos que lo encuentre por id_usuario en la tabla
+            nutriObj: this.nutricionistas.find(n => n.id_usuario === nutriId) || { nombreCompleto: 'No asignado' }
+          };
+        });
 
         this.aplicarFiltros();
         this.loading = false;
@@ -207,7 +222,9 @@ export class AdminNutriComponent implements OnInit {
   editarSesion(sesion: any) {
     let fechaObj = new Date();
     if (sesion.fecha) {
-        const parts = (sesion.fecha as string).split('-');
+        // Cortamos si viene la hora pegada (ej. 2026-08-29T14:30:00.000Z)
+        const fechaStr = (sesion.fecha as string).split('T')[0];
+        const parts = fechaStr.split('-');
         if (parts.length === 3) fechaObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
     }
     
@@ -215,7 +232,8 @@ export class AdminNutriComponent implements OnInit {
       ...sesion,
       fecha: fechaObj,
       tipo_id: sesion.tipo_id,
-      nutricionista_id: sesion.nutricionista_id
+      nutricionista_id: sesion.nutricionista_id,
+      estado: sesion.estado
     };
     this.displayMainDialog = true;
   }
@@ -230,7 +248,7 @@ export class AdminNutriComponent implements OnInit {
     this.guardando = true;
     this.cdr.detectChanges();
     
-    // Payload compatible con Crear y Actualizar
+    // 🔥 FIX: Armamos el payload estricto: solo lo que el Backend permite
     const payload = {
       tipoId: this.evalLogistica.tipo_id,
       nutricionistaId: this.evalLogistica.nutricionista_id,
@@ -238,9 +256,10 @@ export class AdminNutriComponent implements OnInit {
     };
 
     if (this.evalLogistica.id) {
-      // FIX: Modo Edición -> Actualiza logística y luego el estado
+      // MODO EDICIÓN
       this.nutriSesionService.actualizarSesion(this.evalLogistica.id, payload).pipe(
         switchMap(() => {
+          // El estado se actualiza por separado usando su propio endpoint
           if (this.evalLogistica.estado) {
             return this.nutriSesionService.cambiarEstado(this.evalLogistica.id, { estado: this.evalLogistica.estado });
           }
@@ -253,14 +272,17 @@ export class AdminNutriComponent implements OnInit {
           this.guardando = false;
           this.cargarDatosBase();
         },
-        error: () => {
-          this.mostrarError('Error al actualizar la sesión');
+        error: (err) => {
+          let msg = 'Error al actualizar la sesión';
+          if (err.error?.message) msg = Array.isArray(err.error.message) ? err.error.message.join(' · ') : err.error.message;
+          this.mostrarError(msg);
           this.guardando = false;
           this.cdr.detectChanges();
         }
       });
     } else {
-      // Modo Creación
+      // MODO CREACIÓN
+      // 🔥 FIX: NO enviamos "estado" ni "tipoEvaluacionId"
       this.nutriSesionService.crearSesion(payload as any).subscribe({
         next: () => {
           this.mostrarExito('Sesión creada correctamente');
@@ -268,8 +290,10 @@ export class AdminNutriComponent implements OnInit {
           this.guardando = false;
           this.cargarDatosBase();
         },
-        error: () => {
-          this.mostrarError('Error al crear la sesión');
+        error: (err) => {
+          let msg = 'Error al crear la sesión';
+          if (err.error?.message) msg = Array.isArray(err.error.message) ? err.error.message.join(' · ') : err.error.message;
+          this.mostrarError(msg);
           this.guardando = false;
           this.cdr.detectChanges();
         }
@@ -428,12 +452,12 @@ export class AdminNutriComponent implements OnInit {
   }
 
   // ==========================================
-  // HELPERS Y FILTROS
+  // HELPERS DE ESTADO Y FILTROS
   // ==========================================
   aplicarFiltros() {
     this.sesionesFiltradas = this.sesiones.filter(s => {
       let f = true, p = true, e = true;
-      const tId = s.tipo_id; // FIX: Uso correcto
+      const tId = s.tipo_id; 
 
       if (this.filtroFecha) f = (s.fecha || '').substring(0, 10) === this.formatearFechaIso(this.filtroFecha);
       if (this.filtroPrueba) p = tId === this.filtroPrueba.id;
@@ -447,6 +471,26 @@ export class AdminNutriComponent implements OnInit {
     this.filtroPrueba = null;
     this.filtroEstado = null;
     this.aplicarFiltros();
+  }
+
+  getNombreEstado(estado: string): string {
+    switch (estado) {
+      case EstadoSesion.PROGRAMADA: return 'Programada';
+      case EstadoSesion.EN_CURSO: return 'En Curso';
+      case EstadoSesion.FINALIZADA: return 'Finalizada';
+      case EstadoSesion.CANCELADA: return 'Cancelada';
+      default: return 'Desconocido';
+    }
+  }
+
+  getSeverityEstado(estado: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
+    switch (estado) {
+      case EstadoSesion.PROGRAMADA: return 'warn';
+      case EstadoSesion.EN_CURSO: return 'info';
+      case EstadoSesion.FINALIZADA: return 'success';
+      case EstadoSesion.CANCELADA: return 'danger';
+      default: return 'secondary';
+    }
   }
 
   private formatearFechaIso(fecha: any): string {

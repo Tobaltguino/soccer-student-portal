@@ -41,8 +41,8 @@
                           (onChange)="aplicarFiltros()" [showClear]="true" 
                           styleClass="w-full" appendTo="body" [filter]="false">
                     <ng-template let-option pTemplate="item">
-                        <!-- FIX: Alineado al Enum -->
-                        <p-tag [value]="option.label" [severity]="option.value === EstadoSesion.PROGRAMADA ? 'warn' : 'success'"></p-tag>
+                        <!-- 🔥 FIX: Uso del helper para colores del filtro -->
+                        <p-tag [value]="option.label" [severity]="getSeverityEstado(option.value)"></p-tag>
                     </ng-template>
                 </p-select>
             </div>
@@ -75,14 +75,13 @@
                     </td>
                     <td>
                         <span class="p-column-title pf-oswald text-steel hidden-desktop">Evaluación</span>
-                        <!-- FIX: Propiedad correcta (tipoObj en lugar de tipo_evaluacion) -->
                         <span class="font-bold text-chalk">{{ sesion.tipoObj?.nombre }}</span>
                     </td>
                     <td class="text-center">
                         <span class="p-column-title pf-oswald text-steel hidden-desktop">Estado</span>
-                        <!-- FIX: Verificamos contra el Enum -->
-                        <p-tag [value]="sesion.estado === EstadoSesion.PROGRAMADA ? 'Pendiente' : 'Finalizado'" 
-                               [severity]="sesion.estado === EstadoSesion.PROGRAMADA ? 'warn' : 'success'"></p-tag>
+                        <!-- 🔥 FIX: Uso de helpers para que abarque los 4 estados dinámicamente -->
+                        <p-tag [value]="getNombreEstado(sesion.estado)" 
+                               [severity]="getSeverityEstado(sesion.estado)"></p-tag>
                     </td>
                     <td class="text-center">
                         <span class="p-column-title pf-oswald text-steel hidden-desktop">Acciones</span>
@@ -168,22 +167,37 @@
 
             <div class="pf-field-group">
                 <label class="pf-oswald">Nutricionista a Cargo <span class="text-pink-500 font-bold">*</span></label>
-                <p-select [options]="nutricionistas" [(ngModel)]="evalLogistica.nutricionista_id" optionLabel="nombreCompleto" optionValue="id" placeholder="Asignar Nutricionista" appendTo="body" [filter]="true" filterBy="nombreCompleto" [disabled]="guardando"></p-select>
+                <!-- 🔥 FIX: optionValue="id_usuario" 🔥 -->
+                <p-select [options]="nutricionistas" [(ngModel)]="evalLogistica.nutricionista_id" optionLabel="nombreCompleto" optionValue="id_usuario" placeholder="Asignar Nutricionista" appendTo="body" [filter]="true" filterBy="nombreCompleto" [disabled]="guardando"></p-select>
             </div>
             
+            <!-- 🔥 FIX: Selector de estado usando la lista de opciones para abarcar todos los Enum -->
             <div class="pf-field-group" *ngIf="evalLogistica.id">
-                <label class="pf-oswald mb-3 block">Estado de la Sesión</label>
-                <div class="flex gap-4">
-                    <div class="flex align-items-center">
-                        <!-- FIX: Enums para los RadioButtons -->
-                        <p-radioButton name="estado" [value]="EstadoSesion.PROGRAMADA" [(ngModel)]="evalLogistica.estado" inputId="st1" [disabled]="guardando"></p-radioButton>
-                        <label for="st1" class="ml-2 cursor-pointer text-chalk font-bold">Pendiente</label>
-                    </div>
-                    <div class="flex align-items-center">
-                        <p-radioButton name="estado" [value]="EstadoSesion.FINALIZADA" [(ngModel)]="evalLogistica.estado" inputId="st2" [disabled]="guardando"></p-radioButton>
-                        <label for="st2" class="ml-2 cursor-pointer text-chalk font-bold">Finalizado</label>
-                    </div>
-                </div>
+                <label class="pf-oswald mb-2 block">Estado de la Sesión</label>
+                <p-select [options]="opcionesEstadoFiltro" [(ngModel)]="evalLogistica.estado" optionLabel="label" optionValue="value" appendTo="body" [disabled]="guardando" styleClass="w-full">
+                    <ng-template let-option pTemplate="selectedItem">
+                        <div class="flex align-items-center gap-2">
+                            <i class="pi pi-circle-fill" [ngClass]="{
+                                'text-yellow-500': option.value === EstadoSesion.PROGRAMADA,
+                                'text-blue-500': option.value === EstadoSesion.EN_CURSO,
+                                'text-green-500': option.value === EstadoSesion.FINALIZADA,
+                                'text-red-500': option.value === EstadoSesion.CANCELADA
+                            }"></i>
+                            <span>{{option.label}}</span>
+                        </div>
+                    </ng-template>
+                    <ng-template let-option pTemplate="item">
+                        <div class="flex align-items-center gap-2">
+                            <i class="pi pi-circle-fill" [ngClass]="{
+                                'text-yellow-500': option.value === EstadoSesion.PROGRAMADA,
+                                'text-blue-500': option.value === EstadoSesion.EN_CURSO,
+                                'text-green-500': option.value === EstadoSesion.FINALIZADA,
+                                'text-red-500': option.value === EstadoSesion.CANCELADA
+                            }"></i>
+                            <span>{{option.label}}</span>
+                        </div>
+                    </ng-template>
+                </p-select>
             </div>
 
         </ng-template>
@@ -200,7 +214,6 @@
             <div class="p-3 border-round mb-3 flex justify-content-between align-items-center mt-2 flex-wrap gap-2" style="background-color: var(--input-bg); border: 1px solid var(--border-color);">
                 <div class="flex flex-column">
                     <span class="pf-oswald text-steel text-xs">Evaluación Seleccionada</span>
-                    <!-- FIX: Propiedad correcta para el header del modal -->
                     <span class="text-xl pf-anton text-chalk mt-1" style="letter-spacing: 1px;">{{evalLogistica.tipoObj?.nombre}}</span>
                 </div>
                 <div class="text-right">
