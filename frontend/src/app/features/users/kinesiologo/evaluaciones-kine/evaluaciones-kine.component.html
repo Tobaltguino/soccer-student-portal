@@ -19,7 +19,7 @@
         </div>
     </header>
 
-    <!-- BARRA DE FILTROS: Oculta hasta que loading sea falso para evitar el NG0100 -->
+    <!-- BARRA DE FILTROS -->
     <div class="pf-admin-card mb-4 p-3" *ngIf="!loading">
         <div class="filter-row">
             
@@ -60,7 +60,7 @@
             </div>
 
             <div class="filter-item-btn">
-                <button pButton icon="pi pi-filter-slash" class="pf-btn-ghost w-full justify-content-center" 
+                <button pButton icon="pi pi-filter-slash" class="pf-btn-ghost w-full justify-center" 
                         (click)="limpiarFiltros()" pTooltip="Limpiar Filtros"></button>
             </div>
         </div>
@@ -140,25 +140,26 @@
             <div class="field mb-4">
                 <label class="pf-oswald text-steel mb-2 block">Grupo <span class="text-red-500 font-bold ml-1">*</span></label>
                 <p-select [options]="grupos" [(ngModel)]="evalLogistica.grupo_id" optionLabel="nombre" optionValue="id" 
-                          placeholder="Selecciona tu grupo" appendTo="body" [filter]="false" [disabled]="!!evalLogistica.id"></p-select>
+                          placeholder="Selecciona tu grupo" appendTo="body" [filter]="false" [disabled]="!!evalLogistica.id" styleClass="w-full"></p-select>
                 <small *ngIf="evalLogistica.id" class="text-steel italic mt-1 block">El grupo no se puede modificar.</small>
             </div>
             
             <div class="field mb-4">
                 <label class="pf-oswald text-steel mb-2 block">Tipo de Evaluación <span class="text-red-500 font-bold ml-1">*</span></label>
                 <p-select [options]="tiposEvaluacion" [(ngModel)]="evalLogistica.tipo_evaluacion_id" optionLabel="nombre" optionValue="id" 
-                          placeholder="Selecciona la prueba" appendTo="body" [filter]="false" [disabled]="!!evalLogistica.id"></p-select>
+                          placeholder="Selecciona la prueba" appendTo="body" [filter]="false" [disabled]="!!evalLogistica.id" styleClass="w-full"></p-select>
                 <small *ngIf="evalLogistica.id" class="text-steel italic mt-1 block">La prueba no se puede modificar.</small>
             </div>
             
+            <!-- 🔥 FIX: Estado como Select / Dropdown unificado -->
             <div class="field mb-4" *ngIf="evalLogistica.id">
-                <label class="pf-oswald text-steel mb-3 block">Estado de la Sesión</label>
-                <div class="flex flex-wrap gap-4">
-                    <div class="flex align-items-center" *ngFor="let opcion of opcionesEstadoFiltro">
-                        <p-radioButton name="estado" [value]="opcion.value" [(ngModel)]="evalLogistica.estado" [inputId]="'est-'+opcion.value"></p-radioButton>
-                        <label [for]="'est-'+opcion.value" class="ml-2 mb-0 font-normal text-chalk">{{opcion.label}}</label>
-                    </div>
-                </div>
+                <label class="pf-oswald text-steel mb-2 block">Estado de la Sesión</label>
+                <p-select [options]="opcionesEstadoFiltro" [(ngModel)]="evalLogistica.estado" optionLabel="label" optionValue="value" 
+                          placeholder="Selecciona el estado" appendTo="body" [filter]="false" styleClass="w-full">
+                    <ng-template let-option pTemplate="item">
+                        <p-tag [value]="option.label" [severity]="option.value === EstadoSesion.FINALIZADA ? 'success' : (option.value === EstadoSesion.CANCELADA ? 'danger' : 'warn')"></p-tag>
+                    </ng-template>
+                </p-select>
             </div>
 
             <div class="field mb-2">
@@ -178,33 +179,31 @@
               [modal]="true" [style]="{width: '95vw', maxWidth: '1200px'}" [maximizable]="true" styleClass="p-fluid pf-dialog" [draggable]="false" [resizable]="false">
         <ng-template pTemplate="content">
             
-            <div class="surface-hover p-4 border-round mb-4 flex justify-content-between align-items-center flex-wrap gap-3 mt-2 border-1 surface-border" *ngIf="evalLogistica.tipoObj" style="border-color: var(--border-color) !important;">
-                <div class="flex flex-column">
+            <div class="p-4 rounded mb-4 flex justify-between items-center flex-wrap gap-3 mt-2 border" *ngIf="evalLogistica.tipoObj" style="background: var(--bg-card); border-color: var(--border-color) !important;">
+                <div class="flex flex-col">
                     <span class="pf-oswald text-steel text-sm tracking-wider">Evaluación</span>
                     <span class="pf-anton text-chalk text-2xl mt-1" style="letter-spacing: 0.5px;">{{evalLogistica.tipoObj.nombre}}</span>
                 </div>
-                <div class="flex flex-column sm:align-items-end">
+                <div class="flex flex-col sm:items-end">
                     <span class="pf-oswald text-steel text-sm tracking-wider mb-2">Grupo</span>
                     <p-tag [value]="evalLogistica.grupoObj?.nombre || 'Desconocido'" severity="info" styleClass="text-base font-bold"></p-tag>
                 </div>
             </div>
 
-            <!-- LAYOUT SPLIT -->
-            <div class="flex flex-column md:flex-row gap-4 h-full">
+            <div class="flex flex-col md:flex-row gap-4 h-full" style="min-height: 60vh;">
 
                 <!-- SIDEBAR: LISTA DE ESTUDIANTES -->
-                <div class="w-full md:w-4 border-1 surface-border border-round" style="background: var(--bg-main); height: 500px; overflow-y: auto; border-color: var(--border-color) !important;">
-                    <div class="p-3 border-bottom-1 surface-border font-bold text-chalk pf-oswald sticky top-0" style="background: var(--bg-card); z-index: 1; letter-spacing: 0.5px;">
+                <div class="w-full md:w-1/3 lg:w-1/4 border rounded" style="background: var(--bg-main); max-height: 60vh; overflow-y: auto; border-color: var(--border-color) !important;">
+                    <div class="p-3 border-b font-bold text-chalk pf-oswald sticky top-0" style="background: var(--bg-card); z-index: 1; letter-spacing: 0.5px; border-color: var(--border-color) !important;">
                         Evaluados ({{estudiantesGrupo.length}})
                     </div>
 
                     <div *ngFor="let alumno of estudiantesGrupo"
                          (click)="estudianteSeleccionado = alumno"
-                         class="p-3 border-bottom-1 surface-border cursor-pointer flex justify-content-between align-items-center transition-colors transition-duration-200"
-                         [ngClass]="estudianteSeleccionado?.id === alumno.id ? 'surface-hover' : ''"
-                         [ngStyle]="{'border-left': estudianteSeleccionado?.id === alumno.id ? '4px solid var(--pf-teal)' : '4px solid transparent'}">
+                         class="p-3 border-b cursor-pointer flex justify-between items-center transition-colors duration-200"
+                         [ngStyle]="{'background': estudianteSeleccionado?.id === alumno.id ? 'var(--hover-bg)' : 'transparent', 'border-left': estudianteSeleccionado?.id === alumno.id ? '4px solid var(--pf-teal)' : '4px solid transparent', 'border-color': 'var(--border-color) !important'}">
 
-                        <div class="flex flex-column">
+                        <div class="flex flex-col">
                             <span class="font-bold text-chalk">{{alumno.apellido}}</span>
                             <span class="text-sm text-steel">{{alumno.nombre}}</span>
                         </div>
@@ -213,10 +212,10 @@
                 </div>
 
                 <!-- CONTENIDO: PARÁMETROS DEL ALUMNO SELECCIONADO -->
-                <div class="w-full md:w-8 border-1 surface-border border-round p-0" style="background: var(--bg-card); height: 500px; overflow-y: auto; border-color: var(--border-color) !important;">
+                <div class="w-full md:w-2/3 lg:w-3/4 border rounded p-0" style="background: var(--bg-card); max-height: 60vh; overflow-y: auto; border-color: var(--border-color) !important;">
 
                     <div *ngIf="estudianteSeleccionado">
-                        <div class="p-3 border-bottom-1 surface-border sticky top-0" style="background: var(--bg-main); z-index: 1;">
+                        <div class="p-3 border-b sticky top-0 flex items-center" style="background: var(--bg-main); z-index: 1; border-color: var(--border-color) !important;">
                             <h3 class="m-0 text-chalk pf-oswald text-xl" style="letter-spacing: 0.5px;">
                                 Calificando a: <span class="text-teal">{{estudianteSeleccionado.nombre}} {{estudianteSeleccionado.apellido}}</span>
                             </h3>
@@ -264,7 +263,7 @@
                         </div>
                     </div>
 
-                    <div *ngIf="!estudianteSeleccionado" class="flex flex-column align-items-center justify-content-center h-full text-steel p-4">
+                    <div *ngIf="!estudianteSeleccionado" class="flex flex-col items-center justify-center h-full text-steel p-4">
                         <i class="pi pi-list text-6xl mb-3"></i>
                         <h2 class="m-0 pf-anton text-2xl text-chalk" style="letter-spacing: 0.5px;">Selecciona un estudiante</h2>
                         <p class="mt-2 pf-oswald text-center">Elige un nombre de la lista izquierda para ingresar sus notas.</p>
@@ -275,7 +274,7 @@
         </ng-template>
         
         <ng-template pTemplate="footer">
-            <div class="flex justify-content-between align-items-center w-full">
+            <div class="flex justify-between items-center w-full">
                 <small class="text-steel pf-oswald"><i class="pi pi-info-circle mr-1 text-teal"></i> Se guardarán solo los registros modificados.</small>
                 <div class="flex gap-2">
                     <button pButton label="Cerrar" icon="pi pi-times" class="pf-btn-ghost" (click)="displayGradesDialog = false"></button>
@@ -290,33 +289,30 @@
     <p-dialog [(visible)]="displayViewDialog" header="Visor de Resultados" [modal]="true" [style]="{width: '90vw', maxWidth: '1200px'}" [maximizable]="true" styleClass="p-fluid pf-dialog" [draggable]="false" [resizable]="false">
         <ng-template pTemplate="content">
 
-            <div class="surface-hover p-4 border-round mb-4 flex justify-content-between align-items-center flex-wrap gap-3 mt-2 border-1 surface-border" *ngIf="sesionVista?.tipoObj" style="border-color: var(--border-color) !important;">
-                <div class="flex flex-column">
+            <div class="p-4 rounded mb-4 flex justify-between items-center flex-wrap gap-3 mt-2 border" *ngIf="sesionVista?.tipoObj" style="background: var(--bg-card); border-color: var(--border-color) !important;">
+                <div class="flex flex-col">
                     <span class="pf-oswald text-steel text-sm tracking-wider">Evaluación</span>
                     <span class="pf-anton text-chalk text-2xl mt-1" style="letter-spacing: 0.5px;">{{sesionVista?.tipoObj?.nombre}}</span>
                 </div>
-                <div class="flex flex-column sm:align-items-end">
+                <div class="flex flex-col sm:items-end">
                     <span class="pf-oswald text-steel text-sm tracking-wider mb-2">Grupo</span>
                     <p-tag [value]="sesionVista?.grupoObj?.nombre || 'Desconocido'" severity="info" styleClass="text-base font-bold"></p-tag>
                 </div>
             </div>
 
-            <!-- LAYOUT SPLIT -->
-            <div class="flex flex-column md:flex-row gap-4 h-full">
+            <div class="flex flex-col md:flex-row gap-4 h-full" style="min-height: 60vh;">
 
-                <!-- SIDEBAR: LISTA DE ESTUDIANTES EVALUADOS -->
-                <div class="w-full md:w-4 border-1 surface-border border-round" style="background: var(--bg-main); height: 500px; overflow-y: auto; border-color: var(--border-color) !important;">
-                    <div class="p-3 border-bottom-1 surface-border font-bold text-chalk pf-oswald sticky top-0" style="background: var(--bg-card); z-index: 1; letter-spacing: 0.5px;">
+                <div class="w-full md:w-1/3 lg:w-1/4 border rounded" style="background: var(--bg-main); max-height: 60vh; overflow-y: auto; border-color: var(--border-color) !important;">
+                    <div class="p-3 border-b font-bold text-chalk pf-oswald sticky top-0" style="background: var(--bg-card); z-index: 1; letter-spacing: 0.5px; border-color: var(--border-color) !important;">
                         Alumnos Evaluados ({{resultadosVista.length}})
                     </div>
 
                     <div *ngFor="let alumno of resultadosVista"
                          (click)="estudianteVistaSeleccionado = alumno"
-                         class="p-3 border-bottom-1 surface-border cursor-pointer flex justify-content-between align-items-center transition-colors transition-duration-200"
-                         [ngClass]="estudianteVistaSeleccionado?.id === alumno.id ? 'surface-hover' : ''"
-                         [ngStyle]="{'border-left': estudianteVistaSeleccionado?.id === alumno.id ? '4px solid var(--pf-teal)' : '4px solid transparent'}">
+                         class="p-3 border-b cursor-pointer flex justify-between items-center transition-colors duration-200"
+                         [ngStyle]="{'background': estudianteVistaSeleccionado?.id === alumno.id ? 'var(--hover-bg)' : 'transparent', 'border-left': estudianteVistaSeleccionado?.id === alumno.id ? '4px solid var(--pf-teal)' : '4px solid transparent', 'border-color': 'var(--border-color) !important'}">
 
-                        <div class="flex flex-column">
+                        <div class="flex flex-col">
                             <span class="font-bold text-chalk">{{alumno.apellido}}</span>
                             <span class="text-sm text-steel">{{alumno.nombre}}</span>
                         </div>
@@ -324,11 +320,10 @@
                     </div>
                 </div>
 
-                <!-- CONTENIDO: RESULTADOS DEL ALUMNO SELECCIONADO -->
-                <div class="w-full md:w-8 border-1 surface-border border-round p-0" style="background: var(--bg-card); height: 500px; overflow-y: auto; border-color: var(--border-color) !important;">
+                <div class="w-full md:w-2/3 lg:w-3/4 border rounded p-0" style="background: var(--bg-card); max-height: 60vh; overflow-y: auto; border-color: var(--border-color) !important;">
 
                     <div *ngIf="estudianteVistaSeleccionado">
-                        <div class="p-3 border-bottom-1 surface-border sticky top-0" style="background: var(--bg-main); z-index: 1;">
+                        <div class="p-3 border-b sticky top-0 flex items-center" style="background: var(--bg-main); z-index: 1; border-color: var(--border-color) !important;">
                             <h3 class="m-0 text-chalk pf-oswald text-xl" style="letter-spacing: 0.5px;">
                                 Resultados de: <span class="text-teal">{{estudianteVistaSeleccionado.nombre}} {{estudianteVistaSeleccionado.apellido}}</span>
                             </h3>
@@ -370,7 +365,7 @@
                         </div>
                     </div>
 
-                    <div *ngIf="!estudianteVistaSeleccionado" class="flex flex-column align-items-center justify-content-center h-full text-steel p-4">
+                    <div *ngIf="!estudianteVistaSeleccionado" class="flex flex-col items-center justify-center h-full text-steel p-4">
                         <i class="pi pi-list text-6xl mb-3"></i>
                         <h2 class="m-0 pf-anton text-2xl text-chalk" style="letter-spacing: 0.5px;">Selecciona un estudiante</h2>
                         <p class="mt-2 pf-oswald text-center">Elige un nombre de la lista izquierda para ver sus resultados detallados.</p>
@@ -380,7 +375,9 @@
 
         </ng-template>
         <ng-template pTemplate="footer">
-            <button pButton label="Cerrar Visor" icon="pi pi-times" class="pf-btn-ghost w-full sm:w-auto" (click)="displayViewDialog = false"></button>
+            <div class="flex justify-end w-full">
+                <button pButton label="Cerrar Visor" icon="pi pi-times" class="pf-btn-ghost w-full sm:w-auto" (click)="displayViewDialog = false"></button>
+            </div>
         </ng-template>
     </p-dialog>
 </div>
