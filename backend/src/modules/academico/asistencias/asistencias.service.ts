@@ -3,10 +3,14 @@ import { SupabaseService } from '../../../core/supabase/supabase.service';
 import { RegistrarAsistenciasLoteDto } from './dto/registrar-asistencias-lotes.dto';
 import type { AsistenciaRow } from './interfaces/asistencias.interface';
 import { lanzarErrorSupabaseConFk } from '../../../shared/utils/supabase-error.util';
+import { ExcelService } from '../../../shared/services/excel.service';
 
 @Injectable()
 export class AsistenciasService {
-  constructor(private readonly supabase: SupabaseService) {}
+  constructor(
+    private readonly supabase: SupabaseService,
+    private readonly excelService: ExcelService, // 🔥 INYECTAR EXCEL SERVICE
+  ) {}
 
   async registrarLote(
     claseId: number,
@@ -242,5 +246,43 @@ export class AsistenciasService {
       hora: reg.clases.hora,
       lugar: reg.clases.lugar
     }));
+  }
+
+  async generarExcelReporteMensual(grupoId: number, mes: number, anio: number): Promise<Buffer> {
+    // 1. Reutilizamos tu propia lógica para obtener los datos cruzados
+    const reporte = await this.reporteMensualConsolidado(grupoId, mes, anio);
+
+    // 2. Mapeamos la data para que sea amigable en Excel
+    const datosMapeados = reporte.map((r) => ({
+      rut: r.rut || 'Sin RUT',
+      nombre: r.nombre || '-',
+      apellido: r.apellido || '-',
+      totalClases: r.total_clases,
+      totalPresentes: r.total_presentes,
+      ausencias: r.total_clases - r.total_presentes,
+      porcentaje: `${r.porcentaje}%`,
+      resumen: r.resumen,
+    }));
+
+    // 3. Definimos las columnas
+    const columnas = [
+      { header: 'RUT', key: 'rut', width: 15 },
+      { header: 'Nombre', key: 'nombre', width: 25 },
+      { header: 'Apellido', key: 'apellido', width: 25 },
+      { header: 'Total Clases', key: 'totalClases', width: 15 },
+      { header: 'Días Presente', key: 'totalPresentes', width: 15 },
+      { header: 'Días Ausente', key: 'ausencias', width: 15 },
+      { header: '% Asistencia', key: 'porcentaje', width: 15 },
+      { header: 'Resumen', key: 'resumen', width: 15 },
+    ];
+
+    // 4. Nombre dinámico para la hoja de Excel
+    const nombreHoja = `Asistencia ${mes}-${anio}`;
+
+    try {
+      return await this.excelService.generarExcel(nombreHoja, columnas, datosMapeados);
+    } catch (error) {
+      throw new InternalServerErrorException('Error al generar el archivo Excel de asistencias');
+    }
   }
 }

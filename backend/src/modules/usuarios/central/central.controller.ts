@@ -1,4 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+// modules/usuarios/central/central.controller.ts
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, Res } from '@nestjs/common';
+import type { Response } from 'express'; 
 import { CentralService } from './central.service';
 import { CrearUsuarioDto } from './dto/crear-usuario.dto';
 import { ActualizarUsuarioDto } from './dto/actualizar-usuario.dto';
@@ -32,6 +34,22 @@ export class CentralController {
     return this.centralService.listarUsuarios(filtros);
   }
 
+  // 🔥 NUEVO ENDPOINT PARA EXPORTAR EXCEL (Antes de los :id)
+  @Get('exportar/excel')
+  @Roles(Rol.ADMINISTRADOR)
+  async exportarUsuariosExcel(
+    @Query() filtros: FiltrarUsuariosDto, 
+    @Res() res: Response
+  ) {
+    const buffer = await this.centralService.generarExcelUsuarios(filtros);
+
+    // Headers para forzar la descarga del archivo en el navegador
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="usuarios_profutbol.xlsx"');
+    
+    res.send(buffer);
+  }
+
   @Get('me')
   miPerfil(@CurrentUser() user: RequestUser) {
     return this.centralService.buscarPerfilCompleto(user.id);
@@ -46,7 +64,6 @@ export class CentralController {
   @Get('cumpleanos')
   @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.NUTRICIONISTA)
   obtenerCumpleanos() {
-    // Le pasamos 7 como parámetro fijo porque así lo solicitaste
     return this.centralService.obtenerProximosCumpleanos(7);
   }
 

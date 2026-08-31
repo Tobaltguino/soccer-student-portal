@@ -6,6 +6,7 @@ import { ProfesoresModule } from '../profesores/profesores.module';
 import { KinesiologosModule } from '../kinesiologos/kinesiologos.module';
 import { NutricionistasModule } from '../nutricionistas/nutricionistas.module';
 import { AdminsModule } from '../admins/admins.module';
+import { SharedModule } from '../../../shared/shared.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { AdminsModule } from '../admins/admins.module';
     KinesiologosModule,
     NutricionistasModule,
     AdminsModule,
+    SharedModule
   ],
   controllers: [CentralController],
   providers: [CentralService],

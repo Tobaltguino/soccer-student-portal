@@ -12,10 +12,10 @@ import { AdminsService } from '../admins/admins.service';
 import type { UsuarioPerfilRow, UsuarioPerfilCompleto } from '../../../shared/interfaces/usuario-perfil.interface';
 import { lanzarErrorSupabase, lanzarErrorAuth } from '../../../shared/utils/supabase-error.util';
 import { FiltrarUsuariosDto } from './dto/filtrar-usuarios.dto';
+import { ExcelService } from '../../../shared/services/excel.service'; // 🔥 IMPORTACIÓN DEL MOTOR EXCEL
 
 import 'multer';
 import { randomUUID } from 'crypto';
-
 
 const BUCKET_FOTOS = 'usuarios-fotos';
 const TIPOS_IMAGEN_PERMITIDOS = ['image/png', 'image/jpeg', 'image/webp'];
@@ -30,6 +30,7 @@ export class CentralService {
     private readonly kinesiologosService: KinesiologosService,
     private readonly nutricionistasService: NutricionistasService,
     private readonly adminsService: AdminsService,
+    private readonly excelService: ExcelService, // 🔥 INYECCIÓN DEL MOTOR EXCEL
   ) {}
   
   async crearUsuario(dto: CrearUsuarioDto): Promise<UsuarioPerfilRow> {
@@ -101,7 +102,6 @@ export class CentralService {
     const desde = (pagina - 1) * limite;
     const hasta = desde + limite - 1;
 
-    // Si hay filtros que solo existen en las sub-tablas, primero acotamos los ids
     let idsPreseleccionados: string[] | null = null;
 
     if (filtros.rol === Rol.ESTUDIANTE && (filtros.grupoIds?.length || filtros.posiciones?.length)) {
@@ -117,7 +117,6 @@ export class CentralService {
       });
     }
 
-    // Si el filtro de sub-tabla no encontró a nadie, no hace falta ni consultar usuarios_perfiles
     if (idsPreseleccionados !== null && idsPreseleccionados.length === 0) {
       return { registros: [], total: 0, pagina, limite };
     }
@@ -179,8 +178,59 @@ export class CentralService {
     return { registros, total: count ?? 0, pagina, limite };
   }
 
+  // 🔥 NUEVO MÉTODO EXPORTAR EXCEL
+  // 🔥 NUEVO MÉTODO EXPORTAR EXCEL ACTUALIZADO
+  async generarExcelUsuarios(filtros: FiltrarUsuariosDto): Promise<Buffer> {
+    const filtrosExportacion = { ...filtros, limite: 10000, pagina: 1 };
+    
+    // Obtenemos los datos
+    const { registros } = await this.listarUsuarios(filtrosExportacion);
+
+    // Mapeamos TODA la info de la tabla
+    const datosMapeados = registros.map((u: any) => {
+      // Formateamos las fechas de manera segura (Día/Mes/Año)
+      const fechaNacimientoStr = u.fecha_nacimiento 
+        ? new Date(u.fecha_nacimiento + 'T00:00:00').toLocaleDateString('es-CL') 
+        : 'Sin fecha';
+        
+      const fechaRegistroStr = u.created_at 
+        ? new Date(u.created_at).toLocaleDateString('es-CL') 
+        : 'Sin registro';
+
+      return {
+        rol: u.rol ? u.rol.toUpperCase() : '-',
+        rut: u.rut || 'Sin RUT',
+        nombre: u.nombre || '-',
+        apellido: u.apellido || '-',
+        email: u.email || '-',
+        telefono: u.telefono || 'Sin teléfono',
+        fechaNacimiento: fechaNacimientoStr,
+        fechaRegistro: fechaRegistroStr,
+        estado: u.activo ? 'Activo' : 'Inactivo'
+      };
+    });
+
+    // Definimos las columnas que aparecerán en el Excel
+    const columnas = [
+      { header: 'Rol', key: 'rol', width: 20 },
+      { header: 'RUT', key: 'rut', width: 15 },
+      { header: 'Nombre', key: 'nombre', width: 20 },
+      { header: 'Apellido', key: 'apellido', width: 20 },
+      { header: 'Email', key: 'email', width: 35 },
+      { header: 'Teléfono', key: 'telefono', width: 15 },
+      { header: 'Fecha de Nacimiento', key: 'fechaNacimiento', width: 20 },
+      { header: 'Fecha de Registro', key: 'fechaRegistro', width: 20 },
+      { header: 'Estado', key: 'estado', width: 15 },
+    ];
+
+    try {
+      return await this.excelService.generarExcel('Directorio de Usuarios', columnas, datosMapeados);
+    } catch (error) {
+      throw new InternalServerErrorException('Error al generar el archivo Excel de usuarios');
+    }
+  }
+
   async obtenerProximosCumpleanos(dias: number = 7): Promise<any[]> {
-    // 1. Traemos solo a los usuarios activos que tienen fecha de nacimiento
     const { data, error } = await this.supabase.client
       .from('usuarios_perfiles')
       .select('id_usuario, nombre, apellido, fecha_nacimiento, rol')
@@ -193,22 +243,18 @@ export class CentralService {
 
     const usuarios = data ?? [];
     
-    // 2. Calculamos las fechas en el servidor
     const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0); // Normalizamos a la medianoche
+    hoy.setHours(0, 0, 0, 0); 
 
     const proximos = usuarios
       .map((u) => {
-        // Añadimos T00:00:00 para evitar desajustes por zona horaria
         const nacimiento = new Date(u.fecha_nacimiento + 'T00:00:00'); 
         const cumpleEsteAno = new Date(hoy.getFullYear(), nacimiento.getMonth(), nacimiento.getDate());
         
-        // Si ya pasó su cumple este año, calculamos para el próximo año
         let proximoCumple = cumpleEsteAno < hoy 
             ? new Date(hoy.getFullYear() + 1, nacimiento.getMonth(), nacimiento.getDate()) 
             : cumpleEsteAno;
             
-        // Diferencia en días
         const diasRestantes = Math.ceil((proximoCumple.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
         
         return { 
@@ -220,9 +266,7 @@ export class CentralService {
             nuevaEdad: proximoCumple.getFullYear() - nacimiento.getFullYear() 
         };
       })
-      // 3. Filtramos solo los que cumplen en los próximos X días (7 por defecto)
       .filter((item) => item.diasRestantes >= 0 && item.diasRestantes <= dias)
-      // 4. Ordenamos para que el que cumple más pronto salga primero
       .sort((a, b) => a.diasRestantes - b.diasRestantes);
 
     return proximos;
@@ -374,52 +418,45 @@ export class CentralService {
   }
 
   async eliminarUsuario(usuarioId: string): Promise<void> {
-  // Verificar si tiene actividad relevante antes de permitir el borrado físico
-  const tieneActividad = await this.tieneActividadRelacionada(usuarioId);
+    const tieneActividad = await this.tieneActividadRelacionada(usuarioId);
 
-  if (tieneActividad) {
-    throw new BadRequestException(
-      'Este usuario ya tiene actividad registrada (asistencias, evaluaciones, etc.). ' +
-      'No se puede eliminar, pero puedes desactivarlo.',
-    );
+    if (tieneActividad) {
+      throw new BadRequestException(
+        'Este usuario ya tiene actividad registrada (asistencias, evaluaciones, etc.). ' +
+        'No se puede eliminar, pero puedes desactivarlo.',
+      );
+    }
+
+    const { error } = await this.supabase.client.auth.admin.deleteUser(usuarioId);
+
+    if (error) {
+      throw new BadRequestException(`No se pudo eliminar el usuario: ${error.message}`);
+    }
   }
 
-  // Sin actividad relacionada: se puede borrar físicamente sin perder historial real
-  const { error } = await this.supabase.client.auth.admin.deleteUser(usuarioId);
+  private async tieneActividadRelacionada(usuarioId: string): Promise<boolean> {
+    const { count: countAsistencias } = await this.supabase.client
+      .from('asistencias')
+      .select('*', { count: 'exact', head: true })
+      .eq('estudiante_id', usuarioId);
 
-  if (error) {
-    throw new BadRequestException(`No se pudo eliminar el usuario: ${error.message}`);
-  }
-  // El resto de las filas (usuarios_perfiles, estudiantes, etc.) se borran
-  // automáticamente por el ON DELETE CASCADE que ya tienen las FKs.
-}
+    if (countAsistencias && countAsistencias > 0) return true;
 
-private async tieneActividadRelacionada(usuarioId: string): Promise<boolean> {
-  // Revisa asistencias como estudiante
-  const { count: countAsistencias } = await this.supabase.client
-    .from('asistencias')
-    .select('*', { count: 'exact', head: true })
-    .eq('estudiante_id', usuarioId);
+    const { count: countResultados } = await this.supabase.client
+      .from('evaluaciones_resultados')
+      .select('*', { count: 'exact', head: true })
+      .eq('estudiante_id', usuarioId);
 
-  if (countAsistencias && countAsistencias > 0) return true;
+    if (countResultados && countResultados > 0) return true;
 
-  // Revisa resultados de evaluaciones como estudiante
-  const { count: countResultados } = await this.supabase.client
-    .from('evaluaciones_resultados')
-    .select('*', { count: 'exact', head: true })
-    .eq('estudiante_id', usuarioId);
+    const { count: countClases } = await this.supabase.client
+      .from('clases')
+      .select('*', { count: 'exact', head: true })
+      .eq('profesor_id', usuarioId);
 
-  if (countResultados && countResultados > 0) return true;
+    if (countClases && countClases > 0) return true;
 
-  // Revisa clases dictadas como profesor
-  const { count: countClases } = await this.supabase.client
-    .from('clases')
-    .select('*', { count: 'exact', head: true })
-    .eq('profesor_id', usuarioId);
-
-  if (countClases && countClases > 0) return true;
-
-  return false;
+    return false;
   }
 
   async miEquipoTecnico(estudianteId: string): Promise<any[]> {
@@ -453,7 +490,6 @@ private async tieneActividadRelacionada(usuarioId: string): Promise<boolean> {
 
     const listaPerfiles = (perfiles ?? []) as UsuarioPerfilRow[];
 
-    // Enriquecemos a los profesores con su tipo_profesor (Físico, Táctico, etc.)
     const datosProfesores = await this.profesoresService.buscarPorIds(profesoresIds);
     const mapaTipoProfesor = new Map(datosProfesores.map((p) => [p.usuario_id, p.tipo_profesor]));
 
@@ -490,7 +526,6 @@ private async tieneActividadRelacionada(usuarioId: string): Promise<boolean> {
 
     const fotoUrl = await this.subirFoto(archivo, usuarioId);
 
-    // Borra la foto anterior del bucket, si tenía una
     if (perfilActual.foto_url) {
       await this.borrarFoto(perfilActual.foto_url);
     }

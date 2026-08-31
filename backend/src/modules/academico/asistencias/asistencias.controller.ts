@@ -1,4 +1,5 @@
-import { BadRequestException, Body, Controller, ForbiddenException, Get, Param, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, ForbiddenException, Get, Param, ParseIntPipe, Post, Query, Res, UseGuards } from '@nestjs/common';
+import type { Response } from 'express';
 import { AsistenciasService } from './asistencias.service';
 import { RegistrarAsistenciasLoteDto } from './dto/registrar-asistencias-lotes.dto';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
@@ -77,6 +78,37 @@ export class AsistenciasController {
     );
   }
 
+  // 🔥 NUEVO ENDPOINT DE EXCEL
+  @Get('reportes/mensual/exportar/excel')
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
+  async exportarReporteMensualExcel(
+    @Query() filtros: FiltrosReporteMensualDto,
+    @CurrentUser() user: RequestUser,
+    @Res() res: Response,
+  ) {
+    if (!filtros.grupoId) {
+      throw new BadRequestException('Se requiere especificar un grupo_id para exportar el reporte');
+    }
+
+    // Validamos seguridad (igual que en el endpoint normal)
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
+    if (gruposPermitidos !== null && !gruposPermitidos.includes(filtros.grupoId)) {
+      throw new ForbiddenException('No tienes acceso a este grupo');
+    }
+
+    const buffer = await this.asistenciasService.generarExcelReporteMensual(
+      filtros.grupoId,
+      filtros.mes,
+      filtros.anio,
+    );
+
+    const nombreArchivo = `asistencia_grupo_${filtros.grupoId}_${filtros.mes}_${filtros.anio}.xlsx`;
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${nombreArchivo}"`);
+    res.send(buffer);
+  }
+  
   @Get('estudiantes/:estudianteId/asistencias/mensual')
   @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
   async detalleMensualEstudiante(
