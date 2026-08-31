@@ -8,8 +8,10 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ClasesService } from './clases.service';
 import { CrearClaseDto } from './dto/crear-clase.dto';
 import { ActualizarClaseDto } from './dto/actualizar-clase.dto';
@@ -45,6 +47,21 @@ export class ClasesController {
   ) {
     const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
     return this.clasesService.listar(filtros, gruposPermitidos);
+  }
+
+  @Get('exportar/excel')
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO)
+  async exportarExcel(
+    @CurrentUser() user: RequestUser,
+    @Query() filtros: FiltrarClasesDto,
+    @Res() res: Response,
+  ) {
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
+    const buffer = await this.clasesService.generarExcelClases(filtros, gruposPermitidos);
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="clases_profutbol.xlsx"');
+    res.send(buffer);
   }
 
   @Get('mis-clases')

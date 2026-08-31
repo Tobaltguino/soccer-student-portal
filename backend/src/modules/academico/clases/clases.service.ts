@@ -6,10 +6,14 @@ import type { ClaseRow } from './interfaces/clase.interface';
 import { lanzarErrorSupabase, lanzarErrorSupabaseConFk } from '../../../shared/utils/supabase-error.util';
 import { FiltrarClasesDto } from './dto/filtrar-clases.dto';
 
+import { ExcelService } from '../../../shared/services/excel.service';
+
 @Injectable()
   export class ClasesService {
-    constructor(private readonly supabase: SupabaseService) {}
-
+    constructor(
+      private readonly supabase: SupabaseService,
+      private readonly excelService: ExcelService, // 🔥 INYECTAR EXCEL SERVICE
+    ) {}
     async crear(dto: CrearClaseDto, gruposPermitidos: number[] | null = null): Promise<ClaseRow> {
     if (gruposPermitidos !== null && !gruposPermitidos.includes(dto.grupoId)) {
       throw new ForbiddenException('No puedes crear clases en un grupo que no tienes asignado');
@@ -283,5 +287,41 @@ import { FiltrarClasesDto } from './dto/filtrar-clases.dto';
     }
 
     return data;
+  }
+
+  async generarExcelClases(
+    filtros: FiltrarClasesDto,
+    gruposPermitidos: number[] | null = null,
+  ): Promise<Buffer> {
+    // Forzamos un límite alto para traer todas las páginas
+    const filtrosExportacion = { ...filtros, limite: 10000, pagina: 1 };
+    
+    const { registros } = await this.listar(filtrosExportacion, gruposPermitidos);
+
+    const datosMapeados = registros.map((c: any) => ({
+      id: c.id,
+      grupoId: c.grupo_id,
+      fecha: c.fecha ? new Date(c.fecha + 'T00:00:00').toLocaleDateString('es-CL') : '-',
+      hora: c.hora || '-',
+      lugar: c.lugar || 'Sin lugar asignado',
+      objetivo: c.objetivo || 'Sin objetivo',
+      estado: c.eliminado_at ? 'Eliminada' : 'Activa',
+    }));
+
+    const columnas = [
+      { header: 'ID Clase', key: 'id', width: 10 },
+      { header: 'ID Grupo', key: 'grupoId', width: 12 },
+      { header: 'Fecha', key: 'fecha', width: 15 },
+      { header: 'Hora', key: 'hora', width: 10 },
+      { header: 'Lugar', key: 'lugar', width: 25 },
+      { header: 'Objetivo', key: 'objetivo', width: 35 },
+      { header: 'Estado', key: 'estado', width: 15 },
+    ];
+
+    try {
+      return await this.excelService.generarExcel('Registro de Clases', columnas, datosMapeados);
+    } catch (error) {
+      throw new InternalServerErrorException('Error al generar el archivo Excel de clases');
+    }
   }
 }

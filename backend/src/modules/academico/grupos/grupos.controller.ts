@@ -10,7 +10,9 @@ import {
   Query,
   Request,
   UseGuards,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express'; // 🔥 IMPORTACIÓN TYPE
 import { GruposService } from './grupos.service';
 import { CrearGrupoDto } from './dto/crear-grupo.dto';
 import { ActualizarGrupoDto } from './dto/actualizar-grupo.dto';
@@ -49,29 +51,44 @@ export class GruposController {
     return this.gruposService.listar(incluirEliminados === 'true', gruposPermitidos);
   }
 
+  // 🔥 NUEVO ENDPOINT DE EXCEL
+  @Get('exportar/excel')
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.NUTRICIONISTA)
+  async exportarExcel(
+    @CurrentUser() user: RequestUser,
+    @Query('incluirEliminados') incluirEliminados: string,
+    @Res() res: Response,
+  ) {
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
+    const buffer = await this.gruposService.generarExcelGrupos(
+      incluirEliminados === 'true', 
+      gruposPermitidos
+    );
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="grupos_profutbol.xlsx"');
+    res.send(buffer);
+  }
+
   @Get('mis-grupos')
   @Roles(Rol.PROFESOR, Rol.KINESIOLOGO, Rol.NUTRICIONISTA)
   async listarMisGrupos(@Request() req: any) {
-    const usuarioId = req.user.id; // El UUID del token
+    const usuarioId = req.user.id;
     const rol = req.user.rol;
 
-    // Mapeamos el Rol del token al TipoStaff de tu servicio
     let tipoStaff: TipoStaff;
     if (rol === Rol.PROFESOR) tipoStaff = TipoStaff.PROFESOR;
     else if (rol === Rol.KINESIOLOGO) tipoStaff = TipoStaff.KINESIOLOGO;
     else if (rol === Rol.NUTRICIONISTA) tipoStaff = TipoStaff.NUTRICIONISTA;
     else return [];
 
-    // 1. Buscamos en la tabla intermedia los grupos de este usuario
     const asignaciones = await this.asignacionesStaffService.listarPorUsuario(usuarioId, tipoStaff);
     const gruposPermitidos = asignaciones.map(a => a.grupo_id);
 
-    // Si no tiene grupos asignados, devolvemos vacío rápido
     if (gruposPermitidos.length === 0) {
       return [];
     }
 
-    // 2. Usamos tu función existente que ya filtra por array de IDs
     return this.gruposService.listar(false, gruposPermitidos);
   }
 

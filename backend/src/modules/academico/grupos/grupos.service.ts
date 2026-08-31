@@ -4,10 +4,14 @@ import { CrearGrupoDto } from './dto/crear-grupo.dto';
 import { ActualizarGrupoDto } from './dto/actualizar-grupo.dto';
 import type { GrupoRow } from './interfaces/grupo.interface';
 import { lanzarErrorSupabase } from '../../../shared/utils/supabase-error.util';
+import { ExcelService } from '../../../shared/services/excel.service'; // 🔥 IMPORTAR
 
 @Injectable()
 export class GruposService {
-  constructor(private readonly supabase: SupabaseService) {}
+  constructor(
+    private readonly supabase: SupabaseService,
+    private readonly excelService: ExcelService, // 🔥 INYECTAR EXCEL SERVICE
+  ) {}
 
   async crear(dto: CrearGrupoDto): Promise<GrupoRow> {
     const { data, error } = await this.supabase.client
@@ -48,6 +52,36 @@ export class GruposService {
     }
 
     return data ?? [];
+  }
+
+  // 🔥 NUEVO MÉTODO PARA EXPORTAR EXCEL
+  async generarExcelGrupos(
+    incluirEliminados: boolean = false,
+    gruposPermitidos: number[] | null = null,
+  ): Promise<Buffer> {
+    const grupos = await this.listar(incluirEliminados, gruposPermitidos);
+
+    const datosMapeados = grupos.map((g: any) => ({
+      id: g.id,
+      nombre: g.nombre,
+      descripcion: g.descripcion || 'Sin descripción',
+      cantidadEstudiantes: g.estudiantes?.[0]?.count ?? 0, // Obtenemos el count de la relación
+      estado: g.eliminado_at ? 'Eliminado' : 'Activo',
+    }));
+
+    const columnas = [
+      { header: 'ID', key: 'id', width: 10 },
+      { header: 'Nombre', key: 'nombre', width: 25 },
+      { header: 'Descripción', key: 'descripcion', width: 40 },
+      { header: 'Alumnos Inscritos', key: 'cantidadEstudiantes', width: 20 },
+      { header: 'Estado', key: 'estado', width: 15 },
+    ];
+
+    try {
+      return await this.excelService.generarExcel('Grupos', columnas, datosMapeados);
+    } catch (error) {
+      throw new InternalServerErrorException('Error al generar el archivo Excel de grupos');
+    }
   }
 
   async buscarPorId(id: number, gruposPermitidos: number[] | null = null): Promise<GrupoRow> {
