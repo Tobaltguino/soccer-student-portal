@@ -16,7 +16,8 @@
         </div>
     </header>
 
-    <div class="pf-admin-card mb-4 p-3">
+    <!-- 🔥 FIX DEFINITIVO: Ocultar los filtros hasta que el proceso de carga finalice 🔥 -->
+    <div class="pf-admin-card mb-4 p-3" *ngIf="!loading">
         <div class="filter-row">
             <div class="filter-item flex-grow-1" style="min-width: 200px;">
                 <label><i class="pi pi-users mr-1 text-teal"></i> Categoría</label>

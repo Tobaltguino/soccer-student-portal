@@ -14,8 +14,8 @@
         </div>
     </header>
 
-    <!-- BARRA DE FILTROS -->
-    <div class="pf-admin-card mb-4 p-3">
+    <!-- 🔥 FIX: Ocultamos los filtros mientras carga la data 🔥 -->
+    <div class="pf-admin-card mb-4 p-3" *ngIf="!loading">
         <div class="filter-row">
             <div class="filter-item flex-grow-1">
                 <label><i class="pi pi-calendar mr-1 text-teal"></i> Fecha</label>
@@ -107,7 +107,6 @@
                     </div>
                     <div class="flex flex-column sm:align-items-end">
                         <span class="pf-oswald text-steel text-sm tracking-wider mb-2">Fecha del Informe</span>
-                        <!-- 🔥 CORRECCIÓN DEL PIPE DATE 🔥 -->
                         <p-tag [value]="(evalLogistica.fecha | date:'dd/MM/yyyy') || ''" severity="info" styleClass="text-base font-bold"></p-tag>
                     </div>
                 </div>

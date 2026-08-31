@@ -165,8 +165,8 @@ export class KinesiologoHistorialClinicoComponent implements OnInit {
       fechaFormateada = (new Date(d.getTime() - tzOffset)).toISOString().split('T')[0];
     }
 
-    const payload = {
-      estudianteId: this.alumnoSeleccionado.id,
+    // 🔥 FIX: Creamos un payload base SIN el estudianteId
+    const payload: any = {
       tipo: this.lesionActual.tipo,
       diagnostico: this.lesionActual.diagnostico || '',
       fechaEvento: fechaFormateada,
@@ -174,13 +174,18 @@ export class KinesiologoHistorialClinicoComponent implements OnInit {
       observaciones: this.lesionActual.observaciones || ''
     };
 
+    // 🔥 FIX: Solo inyectamos el estudianteId si es un registro NUEVO (POST)
+    if (!this.lesionActual.id) {
+      payload.estudianteId = this.alumnoSeleccionado.id;
+    }
+
     const peticion$ = this.lesionActual.id 
       ? this.historialService.actualizarHistorial(this.lesionActual.id, payload)
       : this.historialService.crearHistorial(payload);
 
     peticion$.subscribe({
       next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Registro actualizado correctamente.' });
+        this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Registro guardado correctamente.' });
         this.mostrarDialogoLesion = false;
         this.cargarListaLesiones();
         this.cdr.detectChanges();

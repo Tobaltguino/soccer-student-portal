@@ -221,8 +221,8 @@ export class KinesiologoFichaEvolutivaComponent implements OnInit {
       fechaFormateada = (new Date(d.getTime() - tzOffset)).toISOString().split('T')[0];
     }
 
+    // 🔥 FIX: Creamos el payload SIN el estudianteId para evitar el error 400
     const payload: any = { 
-      estudianteId: this.alumnoSeleccionado.id,
       fechaEvaluacion: fechaFormateada,
       diagnosticoMedico: this.ficha.diagnosticoMedico,
       observacion: this.ficha.observacion,
@@ -238,6 +238,11 @@ export class KinesiologoFichaEvolutivaComponent implements OnInit {
       fuerzaMovimientos: this.listaFuerzas,
       rangoMovimiento: this.listaArticulaciones
     };
+
+    // 🔥 FIX: Solo inyectamos el estudianteId si estamos creando (POST)
+    if (!this.editandoId) {
+      payload.estudianteId = this.alumnoSeleccionado.id;
+    }
 
     const peticion$ = this.editandoId 
       ? this.fichaService.actualizarFicha(this.editandoId, payload)

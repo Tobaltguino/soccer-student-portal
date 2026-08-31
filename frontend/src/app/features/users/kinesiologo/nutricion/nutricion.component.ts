@@ -67,7 +67,10 @@ export class KineNutritionComponent implements OnInit {
   evalLogistica: any = {};
 
   ngOnInit() {
-    this.cargarDatosBase();
+    // 🔥 FIX: Permitimos que Angular dibuje la pantalla vacía primero
+    Promise.resolve().then(() => {
+      this.cargarDatosBase();
+    });
   }
 
   // ==========================================
@@ -75,6 +78,7 @@ export class KineNutritionComponent implements OnInit {
   // ==========================================
   cargarDatosBase() {
     this.loading = true;
+    this.cdr.markForCheck();
 
     forkJoin({
       tipos: this.nutriTipoService.listarTiposEvaluacion(),
@@ -90,18 +94,17 @@ export class KineNutritionComponent implements OnInit {
 
         this.sesiones = sesionesFinalizadas.map((s: any) => ({
           ...s,
-          // FIX: Mapeo correcto de tipo_id coincidiendo con la base de datos
           tipoObj: this.tiposEvaluacion.find(t => t.id === s.tipo_id) || { nombre: 'Desconocido' }
         }));
 
         this.aplicarFiltros();
         this.loading = false;
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       },
       error: () => {
         this.mostrarError('No se pudieron cargar los datos de nutrición.');
         this.loading = false;
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       }
     });
   }
@@ -114,7 +117,6 @@ export class KineNutritionComponent implements OnInit {
       let cumpleFecha = true;
       let cumplePrueba = true;
 
-      // FIX: Uso correcto de tipo_id
       const tId = s.tipo_id;
 
       if (this.filtroFecha) {
@@ -127,7 +129,6 @@ export class KineNutritionComponent implements OnInit {
 
       return cumpleFecha && cumplePrueba;
     });
-    this.cdr.detectChanges();
   }
 
   limpiarFiltros() {
@@ -150,7 +151,7 @@ export class KineNutritionComponent implements OnInit {
     this.evalLogistica = sesion;
     this.cargandoResultados = true;
     this.displayGradesDialog = true;
-    this.cdr.detectChanges();
+    this.cdr.detectChanges(); // Se permite porque ocurre tras interacción de usuario
 
     forkJoin({
       alumnos: this.estudianteService.listarEstudiantes({ limite: 2000, activo: true }),
@@ -160,26 +161,22 @@ export class KineNutritionComponent implements OnInit {
         const alumnosBD = res.alumnos.registros || [];
         const resultadosPrevios = res.resultados || [];
 
-        // Mapeamos los alumnos para adjuntar sus resultados y PDFs
         this.estudiantes = alumnosBD.map((est: any) => {
           const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id || est.id;
           const nombre = est.perfil ? est.perfil.nombre : est.nombre;
           const apellido = est.perfil ? est.perfil.apellido : est.apellido;
 
-          // FIX: Búsqueda correcta asegurando mapeo (estudiante_id)
           const resultadoGuardado: any = resultadosPrevios.find((r: any) => r.estudianteId === idUsuario || r.estudiante_id === idUsuario);
 
           const estudianteConResultados = {
             id: idUsuario,
             nombre: nombre,
             apellido: apellido,
-            // FIX: Priorizar nomenclatura exacta de la BD/Backend
             archivo_url_previo: resultadoGuardado ? (resultadoGuardado.archivo_url || resultadoGuardado.archivoUrl) : null,
             nombre_archivo_previo: null as string | null,
             observacion: resultadoGuardado ? (resultadoGuardado.observaciones || resultadoGuardado.observacion) : ''
           };
 
-          // Extraer nombre del archivo para mostrarlo limpio
           if (estudianteConResultados.archivo_url_previo) {
             const urlParts = estudianteConResultados.archivo_url_previo.split('/');
             const rawName = decodeURIComponent(urlParts[urlParts.length - 1]);
@@ -190,8 +187,7 @@ export class KineNutritionComponent implements OnInit {
           return estudianteConResultados;
         });
 
-        // ✅ FIX IMPORTANTE: Filtramos para que NO salgan los 2000 alumnos vacíos,
-        // solo los que realmente fueron evaluados en esta sesión.
+        // ✅ FIX IMPORTANTE: Filtramos para que NO salgan los 2000 alumnos vacíos
         this.estudiantes = this.estudiantes.filter(e => e.archivo_url_previo || e.observacion);
 
         this.cargandoResultados = false;

@@ -73,11 +73,15 @@ export class KinesiologoClasesComponent implements OnInit {
   claseSeleccionadaAsistencia: Clase | null = null; // 🔥 VARIABLE RECUPERADA
 
   ngOnInit() {
-    this.cargarGrupos();
+    // 🔥 FIX: Permitimos que Angular termine su ciclo de dibujo inicial en paz
+    Promise.resolve().then(() => {
+      this.cargarGrupos();
+    });
   }
 
   cargarGrupos() {
     this.loading = true;
+    this.cdr.markForCheck(); // Le avisamos a Angular que iniciamos la carga
     
     this.grupoService.listarGrupos().subscribe({
       next: (data) => {
@@ -87,7 +91,7 @@ export class KinesiologoClasesComponent implements OnInit {
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar las categorías' });
         this.loading = false;
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       }
     });
   }

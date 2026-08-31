@@ -10,14 +10,12 @@
             </div>
         </div>
         <div class="header-actions">
-            <!-- Botón de recarga añadido -->
             <button pButton icon="pi pi-sync" class="pf-btn-ghost" 
                     (click)="cargarDatosIniciales()" [loading]="loading" pTooltip="Actualizar lista" tooltipPosition="left"></button>
         </div>
     </header>
 
-    <!-- BARRA DE FILTROS -->
-    <div class="pf-admin-card mb-4 p-3">
+    <div class="pf-admin-card mb-4 p-3" *ngIf="!loading">
         <div class="filter-row">
             <div class="filter-item flex-grow-1">
                 <label><i class="pi pi-calendar mr-1 text-teal"></i> Fecha</label>
@@ -72,11 +70,13 @@
                     </td>
                     <td>
                         <span class="p-column-title hidden-desktop pf-oswald text-steel">Grupo</span>
-                        <p-tag [value]="sesion.grupos?.nombre" severity="info" styleClass="text-sm font-bold"></p-tag>
+                        <!-- 🔥 FIX: Usamos la función obtenerNombreGrupo que creaste en el TS -->
+                        <p-tag [value]="obtenerNombreGrupo(sesion)" severity="info" styleClass="text-sm font-bold"></p-tag>
                     </td>
                     <td>
                         <span class="p-column-title hidden-desktop pf-oswald text-steel">Prueba Física</span>
-                        <span class="font-bold text-chalk">{{ sesion.tipo_evaluacion?.nombre }}</span>
+                        <!-- 🔥 FIX: Usamos la función obtenerTipoEvaluacion que creaste en el TS -->
+                        <span class="font-bold text-chalk">{{ obtenerTipoEvaluacion(sesion)?.nombre || 'Prueba desconocida' }}</span>
                     </td>
                     <td class="text-center">
                         <span class="p-column-title hidden-desktop pf-oswald text-steel">Resultados</span>
@@ -107,11 +107,13 @@
             <div class="surface-hover p-4 border-round mb-4 flex justify-content-between align-items-center flex-wrap gap-3 mt-2 border-1 surface-border" style="border-color: var(--border-color) !important;">
                 <div class="flex flex-column">
                     <span class="pf-oswald text-steel text-sm tracking-wider">Evaluación Seleccionada</span>
-                    <span class="pf-anton text-chalk text-2xl mt-1" style="letter-spacing: 0.5px;">{{evalLogistica.tipo_evaluacion?.nombre}}</span>
+                    <!-- 🔥 FIX MODAL: Usar las variables mapeadas en abrirCalificador() -->
+                    <span class="pf-anton text-chalk text-2xl mt-1" style="letter-spacing: 0.5px;">{{evalLogistica.tipoEvaluacionResuelto?.nombre}}</span>
                 </div>
                 <div class="flex flex-column sm:align-items-end">
                     <span class="pf-oswald text-steel text-sm tracking-wider mb-2">Grupo</span>
-                    <p-tag [value]="evalLogistica.grupos?.nombre" severity="info" styleClass="text-base font-bold"></p-tag>
+                    <!-- 🔥 FIX MODAL: Usar las variables mapeadas en abrirCalificador() -->
+                    <p-tag [value]="evalLogistica.grupoNombre" severity="info" styleClass="text-base font-bold"></p-tag>
                 </div>
             </div>
 
@@ -135,7 +137,7 @@
                         <td class="text-center">
                             <span class="p-column-title hidden-desktop pf-oswald text-steel">Resultado Obtenido</span>
                             <span *ngIf="estudiante.valor_numerico !== null" class="font-bold text-xl text-teal pf-anton" style="letter-spacing: 0.5px;">
-                                {{estudiante.valor_numerico}} <span class="text-sm text-steel font-normal ml-1">{{evalLogistica.tipo_evaluacion?.unidad_medida}}</span>
+                                {{estudiante.valor_numerico}} <span class="text-sm text-steel font-normal ml-1">{{evalLogistica.tipoEvaluacionResuelto?.unidad_medida}}</span>
                             </span>
                             <span *ngIf="estudiante.valor_numerico === null" class="text-steel italic text-sm">Ausente / S.D.</span>
                         </td>

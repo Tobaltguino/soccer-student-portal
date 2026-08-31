@@ -121,7 +121,6 @@ export class KinesiologoEvaluacionesKineComponent implements OnInit {
   filtroGrupo: number | null = null;
   filtroPrueba: number | null = null;
   filtroEstado: EstadoSesion | null = null;
-  filtroIncluirEliminadas = false;
 
   opcionesEstadoFiltro = [
     { label: 'Programada', value: EstadoSesion.PROGRAMADA },
@@ -157,11 +156,14 @@ export class KinesiologoEvaluacionesKineComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.cargarDatosGenerales();
+    Promise.resolve().then(() => {
+      this.cargarDatosGenerales();
+    });
   }
 
   cargarDatosGenerales(): void {
     this.loading = true;
+    this.cdr.markForCheck(); 
 
     this.grupoService.obtenerMisGrupos().subscribe({
       next: (grupos: GrupoOption[]) => {
@@ -177,11 +179,11 @@ export class KinesiologoEvaluacionesKineComponent implements OnInit {
 
         const misGrupoIds = this.grupos.map((g) => g.id);
 
+        // 🔥 FIX: Ya no enviamos el flag de incluirEliminadas, solo las activas.
         const peticionesSesiones = misGrupoIds.map((id) =>
           this.kineSesionService.listarSesiones({
             grupoId: id,
-            limite: 1000,
-            incluirEliminadas: this.filtroIncluirEliminadas,
+            limite: 1000
           }),
         );
 
@@ -244,10 +246,6 @@ export class KinesiologoEvaluacionesKineComponent implements OnInit {
     this.filtroPrueba = null;
     this.filtroEstado = null;
     this.aplicarFiltros();
-  }
-
-  toggleIncluirEliminadas(): void {
-    this.cargarDatosGenerales();
   }
 
   getSeverityPuntaje(puntaje: number | string | null, subevaluacionId: number): Severity {
@@ -375,13 +373,12 @@ export class KinesiologoEvaluacionesKineComponent implements OnInit {
 
   confirmarEliminarSesion(sesion: KineSesionVista): void {
     this.confirmationService.confirm({
-      message:
-        'Esta sesión quedará marcada como eliminada. Sus resultados dejarán de aparecer mientras esté así, ' +
-        'pero puedes restaurarla después desde el filtro "Mostrar eliminadas".',
+      message: '¿Estás seguro de que deseas eliminar esta sesión? Sus resultados se ocultarán.',
       header: 'Eliminar sesión',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Sí, eliminar',
       rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
         this.kineSesionService.eliminarSesion(sesion.id).subscribe({
           next: () => {
@@ -389,25 +386,6 @@ export class KinesiologoEvaluacionesKineComponent implements OnInit {
             this.cargarDatosGenerales();
           },
           error: () => this.mostrarError('No se pudo eliminar la sesión.'),
-        });
-      },
-    });
-  }
-
-  restaurarSesion(sesion: KineSesionVista): void {
-    this.confirmationService.confirm({
-      message: '¿Deseas restaurar esta sesión eliminada?',
-      header: 'Restaurar sesión',
-      icon: 'pi pi-refresh',
-      acceptLabel: 'Sí, restaurar',
-      rejectLabel: 'Cancelar',
-      accept: () => {
-        this.kineSesionService.restaurarSesion(sesion.id).subscribe({
-          next: () => {
-            this.mostrarExito('Sesión restaurada.');
-            this.cargarDatosGenerales();
-          },
-          error: () => this.mostrarError('No se pudo restaurar la sesión.'),
         });
       },
     });
@@ -525,8 +503,8 @@ export class KinesiologoEvaluacionesKineComponent implements OnInit {
             this.estudianteSeleccionado = alumnos[0] ?? null;
             this.displayGradesDialog = true;
           } else {
-            this.resultadosVista = alumnos;
-            this.estudianteVistaSeleccionado = alumnos[0] ?? null;
+            this.resultadosVista = alumnos.filter(a => a.evaluaciones.some(e => e.tiene_datos));
+            this.estudianteVistaSeleccionado = this.resultadosVista[0] ?? null;
             this.displayViewDialog = true;
           }
 

@@ -62,11 +62,15 @@ export class KinesiologoEvaluacionesComponent implements OnInit {
   evalLogistica: any = {};
 
   ngOnInit() {
-    this.cargarDatosIniciales();
+    // 🔥 FIX: Diferimos la carga para evitar el NG0100 en la vista
+    Promise.resolve().then(() => {
+      this.cargarDatosIniciales();
+    });
   }
 
   cargarDatosIniciales() {
     this.loading = true;
+    this.cdr.markForCheck(); // Le avisamos a Angular que empezamos a cargar
 
     this.grupoService.obtenerMisGrupos().subscribe({
       next: (gruposData) => {
@@ -79,7 +83,7 @@ export class KinesiologoEvaluacionesComponent implements OnInit {
             this.sesionesOriginales = [];
             this.sesiones = [];
             this.loading = false;
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
           });
           return;
         }
@@ -101,19 +105,19 @@ export class KinesiologoEvaluacionesComponent implements OnInit {
             this.sesiones = [...this.sesionesOriginales];
             this.aplicarFiltros();
             this.loading = false;
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
           },
           error: () => {
             this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Fallo al cargar sesiones.' });
             this.loading = false;
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
           }
         });
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar tus grupos.' });
         this.loading = false;
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       }
     });
   }
