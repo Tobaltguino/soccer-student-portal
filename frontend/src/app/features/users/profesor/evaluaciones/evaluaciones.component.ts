@@ -95,14 +95,19 @@ export class ProfesorEvaluacionesComponent implements OnInit {
     
     this.grupoService.obtenerMisGrupos().subscribe({
       next: (gruposData) => {
-        this.grupos = gruposData || [];
-        const misGrupoIds = this.grupos.map(g => g.id).filter(id => id !== undefined) as number[];
+        // 🔥 FIX DEFINITIVO: Guardamos los grupos temporalmente aquí.
+        // NO tocamos 'this.grupos' todavía para que Angular no vea cambios a medias.
+        const tempGrupos = gruposData || [];
+        const misGrupoIds = tempGrupos.map(g => g.id).filter(id => id !== undefined) as number[];
 
         if (misGrupoIds.length === 0) {
           this.tipoEvalService.listarTiposEvaluacion().subscribe(t => {
             this.tiposEvaluacion = t || [];
             this.sesionesOriginales = [];
             this.sesiones = [];
+            
+            // Liberamos todo junto de golpe
+            this.grupos = tempGrupos; 
             this.loading = false;
             this.cdr.detectChanges();
           });
@@ -121,6 +126,9 @@ export class ProfesorEvaluacionesComponent implements OnInit {
             this.tiposEvaluacion = tipos || [];
             this.sesionesOriginales = sesionesGrupos.flatMap(res => res.registros);
             this.sesiones = [...this.sesionesOriginales];
+            
+            // 🔥 Liberamos todo junto de golpe en un solo movimiento atómico
+            this.grupos = tempGrupos;
             this.aplicarFiltros();
             this.loading = false;
             this.cdr.detectChanges();
@@ -131,7 +139,6 @@ export class ProfesorEvaluacionesComponent implements OnInit {
             this.cdr.detectChanges();
           }
         });
-
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar tus grupos.' });

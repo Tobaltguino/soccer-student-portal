@@ -157,9 +157,12 @@
         <div *ngIf="selectedEstudiante" class="flex flex-column pt-3 animation-fade-in">
 
             <!-- Cabecera del Estudiante -->
-            <div class="flex flex-column align-items-center mb-4 pb-4 border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+            <div class="flex flex-column align-items-center mb-4 pb-4 border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">                
                 <img [src]="selectedEstudiante.foto_url || 'assets/images/default-user.png'" 
-                     alt="Avatar" class="w-6rem h-6rem border-circle shadow-4 mb-3 object-cover border-2" style="border-color: var(--pf-teal);">
+                     alt="Avatar" class="avatar-img-xl shadow-4 mb-3 border-2" 
+                     style="border-color: var(--pf-teal);"
+                     [class.pf-img-invert]="!selectedEstudiante.foto_url">
+                
                 <h2 class="m-0 text-chalk pf-anton text-2xl text-center" style="letter-spacing: 0.5px;">{{selectedEstudiante.nombre}} {{selectedEstudiante.apellido}}</h2>
                 <div class="flex align-items-center gap-2 mt-2">
                     <span class="text-steel font-medium text-sm"><i class="pi pi-id-card mr-1 text-teal"></i> {{selectedEstudiante.rut || 'Sin RUT'}}</span>

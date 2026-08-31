@@ -14,10 +14,10 @@
         </div>
     </header>
 
-    <!-- BARRA DE FILTROS -->
-    <div class="pf-admin-card mb-4 p-3">
+    <!-- BARRA DE FILTROS: Oculta mientras carga para evitar NG0100 -->
+    <div class="pf-admin-card mb-4 p-3" *ngIf="!loading">
         <div class="filter-row">
-            
+
             <div class="filter-item flex-grow-1">
                 <label><i class="pi pi-calendar mr-1 text-teal"></i> Fecha</label>
                 <p-datepicker [(ngModel)]="filtroFecha" dateFormat="dd/mm/yy" [showIcon]="true" 
@@ -53,7 +53,7 @@
                 <button pButton icon="pi pi-filter-slash" class="pf-btn-ghost w-full justify-content-center" 
                         (click)="limpiarFiltros()" pTooltip="Limpiar Filtros"></button>
             </div>
-            
+
         </div>
     </div>
 
@@ -61,7 +61,7 @@
     <div class="pf-admin-card table-responsive p-0">
         <p-table [value]="sesionesFiltradas" [loading]="loading" [rows]="10" [paginator]="true" 
                  styleClass="p-datatable-sm pf-table w-full" responsiveLayout="stack" [breakpoint]="'768px'">    
-            
+
             <ng-template pTemplate="header">
                 <tr>
                     <th style="width: 25%">Fecha</th>
@@ -112,7 +112,7 @@
     <!-- MODAL VISOR DE RESULTADOS -->
     <p-dialog [(visible)]="displayViewDialog" header="Resultados de la Sesión" [modal]="true" [style]="{width: '90vw', maxWidth: '1200px'}" [maximizable]="true" styleClass="p-fluid pf-dialog" [draggable]="false" [resizable]="false">
         <ng-template pTemplate="content">
-            
+
             <div *ngIf="cargandoResultados" class="flex flex-column align-items-center justify-content-center p-5">
                 <p-progressSpinner styleClass="w-4rem h-4rem" strokeWidth="4" animationDuration=".5s"></p-progressSpinner>
                 <span class="pf-oswald text-teal mt-3 text-lg" style="letter-spacing: 0.5px;">Cargando notas...</span>
@@ -132,7 +132,7 @@
 
                 <!-- 🔄 SPLIT LAYOUT CONVERTIDO A PRIMEFLEX -->
                 <div class="flex flex-column md:flex-row gap-4 h-full">
-                    
+
                     <!-- SIDEBAR: LISTA DE ESTUDIANTES EVALUADOS -->
                     <div class="w-full md:w-4 border-1 surface-border border-round" style="background: var(--bg-main); height: 500px; overflow-y: auto; border-color: var(--border-color) !important;">
                         <div class="p-3 border-bottom-1 surface-border font-bold text-chalk pf-oswald sticky top-0" style="background: var(--bg-card); z-index: 1; letter-spacing: 0.5px;">
@@ -146,7 +146,7 @@
                              [ngStyle]="{'border-left': estudianteVistaSeleccionado?.id === alumno.id ? '4px solid var(--pf-teal)' : '4px solid transparent'}"
                              onmouseover="this.classList.add('surface-hover')"
                              onmouseout="this.classList.remove('surface-hover')">
-                            
+
                             <div class="flex flex-column">
                                 <span class="font-bold text-chalk">{{alumno.apellido}}</span>
                                 <span class="text-sm text-steel">{{alumno.nombre}}</span>
@@ -157,7 +157,7 @@
 
                     <!-- CONTENIDO: RESULTADOS -->
                     <div class="w-full md:w-8 border-1 surface-border border-round p-0" style="background: var(--bg-card); height: 500px; overflow-y: auto; border-color: var(--border-color) !important;">
-                        
+
                         <div *ngIf="estudianteVistaSeleccionado">
                             <div class="p-3 border-bottom-1 surface-border sticky top-0" style="background: var(--bg-main); z-index: 1;">
                                 <h3 class="m-0 text-chalk pf-oswald text-xl" style="letter-spacing: 0.5px;">
@@ -203,7 +203,7 @@
                                 </p-table>
                             </div>
                         </div>
-                        
+
                         <div *ngIf="!estudianteVistaSeleccionado" class="flex flex-column align-items-center justify-content-center h-full text-steel p-4">
                             <i class="pi pi-list text-6xl mb-3"></i>
                             <h2 class="m-0 pf-anton text-2xl text-chalk" style="letter-spacing: 0.5px;">Selecciona un estudiante</h2>

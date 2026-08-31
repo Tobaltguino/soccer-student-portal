@@ -1516,13 +1516,26 @@ a.fc-col-header-cell-cushion,
 }
 
 /* ==========================================================
-   🔥 23. FIX: AVATAR DE TABLA (img plano, no p-avatar) 🔥
+   🔥 23. FIX: AVATAR DE TABLA Y MODAL (img plano) 🔥
    ========================================================== */
 .avatar-img {
     width: 2.25rem !important;
     height: 2.25rem !important;
     min-width: 2.25rem !important;
     min-height: 2.25rem !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    display: block !important;
+    flex-shrink: 0 !important;
+    background: var(--input-bg);
+}
+
+/* 🔥 NUEVA CLASE PARA EL AVATAR GRANDE DEL MODAL 🔥 */
+.avatar-img-xl {
+    width: 6rem !important;
+    height: 6rem !important;
+    min-width: 6rem !important;
+    min-height: 6rem !important;
     border-radius: 50% !important;
     object-fit: cover !important;
     display: block !important;

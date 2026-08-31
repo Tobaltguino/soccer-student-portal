@@ -70,7 +70,11 @@ export class ProfessorNutritionComponent implements OnInit {
   evalLogistica: any = {};
 
   ngOnInit() {
-    this.cargarDatosGenerales();
+    // 🔥 FIX DEFINITIVO: Permite que Angular dibuje la pantalla vacía en paz,
+    // y en el siguiente micro-segundo, dispara la carga de datos.
+    Promise.resolve().then(() => {
+      this.cargarDatosGenerales();
+    });
   }
 
   // ==========================================
@@ -78,6 +82,7 @@ export class ProfessorNutritionComponent implements OnInit {
   // ==========================================
   cargarDatosGenerales() {
     this.loading = true;
+    this.cdr.markForCheck(); // Avisamos a Angular que empezamos a cargar
 
     this.grupoService.obtenerMisGrupos().subscribe({
       next: (gruposData) => {
@@ -89,7 +94,7 @@ export class ProfessorNutritionComponent implements OnInit {
             this.tiposEvaluacion = t || [];
             this.sesiones = [];
             this.loading = false;
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
           });
           return;
         }
@@ -114,19 +119,19 @@ export class ProfessorNutritionComponent implements OnInit {
 
             this.aplicarFiltros();
             this.loading = false;
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
           },
           error: () => {
             this.mostrarError('Error al cargar datos iniciales.');
             this.loading = false;
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
           }
         });
       },
       error: () => {
         this.mostrarError('No se pudieron cargar tus grupos.');
         this.loading = false;
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       }
     });
   }
@@ -152,7 +157,7 @@ export class ProfessorNutritionComponent implements OnInit {
 
       return cumpleFecha && cumplePrueba;
     });
-    this.cdr.detectChanges();
+    this.cdr.markForCheck();
   }
 
   limpiarFiltros() {
@@ -175,7 +180,7 @@ export class ProfessorNutritionComponent implements OnInit {
     this.evalLogistica = sesion;
     this.cargandoResultados = true;
     this.displayGradesDialog = true;
-    this.cdr.detectChanges();
+    this.cdr.detectChanges(); // Aquí sí usamos detectChanges porque es provocado por un clic del usuario
 
     const misGrupoIds = this.grupos.map(g => g.id).filter(id => id !== undefined) as number[];
 

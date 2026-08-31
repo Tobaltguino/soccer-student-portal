@@ -61,11 +61,12 @@ export class FichasEvolutivasService {
     estudianteId: string,
     gruposPermitidos: number[] | null,
     incluirEliminadas: boolean = false,
-  ): Promise<FichaEvolutivaRow[]> {
+  ): Promise<any[]> {
     if (gruposPermitidos !== null) {
-      await this.verificarEstudianteEnAlcance(estudianteId, gruposPermitidos, true);   // 👈 agregado
+      await this.verificarEstudianteEnAlcance(estudianteId, gruposPermitidos, true);   
     }
 
+    // 1. Buscamos las fichas normales con select('*')
     let query = this.supabase.client
       .from('kine_fichas_evolutivas')
       .select('*')
@@ -82,16 +83,17 @@ export class FichasEvolutivasService {
       throw new InternalServerErrorException(`No se pudo listar las fichas: ${error.message}`);
     }
 
-    return data ?? [];
+    // 2. Usamos nuestra función segura para adjuntar los nombres
+    return this.adjuntarNombresKinesiologos(data ?? []);
   }
 
-  async buscarPorId(id: string, gruposPermitidos: number[] | null): Promise<FichaEvolutivaRow> {
+  async buscarPorId(id: string, gruposPermitidos: number[] | null): Promise<any> {
     const { data, error } = await this.supabase.client
       .from('kine_fichas_evolutivas')
       .select('*')
       .eq('id', id)
       .is('eliminado_at', null)
-      .single<FichaEvolutivaRow>();
+      .single();
 
     if (error || !data) {
       throw new NotFoundException('Ficha no encontrada');
@@ -101,7 +103,9 @@ export class FichasEvolutivasService {
       await this.verificarEstudianteEnAlcance(data.estudiante_id, gruposPermitidos, true);
     }
 
-    return data;
+    // Adjuntamos el nombre al objeto individual
+    const resultado = await this.adjuntarNombresKinesiologos([data]);
+    return resultado[0];
   }
 
   async actualizar(
@@ -203,5 +207,34 @@ export class FichasEvolutivasService {
       }
       throw new ForbiddenException('El estudiante no pertenece a tu grupo asignado');
     }
+  }
+
+  // 🔥 NUEVA FUNCIÓN PARA TRAER LOS NOMBRES DE LOS EVALUADORES SIN ERROR 500
+  private async adjuntarNombresKinesiologos(fichas: any[]): Promise<any[]> {
+    if (!fichas || fichas.length === 0) return fichas;
+
+    // Extraemos los IDs únicos de los kinesiólogos involucrados en estas fichas
+    const kineIds = [...new Set(fichas.map(f => f.kinesiologo_id).filter(Boolean))];
+    if (kineIds.length === 0) return fichas;
+
+    // 🔥 FIX: Cambiamos 'perfiles' por 'usuarios_perfiles' basado en tu BD
+    const { data: perfiles } = await this.supabase.client
+      .from('usuarios_perfiles') 
+      .select('id_usuario, nombre, apellido')
+      .in('id_usuario', kineIds);
+
+    // Creamos un diccionario (Map) para buscar rápido
+    const mapNombres = new Map();
+    if (perfiles) {
+      perfiles.forEach((p: any) => {
+        mapNombres.set(p.id_usuario, { nombre: p.nombre, apellido: p.apellido });
+      });
+    }
+
+    // Le inyectamos el objeto kinesiologo a cada ficha
+    return fichas.map(ficha => ({
+      ...ficha,
+      kinesiologo: mapNombres.get(ficha.kinesiologo_id) || null
+    }));
   }
 }

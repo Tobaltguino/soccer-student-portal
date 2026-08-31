@@ -13,6 +13,7 @@
         </div>
     </header>
 
+    <!-- BARRA DE FILTROS -->
     <div class="pf-admin-card mb-4 p-3">
         <div class="filter-row">
             
@@ -112,7 +113,6 @@
                     <td>
                         <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Posiciones</span>
                         <div class="flex gap-1 flex-wrap justify-content-end sm:justify-content-start">
-                            <!-- 🔥 CORRECCIÓN: 'warn' EN LUGAR DE 'warning' 🔥 -->
                             <p-tag *ngFor="let p of item.posiciones" [value]="p | uppercase" severity="warn" styleClass="text-xs"></p-tag>
                             <span *ngIf="!item.posiciones || item.posiciones.length === 0" class="text-steel text-xs italic">N/A</span>
                         </div>
@@ -149,8 +149,10 @@
 
             <!-- Cabecera del Estudiante -->
             <div class="flex flex-column align-items-center mb-4 pb-4 border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                <!-- 🔥 FIX APLICADO: avatar-img-xl y pf-img-invert 🔥 -->
                 <img [src]="selectedEstudiante.foto_url || 'assets/images/default-user.png'" 
-                     alt="Avatar" class="w-6rem h-6rem border-circle shadow-4 mb-3 object-cover border-2" style="border-color: var(--pf-teal);">
+                     alt="Avatar" class="avatar-img-xl shadow-4 mb-3 border-2" style="border-color: var(--pf-teal);"
+                     [class.pf-img-invert]="!selectedEstudiante.foto_url">
                 <h2 class="m-0 text-chalk pf-anton text-2xl text-center" style="letter-spacing: 0.5px;">{{selectedEstudiante.nombre}} {{selectedEstudiante.apellido}}</h2>
                 <div class="flex align-items-center gap-2 mt-2">
                     <span class="text-steel font-medium text-sm"><i class="pi pi-id-card mr-1 text-teal"></i> {{selectedEstudiante.rut || 'Sin RUT'}}</span>

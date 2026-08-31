@@ -13,8 +13,8 @@
         <div class="header-actions flex gap-2">
             <button pButton icon="pi pi-sync" class="pf-btn-ghost" 
                     (click)="cargarClasesPorGrupo()" [loading]="loading" pTooltip="Actualizar"></button>
-            <button pButton label="Nueva Clase" icon="pi pi-plus" class="pf-btn-primary" 
-                    (click)="abrirNuevaClase()" [disabled]="!selectedGrupoId"></button>
+                <button pButton label="Nueva Clase" icon="pi pi-plus" class="pf-btn-primary" 
+                        (click)="abrirNuevaClase()" [disabled]="!selectedGrupoId", pTooltip="Selecciona un grupo en los filtros primero"></button>
         </div>
     </header>
 

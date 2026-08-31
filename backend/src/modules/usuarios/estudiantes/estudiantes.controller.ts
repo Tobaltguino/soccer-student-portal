@@ -19,7 +19,8 @@ export class EstudiantesController {
   ) {}
 
   @Get()
-  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
+  // 🔥 FIX: Se agregó Nutricionista y Kinesiólogo para que puedan listar alumnos al calificar
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.NUTRICIONISTA)
   listar(@Query() filtros: FiltrarEstudiantesDto) {
     return this.estudiantesService.listarConFiltros(filtros);
   }
@@ -32,7 +33,8 @@ export class EstudiantesController {
   }
 
   @Get('count')
-  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
+  // 🔥 FIX: Se agregó Nutricionista y Kinesiólogo para que el Dashboard cargue el KPI
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.NUTRICIONISTA)
   async contarEstudiantesActivos() {
     const total = await this.estudiantesService.contarActivos();
     return { total };

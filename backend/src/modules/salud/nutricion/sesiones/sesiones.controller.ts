@@ -34,22 +34,26 @@ export class SesionesController {
   }
 
   @Get()
-  @Roles(Rol.ADMINISTRADOR, Rol.NUTRICIONISTA)
+  // 🔥 FIX: Se agregó Rol.PROFESOR para permitirle ver la lista
+  @Roles(Rol.ADMINISTRADOR, Rol.NUTRICIONISTA, Rol.PROFESOR)
   listar(@CurrentUser() user: RequestUser, @Query() filtros: FiltrarSesionesDto) {
-    const soloDeNutricionista = user.rol === Rol.ADMINISTRADOR ? null : user.id;
+    // 🔥 FIX LÓGICO: Si es Nutricionista, filtra por sus sesiones. Si es Admin o Profesor, no aplica este filtro restrictivo.
+    const soloDeNutricionista = user.rol === Rol.NUTRICIONISTA ? user.id : null;
     return this.sesionesService.listar(soloDeNutricionista, filtros);
   }
 
   @Get('ultima-finalizada')
-  @Roles(Rol.ADMINISTRADOR, Rol.NUTRICIONISTA)
+  // 🔥 FIX: Agregado por si el dashboard del profesor necesita este dato
+  @Roles(Rol.ADMINISTRADOR, Rol.NUTRICIONISTA, Rol.PROFESOR)
   obtenerUltima() {
     return this.sesionesService.obtenerUltimaFinalizada();
   }
 
   @Get(':id')
-  @Roles(Rol.ADMINISTRADOR, Rol.NUTRICIONISTA)
+  // 🔥 FIX: Se agregó Rol.PROFESOR
+  @Roles(Rol.ADMINISTRADOR, Rol.NUTRICIONISTA, Rol.PROFESOR)
   buscarPorId(@Param('id') id: string, @CurrentUser() user: RequestUser) {
-    const soloDeNutricionista = user.rol === Rol.ADMINISTRADOR ? null : user.id;
+    const soloDeNutricionista = user.rol === Rol.NUTRICIONISTA ? user.id : null;
     return this.sesionesService.buscarPorId(id, soloDeNutricionista);
   }
 

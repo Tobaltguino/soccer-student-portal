@@ -13,8 +13,12 @@
         <div class="header-actions flex gap-2">
             <button pButton icon="pi pi-sync" class="pf-btn-ghost" 
                     (click)="cargarDatosIniciales()" [loading]="loading" pTooltip="Actualizar lista"></button>
-            <button pButton label="Nueva Sesión" icon="pi pi-plus" class="pf-btn-primary" 
-                    (click)="abrirNuevo()"></button>
+            
+            <!-- 🔥 FIX: Opción 1 aplicada. Bloquea si el profesor no tiene grupos asignados -->
+            <div [pTooltip]="grupos.length === 0 ? 'No tienes grupos asignados para crear sesiones' : ''" tooltipPosition="left">
+                <button pButton label="Nueva Sesión" icon="pi pi-plus" class="pf-btn-primary" 
+                        (click)="abrirNuevo()" [disabled]="grupos.length === 0"></button>
+            </div>
         </div>
     </header>
 

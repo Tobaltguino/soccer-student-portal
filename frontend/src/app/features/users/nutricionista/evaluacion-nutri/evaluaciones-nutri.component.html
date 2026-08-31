@@ -47,7 +47,7 @@
                           (onChange)="aplicarFiltros()" [showClear]="true" 
                           styleClass="w-full" appendTo="body" [filter]="false">
                     <ng-template let-option pTemplate="item">
-                        <p-tag [value]="option.label" [severity]="option.value === EstadoSesion.PROGRAMADA ? 'warn' : 'success'"></p-tag>
+                        <p-tag [value]="option.label" [severity]="getSeverityEstado(option.value)"></p-tag>
                     </ng-template>
                 </p-select>
             </div>
@@ -85,8 +85,9 @@
                     </td>
                     <td class="text-center">
                         <span class="p-column-title hidden-desktop pf-oswald text-steel">Estado</span>
-                        <p-tag [value]="sesion.estado === EstadoSesion.PROGRAMADA ? 'Pendiente' : 'Finalizado'" 
-                               [severity]="sesion.estado === EstadoSesion.PROGRAMADA ? 'warn' : 'success'"></p-tag>
+                        <!-- 🔥 FIX: Uso del helper dinámico para los 4 estados -->
+                        <p-tag [value]="getNombreEstado(sesion.estado)" 
+                               [severity]="getSeverityEstado(sesion.estado)"></p-tag>
                     </td>
                     <td class="text-center">
                         <span class="p-column-title hidden-desktop pf-oswald text-steel">Acciones</span>
@@ -127,18 +128,33 @@
                           placeholder="Selecciona el tipo" appendTo="body" [filter]="false"></p-select>
             </div>
             
+            <!-- 🔥 FIX: Selector de estado desplegable adaptado a los 4 estados del enum -->
             <div class="field mb-2" *ngIf="evalLogistica.id">
-                <label class="pf-oswald text-steel mb-3 block">Estado de la Sesión</label>
-                <div class="flex gap-4">
-                    <div class="flex align-items-center">
-                        <p-radioButton name="estado" [value]="EstadoSesion.PROGRAMADA" [(ngModel)]="evalLogistica.estado" inputId="st1"></p-radioButton>
-                        <label for="st1" class="ml-2 mb-0 font-normal text-chalk">Pendiente</label>
-                    </div>
-                    <div class="flex align-items-center">
-                        <p-radioButton name="estado" [value]="EstadoSesion.FINALIZADA" [(ngModel)]="evalLogistica.estado" inputId="st2"></p-radioButton>
-                        <label for="st2" class="ml-2 mb-0 font-normal text-chalk">Finalizado</label>
-                    </div>
-                </div>
+                <label class="pf-oswald text-steel mb-2 block">Estado de la Sesión</label>
+                <p-select [options]="opcionesEstadoFiltro" [(ngModel)]="evalLogistica.estado" optionLabel="label" optionValue="value" appendTo="body" styleClass="w-full">
+                    <ng-template let-option pTemplate="selectedItem">
+                        <div class="flex align-items-center gap-2">
+                            <i class="pi pi-circle-fill" [ngClass]="{
+                                'text-yellow-500': option.value === EstadoSesion.PROGRAMADA,
+                                'text-blue-500': option.value === EstadoSesion.EN_CURSO,
+                                'text-green-500': option.value === EstadoSesion.FINALIZADA,
+                                'text-red-500': option.value === EstadoSesion.CANCELADA
+                            }"></i>
+                            <span>{{option.label}}</span>
+                        </div>
+                    </ng-template>
+                    <ng-template let-option pTemplate="item">
+                        <div class="flex align-items-center gap-2">
+                            <i class="pi pi-circle-fill" [ngClass]="{
+                                'text-yellow-500': option.value === EstadoSesion.PROGRAMADA,
+                                'text-blue-500': option.value === EstadoSesion.EN_CURSO,
+                                'text-green-500': option.value === EstadoSesion.FINALIZADA,
+                                'text-red-500': option.value === EstadoSesion.CANCELADA
+                            }"></i>
+                            <span>{{option.label}}</span>
+                        </div>
+                    </ng-template>
+                </p-select>
             </div>
 
         </ng-template>
@@ -191,7 +207,6 @@
                                 
                                 <div *ngIf="estudiante.archivoSeleccionado || estudiante.archivo_url_previo; else noFile" class="flex flex-column gap-2 w-full">
                                     
-                                    <!-- Contenedor del PDF Actual -->
                                     <div class="flex align-items-center gap-2 border-1 surface-border p-2 border-round surface-hover overflow-hidden w-full" style="border-color: var(--border-color) !important;">
                                         <i class="pi pi-file-pdf text-red-500 text-xl flex-shrink-0"></i>
                                         <span class="text-sm text-chalk font-medium text-truncate text-left flex-grow-1" 

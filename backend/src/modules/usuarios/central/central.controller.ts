@@ -44,7 +44,7 @@ export class CentralController {
   }
 
   @Get('cumpleanos')
-  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR)
+  @Roles(Rol.ADMINISTRADOR, Rol.PROFESOR, Rol.KINESIOLOGO, Rol.NUTRICIONISTA)
   obtenerCumpleanos() {
     // Le pasamos 7 como parámetro fijo porque así lo solicitaste
     return this.centralService.obtenerProximosCumpleanos(7);

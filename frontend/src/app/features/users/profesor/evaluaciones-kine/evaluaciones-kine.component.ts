@@ -55,7 +55,6 @@ interface EvaluacionParametroVista {
   resultado_derecho: number | null;
   observacion: string;
   tiene_datos: boolean;
-  // Rango "oficial" calculado por el backend (según prioridad MENOR/MAYOR de la subevaluación)
   rango: { etiqueta: string; color: string | null } | null;
 }
 
@@ -126,11 +125,15 @@ export class ProfesorEvaluacionesKineComponent implements OnInit {
   cargandoResultados = false;
 
   ngOnInit(): void {
-    this.cargarDatosGenerales();
+    // 🔥 FIX: Diferimos la carga un microsegundo para evitar NG0100
+    Promise.resolve().then(() => {
+      this.cargarDatosGenerales();
+    });
   }
 
   cargarDatosGenerales(): void {
     this.loading = true;
+    this.cdr.markForCheck(); // 🔥 FIX: Le indicamos a Angular que estamos cargando
 
     this.grupoService.obtenerMisGrupos().subscribe({
       next: (gruposData: GrupoOption[]) => {
@@ -143,7 +146,7 @@ export class ProfesorEvaluacionesKineComponent implements OnInit {
             this.sesionesOriginales = [];
             this.sesionesFiltradas = [];
             this.loading = false;
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
           });
           return;
         }
@@ -171,19 +174,19 @@ export class ProfesorEvaluacionesKineComponent implements OnInit {
             this.aplicarFiltros();
 
             this.loading = false;
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
           },
           error: () => {
             this.mostrarError('Error al cargar datos iniciales.');
             this.loading = false;
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
           },
         });
       },
       error: () => {
         this.mostrarError('No se pudieron cargar tus grupos.');
         this.loading = false;
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       },
     });
   }
@@ -234,7 +237,6 @@ export class ProfesorEvaluacionesKineComponent implements OnInit {
         cumpleGrupo = sesion.grupo_id === this.filtroGrupo.id;
       }
 
-      // filtroPrueba ya es el id (el <p-select> usa optionValue="id"), no un objeto.
       if (this.filtroPrueba !== null) {
         cumplePrueba = sesion.tipo_evaluacion_id === this.filtroPrueba;
       }

@@ -101,8 +101,13 @@ export class ProfesorClasesComponent implements OnInit {
     
     this.grupoService.listarGrupos().subscribe({
       next: (data) => {
-        this.grupos = data;
-        this.cargarClasesPorGrupo(); 
+        // 🔥 FIX: Usamos setTimeout para "patear" la actualización al siguiente ciclo de Angular
+        // Esto evita el error NG0100 si el servicio responde de manera síncrona/muy rápido.
+        setTimeout(() => {
+          this.grupos = data;
+          this.cargarClasesPorGrupo(); 
+          this.cdr.detectChanges();
+        });
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar tus grupos asignados' });

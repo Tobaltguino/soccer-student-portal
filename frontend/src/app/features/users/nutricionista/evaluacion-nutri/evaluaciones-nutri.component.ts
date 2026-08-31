@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core'; 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, switchMap, of } from 'rxjs'; // Añadidos operadores RxJS
+import { forkJoin, switchMap, of } from 'rxjs';
 
 // Enum
 import { EstadoSesion } from '../../../../shared/enums/estado-sesion.enum';
@@ -63,9 +63,12 @@ export class NutriEvaluationsComponent implements OnInit {
   filtroPrueba: any = null;
   filtroEstado: EstadoSesion | null = null;
   
+  // 🔥 FIX: Opciones actualizadas para cubrir todos los estados del Enum
   opcionesEstadoFiltro = [
-    { label: 'Pendientes', value: EstadoSesion.PROGRAMADA },
-    { label: 'Finalizadas', value: EstadoSesion.FINALIZADA }
+    { label: 'Programada', value: EstadoSesion.PROGRAMADA },
+    { label: 'En Curso', value: EstadoSesion.EN_CURSO },
+    { label: 'Finalizada', value: EstadoSesion.FINALIZADA },
+    { label: 'Cancelada', value: EstadoSesion.CANCELADA }
   ];
 
   // Modales y Estado
@@ -97,7 +100,6 @@ export class NutriEvaluationsComponent implements OnInit {
         const regs = data.sesiones.registros || [];
         this.sesiones = regs.map((s: any) => ({
           ...s,
-          // FIX: Utilizar 'tipo_id' que es la propiedad exacta de la base de datos
           tipoObj: this.tiposEvaluacion.find(t => t.id === s.tipo_id) || { nombre: 'Desconocido' }
         }));
 
@@ -114,7 +116,7 @@ export class NutriEvaluationsComponent implements OnInit {
   }
 
   // ==========================================
-  // FILTROS
+  // FILTROS Y HELPERS DE ESTADO
   // ==========================================
   aplicarFiltros() {
     this.sesionesFiltradas = this.sesiones.filter(s => {
@@ -122,7 +124,6 @@ export class NutriEvaluationsComponent implements OnInit {
       let cumplePrueba = true;
       let cumpleEstado = true;
 
-      // FIX: Propiedad corregida a tipo_id
       const tId = s.tipo_id;
 
       if (this.filtroFecha) {
@@ -146,6 +147,26 @@ export class NutriEvaluationsComponent implements OnInit {
     this.filtroPrueba = null;
     this.filtroEstado = null;
     this.aplicarFiltros();
+  }
+
+  getNombreEstado(estado: string): string {
+    switch (estado) {
+      case EstadoSesion.PROGRAMADA: return 'Programada';
+      case EstadoSesion.EN_CURSO: return 'En Curso';
+      case EstadoSesion.FINALIZADA: return 'Finalizada';
+      case EstadoSesion.CANCELADA: return 'Cancelada';
+      default: return 'Desconocido';
+    }
+  }
+
+  getSeverityEstado(estado: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
+    switch (estado) {
+      case EstadoSesion.PROGRAMADA: return 'warn';
+      case EstadoSesion.EN_CURSO: return 'info';
+      case EstadoSesion.FINALIZADA: return 'success';
+      case EstadoSesion.CANCELADA: return 'danger';
+      default: return 'secondary';
+    }
   }
 
   private formatearFechaIso(fecha: any): string {
@@ -173,8 +194,9 @@ export class NutriEvaluationsComponent implements OnInit {
     const fechaObj = new Date(sesion.fecha + 'T00:00:00');
     this.evalLogistica = { 
       ...sesion,
-      tipo_id: sesion.tipo_id, // FIX: Propiedad corregida
-      fecha: fechaObj
+      tipo_id: sesion.tipo_id,
+      fecha: fechaObj,
+      estado: sesion.estado
     };
     this.displayMainDialog = true;
     this.cdr.detectChanges(); 
@@ -189,14 +211,12 @@ export class NutriEvaluationsComponent implements OnInit {
     this.loading = true;
     const fechaSeleccionada = new Date(this.evalLogistica.fecha);
     
-    // Payload base (ActualizarSesionDto y CrearSesionDto lo aceptan)
     const payload = {
       tipoId: this.evalLogistica.tipo_id,
       fecha: fechaSeleccionada.toISOString().split('T')[0]
     };
 
     if (this.evalLogistica.id) {
-      // FIX: Modo Edición -> Actualiza datos logísticos Y encadena la actualización de estado
       this.nutriSesionService.actualizarSesion(this.evalLogistica.id, payload).pipe(
         switchMap(() => {
           if (this.evalLogistica.estado) {
@@ -217,7 +237,6 @@ export class NutriEvaluationsComponent implements OnInit {
         }
       });
     } else {
-      // Modo Creación (el backend por defecto la setea en PROGRAMADA)
       this.nutriSesionService.crearSesion(payload as any).subscribe({
         next: () => {
           this.mostrarExito('Sesión creada correctamente');
