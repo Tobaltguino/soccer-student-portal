@@ -26,6 +26,9 @@ import { UsuarioService } from '../../../../core/domains/usuarios/central/servic
 import { CrearUsuarioPayload, ActualizarUsuarioPayload } from '../../../../core/domains/usuarios/central/models/usuario.interface'
 import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
 
+// 🔥 IMPORTAMOS TU SERVICIO DE EXCEL
+import { ExcelExportService } from '../../../../core/services/excel-export.service';
+
 import { Rol } from '../../../../shared/enums/rol.enum';
 import { Posicion } from '../../../../shared/enums/posicion.enum';
 
@@ -52,6 +55,9 @@ export class AdministradorUsuariosComponent implements OnInit {
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
   private filterService = inject(FilterService);
+
+  // 🔥 INYECTAMOS EL SERVICIO DE EXCEL
+  private excelService = inject(ExcelExportService);
 
   dataList: any[] = []; 
   listaGrupos: any[] = [];
@@ -124,7 +130,6 @@ export class AdministradorUsuariosComponent implements OnInit {
   cargarMaestros() {
     this.grupoService.listarGrupos().subscribe({
       next: (data) => {
-        // 🔥 FIX NG0100: Diferimos la asignación al siguiente micro-tick de Angular
         Promise.resolve().then(() => {
             this.listaGrupos = data;
             this.cdr.detectChanges();
@@ -169,6 +174,15 @@ export class AdministradorUsuariosComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  // 🔥 NUEVO MÉTODO PARA EXPORTAR EXCEL GLOBAL
+  descargarExcel() {
+    this.messageService.add({ severity: 'info', summary: 'Exportando', detail: 'Generando directorio completo...' });
+    this.cdr.detectChanges();
+    
+    // Al enviar un objeto vacío {}, ignoramos el filtro de rol y nos trae a TODOS los usuarios de la base de datos
+    this.excelService.exportarUsuarios({});
   }
 
   // --- LÓGICA DE FOTOS ---
@@ -260,8 +274,6 @@ export class AdministradorUsuariosComponent implements OnInit {
 
     this.guardando = true;
 
-    // Construimos el payload de forma segura (sin nulls ni strings vacíos)
-    // Construimos el payload de forma segura
     const payload: any = {
       rut: rutLimpio,
       nombre: this.userForm.nombre,
@@ -269,7 +281,6 @@ export class AdministradorUsuariosComponent implements OnInit {
       email: this.userForm.email.toLowerCase(),
     };
 
-    // 🔥 FIX: Solo adjuntamos el ROL si es un usuario nuevo (Creación)
     if (!this.isEditing) {
       payload.rol = this.vistaActual;
     }
@@ -278,7 +289,6 @@ export class AdministradorUsuariosComponent implements OnInit {
       payload.fechaNacimiento = this.formatearFecha(this.userForm.fecha_nacimiento);
     }
 
-    // Limpiamos la basura (nulls o strings vacíos) antes de enviar al backend
     if (this.vistaActual === Rol.ESTUDIANTE) {
       if (this.userForm.peso !== null && this.userForm.peso !== '') payload.peso = this.userForm.peso;
       if (this.userForm.altura !== null && this.userForm.altura !== '') payload.altura = this.userForm.altura;
@@ -331,14 +341,12 @@ export class AdministradorUsuariosComponent implements OnInit {
     this.cargarDatos();
   }
 
-  // Parseo inteligente del error de Class-Validator
   private mostrarErrorGuardado(err: any) {
     this.guardando = false;
     
     let errorDetalle = 'Error al procesar la solicitud';
     
     if (err.error?.message) {
-      // Si NestJS devuelve un array de errores de validación, los unimos
       if (Array.isArray(err.error.message)) {
         errorDetalle = err.error.message.join(' · ');
       } else {
@@ -350,7 +358,7 @@ export class AdministradorUsuariosComponent implements OnInit {
       severity: 'error', 
       summary: 'Error de Validación', 
       detail: errorDetalle,
-      life: 6000 // Le damos más tiempo para que puedas leerlo
+      life: 6000 
     });
     
     this.cdr.detectChanges();

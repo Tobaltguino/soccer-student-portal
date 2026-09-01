@@ -25,6 +25,9 @@ import { Grupo } from '../../../../core/domains/academico/grupos/models/grupo.in
 import { AsistenciaService } from '../../../../core/domains/academico/asistencias/services/asistencia.service';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
 
+// 🔥 IMPORTAMOS TU SERVICIO DE EXCEL
+import { ExcelExportService } from '../../../../core/services/excel-export.service';
+
 @Component({
   selector: 'app-administrador-clases',
   standalone: true,
@@ -46,6 +49,9 @@ export class AdministradorClasesComponent implements OnInit {
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
   private cdr = inject(ChangeDetectorRef);
+  
+  // 🔥 INYECTAMOS EL SERVICIO DE EXCEL
+  private excelService = inject(ExcelExportService);
 
   clases: Clase[] = [];
   totalRegistros: number = 0;
@@ -117,6 +123,45 @@ export class AdministradorClasesComponent implements OnInit {
     this.filtroGrupoId = null;
     this.filtroLugar = '';
     this.aplicarFiltros();
+  }
+
+  // 🔥 MÉTODO PARA EXPORTAR EXCEL (AHORA POR MES COMPLETO)
+  descargarExcel() {
+    if (this.clases.length === 0 && !this.filtroFecha && !this.filtroGrupoId) {
+      this.messageService.add({ 
+        severity: 'warn', 
+        summary: 'Sin datos', 
+        detail: 'No hay clases para exportar con los filtros actuales.' 
+      });
+      return;
+    }
+
+    let fechaDesdeStr = undefined;
+    let fechaHastaStr = undefined;
+
+    // Si el usuario seleccionó una fecha, calculamos el mes completo
+    if (this.filtroFecha) {
+      const year = this.filtroFecha.getFullYear();
+      const month = this.filtroFecha.getMonth(); // 0 a 11
+
+      // Primer día del mes (ej: 1 de Agosto)
+      const primerDia = new Date(year, month, 1);
+      // Último día del mes (pasando el día 0 del mes siguiente nos da el último día del actual)
+      const ultimoDia = new Date(year, month + 1, 0);
+
+      fechaDesdeStr = this.formatearFecha(primerDia);
+      fechaHastaStr = this.formatearFecha(ultimoDia);
+    }
+
+    // Armamos el objeto de filtros para enviarlo al servicio
+    const filtrosExportacion = {
+      grupoId: this.filtroGrupoId || undefined,
+      desde: fechaDesdeStr,
+      hasta: fechaHastaStr,
+      lugar: this.filtroLugar?.trim() || undefined
+    };
+
+    this.excelService.exportarClases(filtrosExportacion);
   }
 
   obtenerNombreGrupo(grupoId: number): string {

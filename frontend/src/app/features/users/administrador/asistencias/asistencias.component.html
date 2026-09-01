@@ -15,22 +15,35 @@
 
     <!-- BARRA DE FILTROS -->
     <div class="pf-admin-card mb-4 p-3">
-        <div class="filter-row">
+        <div class="filter-row flex flex-wrap gap-3 align-items-end">
             
-            <div class="filter-item flex-grow-2">
+            <div class="filter-item flex-grow-1">
                 <label><i class="pi pi-users mr-1 text-teal"></i> Grupo</label>
                 <p-select [options]="grupos" [(ngModel)]="grupoSeleccionado" optionLabel="nombre" optionValue="id" 
                           placeholder="Escoge un grupo" (onChange)="onFilterChange()" appendTo="body" styleClass="w-full" [filter]="false" [disabled]="loading"></p-select>
             </div>
 
-            <div class="filter-item flex-grow-1">
+            <div class="filter-item w-10rem">
                 <label><i class="pi pi-calendar mr-1 text-teal"></i> Mes</label>
                 <p-select [options]="meses" [(ngModel)]="filtroMes" (onChange)="onFilterChange()" appendTo="body" styleClass="w-full" [disabled]="loading"></p-select>
             </div>
 
-            <div class="filter-item flex-grow-1">
+            <div class="filter-item w-10rem">
                 <label><i class="pi pi-calendar-plus mr-1 text-teal"></i> Año</label>
                 <p-select [options]="anios" [(ngModel)]="filtroAnio" (onChange)="onFilterChange()" appendTo="body" styleClass="w-full" [disabled]="loading"></p-select>
+            </div>
+
+            <!-- 🔥 NUEVO BOTÓN EXPORTAR EXCEL 🔥 -->
+            <div class="filter-item">
+                <button pButton pRipple 
+                        icon="pi pi-file-excel" 
+                        label="Exportar" 
+                        class="p-button-success w-full"
+                        pTooltip="Descargar reporte en Excel" 
+                        tooltipPosition="top"
+                        [disabled]="loading || !grupoSeleccionado || estudiantesAsistencia.length === 0" 
+                        (click)="descargarExcel()">
+                </button>
             </div>
 
         </div>

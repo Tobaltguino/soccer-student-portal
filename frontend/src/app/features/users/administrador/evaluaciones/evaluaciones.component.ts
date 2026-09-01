@@ -25,6 +25,9 @@ import { RangoEvaluacionService } from '../../../../core/domains/academico/evalu
 import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
 
+// 🔥 IMPORTAMOS TU SERVICIO DE EXCEL
+import { ExcelExportService } from '../../../../core/services/excel-export.service';
+
 import { EstadoSesion } from '../../../../shared/enums/estado-sesion.enum';
 
 @Component({
@@ -51,6 +54,9 @@ export class AdministradorEvaluacionesComponent implements OnInit {
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
   private cdr = inject(ChangeDetectorRef);
+  
+  // 🔥 INYECTAMOS EL SERVICIO DE EXCEL
+  private excelService = inject(ExcelExportService);
 
   // Enum expuesto al template
   readonly EstadoSesion = EstadoSesion;
@@ -86,13 +92,13 @@ export class AdministradorEvaluacionesComponent implements OnInit {
 
   // --- ESTADOS UI ---
   loading: boolean = true;
-  guardando: boolean = false; // Usado solo para Configurar Test
+  guardando: boolean = false; 
   displayTipoDialog: boolean = false;   
-  displayGradesDialog: boolean = false; // Ahora solo lectura
+  displayGradesDialog: boolean = false; 
   
   usarRangos: boolean = false;
 
-  // --- FORMULARIOS (Configurar Test, sigue siendo Admin) ---
+  // --- FORMULARIOS ---
   tipoForm: any = { id: null, nombre: '', unidad_medida: '', descripcion: '' }; 
   rangosForm: any[] = [];
   rangosOriginalesCache: any[] = [];
@@ -106,16 +112,13 @@ export class AdministradorEvaluacionesComponent implements OnInit {
     color_sugerido: '#22c55e' 
   };
 
-  // Sesión seleccionada solo para visualizar en el informe de resultados
+  // Sesión seleccionada
   sesionSeleccionada: any = null;
 
   ngOnInit() {
     this.cargarDatosIniciales();
   }
 
-  // ==========================================
-  // CARGA DE DATOS INICIAL
-  // ==========================================
   cargarDatosIniciales() {
     this.loading = true;
     this.cdr.detectChanges();
@@ -143,9 +146,6 @@ export class AdministradorEvaluacionesComponent implements OnInit {
     });
   }
 
-  // ==========================================
-  // LÓGICA DE FILTRADO
-  // ==========================================
   aplicarFiltros() {
     this.loading = true;
     this.cdr.detectChanges();
@@ -204,10 +204,6 @@ export class AdministradorEvaluacionesComponent implements OnInit {
     }
   }
 
-  /**
-   * El backend no envía el grupo/tipo de evaluación embebido en la sesión,
-   * solo los IDs. Los resolvemos localmente contra lo ya cargado.
-   */
   obtenerNombreGrupo(sesion: any): string {
     const grupoId = sesion.grupo_id || sesion.grupoId;
     return this.grupos.find(g => g.id === grupoId)?.nombre || 'Grupo desconocido';
@@ -218,12 +214,10 @@ export class AdministradorEvaluacionesComponent implements OnInit {
     return this.tiposEvaluacion.find(t => t.id === tipoId) || null;
   }
 
-  // ==========================================
-  // CONFIGURACIÓN DE TIPOS Y RANGOS (SIGUE SIENDO ADMIN)
-  // ==========================================
   abrirNuevoTipo() {
     this.cancelarEdicionTipo(); 
     this.displayTipoDialog = true;
+    this.cdr.detectChanges();
   }
 
   cancelarEdicionTipo() {
@@ -232,11 +226,13 @@ export class AdministradorEvaluacionesComponent implements OnInit {
     this.rangosOriginalesCache = [];
     this.usarRangos = false;
     this.nuevoRango = { edad_min: null, edad_max: null, nombre_etiqueta: '', valor_min: null, valor_max: null, color_sugerido: '#22c55e' };
+    this.cdr.detectChanges();
   }
 
   editarTipoTest(test: any) {
     this.tipoForm = { ...test }; 
     this.displayTipoDialog = true;
+    this.cdr.detectChanges();
     
     this.rangoService.listarRangosPorTipo(test.id).subscribe({
       next: (rangos) => {
@@ -285,10 +281,12 @@ export class AdministradorEvaluacionesComponent implements OnInit {
     this.nuevoRango.nombre_etiqueta = '';
     this.nuevoRango.valor_min = null;
     this.nuevoRango.valor_max = null;
+    this.cdr.detectChanges();
   }
 
   quitarRangoDeLista(index: number) {
     this.rangosForm.splice(index, 1);
+    this.cdr.detectChanges();
   }
 
   guardarNuevoTipo() {
@@ -326,7 +324,6 @@ export class AdministradorEvaluacionesComponent implements OnInit {
 
         if (this.usarRangos) {
           this.rangosForm.forEach(rango => {
-            // 🔥 FIX: Cambiamos || por ?? para que el número 0 no sea ignorado
             const payloadRango = {
               tipoEvaluacionId: testId,
               edadMin: rango.edad_min ?? rango.edadMin,
@@ -362,6 +359,7 @@ export class AdministradorEvaluacionesComponent implements OnInit {
     this.guardando = false;
     this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Test configurado correctamente' });
     this.displayTipoDialog = false; 
+    this.cdr.detectChanges();
     this.cargarDatosIniciales();
   }
 
@@ -377,18 +375,21 @@ export class AdministradorEvaluacionesComponent implements OnInit {
         this.tipoEvalService.eliminarTipoEvaluacion(id).subscribe({
           next: () => {
             this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Test eliminado' });
-            if (this.tipoForm.id === id) this.displayTipoDialog = false;
+            if (this.tipoForm.id === id) {
+                this.displayTipoDialog = false;
+                this.cdr.detectChanges();
+            }
             this.cargarDatosIniciales();
           },
-          error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el test.' })
+          error: () => {
+              this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el test.' });
+              this.cdr.detectChanges();
+          }
         });
       }
     });
   }
 
-  // ==========================================
-  // SESIONES: SOLO VER Y ELIMINAR
-  // ==========================================
   eliminarSesion(id: string) {
       this.confirmationService.confirm({
           message: '¿Eliminar sesión y todas sus notas asociadas?',
@@ -402,15 +403,15 @@ export class AdministradorEvaluacionesComponent implements OnInit {
                   this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Sesión borrada' });
                   this.cargarDatosIniciales();
                 },
-                error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar la sesión' })
+                error: () => {
+                    this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar la sesión' });
+                    this.cdr.detectChanges();
+                }
               });
           }
       });
   }
 
-  // ==========================================
-  // VER RESULTADOS (SOLO LECTURA)
-  // ==========================================
   abrirCalificador(sesion: any) {
     this.sesionSeleccionada = {
       ...sesion,
@@ -456,7 +457,18 @@ export class AdministradorEvaluacionesComponent implements OnInit {
     });
   }
 
-  // --- UTILIDADES ---
+  // 🔥 MÉTODO PARA EXPORTAR EXCEL POR SESIÓN
+  descargarExcelPorSesion(sesion: any) {
+    if (!sesion || !sesion.id) return;
+    
+    // Notificamos visualmente al usuario
+    this.messageService.add({ severity: 'info', summary: 'Exportando', detail: 'Generando archivo Excel...' });
+    this.cdr.detectChanges();
+    
+    // El servicio maneja la descarga directa del archivo
+    this.excelService.exportarResultadosAcademicos(sesion.id);
+  }
+
   private mostrarErrorGuardado(mensaje: string) {
     this.guardando = false;
     this.loading = false;

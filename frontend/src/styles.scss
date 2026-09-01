@@ -1542,3 +1542,65 @@ a.fc-col-header-cell-cushion,
     flex-shrink: 0 !important;
     background: var(--input-bg);
 }
+
+/* ==========================================================
+   🔥 24. BOTÓN EXPORTAR EXCEL / SUCCESS 🔥
+   ========================================================== */
+.p-button.p-button-success {
+    background: #22c55e !important; /* Verde Neón */
+    color: #0a0f0e !important; /* Texto oscuro para máximo contraste */
+    font-family: var(--pf-font-label) !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 12px 24px !important;
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s !important;
+    cursor: pointer !important;
+}
+
+/* Forzar que el ícono de Excel sea oscuro y del tamaño correcto */
+.p-button.p-button-success .p-button-icon {
+    color: #0a0f0e !important;
+    font-size: 1.15rem !important;
+}
+
+/* Efecto al pasar el mouse (Elevación y resplandor verde) */
+.p-button.p-button-success:hover:not(:disabled):not(.p-disabled) {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.3) !important;
+    background: #16a34a !important; /* Verde un poco más intenso */
+}
+
+/* Estado deshabilitado (cuando está cargando o no hay grupo) */
+.p-button.p-button-success:disabled,
+.p-button.p-button-success.p-disabled {
+    opacity: 0.4 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* ⚠️ PROTECCIÓN: Restaurar el estilo de los botones verdes pequeños de las tablas */
+.pf-table-actions .p-button-success {
+    background: rgba(34, 197, 94, 0.15) !important; 
+    color: #22c55e !important; 
+    padding: 0 !important;
+    min-height: 36px !important;
+    width: 36px !important;
+}
+.pf-table-actions .p-button-success .p-button-icon {
+    color: #22c55e !important;
+    font-size: 0.95rem !important;
+}
+.pf-table-actions .p-button-success:hover:not(:disabled) {
+    background: rgba(34, 197, 94, 0.3) !important; 
+    box-shadow: none !important;
+}

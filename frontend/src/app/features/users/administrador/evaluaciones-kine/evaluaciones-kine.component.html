@@ -93,6 +93,8 @@
                         <span class="p-column-title pf-oswald text-steel hidden-desktop">Acciones:</span>
                         <div class="pf-table-actions">
                             <button pButton icon="pi pi-eye" class="p-button-info" (click)="verResultados(sesion)" pTooltip="Ver Resultados"></button>
+                            <!-- 🔥 BOTÓN EXPORTAR EXCEL EN LA FILA 🔥 -->
+                            <button pButton icon="pi pi-file-excel" class="p-button-success" (click)="descargarExcelPorSesion(sesion)" pTooltip="Exportar a Excel"></button>
                             <button pButton icon="pi pi-trash" class="p-button-danger" (click)="confirmarEliminarSesion(sesion)" pTooltip="Eliminar"></button>
                         </div>
                     </td>
@@ -211,8 +213,10 @@
             </ng-container>
         </ng-template>
         <ng-template pTemplate="footer">
-            <div style="padding-top: 1rem;">
-                <button pButton label="Cerrar Visor" icon="pi pi-times" class="pf-btn-ghost w-full justify-content-center" (click)="displayViewDialog = false"></button>
+            <div class="flex w-full gap-2 justify-content-end" style="padding-top: 1rem;">
+                <button pButton label="Cerrar Visor" icon="pi pi-times" class="pf-btn-ghost flex-1 sm:flex-none justify-content-center" (click)="displayViewDialog = false"></button>
+                <!-- 🔥 BOTÓN EXPORTAR EXCEL DENTRO DEL MODAL 🔥 -->
+                <button pButton label="Exportar a Excel" icon="pi pi-file-excel" class="p-button-success flex-1 sm:flex-none justify-content-center" (click)="descargarExcelPorSesion(sesionVista)"></button>
             </div>
         </ng-template>
     </p-dialog>

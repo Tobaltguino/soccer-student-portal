@@ -17,6 +17,9 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 // Servicio de Angular (Conectado a NestJS)
 import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
 
+// 🔥 IMPORTAMOS TU SERVICIO DE EXCEL
+import { ExcelExportService } from '../../../../core/services/excel-export.service';
+
 @Component({
   selector: 'app-administrador-grupos',
   standalone: true,
@@ -43,13 +46,16 @@ export class AdministradorGruposComponent implements OnInit {
   private confirmationService = inject(ConfirmationService);
   private messageService = inject(MessageService);
   private cdr = inject(ChangeDetectorRef);
+  
+  // 🔥 INYECTAMOS EL SERVICIO DE EXCEL
+  private excelService = inject(ExcelExportService);
 
   grupos: any[] = [];
   loading: boolean = true;
   displayDialog: boolean = false;
   tituloDialogo: string = '';
   
-  // 🔥 Variable para controlar el bloqueo de pantalla
+  // Variable para controlar el bloqueo de pantalla
   guardando: boolean = false; 
   
   // Objeto del formulario
@@ -64,7 +70,6 @@ export class AdministradorGruposComponent implements OnInit {
     
     this.grupoService.listarGrupos().subscribe({
       next: (data) => {
-        // Mapeamos los datos asumiendo que agregaste 'estudiantes(count)' en tu NestJS
         this.grupos = data.map((g: any) => ({
             ...g,
             cantidad_alumnos: (g.estudiantes && g.estudiantes.length > 0) ? g.estudiantes[0].count : 0
@@ -79,6 +84,20 @@ export class AdministradorGruposComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  // 🔥 NUEVO MÉTODO PARA EXPORTAR EXCEL
+  descargarExcel() {
+    if (this.grupos.length === 0) {
+      this.messageService.add({ severity: 'warn', summary: 'Sin datos', detail: 'No hay grupos para exportar.' });
+      return;
+    }
+    
+    this.messageService.add({ severity: 'info', summary: 'Exportando', detail: 'Generando archivo Excel...' });
+    this.cdr.detectChanges();
+    
+    // Exportamos (pasando false para no incluir los eliminados por defecto)
+    this.excelService.exportarGrupos(false);
   }
 
   // --- ABRIR DIÁLOGOS ---
@@ -96,7 +115,6 @@ export class AdministradorGruposComponent implements OnInit {
 
   // --- GUARDAR ---
   guardarGrupo() {
-    // Si ya se está guardando, ignorar nuevos clics
     if (this.guardando) return;
 
     if (!this.grupoForm.nombre || this.grupoForm.nombre.trim() === '') {
@@ -104,7 +122,6 @@ export class AdministradorGruposComponent implements OnInit {
       return;
     }
 
-    // 🔥 Activar animación y bloqueo de pantalla
     this.guardando = true;
 
     const payload = { 
@@ -113,31 +130,29 @@ export class AdministradorGruposComponent implements OnInit {
     };
 
     if (this.grupoForm.id) {
-      // Actualizar
       this.grupoService.actualizarGrupo(this.grupoForm.id, payload).subscribe({
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Grupo actualizado correctamente.' });
           this.displayDialog = false;
-          this.guardando = false; // 🔥 Desbloquear
+          this.guardando = false; 
           this.cargarGrupos();
         },
         error: (err) => {
           this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el grupo.' });
-          this.guardando = false; // 🔥 Desbloquear incluso si hay error
+          this.guardando = false; 
         }
       });
     } else {
-      // Crear nuevo
       this.grupoService.crearGrupo(payload).subscribe({
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Grupo creado correctamente.' });
           this.displayDialog = false;
-          this.guardando = false; // 🔥 Desbloquear
+          this.guardando = false; 
           this.cargarGrupos();
         },
         error: (err) => {
           this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo crear el grupo.' });
-          this.guardando = false; // 🔥 Desbloquear incluso si hay error
+          this.guardando = false; 
         }
       });
     }

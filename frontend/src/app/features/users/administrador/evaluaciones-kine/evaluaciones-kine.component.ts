@@ -16,6 +16,9 @@ import { KineRangoService } from '../../../../core/domains/salud/kinesiologia/ev
 import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
 
+// 🔥 IMPORTAMOS TU SERVICIO DE EXCEL
+import { ExcelExportService } from '../../../../core/services/excel-export.service';
+
 // Modelos
 import { KineSesion } from '../../../../core/domains/salud/kinesiologia/evaluaciones/sesiones/models/sesion.interface';
 import { KineTipoEvaluacion } from '../../../../core/domains/salud/kinesiologia/evaluaciones/tipos/models/tipo-evaluacion.interface';
@@ -100,6 +103,9 @@ export class AdministradorEvaluacionesKineComponent implements OnInit {
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
   private cdr = inject(ChangeDetectorRef);
+
+  // 🔥 INYECTAMOS EL SERVICIO DE EXCEL
+  private excelService = inject(ExcelExportService);
 
   // --- DATOS PRINCIPALES ---
   sesiones: KineSesionVista[] = [];
@@ -344,6 +350,18 @@ export class AdministradorEvaluacionesKineComponent implements OnInit {
         this.cdr.detectChanges();
       },
     });
+  }
+
+  // 🔥 NUEVO MÉTODO PARA EXPORTAR EXCEL DE KINESIOLOGÍA
+  descargarExcelPorSesion(sesion: KineSesionVista | null): void {
+    if (!sesion || !sesion.id) return;
+    
+    // Notificación visual de descarga
+    this.messageService.add({ severity: 'info', summary: 'Exportando', detail: 'Generando archivo Excel...' });
+    this.cdr.detectChanges();
+    
+    // Llama al servicio de Excel
+    this.excelService.exportarResultadosKine(sesion.id);
   }
 
   private formatearFechaIso(fecha: Date | string | null): string {
