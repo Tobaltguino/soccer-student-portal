@@ -9,6 +9,8 @@ import type { KineResultadoRow, KineResultadoConDetalle } from './interfaces/res
 import type { CriterioPrioridad } from '../subevaluaciones/interfaces/subevaluacion.interface';
 import { lanzarErrorSupabaseConFk } from '../../../../../shared/utils/supabase-error.util';
 
+import { ExcelService } from '../../../../../shared/services/excel.service';
+
 type SubevaluacionInfo = {
   nombre: string;
   evalua_lados: boolean;
@@ -21,6 +23,7 @@ export class ResultadosService {
     private readonly supabase: SupabaseService,
     private readonly sesionesService: SesionesService,
     private readonly estudiantesService: EstudiantesService,
+    private readonly excelService: ExcelService,
   ) {}
 
   async crear(
@@ -268,5 +271,57 @@ export class ResultadosService {
       },
       rango,
     };
+  }
+
+  async generarExcelPorSesionKine(sesionId: string, gruposPermitidos: number[] | null): Promise<Buffer> {
+    // 1. Reutilizamos tu método que ya enriquece los datos y valida permisos
+    const resultadosEnriquecidos = await this.listarPorSesion(sesionId, gruposPermitidos);
+
+    if (resultadosEnriquecidos.length === 0) {
+      throw new BadRequestException('No hay resultados registrados en esta sesión para exportar.');
+    }
+
+    // 2. Extraemos los IDs y buscamos los nombres en usuarios_perfiles
+    const idsEstudiantes = resultadosEnriquecidos.map((r) => r.estudiante_id);
+    const { data: perfiles } = await this.supabase.client
+      .from('usuarios_perfiles')
+      .select('id_usuario, nombre, apellido, rut')
+      .in('id_usuario', idsEstudiantes);
+
+    const mapaPerfiles = new Map((perfiles || []).map((p) => [p.id_usuario, p]));
+
+    // 3. Mapeamos incluyendo los campos únicos, izquierdo y derecho
+    const datosMapeados = resultadosEnriquecidos.map((r) => {
+      const perfil = mapaPerfiles.get(r.estudiante_id);
+      return {
+        rut: perfil?.rut || 'Sin RUT',
+        nombreCompleto: `${perfil?.nombre || ''} ${perfil?.apellido || ''}`.trim() || '-',
+        subevaluacion: r.subevaluacion.nombre,
+        resultadoUnico: r.resultado_unico !== null ? r.resultado_unico : '-',
+        resultadoIzquierdo: r.resultado_izquierdo !== null ? r.resultado_izquierdo : '-',
+        resultadoDerecho: r.resultado_derecho !== null ? r.resultado_derecho : '-',
+        // Nota: en Kine usaste 'etiqueta' en lugar de 'nombreEtiqueta'
+        rango: r.rango?.etiqueta || 'Sin rango', 
+        observacion: r.observacion || '-',
+      };
+    });
+
+    // 4. Definimos las columnas del Excel
+    const columnas = [
+      { header: 'RUT', key: 'rut', width: 15 },
+      { header: 'Nombre Alumno', key: 'nombreCompleto', width: 30 },
+      { header: 'Subevaluación', key: 'subevaluacion', width: 30 },
+      { header: 'Res. Único', key: 'resultadoUnico', width: 15 },
+      { header: 'Res. Izquierdo', key: 'resultadoIzquierdo', width: 15 },
+      { header: 'Res. Derecho', key: 'resultadoDerecho', width: 15 },
+      { header: 'Rango Alcanzado', key: 'rango', width: 20 },
+      { header: 'Observación', key: 'observacion', width: 35 },
+    ];
+
+    try {
+      return await this.excelService.generarExcel('Resultados Kine', columnas, datosMapeados);
+    } catch (error) {
+      throw new InternalServerErrorException('Error al generar el archivo Excel de kinesiología');
+    }
   }
 }

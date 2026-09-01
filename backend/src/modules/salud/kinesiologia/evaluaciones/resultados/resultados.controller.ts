@@ -7,8 +7,10 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ResultadosService } from './resultados.service';
 import { CrearResultadoDto } from './dto/crear-resultado.dto';
 import { ActualizarResultadoDto } from './dto/actualizar-resultado.dto';
@@ -47,6 +49,23 @@ export class ResultadosController {
   async listarPorSesion(@Param('sesionId') sesionId: string, @CurrentUser() user: RequestUser) {
     const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
     return this.resultadosService.listarPorSesion(sesionId, gruposPermitidos);
+  }
+
+  @Get('kine-evaluaciones-sesiones/:sesionId/resultados/exportar/excel')
+  @Roles(Rol.ADMINISTRADOR, Rol.KINESIOLOGO, Rol.PROFESOR)
+  async exportarExcelKinePorSesion(
+    @Param('sesionId') sesionId: string,
+    @CurrentUser() user: RequestUser,
+    @Res() res: Response,
+  ) {
+    const gruposPermitidos = await this.alcanceService.obtenerGruposPermitidos(user.id, user.rol);
+    const buffer = await this.resultadosService.generarExcelPorSesionKine(sesionId, gruposPermitidos);
+
+    const nombreArchivo = `kine_resultados_${sesionId.substring(0, 8)}.xlsx`;
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${nombreArchivo}"`);
+    res.send(buffer);
   }
 
   @Patch('kine-evaluaciones-resultados/:id')

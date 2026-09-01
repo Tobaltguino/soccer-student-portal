@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../../../../core/supabase/supabase.service';
 import { SesionesService } from '../sesiones/sesiones.service';
 import { RangosService } from '../rangos/rangos.service';
@@ -6,6 +6,7 @@ import { CrearResultadoDto } from './dto/crear-resultado.dto';
 import { ActualizarResultadoDto } from './dto/actualizar-resultado.dto';
 import type { ResultadoRow, ResultadoConRango, ResultadoConDetalle } from './interfaces/resultado.interface';
 import { lanzarErrorSupabaseConFk } from '../../../../shared/utils/supabase-error.util';
+import { ExcelService } from '../../../../shared/services/excel.service';
 
 @Injectable()
 export class ResultadosService {
@@ -13,6 +14,7 @@ export class ResultadosService {
     private readonly supabase: SupabaseService,
     private readonly sesionesService: SesionesService,
     private readonly rangosService: RangosService,
+    private readonly excelService: ExcelService, // 🔥 INYECTAR EXCEL SERVICE
   ) {}
 
   async crear(
@@ -228,5 +230,75 @@ export class ResultadosService {
     }
 
     return edad;
+  }
+
+  // 🔥 MÉTODO CORREGIDO PARA EXPORTAR EXCEL
+  async generarExcelPorSesion(sesionId: string, gruposPermitidos: number[] | null = null): Promise<Buffer> {
+    // 1. Validamos acceso a la sesión (lanza error si no existe o no tiene permisos)
+    await this.sesionesService.buscarPorId(sesionId, gruposPermitidos);
+
+    // 2. Obtenemos los resultados planos de la base de datos para esa sesión
+    const { data, error } = await this.supabase.client
+      .from('evaluaciones_resultados')
+      .select('*')
+      .eq('sesion_id', sesionId);
+
+    if (error) {
+      throw new InternalServerErrorException(`No se pudo listar los resultados: ${error.message}`);
+    }
+
+    const resultadosPlanos = (data ?? []) as ResultadoRow[];
+
+    if (resultadosPlanos.length === 0) {
+      throw new BadRequestException('No hay resultados registrados en esta sesión para exportar.');
+    }
+
+    // 3. ENRIQUECEMOS cada resultado usando tu propio método privado para obtener edad, rangos y nombres
+    const resultadosEnriquecidos = await Promise.all(
+      resultadosPlanos.map((r) => this.enriquecerConDetalle(r))
+    );
+
+    // 4. Extraemos los IDs de los estudiantes y buscamos sus nombres reales y RUTs
+    const idsEstudiantes = resultadosEnriquecidos.map((r) => r.estudiante_id);
+    const { data: perfiles } = await this.supabase.client
+      .from('usuarios_perfiles')
+      .select('id_usuario, nombre, apellido, rut')
+      .in('id_usuario', idsEstudiantes);
+
+    const mapaPerfiles = new Map((perfiles || []).map((p) => [p.id_usuario, p]));
+
+    // 5. Tomamos la información de la evaluación del primer elemento enriquecido
+    const infoEvaluacion = resultadosEnriquecidos[0].evaluacion;
+
+    // 6. Mapeamos los datos para que el Excel quede impecable
+    const datosMapeados = resultadosEnriquecidos.map((r) => {
+      const perfil = mapaPerfiles.get(r.estudiante_id);
+      return {
+        rut: perfil?.rut || 'Sin RUT',
+        nombreCompleto: `${perfil?.nombre || ''} ${perfil?.apellido || ''}`.trim() || '-',
+        edad: r.edadEvaluacion ?? 'N/A',
+        resultado: `${r.valor_numerico} ${infoEvaluacion.unidadMedida}`.trim(),
+        rango: r.rango?.nombreEtiqueta || 'Sin rango',
+        observacion: r.observacion || '-',
+      };
+    });
+
+    // 7. Definimos las columnas
+    const columnas = [
+      { header: 'RUT', key: 'rut', width: 15 },
+      { header: 'Nombre Alumno', key: 'nombreCompleto', width: 30 },
+      { header: 'Edad', key: 'edad', width: 10 },
+      { header: 'Resultado', key: 'resultado', width: 15 },
+      { header: 'Rango Alcanzado', key: 'rango', width: 25 },
+      { header: 'Observación', key: 'observacion', width: 40 },
+    ];
+
+    const nombreHoja = (infoEvaluacion.nombre || 'Resultados').substring(0, 31);
+
+    try {
+      return await this.excelService.generarExcel(nombreHoja, columnas, datosMapeados);
+    } catch (error) {
+      throw new InternalServerErrorException('Error al generar el archivo Excel de resultados');
+    }
   }
 }
