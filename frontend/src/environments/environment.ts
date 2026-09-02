@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:3000', // La URL local de tu NestJS
+  apiUrl: 'https://profutbol.onrender.com',
 };
