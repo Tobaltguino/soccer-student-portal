@@ -151,7 +151,6 @@
                 <small *ngIf="evalLogistica.id" class="text-steel italic mt-1 block">La prueba no se puede modificar.</small>
             </div>
             
-            <!-- 🔥 FIX: Estado como Select / Dropdown unificado -->
             <div class="field mb-4" *ngIf="evalLogistica.id">
                 <label class="pf-oswald text-steel mb-2 block">Estado de la Sesión</label>
                 <p-select [options]="opcionesEstadoFiltro" [(ngModel)]="evalLogistica.estado" optionLabel="label" optionValue="value" 
@@ -205,7 +204,11 @@
 
                         <div class="flex flex-col">
                             <span class="font-bold text-chalk">{{alumno.apellido}}</span>
-                            <span class="text-sm text-steel">{{alumno.nombre}}</span>
+                            <span class="text-sm text-steel flex items-center">
+                                {{alumno.nombre}}
+                                <!-- 🔥 ETIQUETA LATERAL: ALUMNOS RETIRADOS -->
+                                <p-tag *ngIf="!alumno.activoEnGrupo" severity="warn" value="Retirado" styleClass="ml-2" [style]="{'font-size':'0.6rem', 'padding':'0.1rem 0.3rem'}"></p-tag>
+                            </span>
                         </div>
                         <i class="pi text-xl" [ngClass]="alumno.evaluado ? 'pi-check-circle text-green-500' : 'pi-circle text-gray-500'"></i>
                     </div>
@@ -216,8 +219,10 @@
 
                     <div *ngIf="estudianteSeleccionado">
                         <div class="p-3 border-b sticky top-0 flex items-center" style="background: var(--bg-main); z-index: 1; border-color: var(--border-color) !important;">
-                            <h3 class="m-0 text-chalk pf-oswald text-xl" style="letter-spacing: 0.5px;">
-                                Calificando a: <span class="text-teal">{{estudianteSeleccionado.nombre}} {{estudianteSeleccionado.apellido}}</span>
+                            <h3 class="m-0 text-chalk pf-oswald text-xl flex items-center" style="letter-spacing: 0.5px;">
+                                Calificando a: <span class="text-teal mx-2">{{estudianteSeleccionado.nombre}} {{estudianteSeleccionado.apellido}}</span>
+                                <!-- 🔥 ETIQUETA HEADER: ALUMNOS RETIRADOS -->
+                                <p-tag *ngIf="!estudianteSeleccionado.activoEnGrupo" severity="warn" value="Retirado / Otro Grupo" styleClass="text-xs ml-2"></p-tag>
                             </h3>
                         </div>
 
@@ -236,8 +241,12 @@
                                 <ng-template pTemplate="body" let-sub>
                                     <tr>
                                         <td class="font-bold text-sm text-chalk">
-                                            {{sub.nombre_parametro}}
-                                            <p-tag *ngIf="sub.evalua_lados && sub.rango" [value]="sub.rango.etiqueta" [style]="sub.rango.color ? {'background-color': sub.rango.color} : {}" styleClass="ml-2 mt-1"></p-tag>
+                                            <span class="block">{{sub.nombre_parametro}}</span>
+                                            <!-- 🔥 NUEVO: Etiqueta de color basada en Base de Datos -->
+                                            <p-tag *ngIf="sub.rango" 
+                                                   [value]="sub.rango.etiqueta" 
+                                                   [style]="getEstiloColorRango(sub.rango.color)" 
+                                                   styleClass="pf-kine-rango-tag mt-2"></p-tag>
                                         </td>
                                         <td class="text-center">
                                             <p-inputNumber *ngIf="!sub.evalua_lados" [(ngModel)]="sub.resultado_unico" (ngModelChange)="actualizarEstadoEstudiante(estudianteSeleccionado)" [showButtons]="false" styleClass="w-full"></p-inputNumber>
@@ -314,7 +323,11 @@
 
                         <div class="flex flex-col">
                             <span class="font-bold text-chalk">{{alumno.apellido}}</span>
-                            <span class="text-sm text-steel">{{alumno.nombre}}</span>
+                            <span class="text-sm text-steel flex items-center">
+                                {{alumno.nombre}}
+                                <!-- 🔥 ETIQUETA LATERAL: ALUMNOS RETIRADOS -->
+                                <p-tag *ngIf="!alumno.activoEnGrupo" severity="warn" value="Retirado" styleClass="ml-2" [style]="{'font-size':'0.6rem', 'padding':'0.1rem 0.3rem'}"></p-tag>
+                            </span>
                         </div>
                         <i class="pi pi-angle-right text-teal"></i>
                     </div>
@@ -324,8 +337,10 @@
 
                     <div *ngIf="estudianteVistaSeleccionado">
                         <div class="p-3 border-b sticky top-0 flex items-center" style="background: var(--bg-main); z-index: 1; border-color: var(--border-color) !important;">
-                            <h3 class="m-0 text-chalk pf-oswald text-xl" style="letter-spacing: 0.5px;">
-                                Resultados de: <span class="text-teal">{{estudianteVistaSeleccionado.nombre}} {{estudianteVistaSeleccionado.apellido}}</span>
+                            <h3 class="m-0 text-chalk pf-oswald text-xl flex items-center" style="letter-spacing: 0.5px;">
+                                Resultados de: <span class="text-teal mx-2">{{estudianteVistaSeleccionado.nombre}} {{estudianteVistaSeleccionado.apellido}}</span>
+                                <!-- 🔥 ETIQUETA HEADER: ALUMNOS RETIRADOS -->
+                                <p-tag *ngIf="!estudianteVistaSeleccionado.activoEnGrupo" severity="warn" value="Retirado / Otro Grupo" styleClass="text-xs ml-2"></p-tag>
                             </h3>
                         </div>
 
@@ -343,8 +358,12 @@
                                 <ng-template pTemplate="body" let-sub>
                                     <tr>
                                         <td class="font-bold text-sm text-chalk">
-                                            {{sub.nombre_parametro}}
-                                            <p-tag *ngIf="sub.evalua_lados && sub.rango" [value]="sub.rango.etiqueta" [style]="sub.rango.color ? {'background-color': sub.rango.color} : {}" styleClass="ml-2 mt-1"></p-tag>
+                                            <span class="block">{{sub.nombre_parametro}}</span>
+                                            <!-- 🔥 NUEVO: Etiqueta de color basada en Base de Datos -->
+                                            <p-tag *ngIf="sub.rango" 
+                                                   [value]="sub.rango.etiqueta" 
+                                                   [style]="getEstiloColorRango(sub.rango.color)" 
+                                                   styleClass="pf-kine-rango-tag mt-2"></p-tag>
                                         </td>
                                         <td class="text-center">
                                             <p-tag *ngIf="!sub.evalua_lados && sub.resultado_unico !== null" [value]="sub.resultado_unico.toString()" [severity]="getSeverityPuntaje(sub.resultado_unico, sub.subevaluacion_id)"></p-tag>

@@ -77,6 +77,7 @@ interface AlumnoEvaluacion {
   apellido: string;
   evaluado: boolean;
   evaluaciones: EvaluacionParametro[];
+  activoEnGrupo: boolean; // 🔥 NUEVO: Identificador de pacientes retirados
 }
 
 @Component({
@@ -179,7 +180,6 @@ export class KinesiologoEvaluacionesKineComponent implements OnInit {
 
         const misGrupoIds = this.grupos.map((g) => g.id);
 
-        // 🔥 FIX: Ya no enviamos el flag de incluirEliminadas, solo las activas.
         const peticionesSesiones = misGrupoIds.map((id) =>
           this.kineSesionService.listarSesiones({
             grupoId: id,
@@ -246,6 +246,25 @@ export class KinesiologoEvaluacionesKineComponent implements OnInit {
     this.filtroPrueba = null;
     this.filtroEstado = null;
     this.aplicarFiltros();
+  }
+
+  // 🔥 NUEVO: Función para dar estilo exacto a los rangos
+  getEstiloColorRango(color: string | null | undefined): { [key: string]: string } {
+    if (!color) return { 'background-color': '#6b7280', 'color': '#ffffff' }; // Gris
+
+    const colorLower = color.trim().toLowerCase();
+
+    if (colorLower.includes('rojo')) {
+      return { 'background-color': '#ef4444', 'color': '#ffffff' }; 
+    }
+    if (colorLower.includes('amarillo')) {
+      return { 'background-color': '#eab308', 'color': '#111827' }; 
+    }
+    if (colorLower.includes('verde')) {
+      return { 'background-color': '#22c55e', 'color': '#ffffff' }; 
+    }
+
+    return { 'background-color': '#3b82f6', 'color': '#ffffff' }; // Azul
   }
 
   getSeverityPuntaje(puntaje: number | string | null, subevaluacionId: number): Severity {
@@ -451,59 +470,101 @@ export class KinesiologoEvaluacionesKineComponent implements OnInit {
         cargarRangos$.subscribe((rangosPorSub) => {
           this.rangos = rangosPorSub.flat();
 
-          const resultadosPorAlumnoYSub = new Map<string, KineResultadoConDetalle>();
-          (resultados || []).forEach((r: KineResultadoConDetalle) => {
+          const resultadosPorAlumnoYSub = new Map<string, any>();
+          (resultados || []).forEach((r: any) => {
             resultadosPorAlumnoYSub.set(`${r.estudiante_id}-${r.subevaluacion_id}`, r);
           });
 
-          const alumnos: AlumnoEvaluacion[] = (estudiantes?.registros || estudiantes || []).map(
-            (alumno: any) => {
-              const idAlumno = alumno.usuario_id ?? alumno.id;
-              const nombre = alumno.perfil?.nombre ?? alumno.nombre ?? '';
-              const apellido = alumno.perfil?.apellido ?? alumno.apellido ?? '';
+          const alumnosFiltrados: AlumnoEvaluacion[] = [];
+          const idsProcesados = new Set<string>();
 
-              const evaluaciones: EvaluacionParametro[] = listaSubevaluaciones.map((sub) => {
-                const resGuardado = resultadosPorAlumnoYSub.get(`${idAlumno}-${sub.id}`);
+          // 1. Pacientes actuales en el grupo
+          (estudiantes?.registros || estudiantes || []).forEach((alumno: any) => {
+            const idAlumno = alumno.usuario_id ?? alumno.id;
+            const nombre = alumno.perfil?.nombre ?? alumno.nombre ?? '';
+            const apellido = alumno.perfil?.apellido ?? alumno.apellido ?? '';
 
-                return {
-                  resultado_id: resGuardado?.id ?? null,
-                  subevaluacion_id: sub.id,
-                  nombre_parametro: sub.nombre,
-                  evalua_lados: sub.evalua_lados,
-                  resultado_unico:
-                    resGuardado?.resultado_unico != null ? Number(resGuardado.resultado_unico) : null,
-                  resultado_izquierdo:
-                    resGuardado?.resultado_izquierdo != null
-                      ? Number(resGuardado.resultado_izquierdo)
-                      : null,
-                  resultado_derecho:
-                    resGuardado?.resultado_derecho != null
-                      ? Number(resGuardado.resultado_derecho)
-                      : null,
-                  observacion: resGuardado?.observacion ?? '',
-                  tiene_datos: !!resGuardado,
-                  rango: resGuardado?.rango ?? null,
-                };
-              });
+            idsProcesados.add(idAlumno);
 
-              const alumnoEvaluacion: AlumnoEvaluacion = {
-                id: idAlumno,
-                nombre,
-                apellido,
-                evaluado: false,
-                evaluaciones,
+            const evaluaciones: EvaluacionParametro[] = listaSubevaluaciones.map((sub) => {
+              const resGuardado = resultadosPorAlumnoYSub.get(`${idAlumno}-${sub.id}`);
+
+              return {
+                resultado_id: resGuardado?.id ?? null,
+                subevaluacion_id: sub.id,
+                nombre_parametro: sub.nombre,
+                evalua_lados: sub.evalua_lados,
+                resultado_unico: resGuardado?.resultado_unico != null ? Number(resGuardado.resultado_unico) : null,
+                resultado_izquierdo: resGuardado?.resultado_izquierdo != null ? Number(resGuardado.resultado_izquierdo) : null,
+                resultado_derecho: resGuardado?.resultado_derecho != null ? Number(resGuardado.resultado_derecho) : null,
+                observacion: resGuardado?.observacion ?? '',
+                tiene_datos: !!resGuardado,
+                rango: resGuardado?.rango ?? null,
               };
-              alumnoEvaluacion.evaluado = this.verificarSiEstaEvaluado(alumnoEvaluacion);
-              return alumnoEvaluacion;
-            },
-          );
+            });
+
+            const alumnoEvaluacion: AlumnoEvaluacion = {
+              id: idAlumno,
+              nombre,
+              apellido,
+              evaluado: false,
+              evaluaciones,
+              activoEnGrupo: true // 🔥 Identificador
+            };
+            alumnoEvaluacion.evaluado = this.verificarSiEstaEvaluado(alumnoEvaluacion);
+            alumnosFiltrados.push(alumnoEvaluacion);
+          });
+
+          // 2. Pacientes retirados con notas
+          const resultadosAgrupadosPorEstudiante = new Map<string, any[]>();
+          (resultados || []).forEach((r: any) => {
+            if (!resultadosAgrupadosPorEstudiante.has(r.estudiante_id)) {
+                resultadosAgrupadosPorEstudiante.set(r.estudiante_id, []);
+            }
+            resultadosAgrupadosPorEstudiante.get(r.estudiante_id)!.push(r);
+          });
+
+          resultadosAgrupadosPorEstudiante.forEach((resultadosEstudiante, idAlumno) => {
+              if (!idsProcesados.has(idAlumno)) {
+                  const primerRes = resultadosEstudiante[0];
+                  const nombre = primerRes.alumno?.nombre || 'Desconocido';
+                  const apellido = primerRes.alumno?.apellido || '';
+
+                  const evaluaciones: EvaluacionParametro[] = listaSubevaluaciones.map((sub) => {
+                      const resGuardado = resultadosPorAlumnoYSub.get(`${idAlumno}-${sub.id}`);
+                      return {
+                          resultado_id: resGuardado?.id ?? null,
+                          subevaluacion_id: sub.id,
+                          nombre_parametro: sub.nombre,
+                          evalua_lados: sub.evalua_lados,
+                          resultado_unico: resGuardado?.resultado_unico != null ? Number(resGuardado.resultado_unico) : null,
+                          resultado_izquierdo: resGuardado?.resultado_izquierdo != null ? Number(resGuardado.resultado_izquierdo) : null,
+                          resultado_derecho: resGuardado?.resultado_derecho != null ? Number(resGuardado.resultado_derecho) : null,
+                          observacion: resGuardado?.observacion ?? '',
+                          tiene_datos: !!resGuardado,
+                          rango: resGuardado?.rango ?? null,
+                      };
+                  });
+
+                  const alumnoEvaluacion: AlumnoEvaluacion = {
+                      id: idAlumno,
+                      nombre,
+                      apellido,
+                      evaluado: false,
+                      evaluaciones,
+                      activoEnGrupo: false // 🔥 Identificador
+                  };
+                  alumnoEvaluacion.evaluado = this.verificarSiEstaEvaluado(alumnoEvaluacion);
+                  alumnosFiltrados.push(alumnoEvaluacion);
+              }
+          });
 
           if (modo === 'calificar') {
-            this.estudiantesGrupo = alumnos;
-            this.estudianteSeleccionado = alumnos[0] ?? null;
+            this.estudiantesGrupo = alumnosFiltrados;
+            this.estudianteSeleccionado = alumnosFiltrados[0] ?? null;
             this.displayGradesDialog = true;
           } else {
-            this.resultadosVista = alumnos.filter(a => a.evaluaciones.some(e => e.tiene_datos));
+            this.resultadosVista = alumnosFiltrados.filter(a => a.evaluaciones.some(e => e.tiene_datos));
             this.estudianteVistaSeleccionado = this.resultadosVista[0] ?? null;
             this.displayViewDialog = true;
           }

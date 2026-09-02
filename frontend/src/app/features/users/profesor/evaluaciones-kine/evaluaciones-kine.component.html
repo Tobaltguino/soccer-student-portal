@@ -149,7 +149,11 @@
 
                             <div class="flex flex-column">
                                 <span class="font-bold text-chalk">{{alumno.apellido}}</span>
-                                <span class="text-sm text-steel">{{alumno.nombre}}</span>
+                                <span class="text-sm text-steel flex align-items-center">
+                                    {{alumno.nombre}}
+                                    <!-- 🔥 ETIQUETA LATERAL: ALUMNOS RETIRADOS -->
+                                    <p-tag *ngIf="!alumno.activoEnGrupo" severity="warn" value="Retirado" styleClass="ml-2" [style]="{'font-size':'0.6rem', 'padding':'0.1rem 0.3rem'}"></p-tag>
+                                </span>
                             </div>
                             <i class="pi pi-angle-right text-teal"></i>
                         </div>
@@ -159,9 +163,11 @@
                     <div class="w-full md:w-8 border-1 surface-border border-round p-0" style="background: var(--bg-card); height: 500px; overflow-y: auto; border-color: var(--border-color) !important;">
 
                         <div *ngIf="estudianteVistaSeleccionado">
-                            <div class="p-3 border-bottom-1 surface-border sticky top-0" style="background: var(--bg-main); z-index: 1;">
-                                <h3 class="m-0 text-chalk pf-oswald text-xl" style="letter-spacing: 0.5px;">
-                                    Resultados de: <span class="text-teal">{{estudianteVistaSeleccionado.nombre}} {{estudianteVistaSeleccionado.apellido}}</span>
+                            <div class="p-3 border-bottom-1 surface-border sticky top-0 flex align-items-center" style="background: var(--bg-main); z-index: 1;">
+                                <h3 class="m-0 text-chalk pf-oswald text-xl flex align-items-center" style="letter-spacing: 0.5px;">
+                                    Resultados de: <span class="text-teal mx-2">{{estudianteVistaSeleccionado.nombre}} {{estudianteVistaSeleccionado.apellido}}</span>
+                                    <!-- 🔥 ETIQUETA HEADER: ALUMNOS RETIRADOS -->
+                                    <p-tag *ngIf="!estudianteVistaSeleccionado.activoEnGrupo" severity="warn" value="Retirado / Otro Grupo" styleClass="text-xs ml-2"></p-tag>
                                 </h3>
                             </div>
 
@@ -179,25 +185,26 @@
                                     <ng-template pTemplate="body" let-sub>
                                         <tr>
                                             <td class="font-bold text-sm text-chalk">
-                                                {{sub.nombre_parametro}}
-                                                <p-tag *ngIf="sub.evalua_lados && sub.rango"
-                                                       [value]="sub.rango.etiqueta"
-                                                       [style]="sub.rango.color ? {'background-color': sub.rango.color} : {}"
-                                                       styleClass="ml-2"></p-tag>
+                                                <span class="block">{{sub.nombre_parametro}}</span>
+                                                <!-- 🔥 NUEVO: Etiqueta de color basada en BD -->
+                                                <p-tag *ngIf="sub.rango" 
+                                                       [value]="sub.rango.etiqueta" 
+                                                       [style]="getEstiloColorRango(sub.rango.color)" 
+                                                       styleClass="pf-kine-rango-tag mt-2"></p-tag>
                                             </td>
                                             <td class="text-center">
-                                                <p-tag *ngIf="sub.resultado_unico !== null" [value]="sub.resultado_unico" [severity]="getSeverityPuntaje(sub.resultado_unico, sub.subevaluacion_id)"></p-tag>
-                                                <span *ngIf="sub.resultado_unico === null" class="text-steel">-</span>
+                                                <p-tag *ngIf="!sub.evalua_lados && sub.resultado_unico !== null" [value]="sub.resultado_unico.toString()" [severity]="getSeverityPuntaje(sub.resultado_unico, sub.subevaluacion_id)"></p-tag>
+                                                <span *ngIf="!sub.evalua_lados && sub.resultado_unico === null" class="text-steel">—</span>
                                             </td>
                                             <td class="text-center">
-                                                <p-tag *ngIf="sub.resultado_izquierdo !== null" [value]="sub.resultado_izquierdo" [severity]="getSeverityPuntaje(sub.resultado_izquierdo, sub.subevaluacion_id)"></p-tag>
-                                                <span *ngIf="sub.resultado_izquierdo === null" class="text-steel">-</span>
+                                                <p-tag *ngIf="sub.evalua_lados && sub.resultado_izquierdo !== null" [value]="sub.resultado_izquierdo.toString()" [severity]="getSeverityPuntaje(sub.resultado_izquierdo, sub.subevaluacion_id)"></p-tag>
+                                                <span *ngIf="sub.evalua_lados && sub.resultado_izquierdo === null" class="text-steel">—</span>
                                             </td>
                                             <td class="text-center">
-                                                <p-tag *ngIf="sub.resultado_derecho !== null" [value]="sub.resultado_derecho" [severity]="getSeverityPuntaje(sub.resultado_derecho, sub.subevaluacion_id)"></p-tag>
-                                                <span *ngIf="sub.resultado_derecho === null" class="text-steel">-</span>
+                                                <p-tag *ngIf="sub.evalua_lados && sub.resultado_derecho !== null" [value]="sub.resultado_derecho.toString()" [severity]="getSeverityPuntaje(sub.resultado_derecho, sub.subevaluacion_id)"></p-tag>
+                                                <span *ngIf="sub.evalua_lados && sub.resultado_derecho === null" class="text-steel">—</span>
                                             </td>
-                                            <td class="text-sm text-steel italic">{{sub.observacion || '-'}}</td>
+                                            <td class="text-sm text-steel italic">{{ sub.observacion || '—' }}</td>
                                         </tr>
                                     </ng-template>
                                 </p-table>

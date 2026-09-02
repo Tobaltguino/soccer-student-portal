@@ -63,6 +63,7 @@ interface AlumnoResultadoVista {
   nombre: string;
   apellido: string;
   evaluaciones: EvaluacionParametroVista[];
+  activoEnGrupo: boolean; // 🔥 NUEVO CAMPO
 }
 
 @Component({
@@ -125,7 +126,6 @@ export class ProfesorEvaluacionesKineComponent implements OnInit {
   cargandoResultados = false;
 
   ngOnInit(): void {
-    // 🔥 FIX: Diferimos la carga un microsegundo para evitar NG0100
     Promise.resolve().then(() => {
       this.cargarDatosGenerales();
     });
@@ -133,7 +133,7 @@ export class ProfesorEvaluacionesKineComponent implements OnInit {
 
   cargarDatosGenerales(): void {
     this.loading = true;
-    this.cdr.markForCheck(); // 🔥 FIX: Le indicamos a Angular que estamos cargando
+    this.cdr.markForCheck(); 
 
     this.grupoService.obtenerMisGrupos().subscribe({
       next: (gruposData: GrupoOption[]) => {
@@ -189,6 +189,25 @@ export class ProfesorEvaluacionesKineComponent implements OnInit {
         this.cdr.markForCheck();
       },
     });
+  }
+
+  // 🔥 NUEVO: Función para dar estilo exacto a los rangos (Igual que en Kinesiólogo)
+  getEstiloColorRango(color: string | null | undefined): { [key: string]: string } {
+    if (!color) return { 'background-color': '#6b7280', 'color': '#ffffff' }; // Gris
+
+    const colorLower = color.trim().toLowerCase();
+
+    if (colorLower.includes('rojo')) {
+      return { 'background-color': '#ef4444', 'color': '#ffffff' }; 
+    }
+    if (colorLower.includes('amarillo')) {
+      return { 'background-color': '#eab308', 'color': '#111827' }; 
+    }
+    if (colorLower.includes('verde')) {
+      return { 'background-color': '#22c55e', 'color': '#ffffff' }; 
+    }
+
+    return { 'background-color': '#3b82f6', 'color': '#ffffff' }; // Azul
   }
 
   getSeverityPuntaje(puntaje: number | string | null, subevaluacionId: number): Severity {
@@ -287,10 +306,16 @@ export class ProfesorEvaluacionesKineComponent implements OnInit {
         );
 
         const procesarDatos = () => {
-          const procesados: AlumnoResultadoVista[] = (res.alumnos.registros || []).map((alumno: any) => {
+          const procesados: AlumnoResultadoVista[] = [];
+          const idsProcesados = new Set<string>();
+
+          // 1. Estudiantes actuales del grupo
+          (res.alumnos.registros || []).forEach((alumno: any) => {
             const idUsuario = alumno.perfil ? alumno.perfil.id_usuario : alumno.usuario_id ?? alumno.id;
             const nombre = alumno.perfil ? alumno.perfil.nombre : alumno.nombre;
             const apellido = alumno.perfil ? alumno.perfil.apellido : alumno.apellido;
+
+            idsProcesados.add(idUsuario);
 
             const evaluacionesDelAlumno: EvaluacionParametroVista[] = subevaluacionesDefinidas
               .map((sub) => {
@@ -302,16 +327,9 @@ export class ProfesorEvaluacionesKineComponent implements OnInit {
                   subevaluacion_id: sub.id,
                   nombre_parametro: sub.nombre,
                   evalua_lados: sub.evalua_lados,
-                  resultado_unico:
-                    resGuardado?.resultado_unico != null ? Number(resGuardado.resultado_unico) : null,
-                  resultado_izquierdo:
-                    resGuardado?.resultado_izquierdo != null
-                      ? Number(resGuardado.resultado_izquierdo)
-                      : null,
-                  resultado_derecho:
-                    resGuardado?.resultado_derecho != null
-                      ? Number(resGuardado.resultado_derecho)
-                      : null,
+                  resultado_unico: resGuardado?.resultado_unico != null ? Number(resGuardado.resultado_unico) : null,
+                  resultado_izquierdo: resGuardado?.resultado_izquierdo != null ? Number(resGuardado.resultado_izquierdo) : null,
+                  resultado_derecho: resGuardado?.resultado_derecho != null ? Number(resGuardado.resultado_derecho) : null,
                   observacion: resGuardado?.observacion ?? '',
                   tiene_datos: !!resGuardado,
                   rango: resGuardado?.rango ?? null,
@@ -319,12 +337,52 @@ export class ProfesorEvaluacionesKineComponent implements OnInit {
               })
               .filter((e) => e.tiene_datos);
 
-            return {
+            procesados.push({
               id: idUsuario,
               nombre,
               apellido,
               evaluaciones: evaluacionesDelAlumno,
-            };
+              activoEnGrupo: true // 🔥 Identificador
+            });
+          });
+
+          // 2. Estudiantes antiguos/retirados con notas en esta sesión
+          resultadosPrevios.forEach((resGuardado) => {
+            const idUsuario = resGuardado.estudiante_id;
+
+            if (!idsProcesados.has(idUsuario)) {
+              idsProcesados.add(idUsuario);
+
+              const nombre = resGuardado.alumno?.nombre || 'Desconocido';
+              const apellido = resGuardado.alumno?.apellido || '';
+
+              const evaluacionesDelAlumno: EvaluacionParametroVista[] = subevaluacionesDefinidas
+                .map((sub) => {
+                  const r = resultadosPrevios.find(
+                    (x) => x.estudiante_id === idUsuario && x.subevaluacion_id === sub.id,
+                  );
+                  return {
+                    subevaluacion_id: sub.id,
+                    nombre_parametro: sub.nombre,
+                    evalua_lados: sub.evalua_lados,
+                    resultado_unico: r?.resultado_unico != null ? Number(r.resultado_unico) : null,
+                    resultado_izquierdo: r?.resultado_izquierdo != null ? Number(r.resultado_izquierdo) : null,
+                    resultado_derecho: r?.resultado_derecho != null ? Number(r.resultado_derecho) : null,
+                    observacion: r?.observacion ?? '',
+                    tiene_datos: !!r,
+                    rango: r?.rango ?? null,
+                  };
+                })
+                .filter((e) => e.tiene_datos);
+
+              procesados.push({
+                id: idUsuario,
+                nombre,
+                apellido,
+                evaluaciones: evaluacionesDelAlumno,
+                activoEnGrupo: false // 🔥 Identificador
+              });
+            }
           });
 
           this.resultadosVista = procesados.filter((a) => a.evaluaciones.length > 0);

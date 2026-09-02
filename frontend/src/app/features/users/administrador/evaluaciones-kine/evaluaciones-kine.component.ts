@@ -67,6 +67,7 @@ interface AlumnoResultadoVista {
   nombre: string;
   apellido: string;
   evaluaciones: EvaluacionParametroVista[];
+  activoEnGrupo: boolean; // 🔥 NUEVO CAMPO
 }
 
 @Component({
@@ -286,31 +287,29 @@ export class AdministradorEvaluacionesKineComponent implements OnInit {
         );
 
         const procesarDatos = () => {
-          const procesados: AlumnoResultadoVista[] = (res.alumnos.registros || []).map((alumno: any) => {
+          const procesados: AlumnoResultadoVista[] = [];
+          const idsProcesados = new Set<string>();
+
+          // 1. Pacientes actuales en el grupo
+          (res.alumnos.registros || []).forEach((alumno: any) => {
             const idUsuario = alumno.perfil ? alumno.perfil.id_usuario : alumno.usuario_id ?? alumno.id;
             const nombre = alumno.perfil ? alumno.perfil.nombre : alumno.nombre;
             const apellido = alumno.perfil ? alumno.perfil.apellido : alumno.apellido;
+
+            idsProcesados.add(idUsuario);
 
             const evaluacionesDelAlumno: EvaluacionParametroVista[] = subevaluacionesDefinidas
               .map((sub) => {
                 const resGuardado = resultadosPrevios.find(
                   (r) => r.estudiante_id === idUsuario && r.subevaluacion_id === sub.id,
                 );
-
                 return {
                   subevaluacion_id: sub.id,
                   nombre_parametro: sub.nombre,
                   evalua_lados: sub.evalua_lados,
-                  resultado_unico:
-                    resGuardado?.resultado_unico != null ? Number(resGuardado.resultado_unico) : null,
-                  resultado_izquierdo:
-                    resGuardado?.resultado_izquierdo != null
-                      ? Number(resGuardado.resultado_izquierdo)
-                      : null,
-                  resultado_derecho:
-                    resGuardado?.resultado_derecho != null
-                      ? Number(resGuardado.resultado_derecho)
-                      : null,
+                  resultado_unico: resGuardado?.resultado_unico != null ? Number(resGuardado.resultado_unico) : null,
+                  resultado_izquierdo: resGuardado?.resultado_izquierdo != null ? Number(resGuardado.resultado_izquierdo) : null,
+                  resultado_derecho: resGuardado?.resultado_derecho != null ? Number(resGuardado.resultado_derecho) : null,
                   observacion: resGuardado?.observacion ?? '',
                   tiene_datos: !!resGuardado,
                   rango: resGuardado?.rango ?? null,
@@ -318,14 +317,55 @@ export class AdministradorEvaluacionesKineComponent implements OnInit {
               })
               .filter((e) => e.tiene_datos);
 
-            return {
+            procesados.push({
               id: idUsuario,
               nombre,
               apellido,
               evaluaciones: evaluacionesDelAlumno,
-            };
+              activoEnGrupo: true // 🔥 Identificador
+            });
           });
 
+          // 2. Pacientes antiguos/retirados con notas en esta sesión
+          resultadosPrevios.forEach((resGuardado) => {
+            const idUsuario = resGuardado.estudiante_id;
+
+            if (!idsProcesados.has(idUsuario)) {
+              idsProcesados.add(idUsuario); // Evita duplicados si tienen más de 1 subevaluación
+
+              const nombre = resGuardado.alumno?.nombre || 'Desconocido';
+              const apellido = resGuardado.alumno?.apellido || '';
+
+              const evaluacionesDelAlumno: EvaluacionParametroVista[] = subevaluacionesDefinidas
+                .map((sub) => {
+                  const r = resultadosPrevios.find(
+                    (x) => x.estudiante_id === idUsuario && x.subevaluacion_id === sub.id,
+                  );
+                  return {
+                    subevaluacion_id: sub.id,
+                    nombre_parametro: sub.nombre,
+                    evalua_lados: sub.evalua_lados,
+                    resultado_unico: r?.resultado_unico != null ? Number(r.resultado_unico) : null,
+                    resultado_izquierdo: r?.resultado_izquierdo != null ? Number(r.resultado_izquierdo) : null,
+                    resultado_derecho: r?.resultado_derecho != null ? Number(r.resultado_derecho) : null,
+                    observacion: r?.observacion ?? '',
+                    tiene_datos: !!r,
+                    rango: r?.rango ?? null,
+                  };
+                })
+                .filter((e) => e.tiene_datos);
+
+              procesados.push({
+                id: idUsuario,
+                nombre,
+                apellido,
+                evaluaciones: evaluacionesDelAlumno,
+                activoEnGrupo: false // 🔥 Identificador
+              });
+            }
+          });
+
+          // Solo mostramos los que tienen al menos 1 resultado
           this.resultadosVista = procesados.filter((a) => a.evaluaciones.length > 0);
           this.estudianteVistaSeleccionado = this.resultadosVista[0] ?? null;
 
@@ -377,5 +417,23 @@ export class AdministradorEvaluacionesKineComponent implements OnInit {
 
   private mostrarError(mensaje: string): void {
     this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
+  }
+
+  getEstiloColorRango(color: string | null | undefined): { [key: string]: string } {
+    if (!color) return { 'background-color': '#6b7280', 'color': '#ffffff' }; // Gris por defecto
+
+    const colorLower = color.trim().toLowerCase();
+
+    if (colorLower.includes('rojo')) {
+      return { 'background-color': '#ef4444', 'color': '#ffffff' }; // Rojo brillante con texto blanco
+    }
+    if (colorLower.includes('amarillo')) {
+      return { 'background-color': '#eab308', 'color': '#111827' }; // Amarillo con texto oscuro
+    }
+    if (colorLower.includes('verde')) {
+      return { 'background-color': '#22c55e', 'color': '#ffffff' }; // Verde con texto blanco
+    }
+
+    return { 'background-color': '#3b82f6', 'color': '#ffffff' }; // Azul por defecto si hay otro
   }
 }

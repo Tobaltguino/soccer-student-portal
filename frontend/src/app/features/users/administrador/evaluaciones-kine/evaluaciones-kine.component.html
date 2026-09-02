@@ -147,7 +147,11 @@
                             
                             <div class="student-info">
                                 <span class="student-name pf-anton" style="letter-spacing: 0.5px;">{{alumno.apellido}}</span>
-                                <span class="student-sub pf-oswald text-steel">{{alumno.nombre}}</span>
+                                <span class="student-sub pf-oswald text-steel flex align-items-center">
+                                    {{alumno.nombre}}
+                                    <!-- 🔥 ETIQUETA LISTA LATERAL -->
+                                    <p-tag *ngIf="!alumno.activoEnGrupo" severity="warn" value="Retirado" styleClass="ml-2" [style]="{'font-size':'0.6rem', 'padding':'0.1rem 0.3rem'}"></p-tag>
+                                </span>
                             </div>
                             <i class="pi pi-angle-right" style="opacity: 0.6; color: var(--text-steel);"></i>
                         </div>
@@ -155,9 +159,11 @@
 
                     <div class="split-content custom-scrollbar">
                         <div *ngIf="estudianteVistaSeleccionado">
-                            <div class="content-header border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
-                                <h3 class="m-0 pf-oswald text-steel text-lg">
-                                    Resultados de: <span class="pf-anton text-chalk ml-2 text-xl" style="letter-spacing: 0.5px;">{{estudianteVistaSeleccionado.nombre}} {{estudianteVistaSeleccionado.apellido}}</span>
+                            <div class="content-header border-bottom-1 surface-border flex align-items-center" style="border-color: var(--border-color) !important;">
+                                <h3 class="m-0 pf-oswald text-steel text-lg flex align-items-center">
+                                    Resultados de: <span class="pf-anton text-chalk mx-2 text-xl" style="letter-spacing: 0.5px;">{{estudianteVistaSeleccionado.nombre}} {{estudianteVistaSeleccionado.apellido}}</span>
+                                    <!-- 🔥 ETIQUETA ENCABEZADO -->
+                                    <p-tag *ngIf="!estudianteVistaSeleccionado.activoEnGrupo" severity="warn" value="Retirado / Otro Grupo" styleClass="text-xs ml-2"></p-tag>
                                 </h3>
                             </div>
 
@@ -175,24 +181,22 @@
                                     <ng-template pTemplate="body" let-sub>
                                         <tr>
                                             <td class="font-medium text-sm text-chalk">
-                                                {{sub.nombre_parametro}}
-                                                <p-tag *ngIf="sub.evalua_lados && sub.rango"
-                                                       [value]="sub.rango.etiqueta"
-                                                       [style]="sub.rango.color ? {'background-color': sub.rango.color} : {}"
-                                                       styleClass="ml-2"></p-tag>
+                                                <span class="block">{{sub.nombre_parametro}}</span>
+                                                <!-- 🔥 Usamos el severity en lugar del background-color manual -->
+                                                <p-tag *ngIf="sub.rango"
+                                                    [value]="sub.rango.etiqueta"
+                                                    [style]="getEstiloColorRango(sub.rango.color)"
+                                                    styleClass="pf-kine-rango-tag"></p-tag>
                                             </td>
                                             <td class="text-center">
-                                                <!-- FIX TS2322: Interpolación para asegurar tipo String -->
                                                 <p-tag *ngIf="sub.resultado_unico !== null" value="{{ sub.resultado_unico }}" [severity]="getSeverityPuntaje(sub.resultado_unico, sub.subevaluacion_id)"></p-tag>
                                                 <span *ngIf="sub.resultado_unico === null" class="text-steel">-</span>
                                             </td>
                                             <td class="text-center">
-                                                <!-- FIX TS2322: Interpolación -->
                                                 <p-tag *ngIf="sub.resultado_izquierdo !== null" value="{{ sub.resultado_izquierdo }}" [severity]="getSeverityPuntaje(sub.resultado_izquierdo, sub.subevaluacion_id)"></p-tag>
                                                 <span *ngIf="sub.resultado_izquierdo === null" class="text-steel">-</span>
                                             </td>
                                             <td class="text-center">
-                                                <!-- FIX TS2322: Interpolación -->
                                                 <p-tag *ngIf="sub.resultado_derecho !== null" value="{{ sub.resultado_derecho }}" [severity]="getSeverityPuntaje(sub.resultado_derecho, sub.subevaluacion_id)"></p-tag>
                                                 <span *ngIf="sub.resultado_derecho === null" class="text-steel">-</span>
                                             </td>
@@ -205,7 +209,7 @@
                         
                         <div *ngIf="!estudianteVistaSeleccionado" class="empty-state">
                             <i class="pi pi-list text-steel" style="font-size: 3.5rem;"></i>
-                            <h2 class="m-0 text-center pf-anton text-chalk text-2xl mt-3" style="letter-spacing: 0.5px;">Selecciona un estudiante</h2>
+                            <h2 class="m-0 text-center pf-anton text-chalk text-2xl mt-3" style="letter-spacing: 0.5px;">Selecciona un paciente</h2>
                             <p class="m-0 text-center pf-oswald text-steel text-lg">Elige un nombre de la lista para ver sus resultados detallados.</p>
                         </div>
                     </div>
