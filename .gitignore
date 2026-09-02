@@ -13,9 +13,9 @@ backend/*.env
 frontend/dist
 frontend/node_modules
 frontend/.angular/cache
-frontend/src/environments/environment.ts
-frontend/src/environments/environment.prod.ts
-!frontend/src/environments/environment.example.ts
+#frontend/src/environments/environment.ts
+#frontend/src/environments/environment.prod.ts
+#!frontend/src/environments/environment.example.ts
 
 # ==========================================
 # COMPARTIDO (ambos proyectos)
