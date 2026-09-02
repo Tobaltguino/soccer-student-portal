@@ -47,7 +47,13 @@
         
         <label class="pf-field">
           <span class="pf-oswald pf-field__label">RUT del Usuario</span>
-          <input type="text" formControlName="rut" appRutFormat placeholder="12.345.678-9" class="pf-field__input" />
+          <input type="text" 
+                 formControlName="rut" 
+                 name="rut" 
+                 autocomplete="username" 
+                 appRutFormat 
+                 placeholder="12.345.678-9" 
+                 class="pf-field__input" />
         </label>
 
         <label class="pf-field">

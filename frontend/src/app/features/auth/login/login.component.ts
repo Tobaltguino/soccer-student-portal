@@ -132,7 +132,7 @@ export class LoginComponent implements OnInit {
 
   abrirDialogoRecuperacion() {
     this.displayResetDialog = true;
-    this.rutRecuperacion = '';
+    this.rutRecuperacion = this.loginForm.get('rut')?.value || '';
   }
 
   enviarCorreoRecuperacion() {

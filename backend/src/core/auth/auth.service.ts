@@ -96,7 +96,7 @@ export class AuthService {
     }
 
     const { error } = await this.supabaseAnon.auth.resetPasswordForEmail(perfil.email, {
-      redirectTo: this.configService.get<string>('FRONTEND_URL') || 'http://localhost:4200/update-password',
+      redirectTo: this.configService.get<string>('FRONTEND_URL') || 'https://profutbol.netlify.app/update-password',
     });
 
     if (error) {
