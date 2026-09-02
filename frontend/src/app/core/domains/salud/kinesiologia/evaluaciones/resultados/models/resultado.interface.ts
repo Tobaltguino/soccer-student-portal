@@ -24,6 +24,12 @@ export interface KineResultadoConDetalle extends KineResultado {
     etiqueta: string;
     color: string | null;
   } | null;
+  // 🔥 AGREGADO: Para recibir los datos que ahora envía el backend
+  alumno?: {
+    nombre: string;
+    apellido: string;
+    rut: string;
+  };
 }
 
 export interface CrearKineResultadoPayload {

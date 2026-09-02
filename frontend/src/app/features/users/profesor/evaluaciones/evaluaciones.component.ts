@@ -95,8 +95,6 @@ export class ProfesorEvaluacionesComponent implements OnInit {
     
     this.grupoService.obtenerMisGrupos().subscribe({
       next: (gruposData) => {
-        // 🔥 FIX DEFINITIVO: Guardamos los grupos temporalmente aquí.
-        // NO tocamos 'this.grupos' todavía para que Angular no vea cambios a medias.
         const tempGrupos = gruposData || [];
         const misGrupoIds = tempGrupos.map(g => g.id).filter(id => id !== undefined) as number[];
 
@@ -106,7 +104,6 @@ export class ProfesorEvaluacionesComponent implements OnInit {
             this.sesionesOriginales = [];
             this.sesiones = [];
             
-            // Liberamos todo junto de golpe
             this.grupos = tempGrupos; 
             this.loading = false;
             this.cdr.detectChanges();
@@ -127,7 +124,6 @@ export class ProfesorEvaluacionesComponent implements OnInit {
             this.sesionesOriginales = sesionesGrupos.flatMap(res => res.registros);
             this.sesiones = [...this.sesionesOriginales];
             
-            // 🔥 Liberamos todo junto de golpe en un solo movimiento atómico
             this.grupos = tempGrupos;
             this.aplicarFiltros();
             this.loading = false;
@@ -261,7 +257,6 @@ export class ProfesorEvaluacionesComponent implements OnInit {
     };
     this.loading = true;
 
-    
     const grupoIdToFetch = sesion.grupo_id || sesion.grupoId;
 
     forkJoin({
@@ -270,22 +265,50 @@ export class ProfesorEvaluacionesComponent implements OnInit {
     }).subscribe({
       next: ({ alumnos, resultados }) => {
         
-        this.estudiantesGrupo = alumnos.registros.map((est: any) => {
+        const estudiantesFinales: any[] = [];
+        const idsProcesados = new Set<string>();
+
+        // 1. Alumnos actuales del grupo
+        alumnos.registros.forEach((est: any) => {
           const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id;
           const nombre = est.perfil ? est.perfil.nombre : est.nombre;
           const apellido = est.perfil ? est.perfil.apellido : est.apellido;
 
           const notaExistente: any = resultados.find((r: any) => r.estudianteId === idUsuario || r.estudiante_id === idUsuario);
           
-          return {
+          idsProcesados.add(idUsuario);
+
+          estudiantesFinales.push({
               resultado_id: notaExistente ? notaExistente.id : null,
               estudiante_id: idUsuario,
               nombre: nombre,
               apellido: apellido,
               valor_numerico: notaExistente ? (notaExistente.valorNumerico || notaExistente.valor_numerico) : null,
-              observacion: notaExistente ? notaExistente.observacion : ''
-          };
+              observacion: notaExistente ? notaExistente.observacion : '',
+              rango: notaExistente ? notaExistente.rango : null, // 🔥 Añadimos el rango
+              activoEnGrupo: true
+          });
         });
+
+        // 2. Alumnos antiguos con nota
+        resultados.forEach((r: any) => {
+          const idUsuario = r.estudianteId || r.estudiante_id;
+          
+          if (!idsProcesados.has(idUsuario)) {
+            estudiantesFinales.push({
+              resultado_id: r.id,
+              estudiante_id: idUsuario,
+              nombre: r.alumno?.nombre || 'Desconocido', 
+              apellido: r.alumno?.apellido || '',
+              valor_numerico: r.valorNumerico || r.valor_numerico,
+              observacion: r.observacion || '',
+              rango: r.rango || null, // 🔥 Añadimos el rango
+              activoEnGrupo: false
+            });
+          }
+        });
+        
+        this.estudiantesGrupo = estudiantesFinales;
         
         this.displayGradesDialog = true;
         this.loading = false;
@@ -314,6 +337,7 @@ export class ProfesorEvaluacionesComponent implements OnInit {
               estudiante.resultado_id = null;
               estudiante.valor_numerico = null;
               estudiante.observacion = '';
+              estudiante.rango = null; // Limpiamos el rango también
               this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Nota eliminada correctamente.' });
               this.cdr.detectChanges();
             },
@@ -326,6 +350,7 @@ export class ProfesorEvaluacionesComponent implements OnInit {
     } else {
       estudiante.valor_numerico = null;
       estudiante.observacion = '';
+      estudiante.rango = null;
     }
   }
 
@@ -368,10 +393,6 @@ export class ProfesorEvaluacionesComponent implements OnInit {
     });
   }
 
-  /**
-   * El backend no envía el grupo/tipo de evaluación embebido en la sesión,
-   * solo los IDs. Los resolvemos localmente contra lo ya cargado.
-   */
   obtenerNombreGrupo(sesion: any): string {
     const grupoId = sesion.grupo_id || sesion.grupoId;
     return this.grupos.find(g => g.id === grupoId)?.nombre || 'Grupo desconocido';

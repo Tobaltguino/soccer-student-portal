@@ -429,21 +429,51 @@ export class AdministradorEvaluacionesComponent implements OnInit {
     }).subscribe({
       next: ({ alumnos, resultados }) => {
         
-        this.estudiantesGrupo = alumnos.registros.map((est: any) => {
+        const estudiantesFinales: any[] = [];
+        const idsProcesados = new Set<string>();
+
+        // 1. Alumnos actuales del grupo
+        alumnos.registros.forEach((est: any) => {
           const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id;
           const nombre = est.perfil ? est.perfil.nombre : est.nombre;
           const apellido = est.perfil ? est.perfil.apellido : est.apellido;
 
+          // Buscamos si el alumno ya tiene un resultado guardado en esta sesión
           const notaExistente: any = resultados.find((r: any) => r.estudianteId === idUsuario || r.estudiante_id === idUsuario);
           
-          return {
+          idsProcesados.add(idUsuario);
+
+          estudiantesFinales.push({
+              resultado_id: notaExistente ? notaExistente.id : null, // 🔥 RESTAURADO: Clave para el POST vs PATCH
               estudiante_id: idUsuario,
               nombre: nombre,
               apellido: apellido,
               valor_numerico: notaExistente ? (notaExistente.valorNumerico || notaExistente.valor_numerico) : null,
-              observacion: notaExistente ? notaExistente.observacion : ''
-          };
+              observacion: notaExistente ? notaExistente.observacion : '',
+              rango: notaExistente ? notaExistente.rango : null,
+              activoEnGrupo: true 
+          });
         });
+
+        // 2. Alumnos antiguos con nota que ya no están en la lista actual
+        resultados.forEach((r: any) => {
+          const idUsuario = r.estudianteId || r.estudiante_id;
+          
+          if (!idsProcesados.has(idUsuario)) {
+            estudiantesFinales.push({
+              resultado_id: r.id, // 🔥 RESTAURADO: Clave para el PATCH de alumnos retirados
+              estudiante_id: idUsuario,
+              nombre: r.alumno?.nombre || 'Desconocido', 
+              apellido: r.alumno?.apellido || '',
+              valor_numerico: r.valorNumerico || r.valor_numerico,
+              observacion: r.observacion || '',
+              rango: r.rango || null,
+              activoEnGrupo: false 
+            });
+          }
+        });
+        
+        this.estudiantesGrupo = estudiantesFinales;
         
         this.displayGradesDialog = true;
         this.loading = false;

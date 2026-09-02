@@ -23,4 +23,10 @@ export interface KineResultadoConDetalle extends KineResultadoRow {
     etiqueta: string;
     color: string | null;
   } | null;
+  // 🔥 AGREGAMOS EL ALUMNO AL TIPO DE DATO
+  alumno: {
+    nombre: string;
+    apellido: string;
+    rut: string;
+  };
 }

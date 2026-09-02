@@ -1,6 +1,5 @@
 <div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
-    <!-- 🔥 Confirm Dialog Global 🔥 -->
     <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
 
     <header class="pf-admin-header">
@@ -14,7 +13,6 @@
             <button pButton icon="pi pi-sync" class="pf-btn-ghost" 
                     (click)="cargarDatosIniciales()" [loading]="loading" pTooltip="Actualizar lista"></button>
             
-            <!-- 🔥 FIX: Opción 1 aplicada. Bloquea si el profesor no tiene grupos asignados -->
             <div [pTooltip]="grupos.length === 0 ? 'No tienes grupos asignados para crear sesiones' : ''" tooltipPosition="left">
                 <button pButton label="Nueva Sesión" icon="pi pi-plus" class="pf-btn-primary" 
                         (click)="abrirNuevo()" [disabled]="grupos.length === 0"></button>
@@ -103,7 +101,7 @@
                     </td>
                     <td class="text-center">
                         <span class="p-column-title hidden-desktop pf-oswald text-steel">Acciones</span>
-                        <div class="pf-table-actions">
+                        <div class="pf-table-actions justify-content-center">
                             <button pButton icon="pi pi-pencil" class="p-button-warning" 
                                     (click)="editarSesion(sesion)" pTooltip="Editar Logística"></button>
                             <button pButton icon="pi pi-user-edit" class="p-button-success" 
@@ -184,7 +182,7 @@
 
     <!-- MODAL REGISTRO DE RESULTADOS -->
     <p-dialog [(visible)]="displayGradesDialog" header="Registro de Resultados" 
-              [modal]="true" [style]="{width: '95vw', maxWidth: '900px'}" [maximizable]="true" styleClass="p-fluid pf-dialog" [draggable]="false" [resizable]="false">
+              [modal]="true" [style]="{width: '95vw', maxWidth: '1000px'}" [maximizable]="true" styleClass="p-fluid pf-dialog" [draggable]="false" [resizable]="false">
         <ng-template pTemplate="content">
             
             <!-- Cabecera del Modal de Notas -->
@@ -206,8 +204,9 @@
                 <ng-template pTemplate="header">
                     <tr>
                         <th style="width: 30%">Estudiante</th>
-                        <th style="width: 25%">Resultado ({{evalLogistica.tipoEvaluacionResuelto?.unidad_medida}})</th>
-                        <th style="width: 35%">Observación</th>
+                        <th style="width: 20%" class="text-center">Resultado ({{evalLogistica.tipoEvaluacionResuelto?.unidad_medida}})</th>
+                        <th style="width: 15%" class="text-center">Rango</th>
+                        <th style="width: 25%">Observación</th>
                         <th style="width: 10%" class="text-center">Borrar</th>
                     </tr>
                 </ng-template>
@@ -217,8 +216,10 @@
                         <td>
                             <span class="p-column-title hidden-desktop pf-oswald text-steel">Estudiante</span>
                             <span class="font-bold text-chalk">{{estudiante.apellido}}</span>, <span class="text-steel">{{estudiante.nombre}}</span>
+                            <!-- 🔥 ETIQUETA VISUAL -->
+                            <p-tag *ngIf="!estudiante.activoEnGrupo" severity="warn" value="Retirado / Otro Grupo" styleClass="ml-2 text-xs"></p-tag>
                         </td>
-                        <td>
+                        <td class="text-center">
                             <span class="p-column-title hidden-desktop pf-oswald text-steel">Resultado</span>
                             <p-inputNumber [(ngModel)]="estudiante.valor_numerico" 
                                            [minFractionDigits]="0" 
@@ -228,13 +229,22 @@
                                            styleClass="w-full">
                             </p-inputNumber>
                         </td>
+                        <td class="text-center">
+                            <span class="p-column-title hidden-desktop pf-oswald text-steel">Rango</span>
+                            <p-tag *ngIf="estudiante.rango" 
+                                   [value]="estudiante.rango.nombreEtiqueta || estudiante.rango.etiqueta" 
+                                   [style]="{'background-color': estudiante.rango.colorSugerido || estudiante.rango.color}"
+                                   styleClass="pf-rango-tag">
+                            </p-tag>
+                            <span *ngIf="!estudiante.rango" class="text-steel italic text-sm">-</span>
+                        </td>
                         <td>
                             <span class="p-column-title hidden-desktop pf-oswald text-steel">Observación</span>
                             <input pInputText [(ngModel)]="estudiante.observacion" placeholder="Comentario opcional..." class="w-full">
                         </td>
                         <td class="text-center">
                             <span class="p-column-title hidden-desktop pf-oswald text-steel">Borrar</span>
-                            <div class="pf-table-actions">
+                            <div class="pf-table-actions justify-content-center">
                                 <button pButton icon="pi pi-eraser" class="p-button-danger" 
                                         (click)="limpiarFila(estudiante)" pTooltip="Limpiar nota"></button>
                             </div>
@@ -244,7 +254,7 @@
 
                 <ng-template pTemplate="emptymessage">
                     <tr>
-                        <td colspan="4" class="text-center p-6 text-steel pf-oswald text-lg">No hay estudiantes activos en este grupo.</td>
+                        <td colspan="5" class="text-center p-6 text-steel pf-oswald text-lg">No hay estudiantes activos en este grupo.</td>
                     </tr>
                 </ng-template>
             </p-table>

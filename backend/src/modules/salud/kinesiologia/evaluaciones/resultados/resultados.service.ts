@@ -248,7 +248,6 @@ export class ResultadosService {
     );
 
     let rango: { etiqueta: string; color: string | null } | null = null;
-
     const puntajeParaRango = this.calcularPuntajeParaRango(subevaluacion, resultado);
 
     if (puntajeParaRango !== null) {
@@ -262,6 +261,13 @@ export class ResultadosService {
       rango = rangoData ?? null;
     }
 
+    // 🔥 NUEVO: Obtenemos los datos del perfil del alumno
+    const { data: perfil } = await this.supabase.client
+      .from('usuarios_perfiles')
+      .select('nombre, apellido, rut')
+      .eq('id_usuario', resultado.estudiante_id)
+      .maybeSingle<{ nombre: string; apellido: string; rut: string }>();
+
     return {
       ...resultado,
       subevaluacion: {
@@ -270,43 +276,39 @@ export class ResultadosService {
         prioridad: subevaluacion.prioridad,
       },
       rango,
+      // 🔥 NUEVO: Empaquetamos al alumno para el frontend
+      alumno: {
+        nombre: perfil?.nombre ?? 'Desconocido',
+        apellido: perfil?.apellido ?? '',
+        rut: perfil?.rut ?? 'Sin RUT',
+      },
     };
   }
 
+  // 🔥 MÉTODO DE EXCEL OPTIMIZADO
   async generarExcelPorSesionKine(sesionId: string, gruposPermitidos: number[] | null): Promise<Buffer> {
-    // 1. Reutilizamos tu método que ya enriquece los datos y valida permisos
+    // 1. Reutilizamos tu método que ya enriquece los datos y AHORA trae al alumno
     const resultadosEnriquecidos = await this.listarPorSesion(sesionId, gruposPermitidos);
 
     if (resultadosEnriquecidos.length === 0) {
       throw new BadRequestException('No hay resultados registrados en esta sesión para exportar.');
     }
 
-    // 2. Extraemos los IDs y buscamos los nombres en usuarios_perfiles
-    const idsEstudiantes = resultadosEnriquecidos.map((r) => r.estudiante_id);
-    const { data: perfiles } = await this.supabase.client
-      .from('usuarios_perfiles')
-      .select('id_usuario, nombre, apellido, rut')
-      .in('id_usuario', idsEstudiantes);
-
-    const mapaPerfiles = new Map((perfiles || []).map((p) => [p.id_usuario, p]));
-
-    // 3. Mapeamos incluyendo los campos únicos, izquierdo y derecho
+    // 2. Mapeamos directamente (¡Ya no necesitamos hacer otra consulta a la BD!)
     const datosMapeados = resultadosEnriquecidos.map((r) => {
-      const perfil = mapaPerfiles.get(r.estudiante_id);
       return {
-        rut: perfil?.rut || 'Sin RUT',
-        nombreCompleto: `${perfil?.nombre || ''} ${perfil?.apellido || ''}`.trim() || '-',
+        rut: r.alumno.rut,
+        nombreCompleto: `${r.alumno.nombre} ${r.alumno.apellido}`.trim() || '-',
         subevaluacion: r.subevaluacion.nombre,
         resultadoUnico: r.resultado_unico !== null ? r.resultado_unico : '-',
         resultadoIzquierdo: r.resultado_izquierdo !== null ? r.resultado_izquierdo : '-',
         resultadoDerecho: r.resultado_derecho !== null ? r.resultado_derecho : '-',
-        // Nota: en Kine usaste 'etiqueta' en lugar de 'nombreEtiqueta'
         rango: r.rango?.etiqueta || 'Sin rango', 
         observacion: r.observacion || '-',
       };
     });
 
-    // 4. Definimos las columnas del Excel
+    // 3. Definimos las columnas del Excel
     const columnas = [
       { header: 'RUT', key: 'rut', width: 15 },
       { header: 'Nombre Alumno', key: 'nombreCompleto', width: 30 },

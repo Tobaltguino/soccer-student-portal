@@ -1604,3 +1604,18 @@ a.fc-col-header-cell-cushion,
     background: rgba(34, 197, 94, 0.3) !important; 
     box-shadow: none !important;
 }
+
+/* =========================================
+   ETIQUETAS DE RANGO (RESULTADOS)
+   ========================================= */
+.p-tag.pf-rango-tag {
+    color: #111827 !important; /* Texto oscuro (casi negro) para máximo contraste con colores vivos */
+    font-family: 'Oswald', sans-serif !important; /* Mantiene la estética deportiva de tus títulos */
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    padding: 0.25rem 0.75rem !important;
+    border-radius: 4px !important; /* Borde ligeramente cuadrado para combinar con tu UI */
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.4) !important; /* Sombra para darle efecto de profundidad */
+    border: 1px solid rgba(255, 255, 255, 0.3) !important; /* Un brillo muy sutil en los bordes */
+}

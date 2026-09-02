@@ -194,22 +194,50 @@ export class KinesiologoEvaluacionesComponent implements OnInit {
     }).subscribe({
       next: ({ alumnos, resultados }) => {
 
-        this.estudiantesGrupo = (alumnos as any[])
-          .filter((est: any) => est.grupo_id === grupoIdToFetch)
-          .map((est: any) => {
-            const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id;
-            const nombre = est.perfil ? est.perfil.nombre : est.nombre;
-            const apellido = est.perfil ? est.perfil.apellido : est.apellido;
+        const estudiantesFinales: any[] = [];
+        const idsProcesados = new Set<string>();
 
-            const notaExistente: any = resultados.find((r: any) => r.estudianteId === idUsuario || r.estudiante_id === idUsuario);
+        // 1. Pacientes actuales asignados a este grupo específico
+        const alumnosFiltrados = (alumnos as any[]).filter((est: any) => est.grupo_id === grupoIdToFetch);
 
-            return {
-                nombre: nombre,
-                apellido: apellido,
-                valor_numerico: notaExistente ? (notaExistente.valorNumerico || notaExistente.valor_numerico) : null,
-                observacion: notaExistente ? notaExistente.observacion : ''
-            };
+        alumnosFiltrados.forEach((est: any) => {
+          const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id;
+          const nombre = est.perfil ? est.perfil.nombre : est.nombre;
+          const apellido = est.perfil ? est.perfil.apellido : est.apellido;
+
+          const notaExistente: any = resultados.find((r: any) => r.estudianteId === idUsuario || r.estudiante_id === idUsuario);
+
+          idsProcesados.add(idUsuario);
+
+          estudiantesFinales.push({
+              estudiante_id: idUsuario,
+              nombre: nombre,
+              apellido: apellido,
+              valor_numerico: notaExistente ? (notaExistente.valorNumerico || notaExistente.valor_numerico) : null,
+              observacion: notaExistente ? notaExistente.observacion : '',
+              rango: notaExistente ? notaExistente.rango : null, // 🔥 Pasamos el rango
+              activoEnGrupo: true // 🔥 Identificador de paciente activo
           });
+        });
+
+        // 2. Pacientes antiguos con registro que ya no están en la lista actual
+        resultados.forEach((r: any) => {
+          const idUsuario = r.estudianteId || r.estudiante_id;
+          
+          if (!idsProcesados.has(idUsuario)) {
+            estudiantesFinales.push({
+              estudiante_id: idUsuario,
+              nombre: r.alumno?.nombre || 'Desconocido', 
+              apellido: r.alumno?.apellido || '',
+              valor_numerico: r.valorNumerico || r.valor_numerico,
+              observacion: r.observacion || '',
+              rango: r.rango || null, // 🔥 Pasamos el rango
+              activoEnGrupo: false // 🔥 Identificador para etiqueta de "Retirado"
+            });
+          }
+        });
+        
+        this.estudiantesGrupo = estudiantesFinales;
         
         this.displayGradesDialog = true;
         this.loading = false;
