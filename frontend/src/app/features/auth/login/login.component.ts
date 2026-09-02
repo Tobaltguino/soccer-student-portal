@@ -11,6 +11,7 @@ import { MessageService } from 'primeng/api';
 // Servicios de Angular
 import { AuthService } from '../../../core/auth/services/auth.service';
 import { Rol } from '../../../shared/enums/rol.enum';
+import { IdleService } from '../../../core/services/idle.service';
 
 import { RutFormatDirective } from '../../../shared/directives/rut-format.directive';
 
@@ -34,6 +35,7 @@ export class LoginComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   private messageService = inject(MessageService);
+  private idleService = inject(IdleService);
 
   // Configuración del formulario
   loginForm: FormGroup = this.fb.group({
@@ -73,6 +75,8 @@ export class LoginComponent implements OnInit {
     this.authService.login(credenciales).subscribe({
       next: (response) => {
         this.loading = false;
+        
+        this.idleService.iniciarMonitoreo();
         
         if (response.user.necesitaAceptarTerminos) {
           this.router.navigate(['/terminos']);
