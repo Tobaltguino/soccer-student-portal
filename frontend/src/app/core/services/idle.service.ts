@@ -9,11 +9,7 @@ import { AuthService } from '../auth/services/auth.service';
 })
 export class IdleService {
   
-  // Cambia esta línea:
-  // private timeoutMilliseconds = 15 * 60 * 1000; 
-
-  // Por esta (10 segundos en milisegundos):
-  private timeoutMilliseconds = 10 * 1000;
+  private timeoutMilliseconds = 15 * 60 * 1000; 
 
   private idleSubscription: Subscription | null = null;
   public onIdleTimeout = new Subject<boolean>();
