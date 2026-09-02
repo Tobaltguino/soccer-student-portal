@@ -12,6 +12,8 @@ import { MessageService } from 'primeng/api';
 import { AuthService } from '../../../core/auth/services/auth.service';
 import { Rol } from '../../../shared/enums/rol.enum';
 
+import { RutFormatDirective } from '../../../shared/directives/rut-format.directive';
+
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -20,7 +22,8 @@ import { Rol } from '../../../shared/enums/rol.enum';
     ReactiveFormsModule, 
     FormsModule,
     ToastModule, 
-    DialogModule
+    DialogModule,
+    RutFormatDirective
   ],
   providers: [MessageService],
   templateUrl: './login.component.html',
@@ -61,7 +64,13 @@ export class LoginComponent implements OnInit {
 
     this.loading = true;
 
-    this.authService.login(this.loginForm.value).subscribe({
+    // 🔥 Clonamos los valores y limpiamos el RUT (quitamos puntos, dejamos guion)
+    const credenciales = { ...this.loginForm.value };
+    if (credenciales.rut) {
+      credenciales.rut = credenciales.rut.replace(/\./g, '').trim();
+    }
+
+    this.authService.login(credenciales).subscribe({
       next: (response) => {
         this.loading = false;
         
@@ -143,7 +152,10 @@ export class LoginComponent implements OnInit {
 
     this.loadingReset = true;
     
-    this.authService.recuperarPassword(this.rutRecuperacion).subscribe({
+    // 🔥 Limpiamos el RUT antes de enviarlo al backend
+    const rutLimpio = this.rutRecuperacion.replace(/\./g, '').trim();
+    
+    this.authService.recuperarPassword(rutLimpio).subscribe({
       next: (response) => {
         this.loadingReset = false;
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Se han enviado las instrucciones a tu correo.' });

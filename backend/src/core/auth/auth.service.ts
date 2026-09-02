@@ -84,6 +84,20 @@ export class AuthService {
     };
   }
 
+  async getMe(userId: string) {
+    const { data, error } = await this.supabaseAdmin
+      .from('usuarios_perfiles')
+      .select('nombre, apellido, foto_url, rol, email, rut')
+      .eq('id_usuario', userId)
+      .single();
+
+    if (error || !data) {
+      throw new NotFoundException('Perfil de usuario no encontrado');
+    }
+
+    return data;
+  }
+
   async recuperarPassword(dto: RecuperarPasswordDto) {
     const { data: perfil, error: perfilError } = await this.supabaseAdmin
       .from('usuarios_perfiles')

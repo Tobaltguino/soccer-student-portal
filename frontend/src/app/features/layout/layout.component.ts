@@ -85,22 +85,31 @@ export class LayoutComponent implements OnInit {
   async cargarUsuario() {
     try {
       const userRes = await firstValueFrom(this.authService.me());
+      // A veces Axios/HttpClient envuelven la data, por si acaso sacamos el objeto correcto:
       const user = userRes?.data ? userRes.data : userRes;
       
-      if (!user || (!user.email && !user.nombre)) {
+      if (!user) {
         this.userName = 'Invitado';
+        this.userInitial = 'I';
         this.cdr.detectChanges();
         return;
       }
 
-      this.userName = user.nombre ? `${user.nombre} ${user.apellido}` : user.email.split('@')[0];
-      this.userPhotoUrl = user.foto_url || user.fotoUrl || null;
+      // 🔥 Ahora sí el backend envía "nombre" y "apellido"
+      if (user.nombre || user.apellido) {
+        this.userName = `${user.nombre || ''} ${user.apellido || ''}`.trim();
+      } else {
+        this.userName = 'Usuario Academia';
+      }
+
+      this.userPhotoUrl = user.foto_url || null;
       this.userInitial = this.userName.charAt(0).toUpperCase();
       
       this.cdr.detectChanges();
     } catch (error) {
       console.error('Error al cargar perfil:', error);
-      this.userName = 'Usuario';
+      this.userName = 'Usuario Academia';
+      this.userInitial = 'U';
       this.cdr.detectChanges();
     }
   }

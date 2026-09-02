@@ -43,6 +43,6 @@ export class AuthController {
   @Post('me')
   @UseGuards(JwtAuthGuard)
   me(@CurrentUser() user: RequestUser) {
-    return user; // luego lo ampliamos para traer el perfil completo desde usuarios_perfiles
+    return this.authService.getMe(user.id);
   }
 }
