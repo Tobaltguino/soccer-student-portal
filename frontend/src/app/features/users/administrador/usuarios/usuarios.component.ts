@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin, Observable } from 'rxjs';
 
 import { TableModule, Table } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -26,7 +27,10 @@ import { UsuarioService } from '../../../../core/domains/usuarios/central/servic
 import { CrearUsuarioPayload, ActualizarUsuarioPayload } from '../../../../core/domains/usuarios/central/models/usuario.interface'
 import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
 
-// 🔥 IMPORTAMOS TU SERVICIO DE EXCEL
+// 🔥 IMPORTAMOS EL SERVICIO DE ASIGNACIÓN DE STAFF
+import { AsignacionStaffService } from '../../../../core/domains/academico/asignaciones-staff/services/asignacion-staff.service';
+import { TipoStaff } from '../../../../core/domains/academico/asignaciones-staff/models/asignacion-staff.interface';
+
 import { ExcelExportService } from '../../../../core/services/excel-export.service';
 
 import { Rol } from '../../../../shared/enums/rol.enum';
@@ -51,12 +55,11 @@ export class AdministradorUsuariosComponent implements OnInit {
   private usuarioService = inject(UsuarioService);
   private grupoService = inject(GrupoService);
   private historialClinicoService = inject(HistorialClinicoService);
+  private asignacionStaffService = inject(AsignacionStaffService); // 🔥 INYECTADO
   private cdr = inject(ChangeDetectorRef);
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
   private filterService = inject(FilterService);
-
-  // 🔥 INYECTAMOS EL SERVICIO DE EXCEL
   private excelService = inject(ExcelExportService);
 
   dataList: any[] = []; 
@@ -144,6 +147,21 @@ export class AdministradorUsuariosComponent implements OnInit {
     this.cargarDatos(); 
   }
 
+  // 🔥 Verifica si la vista actual es de un perfil de Staff (Profe, Kine, Nutri)
+  esVistaStaff(): boolean {
+    return this.vistaActual === Rol.PROFESOR || 
+           this.vistaActual === Rol.KINESIOLOGO || 
+           this.vistaActual === Rol.NUTRICIONISTA;
+  }
+
+  // 🔥 Mapea el Rol a TipoStaff para las peticiones de asignación
+  getTipoStaff(): TipoStaff | null {
+    if (this.vistaActual === Rol.PROFESOR) return TipoStaff.PROFESOR;
+    if (this.vistaActual === Rol.KINESIOLOGO) return TipoStaff.KINESIOLOGO;
+    if (this.vistaActual === Rol.NUTRICIONISTA) return TipoStaff.NUTRICIONISTA;
+    return null;
+  }
+
   limpiarFiltros() {
     this.filtros = { global: '', grupo: null, posicion: null, tipoProfesor: null, estado: null };
     if (this.dt) this.dt.reset();
@@ -155,16 +173,29 @@ export class AdministradorUsuariosComponent implements OnInit {
 
     this.usuarioService.listarUsuarios({ rol: this.vistaActual, limite: 200 }).subscribe({
       next: (res) => {
-        this.dataList = res.registros.map(user => ({
-          ...user,
-          grupo_id: user.datosEstudiante?.grupo_id,
-          posiciones: user.datosEstudiante?.posiciones || [],
-          tipo_profesor: user.datosProfesor?.tipo_profesor,
-          peso: user.datosEstudiante?.peso,
-          altura: user.datosEstudiante?.altura,
-          prevision: user.datosEstudiante?.prevision,
-          direccion: user.datosEstudiante?.direccion
-        }));
+        this.dataList = res.registros.map(user => {
+          // 🔥 FIX: Buscamos todas las posibles formas en las que el backend pueda devolver la relación
+          const gruposRelacion = user.grupos_asignados || user.grupos_profesores || user.grupos_kinesiologos || user.grupos_nutricionistas || [];
+          
+          // 🔥 FIX: Extraemos el ID y forzamos a que sea Número para que PrimeNG lo reconozca
+          const idsGrupos = gruposRelacion
+            .map((g: any) => Number(g.grupo_id || g.id || g))
+            .filter((id: number) => !isNaN(id));
+
+          return {
+            ...user,
+            grupo_id: user.datosEstudiante?.grupo_id,
+            posiciones: user.datosEstudiante?.posiciones || [],
+            tipo_profesor: user.datosProfesor?.tipo_profesor,
+            peso: user.datosEstudiante?.peso,
+            altura: user.datosEstudiante?.altura,
+            prevision: user.datosEstudiante?.prevision,
+            direccion: user.datosEstudiante?.direccion,
+            // Guardamos el arreglo limpio y estrictamente numérico
+            gruposIds: idsGrupos
+          };
+        });
+        
         this.loading = false;
         this.cdr.detectChanges();
       },
@@ -176,12 +207,9 @@ export class AdministradorUsuariosComponent implements OnInit {
     });
   }
 
-  // 🔥 NUEVO MÉTODO PARA EXPORTAR EXCEL GLOBAL
   descargarExcel() {
     this.messageService.add({ severity: 'info', summary: 'Exportando', detail: 'Generando directorio completo...' });
     this.cdr.detectChanges();
-    
-    // Al enviar un objeto vacío {}, ignoramos el filtro de rol y nos trae a TODOS los usuarios de la base de datos
     this.excelService.exportarUsuarios({});
   }
 
@@ -213,6 +241,7 @@ export class AdministradorUsuariosComponent implements OnInit {
   }
 
   abrirEditar(usuario: any) {
+    console.log('Usuario recibido del backend:', usuario);
     if (usuario.rut === '1-1') {
         this.messageService.add({ severity: 'info', summary: 'Cuenta Protegida', detail: 'El Administrador maestro no puede ser modificado aquí.' });
         return;
@@ -232,7 +261,10 @@ export class AdministradorUsuariosComponent implements OnInit {
       ...usuario, 
       id: usuario.id_usuario, 
       fecha_nacimiento: fechaNac, 
-      posicionesIds: usuario.posiciones || []
+      posicionesIds: usuario.posiciones || [],
+      // 🔥 Pasamos el arreglo de IDs que ya limpiamos y convertimos a número en cargarDatos()
+      gruposIds: [...(usuario.gruposIds || [])],
+      gruposIdsOriginales: [...(usuario.gruposIds || [])]
     };
     
     this.previewUrl = usuario.foto_url || null; 
@@ -249,7 +281,8 @@ export class AdministradorUsuariosComponent implements OnInit {
   private getFormularioVacio() {
     return { 
       id: null, nombre: '', apellido: '', rut: '', email: '', fecha_nacimiento: null, activo: true, 
-      grupo_id: null, tipo_profesor: '', posicionesIds: [], direccion: '', prevision: '', peso: null, altura: null
+      grupo_id: null, tipo_profesor: '', posicionesIds: [], direccion: '', prevision: '', peso: null, altura: null,
+      gruposIds: [], gruposIdsOriginales: [] // 🔥 Nuevos campos para el Staff
     };
   }
 
@@ -302,18 +335,53 @@ export class AdministradorUsuariosComponent implements OnInit {
       }
     }
 
+    // 🔥 Modificamos el flujo para que pase por procesarGruposYFoto
     if (this.isEditing) {
       this.usuarioService.actualizarUsuario(this.userForm.id, payload as ActualizarUsuarioPayload).subscribe({
-        next: (res) => this.procesarFotoYFinalizar(res.id_usuario, 'Usuario actualizado con éxito'),
+        next: (res) => this.procesarGruposYFoto(this.userForm.id, 'Usuario actualizado con éxito'),
         error: (err) => this.mostrarErrorGuardado(err)
       });
     } else {
       payload.passwordTemporal = rutLimpio.replace(/-/g, '');
       this.usuarioService.crearUsuario(payload as CrearUsuarioPayload).subscribe({
-        next: (res) => this.procesarFotoYFinalizar(res.id_usuario, 'Usuario creado con éxito'),
+        next: (res) => this.procesarGruposYFoto(res.id_usuario, 'Usuario creado con éxito'),
         error: (err) => this.mostrarErrorGuardado(err)
       });
     }
+  }
+
+  // 🔥 NUEVO: Procesa la asignación múltiple de grupos para el Staff antes de subir la foto
+  private procesarGruposYFoto(userId: string, mensaje: string) {
+    const tipoStaff = this.getTipoStaff();
+    
+    if (tipoStaff) {
+      const originales = this.userForm.gruposIdsOriginales || [];
+      const nuevos = this.userForm.gruposIds || [];
+      
+      const gruposParaAgregar = nuevos.filter((id: number) => !originales.includes(id));
+      const gruposParaQuitar = originales.filter((id: number) => !nuevos.includes(id));
+
+      const peticiones: Observable<any>[] = [];
+
+      gruposParaAgregar.forEach((grupoId: number) => {
+        peticiones.push(this.asignacionStaffService.asignarStaff(grupoId, tipoStaff, { usuarioId: userId }));
+      });
+
+      gruposParaQuitar.forEach((grupoId: number) => {
+        peticiones.push(this.asignacionStaffService.desasignarStaff(grupoId, tipoStaff, userId));
+      });
+
+      if (peticiones.length > 0) {
+        forkJoin(peticiones).subscribe({
+          next: () => this.procesarFotoYFinalizar(userId, mensaje),
+          error: () => this.procesarFotoYFinalizar(userId, mensaje + ' (Nota: Hubo un problema al actualizar algunos grupos asignados)')
+        });
+        return; // Salimos para esperar la respuesta del forkJoin
+      }
+    }
+    
+    // Si no es Staff o no hubieron cambios de grupo, pasamos a la foto directo
+    this.procesarFotoYFinalizar(userId, mensaje);
   }
 
   private procesarFotoYFinalizar(userId: string, mensaje: string) {
@@ -343,24 +411,11 @@ export class AdministradorUsuariosComponent implements OnInit {
 
   private mostrarErrorGuardado(err: any) {
     this.guardando = false;
-    
     let errorDetalle = 'Error al procesar la solicitud';
-    
     if (err.error?.message) {
-      if (Array.isArray(err.error.message)) {
-        errorDetalle = err.error.message.join(' · ');
-      } else {
-        errorDetalle = err.error.message;
-      }
+      errorDetalle = Array.isArray(err.error.message) ? err.error.message.join(' · ') : err.error.message;
     }
-
-    this.messageService.add({ 
-      severity: 'error', 
-      summary: 'Error de Validación', 
-      detail: errorDetalle,
-      life: 6000 
-    });
-    
+    this.messageService.add({ severity: 'error', summary: 'Error de Validación', detail: errorDetalle, life: 6000 });
     this.cdr.detectChanges();
   }
 
@@ -455,6 +510,6 @@ export class AdministradorUsuariosComponent implements OnInit {
     if (estado === 'RECUPERADO') return 'success';
     if (estado === 'EN_OBSERVACION') return 'warn';
     if (estado === 'EN_REINTEGRO_DEPORTIVO') return 'info';
-    return 'danger'; // EN_TRATAMIENTO
+    return 'danger'; 
   }
 }

@@ -17,10 +17,9 @@ export interface UsuarioPerfilRow {
   updated_at: string;
 }
 
-// Perfil base + datos específicos del rol (solo uno de estos vendrá, según el rol)
 export interface UsuarioPerfilCompleto extends UsuarioPerfilRow {
   datosEstudiante?: EstudianteRow;
   datosProfesor?: ProfesorRow;
-  // kinesiologos/nutricionistas/admins no tienen campos propios aún,
-  // así que no necesitan una clave propia por ahora
+  // 🔥 AÑADIMOS ESTA LÍNEA PARA UNIFICAR LOS GRUPOS DEL STAFF
+  grupos_asignados?: any[]; 
 }

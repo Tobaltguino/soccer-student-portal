@@ -154,32 +154,65 @@ export class CentralService {
 
     const listaPerfiles = (perfiles ?? []) as UsuarioPerfilRow[];
 
+    // 🔥 Extraemos IDs según el rol para las consultas
     const idsEstudiantes = listaPerfiles.filter((p) => p.rol === Rol.ESTUDIANTE).map((p) => p.id_usuario);
     const idsProfesores = listaPerfiles.filter((p) => p.rol === Rol.PROFESOR).map((p) => p.id_usuario);
+    const idsKinesiologos = listaPerfiles.filter((p) => p.rol === Rol.KINESIOLOGO).map((p) => p.id_usuario);
+    const idsNutricionistas = listaPerfiles.filter((p) => p.rol === Rol.NUTRICIONISTA).map((p) => p.id_usuario);
 
-    const [datosEstudiantes, datosProfesores] = await Promise.all([
+    // 🔥 Consultamos TODO en paralelo (Estudiantes, Profesores y asignaciones de grupos)
+    const [
+      datosEstudiantes,
+      datosProfesores,
+      { data: gruposProfesores },
+      { data: gruposKines },
+      { data: gruposNutris }
+    ] = await Promise.all([
       this.estudiantesService.buscarPorIds(idsEstudiantes),
       this.profesoresService.buscarPorIds(idsProfesores),
+      idsProfesores.length > 0 
+        ? this.supabase.client.from('grupos_profesores').select('grupo_id, profesor_id').in('profesor_id', idsProfesores) 
+        : Promise.resolve({ data: [] }),
+      idsKinesiologos.length > 0 
+        ? this.supabase.client.from('grupos_kinesiologos').select('grupo_id, kinesiologo_id').in('kinesiologo_id', idsKinesiologos) 
+        : Promise.resolve({ data: [] }),
+      idsNutricionistas.length > 0 
+        ? this.supabase.client.from('grupos_nutricionistas').select('grupo_id, nutricionista_id').in('nutricionista_id', idsNutricionistas) 
+        : Promise.resolve({ data: [] }),
     ]);
 
     const mapaEstudiantes = new Map(datosEstudiantes.map((e) => [e.usuario_id, e]));
     const mapaProfesores = new Map(datosProfesores.map((p) => [p.usuario_id, p]));
 
-    const registros = listaPerfiles.map((perfil) => ({
-      ...perfil,
-      ...(mapaEstudiantes.has(perfil.id_usuario) && {
-        datosEstudiante: mapaEstudiantes.get(perfil.id_usuario),
-      }),
-      ...(mapaProfesores.has(perfil.id_usuario) && {
-        datosProfesor: mapaProfesores.get(perfil.id_usuario),
-      }),
-    }));
+    const registros = listaPerfiles.map((perfil) => {
+      // 🔥 Unificamos los grupos en una sola variable dependiendo del rol
+      let gruposAsignados: any[] = [];
+      
+      if (perfil.rol === Rol.PROFESOR) {
+        gruposAsignados = (gruposProfesores ?? []).filter((g: any) => g.profesor_id === perfil.id_usuario);
+      } else if (perfil.rol === Rol.KINESIOLOGO) {
+        gruposAsignados = (gruposKines ?? []).filter((g: any) => g.kinesiologo_id === perfil.id_usuario);
+      } else if (perfil.rol === Rol.NUTRICIONISTA) {
+        gruposAsignados = (gruposNutris ?? []).filter((g: any) => g.nutricionista_id === perfil.id_usuario);
+      }
+
+      return {
+        ...perfil,
+        ...(mapaEstudiantes.has(perfil.id_usuario) && {
+          datosEstudiante: mapaEstudiantes.get(perfil.id_usuario),
+        }),
+        ...(mapaProfesores.has(perfil.id_usuario) && {
+          datosProfesor: mapaProfesores.get(perfil.id_usuario),
+        }),
+        // 🔥 Inyectamos la variable unificada para el Frontend
+        grupos_asignados: gruposAsignados, 
+      };
+    });
 
     return { registros, total: count ?? 0, pagina, limite };
   }
 
   // 🔥 NUEVO MÉTODO EXPORTAR EXCEL
-  // 🔥 NUEVO MÉTODO EXPORTAR EXCEL ACTUALIZADO
   async generarExcelUsuarios(filtros: FiltrarUsuariosDto): Promise<Buffer> {
     const filtrosExportacion = { ...filtros, limite: 10000, pagina: 1 };
     

@@ -36,6 +36,11 @@ export interface DatosProfesor {
 export interface UsuarioPerfilCompleto extends UsuarioPerfil {
   datosEstudiante?: DatosEstudiante;
   datosProfesor?: DatosProfesor;
+  grupos_asignados?: any[];
+  // 🔥 Agrega estas 3 líneas:
+  grupos_profesores?: any[];
+  grupos_kinesiologos?: any[];
+  grupos_nutricionistas?: any[];
 }
 
 export interface CrearUsuarioPayload {
