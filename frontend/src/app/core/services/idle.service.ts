@@ -2,8 +2,6 @@ import { Injectable, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { fromEvent, merge, Subscription, timer, Subject, firstValueFrom } from 'rxjs';
 import { switchMap, startWith } from 'rxjs/operators';
-
-// 🚀 Importamos tu nuevo servicio de autenticación conectado a NestJS
 import { AuthService } from '../auth/services/auth.service';
 
 @Injectable({
@@ -11,24 +9,30 @@ import { AuthService } from '../auth/services/auth.service';
 })
 export class IdleService {
   
-  private timeoutMilliseconds = 15 * 60 * 1000; // 15 minutos 
+  // Cambia esta línea:
+  // private timeoutMilliseconds = 15 * 60 * 1000; 
+
+  // Por esta (10 segundos en milisegundos):
+  private timeoutMilliseconds = 10 * 1000;
+
   private idleSubscription: Subscription | null = null;
   public onIdleTimeout = new Subject<boolean>();
 
   // --- VARIABLES PARA EL DETECTOR DE SUSPENSIÓN ---
   private suspensionInterval: any;
   private ultimoTick: number = Date.now();
-  private margenSuspension = 10000; // 10 segundos (Si el reloj se retrasa más de 10s, asumimos suspensión)
+  private margenSuspension = 10000; // 10 segundos
 
   constructor(
     private router: Router,
     private ngZone: NgZone,
-    private authService: AuthService // 🔥 Inyectamos el AuthService real
+    private authService: AuthService
   ) {}
 
   iniciarMonitoreo() {
     if (this.idleSubscription) return;
 
+    // Ejecutamos fuera de Angular para no saturar el Change Detection con cada movimiento del mouse
     this.ngZone.runOutsideAngular(() => {
       const activityEvents$ = merge(
         fromEvent(document, 'mousemove'),
@@ -41,18 +45,18 @@ export class IdleService {
         startWith(null), 
         switchMap(() => timer(this.timeoutMilliseconds))
       ).subscribe(() => {
+        // Volvemos a entrar a Angular solo cuando pasan los 15 min
         this.ngZone.run(() => {
           this.cerrarSesionPorInactividad();
         });
       });
 
-      // --- INICIAMOS EL RELOJ DETECTOR DE SUSPENSIÓN ---
       this.iniciarDetectorSuspension();
     });
   }
 
   // ==========================================
-  // MAGIA ANTI-SUSPENSIÓN 
+  // DETECTOR DE SUSPENSIÓN (PC DORMIDO)
   // ==========================================
   private iniciarDetectorSuspension() {
     this.ultimoTick = Date.now();
@@ -61,30 +65,24 @@ export class IdleService {
       const ahora = Date.now();
       const diferencia = ahora - this.ultimoTick;
 
-      // Si la diferencia es mayor a 10 segundos, el PC se durmió y acaba de despertar
       if (diferencia > this.margenSuspension) {
         this.verificarSesionAlDespertar();
       }
 
       this.ultimoTick = ahora;
-    }, 2000); // Hacemos "tic" cada 2 segundos
+    }, 2000); 
   }
 
   private async verificarSesionAlDespertar() {
     try {
-      // Le preguntamos a NestJS si nuestro JWT sigue siendo válido
+      // Validamos con NestJS si el token sigue vivo
       const res = await firstValueFrom(this.authService.me());
       
-      if (!res || (!res.data && !res.email)) {
-        this.ngZone.run(() => {
-          this.cerrarSesionPorInactividad();
-        });
+      if (!res) {
+        this.ngZone.run(() => this.cerrarSesionPorInactividad());
       }
     } catch (error) {
-      // Si NestJS responde con un 401 Unauthorized (token vencido), caerá aquí
-      this.ngZone.run(() => {
-        this.cerrarSesionPorInactividad();
-      });
+      this.ngZone.run(() => this.cerrarSesionPorInactividad());
     }
   }
   // ==========================================
@@ -94,9 +92,9 @@ export class IdleService {
       this.idleSubscription.unsubscribe();
       this.idleSubscription = null;
     }
-    // Limpiamos el reloj si detenemos el monitoreo
     if (this.suspensionInterval) {
       clearInterval(this.suspensionInterval);
+      this.suspensionInterval = null;
     }
   }
 
@@ -105,16 +103,17 @@ export class IdleService {
     this.onIdleTimeout.next(true);
 
     try {
-      // Llamamos a tu endpoint de logout en NestJS (si lo tienes)
       if (this.authService.logout) {
         await firstValueFrom(this.authService.logout());
       }
     } catch (error) {
-      // Ignoramos los errores aquí, lo importante es limpiar todo en el frontend
+      console.warn('Error al cerrar sesión en el backend, forzando limpieza local.', error);
     } finally {
-      // Limpiamos localStorage, sessionStorage y redirigimos
-      localStorage.clear();
-      sessionStorage.clear();
+      // 🔥 MEJORA: Solo borramos lo relacionado a la sesión, no todo el localStorage
+      localStorage.removeItem('supabase.auth.token'); // Ajusta este nombre según la llave real que use tu proyecto
+      localStorage.removeItem('access_token');
+      sessionStorage.clear(); 
+      
       this.router.navigate(['/login']);
     }
   }
