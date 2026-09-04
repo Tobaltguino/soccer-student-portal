@@ -9,4 +9,12 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
+
+  @Get('ping')
+  getPing() {
+    return { 
+      status: 'ProFutbol Backend Online', 
+      timestamp: new Date() 
+    };
+  }
 }
