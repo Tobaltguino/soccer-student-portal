@@ -39,7 +39,7 @@ export class LoginComponent implements OnInit {
 
   // Configuración del formulario
   loginForm: FormGroup = this.fb.group({
-    rut: ['', [Validators.required, Validators.minLength(8)]],
+    rut: ['', [Validators.required, Validators.pattern(/^\d{1,3}(\.\d{3})*-[\dkK]$/i)]],
     password: ['', [Validators.required, Validators.minLength(6)]]
   });
 
