@@ -221,7 +221,7 @@
             
             <div class="pf-field-group">
                 <label class="pf-oswald"><i class="pi pi-id-card mr-2 text-teal"></i>RUT <span class="text-pink-500 font-bold">*</span></label>
-                <input pInputText appRutFormat [(ngModel)]="userForm.rut" placeholder="12.345.678-9" [disabled]="isEditing || guardando"/>
+                <input pInputText appRutFormat [(ngModel)]="userForm.rut" placeholder="12.345.678-9"/>
             </div>
             
             <div class="pf-field-group" *ngIf="vistaActual === 'estudiante'">
