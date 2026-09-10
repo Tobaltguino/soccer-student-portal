@@ -186,9 +186,9 @@ export class ResultadosService {
 
     const { data: perfil } = await this.supabase.client
       .from('usuarios_perfiles')
-      .select('fecha_nacimiento')
+      .select('fecha_nacimiento, genero') // 🔥 1. Agregamos 'genero' al select
       .eq('id_usuario', resultado.estudiante_id)
-      .maybeSingle<{ fecha_nacimiento: string | null }>();
+      .maybeSingle<{ fecha_nacimiento: string | null; genero: string | null }>(); // 🔥 Actualizamos el tipo
 
     let rango: { nombreEtiqueta: string; colorSugerido: string | null } | null = null;
     let edadEvaluacion: number | null = null;
@@ -196,14 +196,18 @@ export class ResultadosService {
     if (perfil?.fecha_nacimiento) {
       edadEvaluacion = this.calcularEdad(perfil.fecha_nacimiento);
 
-      const rangoEncontrado = await this.rangosService.encontrarRango(
-        sesion.tipo_evaluacion_id,
-        edadEvaluacion,
-        resultado.valor_numerico,
-      );
-      rango = rangoEncontrado
-        ? { nombreEtiqueta: rangoEncontrado.nombre_etiqueta, colorSugerido: rangoEncontrado.color_sugerido }
-        : null;
+      // 🔥 2. Solo calculamos el rango si tenemos la edad Y el género
+      if (perfil.genero) {
+        const rangoEncontrado = await this.rangosService.encontrarRango(
+          sesion.tipo_evaluacion_id,
+          edadEvaluacion,
+          resultado.valor_numerico,
+          perfil.genero, // 🔥 3. Le pasamos el género como 4to argumento
+        );
+        rango = rangoEncontrado
+          ? { nombreEtiqueta: rangoEncontrado.nombre_etiqueta, colorSugerido: rangoEncontrado.color_sugerido }
+          : null;
+      }
     }
 
     return {

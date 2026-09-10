@@ -14,6 +14,7 @@ export class RangosService {
       .from('evaluacion_rangos')
       .insert({
         tipo_evaluacion_id: dto.tipoEvaluacionId,
+        genero: dto.genero,
         nombre_etiqueta: dto.nombreEtiqueta,
         valor_min: dto.valorMin,
         valor_max: dto.valorMax,
@@ -73,6 +74,7 @@ export class RangosService {
       .from('evaluacion_rangos')
       .update({
         ...(dto.tipoEvaluacionId !== undefined && { tipo_evaluacion_id: dto.tipoEvaluacionId }),
+        ...(dto.genero !== undefined && { genero: dto.genero }),
         ...(dto.nombreEtiqueta !== undefined && { nombre_etiqueta: dto.nombreEtiqueta }),
         ...(dto.valorMin !== undefined && { valor_min: dto.valorMin }),
         ...(dto.valorMax !== undefined && { valor_max: dto.valorMax }),
@@ -119,11 +121,13 @@ export class RangosService {
     tipoEvaluacionId: number,
     edad: number,
     valor: number,
+    genero: string,
   ): Promise<RangoRow | null> {
     const { data, error } = await this.supabase.client
       .from('evaluacion_rangos')
       .select('*')
       .eq('tipo_evaluacion_id', tipoEvaluacionId)
+      .eq('genero', genero)
       .lte('edad_min', edad)
       .gte('edad_max', edad)
       .lte('valor_min', valor)
