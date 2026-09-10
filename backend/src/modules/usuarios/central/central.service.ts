@@ -44,6 +44,7 @@ export class CentralService {
           nombre: dto.nombre,
           apellido: dto.apellido,
           rol: dto.rol,
+          genero: dto.genero,
         },
       });
 
@@ -133,6 +134,10 @@ export class CentralService {
 
     if (filtros.activo !== undefined) {
       query = query.eq('activo', filtros.activo);
+    }
+
+    if (filtros.generos && filtros.generos.length > 0) {
+      query = query.in('genero', filtros.generos);
     }
 
     if (filtros.busqueda) {
@@ -232,6 +237,7 @@ export class CentralService {
 
       return {
         rol: u.rol ? u.rol.toUpperCase() : '-',
+        genero: u.genero || '-',
         rut: u.rut || 'Sin RUT',
         nombre: u.nombre || '-',
         apellido: u.apellido || '-',
@@ -246,6 +252,7 @@ export class CentralService {
     // Definimos las columnas que aparecerán en el Excel
     const columnas = [
       { header: 'Rol', key: 'rol', width: 20 },
+      { header: 'Género', key: 'genero', width: 15 },
       { header: 'RUT', key: 'rut', width: 15 },
       { header: 'Nombre', key: 'nombre', width: 20 },
       { header: 'Apellido', key: 'apellido', width: 20 },
@@ -329,6 +336,7 @@ export class CentralService {
     if (dto.email !== undefined) camposBase.email = dto.email;
     if (dto.telefono !== undefined) camposBase.telefono = dto.telefono;
     if (dto.fechaNacimiento !== undefined) camposBase.fecha_nacimiento = dto.fechaNacimiento; 
+    if (dto.genero !== undefined) camposBase.genero = dto.genero;
 
     if (Object.keys(camposBase).length > 0) {
       const { error: perfilError } = await this.supabase.client

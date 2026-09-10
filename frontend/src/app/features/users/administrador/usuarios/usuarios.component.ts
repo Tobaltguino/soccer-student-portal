@@ -35,6 +35,7 @@ import { ExcelExportService } from '../../../../core/services/excel-export.servi
 
 import { Rol } from '../../../../shared/enums/rol.enum';
 import { Posicion } from '../../../../shared/enums/posicion.enum';
+import { Genero } from '../../../../shared/enums/genero.enum';
 
 @Component({
   selector: 'app-administrador-usuarios',
@@ -91,12 +92,17 @@ export class AdministradorUsuariosComponent implements OnInit {
     { label: 'Inactivos', value: false }
   ];
 
+  opcionesGenero = [
+    { label: 'Masculino', value: Genero.MASCULINO },
+    { label: 'Femenino', value: Genero.FEMENINO }
+  ];
+
   listaTiposProfesor = [
     { label: 'Profesor de Fútbol', value: 'profesor de futbol' },
     { label: 'Preparador Físico', value: 'preparador fisico' }
   ];
 
-  filtros: any = { global: '', grupo: null, posicion: null, tipoProfesor: null, estado: null };
+  filtros: any = { global: '', grupo: null, posicion: null, tipoProfesor: null, estado: null, generos: null };
 
   loading: boolean = false;
   guardando: boolean = false;
@@ -163,7 +169,7 @@ export class AdministradorUsuariosComponent implements OnInit {
   }
 
   limpiarFiltros() {
-    this.filtros = { global: '', grupo: null, posicion: null, tipoProfesor: null, estado: null };
+    this.filtros = { global: '', grupo: null, posicion: null, tipoProfesor: null, estado: null, generos: null };
     if (this.dt) this.dt.reset();
   }
 
@@ -281,8 +287,9 @@ export class AdministradorUsuariosComponent implements OnInit {
   private getFormularioVacio() {
     return { 
       id: null, nombre: '', apellido: '', rut: '', email: '', fecha_nacimiento: null, activo: true, 
+      genero: null, // 🔥 NUEVO CAMPO
       grupo_id: null, tipo_profesor: '', posicionesIds: [], direccion: '', prevision: '', peso: null, altura: null,
-      gruposIds: [], gruposIdsOriginales: [] // 🔥 Nuevos campos para el Staff
+      gruposIds: [], gruposIdsOriginales: []
     };
   }
 
@@ -290,6 +297,10 @@ export class AdministradorUsuariosComponent implements OnInit {
     if (this.guardando) return;
 
     if (this.isEditing && this.userForm.rut === '1-1') return;
+
+    if (!this.userForm.nombre || !this.userForm.apellido || !this.userForm.email || !this.userForm.rut || !this.userForm.genero) {
+        this.messageService.add({ severity: 'warn', summary: 'Incompleto', detail: 'Completa todos los campos obligatorios (*).' }); return;
+    }
     
     if (!this.userForm.nombre || !this.userForm.apellido || !this.userForm.email || !this.userForm.rut) {
         this.messageService.add({ severity: 'warn', summary: 'Incompleto', detail: 'Completa todos los campos obligatorios (*).' }); return;
@@ -312,6 +323,7 @@ export class AdministradorUsuariosComponent implements OnInit {
       nombre: this.userForm.nombre,
       apellido: this.userForm.apellido,
       email: this.userForm.email.toLowerCase(),
+      genero: this.userForm.genero,
     };
 
     if (!this.isEditing) {

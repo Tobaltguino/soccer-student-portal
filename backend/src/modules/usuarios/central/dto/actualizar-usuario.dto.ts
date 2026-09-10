@@ -8,6 +8,8 @@ import {
   IsString,
 } from 'class-validator';
 import { Posicion } from '../../../../shared/enums/posicion.enum';
+import{ Genero } from '../../../../shared/enums/genero.enum'
+
 
 export class ActualizarUsuarioDto {
   // --- Datos base (usuarios_perfiles) ---
@@ -26,6 +28,10 @@ export class ActualizarUsuarioDto {
   @IsOptional()
   @IsEmail()
   email?: string;
+
+  @IsOptional()
+  @IsEnum(Genero)
+  genero?: Genero;
 
   @IsOptional()
   @IsString()

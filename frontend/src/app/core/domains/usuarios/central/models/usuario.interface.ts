@@ -1,6 +1,7 @@
 // Agrega esta línea arriba con tus otros imports compartidos
 import { Posicion } from "../../../../../shared/enums/posicion.enum";
 import { Rol } from "../../../../../shared/enums/rol.enum";
+import { Genero } from "../../../../../shared/enums/genero.enum";
 
 export { Posicion, Rol };
 
@@ -11,6 +12,7 @@ export interface UsuarioPerfil {
   apellido: string;
   email: string;
   rol: Rol;
+  genero: Genero;
   foto_url?: string | null; // <-- Te sugiero agregar esto a tu interface
   telefono: string | null;
   fecha_nacimiento: string | null;
@@ -50,6 +52,7 @@ export interface CrearUsuarioPayload {
   email: string;
   passwordTemporal: string;
   rol: Rol;
+  genero: Genero;
   telefono?: string;
   fechaNacimiento?: string;
   
@@ -73,6 +76,7 @@ export interface FiltrosUsuarios {
   grupoIds?: number[];
   posiciones?: Posicion[];
   tipoProfesor?: string[];
+  generos?: Genero[];
   activo?: boolean;
   pagina?: number;
   limite?: number;

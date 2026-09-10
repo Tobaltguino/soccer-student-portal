@@ -44,6 +44,7 @@ export class UsuarioService {
       if (filtros.grupoIds?.length) params = params.set('grupoIds', filtros.grupoIds.join(','));
       if (filtros.posiciones?.length) params = params.set('posiciones', filtros.posiciones.join(','));
       if (filtros.tipoProfesor?.length) params = params.set('tipoProfesor', filtros.tipoProfesor.join(','));
+      if (filtros.generos?.length) params = params.set('generos', filtros.generos.join(','));
     }
 
     return this.http.get<PaginacionUsuarios>(this.apiUrl, { params });

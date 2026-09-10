@@ -2,6 +2,8 @@ import { Transform } from 'class-transformer';
 import { IsArray, IsBoolean, IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { Rol } from '../../../../shared/enums/rol.enum';
 import { Posicion } from '../../../../shared/enums/posicion.enum';
+import{ Genero } from '../../../../shared/enums/genero.enum'
+
 
 const aArrayDeNumeros = ({ value }: { value: unknown }): number[] | undefined => {
   if (value === undefined || value === null || value === '') return undefined;
@@ -22,6 +24,13 @@ export class FiltrarUsuariosDto {
   @IsOptional()
   @IsString()
   busqueda?: string;
+
+  // 🔥 NUEVO FILTRO OPCIONAL
+  @IsOptional()
+  @Transform(aArrayDeStrings)
+  @IsArray()
+  @IsEnum(Genero, { each: true })
+  generos?: Genero[];
 
   @IsOptional()
   @Transform(aArrayDeNumeros)
