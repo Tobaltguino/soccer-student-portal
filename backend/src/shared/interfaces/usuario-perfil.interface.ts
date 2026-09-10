@@ -1,4 +1,5 @@
 import { Rol } from '../enums/rol.enum';
+import { Genero } from '../enums/genero.enum'; // 🔥 Importar Enum
 import type { EstudianteRow } from '../../modules/usuarios/estudiantes/interfaces/estudiante.interface';
 import type { ProfesorRow } from '../../modules/usuarios/profesores/interfaces/profesor.interface';
 
@@ -9,6 +10,7 @@ export interface UsuarioPerfilRow {
   apellido: string;
   email: string;
   rol: Rol;
+  genero: Genero; // 🔥 Nueva propiedad
   telefono: string | null;
   fecha_nacimiento: string | null;
   foto_url: string | null;
@@ -20,6 +22,5 @@ export interface UsuarioPerfilRow {
 export interface UsuarioPerfilCompleto extends UsuarioPerfilRow {
   datosEstudiante?: EstudianteRow;
   datosProfesor?: ProfesorRow;
-  // 🔥 AÑADIMOS ESTA LÍNEA PARA UNIFICAR LOS GRUPOS DEL STAFF
   grupos_asignados?: any[]; 
 }

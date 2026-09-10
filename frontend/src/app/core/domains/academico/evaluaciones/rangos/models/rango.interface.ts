@@ -1,6 +1,9 @@
+import { Genero } from "../../../../../../shared/enums/genero.enum";
+
 export interface RangoEvaluacion {
   id: number;
   tipo_evaluacion_id: number;
+  genero: Genero; // 🔥 NUEVO
   nombre_etiqueta: string;
   valor_min: number;
   valor_max: number;
@@ -12,6 +15,7 @@ export interface RangoEvaluacion {
 
 export interface CrearRangoPayload {
   tipoEvaluacionId: number;
+  genero: Genero; // 🔥 NUEVO
   nombreEtiqueta: string;
   valorMin: number;
   valorMax: number;

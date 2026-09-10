@@ -67,6 +67,16 @@
 
             <div class="filter-item flex-grow-2" *ngIf="vistaActual !== 'estudiante' && vistaActual !== 'profesor'"></div>
 
+            <div class="filter-item w-12rem">
+                <label class="pf-oswald text-steel">Género</label>
+                <p-multiSelect [options]="opcionesGenero" [(ngModel)]="filtros.generos"
+                               optionLabel="label" optionValue="value" placeholder="Ambos"
+                               (onChange)="dt.filter($event.value, 'genero', 'in')"
+                               display="chip" [maxSelectedLabels]="1" selectedItemsLabel="{0} gen."
+                               [showClear]="true" styleClass="w-full" appendTo="body" [filter]="false">
+                </p-multiSelect>
+            </div>
+
             <div class="filter-item w-10rem">
                 <label class="pf-oswald text-steel">Estado</label>
                 <p-select [options]="opcionesEstado" [(ngModel)]="filtros.estado" 
@@ -219,9 +229,16 @@
                 </div>
             </div>
             
-            <div class="pf-field-group">
-                <label class="pf-oswald"><i class="pi pi-id-card mr-2 text-teal"></i>RUT <span class="text-pink-500 font-bold">*</span></label>
-                <input pInputText appRutFormat [(ngModel)]="userForm.rut" placeholder="12.345.678-9"/>
+            <!-- 🔥 REEMPLAZA EL CAMPO RUT POR ESTA FILA COMPLETA -->
+            <div class="formgrid grid">
+                <div class="pf-field-group col-6">
+                    <label class="pf-oswald"><i class="pi pi-id-card mr-2 text-teal"></i>RUT <span class="text-pink-500 font-bold">*</span></label>
+                    <input pInputText appRutFormat [(ngModel)]="userForm.rut" placeholder="12.345.678-9"/>
+                </div>
+                <div class="pf-field-group col-6">
+                    <label class="pf-oswald"><i class="pi pi-venus-mars mr-2 text-teal"></i>Género <span class="text-pink-500 font-bold">*</span></label>
+                    <p-select [options]="opcionesGenero" [(ngModel)]="userForm.genero" optionLabel="label" optionValue="value" placeholder="Seleccione" styleClass="w-full" appendTo="body" [disabled]="guardando"></p-select>
+                </div>
             </div>
             
             <div class="pf-field-group" *ngIf="vistaActual === 'estudiante'">

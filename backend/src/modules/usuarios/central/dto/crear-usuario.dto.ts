@@ -11,6 +11,7 @@ import {
 } from 'class-validator';
 import { Rol } from '../../../../shared/enums/rol.enum';
 import { Posicion } from '../../../../shared/enums/posicion.enum';
+import{ Genero } from '../../../../shared/enums/genero.enum'
 
 export class CrearUsuarioDto {
   // --- Datos base (todos los roles) ---
@@ -32,6 +33,10 @@ export class CrearUsuarioDto {
 
   @IsEnum(Rol)
   rol!: Rol;
+
+  // 🔥 NUEVO CAMPO OBLIGATORIO
+  @IsEnum(Genero)
+  genero!: Genero;
 
   @IsOptional()
   @IsString()

@@ -1,6 +1,9 @@
+import { Genero } from '../../../../../shared/enums/genero.enum';
+
 export interface RangoRow {
   id: number;
   tipo_evaluacion_id: number;
+  genero: Genero;
   nombre_etiqueta: string;
   valor_min: number;
   valor_max: number;

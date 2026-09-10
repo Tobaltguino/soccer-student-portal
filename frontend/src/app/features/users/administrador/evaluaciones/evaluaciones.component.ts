@@ -24,6 +24,7 @@ import { ResultadoEvaluacionService } from '../../../../core/domains/academico/e
 import { RangoEvaluacionService } from '../../../../core/domains/academico/evaluaciones/rangos/services/rango.service';
 import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
+import { Genero } from '../../../../shared/enums/genero.enum';
 
 // 🔥 IMPORTAMOS TU SERVICIO DE EXCEL
 import { ExcelExportService } from '../../../../core/services/excel-export.service';
@@ -90,6 +91,11 @@ export class AdministradorEvaluacionesComponent implements OnInit {
     { label: 'Gris', value: '#6b7280' }
   ];
 
+  opcionesGenero = [
+    { label: 'Masculino', value: Genero.MASCULINO },
+    { label: 'Femenino', value: Genero.FEMENINO }
+  ];
+
   // --- ESTADOS UI ---
   loading: boolean = true;
   guardando: boolean = false; 
@@ -104,8 +110,9 @@ export class AdministradorEvaluacionesComponent implements OnInit {
   rangosOriginalesCache: any[] = [];
   
   nuevoRango: any = { 
-    edad_min: null,   
-    edad_max: null,   
+    genero: null, // 🔥 NUEVO CAMPO
+    edad_min: null, 
+    edad_max: null, 
     nombre_etiqueta: '', 
     valor_min: null, 
     valor_max: null, 
@@ -245,8 +252,9 @@ export class AdministradorEvaluacionesComponent implements OnInit {
   }
 
   agregarRangoALista() {
-    if (this.nuevoRango.edad_min === null || this.nuevoRango.edad_max === null || !this.nuevoRango.nombre_etiqueta || this.nuevoRango.valor_min === null || this.nuevoRango.valor_max === null) {
-      this.messageService.add({ severity: 'warn', summary: 'Incompleto', detail: 'Llene todos los campos del rango (*)' });
+    // 🔥 1. Validación incluye género
+    if (!this.nuevoRango.genero || this.nuevoRango.edad_min === null || this.nuevoRango.edad_max === null || !this.nuevoRango.nombre_etiqueta || this.nuevoRango.valor_min === null || this.nuevoRango.valor_max === null) {
+      this.messageService.add({ severity: 'warn', summary: 'Incompleto', detail: 'Llene todos los campos del rango (*), incluyendo el género.' });
       return;
     }
 
@@ -261,18 +269,21 @@ export class AdministradorEvaluacionesComponent implements OnInit {
     }
 
     const conflicto = this.rangosForm.find(r => {
-      const solapanEdades = (this.nuevoRango.edad_min <= r.edad_max) && (this.nuevoRango.edad_max >= r.edad_min);
-      const solapanValores = (this.nuevoRango.valor_min <= r.valor_max) && (this.nuevoRango.valor_max >= r.valor_min);
-      const mismaEtiqueta = (r.nombre_etiqueta.trim().toUpperCase() === this.nuevoRango.nombre_etiqueta.trim().toUpperCase());
+      // 🔥 2. Evaluamos conflictos SOLO si son del mismo género
+      const mismoGenero = r.genero === this.nuevoRango.genero; 
+      
+      const solapanEdades = (this.nuevoRango.edad_min <= (r.edad_max ?? r.edadMax)) && (this.nuevoRango.edad_max >= (r.edad_min ?? r.edadMin));
+      const solapanValores = (this.nuevoRango.valor_min <= (r.valor_max ?? r.valorMax)) && (this.nuevoRango.valor_max >= (r.valor_min ?? r.valorMin));
+      const mismaEtiqueta = ((r.nombre_etiqueta ?? r.nombreEtiqueta).trim().toUpperCase() === this.nuevoRango.nombre_etiqueta.trim().toUpperCase());
 
-      return (solapanEdades && solapanValores) || (solapanEdades && mismaEtiqueta);
+      return mismoGenero && ((solapanEdades && solapanValores) || (solapanEdades && mismaEtiqueta));
     });
 
     if (conflicto) {
       this.messageService.add({ 
         severity: 'error', 
         summary: 'Cruce de Datos Detectado', 
-        detail: `Los valores chocan con el rango '${conflicto.nombre_etiqueta}' para las mismas edades.` 
+        detail: `Los valores chocan con el rango '${conflicto.nombre_etiqueta || conflicto.nombreEtiqueta}' para las mismas edades en este género.` 
       });
       return;
     }
@@ -326,6 +337,7 @@ export class AdministradorEvaluacionesComponent implements OnInit {
           this.rangosForm.forEach(rango => {
             const payloadRango = {
               tipoEvaluacionId: testId,
+              genero: rango.genero,
               edadMin: rango.edad_min ?? rango.edadMin,
               edadMax: rango.edad_max ?? rango.edadMax,
               nombreEtiqueta: rango.nombre_etiqueta ?? rango.nombreEtiqueta,

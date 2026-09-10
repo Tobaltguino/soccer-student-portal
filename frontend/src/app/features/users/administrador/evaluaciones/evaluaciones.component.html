@@ -148,6 +148,10 @@
                      <h4 class="pf-oswald text-lime m-0 mb-3"><i class="pi pi-plus mr-2"></i>Añadir Rango</h4>
 
                     <div class="range-inline-row">
+                        <div class="pf-field-group field-genero" style="width: 110px;">
+                            <label class="pf-oswald text-xs">Género</label>
+                            <p-select [options]="opcionesGenero" [(ngModel)]="nuevoRango.genero" optionLabel="label" optionValue="value" styleClass="w-full" appendTo="body" placeholder="Gen" [disabled]="guardando"></p-select>
+                        </div>
                         <div class="pf-field-group field-edad">
                             <label class="pf-oswald text-xs">Ed. Mín</label>
                             <p-inputNumber [(ngModel)]="nuevoRango.edad_min" [showButtons]="false" styleClass="w-full" inputStyleClass="w-full text-center" placeholder="10" [disabled]="guardando"></p-inputNumber>
@@ -196,6 +200,9 @@
                          <p-table [value]="rangosForm" styleClass="p-datatable-sm pf-table custom-compact-table" responsiveLayout="scroll">
                              <ng-template pTemplate="body" let-r let-i="rowIndex">
                                  <tr class="text-sm">
+                                    <td class="text-center" style="width: 40px;">
+                                         <i [class]="r.genero === 'Masculino' ? 'pi pi-mars text-blue-400' : 'pi pi-venus text-pink-400'" [pTooltip]="r.genero"></i>
+                                     </td>
                                      <td class="font-bold text-teal py-2" style="width: 120px; white-space: nowrap;">
                                          {{r.edad_min || r.edadMin}} a {{r.edad_max || r.edadMax}} años
                                      </td>
