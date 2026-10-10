@@ -1,7 +1,7 @@
 export enum Rol {
+  ADMINISTRADOR = 'administrador',
   ESTUDIANTE = 'estudiante',
   PROFESOR = 'profesor',
-  ADMINISTRADOR = 'administrador',
   KINESIOLOGO = 'kinesiologo',
-  NUTRICIONISTA = 'nutricionista',
+  NUTRICIONISTA = 'nutricionista'
 }
