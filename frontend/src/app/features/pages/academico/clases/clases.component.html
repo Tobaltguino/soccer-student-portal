@@ -1,0 +1,341 @@
+<div class="pf-admin-wrapper fadein animation-duration-500">
+    <p-toast position="top-right"></p-toast>
+    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
+
+    <!-- ========================================================================= -->
+    <!-- 1. VISTA DE GESTIÓN (ADMINISTRADOR / STAFF)                               -->
+    <!-- ========================================================================= -->
+    <ng-container *ngIf="esVistaGestion">
+        <header class="pf-admin-header">
+            <div class="header-content">
+                <div>
+                    <h1 class="pf-anton text-chalk m-0 text-3xl">Gestión de Clases</h1>
+                    <p class="pf-oswald text-teal mt-1">Supervisión administrativa de entrenamientos y asistencia.</p>
+                </div>
+            </div>
+            <div class="header-actions flex gap-2">
+                <button pButton icon="pi pi-sync" class="pf-btn-ghost" 
+                        (click)="aplicarFiltrosGestion()" [loading]="loading" pTooltip="Actualizar"></button>
+                
+                <button *ngIf="esStaff" pButton label="Nueva Clase" icon="pi pi-plus" class="pf-btn-primary" 
+                        (click)="abrirNuevaClase()" [disabled]="!filtroGrupoId" pTooltip="Selecciona un grupo primero"></button>
+            </div>
+        </header>
+
+        <!-- BARRA DE FILTROS GESTIÓN -->
+        <div class="pf-admin-card mb-4 p-3">
+            <div class="filter-row flex flex-wrap gap-3 align-items-end">
+                <div class="filter-item flex-grow-1">
+                    <label><i class="pi pi-calendar mr-1 text-teal"></i> Fecha</label>
+                    <p-datepicker [(ngModel)]="filtroFecha" placeholder="Seleccionar"
+                                  (onSelect)="aplicarFiltrosGestion()" [showClear]="true" (onClear)="aplicarFiltrosGestion()"
+                                  dateFormat="dd/mm/yy" appendTo="body" [showIcon]="true" styleClass="w-full"></p-datepicker>
+                </div>
+
+                <div class="filter-item flex-grow-1" style="min-width: 200px;">
+                    <label><i class="pi pi-users mr-1 text-teal"></i> Grupo</label>
+                    <p-select [options]="grupos" [(ngModel)]="filtroGrupoId" optionLabel="nombre" optionValue="id"
+                              placeholder="Todos los grupos" (onChange)="onGrupoChange()" [showClear]="esAdmin"
+                              appendTo="body" styleClass="w-full" [filter]="false"></p-select>
+                </div>
+
+                <div class="filter-item flex-grow-2">
+                    <label><i class="pi pi-map-marker mr-1 text-teal"></i> Lugar</label>
+                    <input pInputText type="text" [(ngModel)]="filtroLugar" (keyup.enter)="aplicarFiltrosGestion()"
+                           placeholder="Buscar Lugar..." class="w-full"/>
+                </div>
+
+                <div class="filter-item-btn flex gap-2">
+                    <button pButton icon="pi pi-filter-slash" class="pf-btn-ghost"
+                            (click)="limpiarFiltrosGestion()" pTooltip="Limpiar Filtros" tooltipPosition="top"></button>
+                            
+                    <button *ngIf="esAdmin" pButton pRipple icon="pi pi-file-excel" class="p-button-success" label="Exportar"
+                            (click)="descargarExcel()" [disabled]="loading || clases.length === 0"
+                            pTooltip="Descargar Reporte en Excel" tooltipPosition="top"></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLA GESTIÓN -->
+        <div class="pf-admin-card table-responsive p-0">
+            <p-table [value]="clases" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm pf-table" responsiveLayout="stack" [breakpoint]="'768px'">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 25%">Fecha / Hora</th>
+                        <th style="width: 25%">Grupo</th>
+                        <th style="width: 30%">Lugar</th>
+                        <th style="width: 20%" class="text-center">Acciones</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-item>
+                    <tr>
+                        <td>
+                            <span class="p-column-title pf-oswald text-steel hidden-desktop">Fecha / Hora:</span>
+                            <div class="flex flex-column gap-1">
+                                <span class="pf-anton text-chalk text-lg" style="letter-spacing: 0.5px;">{{ item.fecha | date: 'dd/MM/yyyy' }}</span>
+                                <span class="text-steel text-sm font-bold"><i class="pi pi-clock mr-1 text-teal"></i>{{ item.hora | slice:0:5 }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="p-column-title pf-oswald text-steel hidden-desktop">Grupo:</span>
+                            <p-tag [value]="obtenerNombreGrupo(item.grupo_id)" severity="info"></p-tag>
+                        </td>
+                        <td>
+                            <span class="p-column-title pf-oswald text-steel hidden-desktop">Lugar:</span>
+                            <span class="text-steel"><i class="pi pi-map-marker text-teal mr-2"></i>{{ item.lugar || 'Cancha Principal' }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="p-column-title pf-oswald text-steel hidden-desktop">Acciones:</span>
+                            <div class="pf-table-actions">
+                                <button pButton icon="pi pi-check-square" [ngClass]="esAdmin ? 'p-button-info' : 'p-button-success'"
+                                        (click)="verAsistencia(item)" [pTooltip]="esAdmin ? 'Ver Asistencia' : 'Pasar Asistencia'"></button>
+                                
+                                <button pButton icon="pi pi-eye" class="p-button-info"
+                                        (click)="verPlanificacion(item)" pTooltip="Ver Detalles"></button>
+                                
+                                <button *ngIf="esStaff" pButton icon="pi pi-pencil" class="p-button-warning" 
+                                        (click)="abrirEditarClase(item)" pTooltip="Editar Planificación"></button>
+                                
+                                <button *ngIf="esAdmin" pButton icon="pi pi-trash" class="p-button-danger"
+                                        (click)="eliminarClase(item.id)" pTooltip="Eliminar Clase"></button>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="4" class="text-center p-5 text-steel">
+                            <i class="pi pi-calendar-times block mb-3 text-4xl"></i>
+                            <span class="pf-oswald text-lg">No hay clases registradas con estos filtros.</span>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </ng-container>
+
+    <!-- ========================================================================= -->
+    <!-- 2. VISTA ESTUDIANTE                                                       -->
+    <!-- ========================================================================= -->
+    <ng-container *ngIf="esEstudiante">
+        <header class="pf-admin-header">
+            <div class="header-content">
+                <div>
+                    <h1 class="pf-anton text-chalk m-0 text-3xl">Mis Clases</h1>
+                    <p class="pf-oswald text-teal mt-1">Calendario de entrenamientos y planificación técnica.</p>
+                </div>
+            </div>
+            <button pButton icon="pi pi-sync" class="pf-btn-ghost" 
+                    (click)="cargarClasesEstudiante()" [loading]="loading" pTooltip="Actualizar Datos" tooltipPosition="left"></button>
+        </header>
+
+        <!-- BARRA DE FILTROS ESTUDIANTE -->
+        <div class="pf-admin-card mb-4 p-3">
+            <div class="filter-row flex flex-wrap gap-3 align-items-end">
+                <div class="filter-item flex-grow-1">
+                    <label><i class="pi pi-calendar mr-1 text-teal"></i> Fecha</label>
+                    <p-datepicker [(ngModel)]="filtroFecha" placeholder="Filtrar por Fecha" dateFormat="dd/mm/yy"
+                                  (ngModelChange)="aplicarFiltrosEstudiante()" [showClear]="true" styleClass="w-full"
+                                  appendTo="body" [showIcon]="true"></p-datepicker>
+                </div>
+
+                <div class="filter-item flex-grow-2">
+                    <label><i class="pi pi-map-marker mr-1 text-teal"></i> Lugar</label>
+                    <input pInputText type="text" [(ngModel)]="filtroLugar" (input)="aplicarFiltrosEstudiante()" 
+                           placeholder="Buscar por lugar..." class="w-full"/>
+                </div>
+
+                <div class="filter-item flex-grow-1">
+                    <label><i class="pi pi-check-square mr-1 text-teal"></i> Asistencia</label>
+                    <p-select [options]="opcionesAsistencia" [(ngModel)]="filtroAsistencia" placeholder="Estado Asistencia" 
+                              (onChange)="aplicarFiltrosEstudiante()" [showClear]="true" styleClass="w-full"
+                              appendTo="body" [filter]="false"></p-select>
+                </div>
+
+                <div class="filter-item-btn">
+                    <button pButton icon="pi pi-filter-slash" class="pf-btn-ghost w-full justify-content-center" 
+                            (click)="limpiarFiltrosEstudiante()" pTooltip="Limpiar" tooltipPosition="top"></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLA ESTUDIANTE -->
+        <div class="pf-admin-card table-responsive p-0">
+            <p-table [value]="clases" [loading]="loading" [rows]="10" [paginator]="true" styleClass="p-datatable-sm pf-table w-full" responsiveLayout="stack" [breakpoint]="'768px'">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 25%">Fecha / Hora</th>
+                        <th style="width: 30%">Lugar</th>
+                        <th style="width: 20%" class="text-center">Asistencia</th>
+                        <th style="width: 25%" class="text-center">Planificación</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-clase>
+                    <tr>
+                        <td>
+                            <span class="p-column-title pf-oswald text-steel hidden-desktop">Fecha / Hora:</span>
+                            <div class="flex flex-column gap-1">
+                                <span class="pf-anton text-chalk text-lg" style="letter-spacing: 0.5px;">{{ clase.fecha | date:'dd/MM/yyyy' }}</span>
+                                <span class="text-steel text-sm font-bold"><i class="pi pi-clock mr-1 text-teal"></i>{{ clase.hora | slice:0:5 }} hrs</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="p-column-title pf-oswald text-steel hidden-desktop">Lugar:</span>
+                            <span class="text-steel"><i class="pi pi-map-marker text-teal mr-2"></i>{{ clase.lugar || 'Cancha Principal' }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="p-column-title pf-oswald text-steel hidden-desktop">Asistencia:</span>
+                            <p-tag [value]="getAsistenciaLabel(clase.presente)" [severity]="getAsistenciaSeverity(clase.presente)"></p-tag>
+                        </td>
+                        <td class="text-center">
+                            <span class="p-column-title pf-oswald text-steel hidden-desktop">Planificación:</span>
+                            <div class="pf-table-actions">
+                                <button pButton icon="pi pi-eye" [ngClass]="puedeVerPlanificacion(clase) ? 'p-button-info' : 'p-button-secondary'"
+                                        (click)="verPlanificacion(clase)" [disabled]="!puedeVerPlanificacion(clase)"
+                                        [pTooltip]="puedeVerPlanificacion(clase) ? 'Ver Planificación' : 'Se habilitará a la hora del entrenamiento'"></button>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="4" class="text-center p-5 text-steel">
+                            <i class="pi pi-calendar-times block mb-3 text-4xl"></i>
+                            <span class="pf-oswald text-lg">No hay clases que coincidan con los filtros aplicados.</span>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </ng-container>
+
+    <!-- ========================================================================= -->
+    <!-- MODALES COMPARTIDOS                                                       -->
+    <!-- ========================================================================= -->
+
+    <!-- MODAL 1: ASISTENCIA (Gestión) -->
+    <p-dialog [(visible)]="displayAttendanceDialog" [header]="'Asistencia: ' + (claseSeleccionadaAsistencia?.fecha | date: 'dd/MM/yyyy')" 
+              [modal]="true" [style]="{width: '90vw', maxWidth: '450px'}" styleClass="p-fluid pf-dialog" [draggable]="false" [resizable]="false">
+        <ng-template pTemplate="content">
+            <p-table [value]="alumnosAsistencia" [loading]="loadingAsistencia" scrollable="true" scrollHeight="300px" styleClass="p-datatable-sm pf-table w-full">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Estudiante</th>
+                        <th style="width: 80px; text-align: center;">Presente</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-alumno>
+                    <tr>
+                        <td class="text-sm font-bold text-chalk">{{ alumno.nombre }} {{ alumno.apellido }}</td>
+                        <td class="text-center">
+                            <p-checkbox [(ngModel)]="alumno.presente" [binary]="true" [disabled]="esAdmin"></p-checkbox>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr><td colspan="2" class="text-center p-4 text-sm text-steel pf-oswald">No hay estudiantes activos en este grupo.</td></tr>
+                </ng-template>
+            </p-table>
+        </ng-template>
+        <ng-template pTemplate="footer">
+            <button *ngIf="esAdmin" pButton label="Cerrar" icon="pi pi-times" class="pf-btn-ghost w-full justify-content-center" (click)="displayAttendanceDialog = false"></button>
+            <ng-container *ngIf="esStaff">
+                <button pButton label="Cancelar" icon="pi pi-times" class="pf-btn-ghost" (click)="displayAttendanceDialog = false"></button>
+                <button pButton label="Guardar" icon="pi pi-check" class="pf-btn-primary" (click)="guardarAsistencia()" [loading]="loadingAsistencia" [disabled]="alumnosAsistencia.length === 0"></button>
+            </ng-container>
+        </ng-template>
+    </p-dialog>
+
+    <!-- MODAL 2: VER PLANIFICACIÓN (Global) -->
+    <p-dialog [(visible)]="displayPlan" header="Detalle del Entrenamiento" [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" styleClass="p-fluid pf-dialog" [draggable]="false" [resizable]="false">
+        <div *ngIf="selectedClase" class="animation-fade-in pt-3">
+            <div class="mb-4">
+                <label class="pf-oswald text-steel block mb-2 text-sm"><i class="pi pi-bullseye text-lime mr-2"></i> Objetivo Principal</label>
+                <div class="p-3 border-round border-1 surface-border text-chalk italic" style="background: var(--input-bg); border-color: var(--border-color) !important;">
+                    {{ selectedClase.objetivo || 'Sin objetivo definido' }}
+                </div>
+            </div>
+            <div class="mb-4" *ngIf="selectedClase.calentamiento">
+                <label class="pf-oswald text-steel block mb-2 text-sm"><span class="mr-2">🔥</span> Calentamiento</label>
+                <div class="p-3 border-round border-1 surface-border text-chalk text-sm" style="background: var(--input-bg); border-color: var(--border-color) !important; white-space: pre-wrap;">{{ selectedClase.calentamiento }}</div>
+            </div>
+            <div class="mb-4" *ngIf="selectedClase.parte_principal">
+                <label class="pf-oswald text-steel block mb-2 text-sm"><span class="mr-2">⚽</span> Parte Principal</label>
+                <div class="p-3 border-round border-1 surface-border text-chalk text-sm" style="background: var(--input-bg); border-color: var(--border-color) !important; white-space: pre-wrap;">{{ selectedClase.parte_principal }}</div>
+            </div>
+            <div class="mb-4" *ngIf="selectedClase.vuelta_calma">
+                <label class="pf-oswald text-steel block mb-2 text-sm"><span class="mr-2">❄️</span> Vuelta a la Calma</label>
+                <div class="p-3 border-round border-1 surface-border text-chalk text-sm" style="background: var(--input-bg); border-color: var(--border-color) !important; white-space: pre-wrap;">{{ selectedClase.vuelta_calma }}</div>
+            </div>
+        </div>
+        <ng-template pTemplate="footer">
+            <button pButton label="Cerrar" icon="pi pi-times" class="pf-btn-ghost w-full justify-content-center" (click)="displayPlan = false"></button>
+        </ng-template>
+    </p-dialog>
+
+    <!-- MODAL 3: CREAR/EDITAR PLANIFICACIÓN (Solo Staff) -->
+    <p-dialog [(visible)]="displayForm" [header]="isEditing ? 'Editar Clase' : 'Nueva Clase'" 
+              [modal]="true" [style]="{width: '90vw', maxWidth: '550px'}" styleClass="p-fluid pf-dialog" [closable]="!saving" [draggable]="false" [resizable]="false">
+        
+        <ng-template pTemplate="content">
+            <div class="flex justify-content-center mb-4 mt-2">
+                <p-selectButton [options]="opcionesVistaForm" [(ngModel)]="vistaFormulario" optionLabel="label" optionValue="value">
+                    <ng-template let-item pTemplate="item">
+                        <i [class]="item.icon" class="mr-2"></i>
+                        <span class="pf-oswald" style="letter-spacing: 0.05em;">{{item.label}}</span>
+                    </ng-template>
+                </p-selectButton>
+            </div>
+
+            <!-- Pestaña Logística -->
+            <div *ngIf="vistaFormulario === 'logistica'" class="animation-fade-in">
+                <div class="field mb-3">
+                    <label class="pf-oswald text-steel mb-2 block"><i class="pi pi-users mr-1 text-teal"></i> Grupo Asignado <span class="text-red-500 font-bold ml-1">*</span></label>
+                    <p-select [options]="grupos" [(ngModel)]="claseForm.grupo_id" optionLabel="nombre" optionValue="id" 
+                              [disabled]="true" appendTo="body" styleClass="w-full"></p-select>
+                </div>
+                
+                <div class="formgrid grid mb-3">
+                    <div class="field col-12 sm:col-6">
+                        <label class="pf-oswald text-steel mb-2 block"><i class="pi pi-calendar mr-1 text-teal"></i> Fecha <span class="text-red-500 font-bold ml-1">*</span></label>
+                        <p-datepicker [(ngModel)]="claseForm.fecha" dateFormat="dd/mm/yy" appendTo="body" [showIcon]="true" styleClass="w-full"></p-datepicker>
+                    </div>
+                    <div class="field col-12 sm:col-6">
+                        <label class="pf-oswald text-steel mb-2 block"><i class="pi pi-clock mr-1 text-teal"></i> Hora <span class="text-red-500 font-bold ml-1">*</span></label>
+                        <input pInputText type="time" [(ngModel)]="claseForm.hora" class="w-full">
+                    </div>
+                </div>
+                
+                <div class="field mb-3">
+                    <label class="pf-oswald text-steel mb-2 block"><i class="pi pi-map-marker mr-1 text-teal"></i> Lugar / Cancha <span class="text-red-500 font-bold ml-1">*</span></label>
+                    <input pInputText [(ngModel)]="claseForm.lugar" placeholder="Ej: Cancha 3" class="w-full"/>
+                </div>
+            </div>
+
+            <!-- Pestaña Planificación -->
+            <div *ngIf="vistaFormulario === 'planificacion'" class="animation-fade-in">
+                <div class="field mb-3">
+                    <label class="pf-oswald text-lime mb-2 block"><i class="pi pi-bullseye mr-1"></i> Objetivo Principal</label>
+                    <input pInputText [(ngModel)]="claseForm.objetivo" placeholder="Ej: Mejora del pase corto" class="w-full"/>
+                </div>
+                <div class="field mb-3">
+                    <label class="pf-oswald text-steel mb-2 block"><span class="mr-2">🔥</span> Calentamiento</label>
+                    <textarea pTextarea class="w-full" [(ngModel)]="claseForm.calentamiento" rows="3" placeholder="Descripción del calentamiento..."></textarea>
+                </div>
+                <div class="field mb-3">
+                    <label class="pf-oswald text-steel mb-2 block"><span class="mr-2">⚽</span> Parte Principal</label>
+                    <textarea pTextarea class="w-full" [(ngModel)]="claseForm.parte_principal" rows="4" placeholder="Ejercicios principales..."></textarea>
+                </div>
+                <div class="field mb-3">
+                    <label class="pf-oswald text-steel mb-2 block"><span class="mr-2">❄️</span> Vuelta a la Calma</label>
+                    <textarea pTextarea class="w-full" [(ngModel)]="claseForm.vuelta_calma" rows="2" placeholder="Estiramientos finales..."></textarea>
+                </div>
+            </div>
+        </ng-template>
+
+        <ng-template pTemplate="footer">
+            <button pButton label="Cancelar" icon="pi pi-times" class="pf-btn-ghost w-full sm:w-auto" (click)="displayForm = false" [disabled]="saving"></button>
+            <button pButton [label]="isEditing ? 'Guardar Cambios' : 'Crear Clase'" icon="pi pi-check" class="pf-btn-primary w-full sm:w-auto" (click)="guardarClase()" [loading]="saving"></button>
+        </ng-template>
+    </p-dialog>
+</div>

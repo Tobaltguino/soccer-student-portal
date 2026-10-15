@@ -14,7 +14,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageService, ConfirmationService } from 'primeng/api'; 
 
 // Nuevo Servicio
-import { NutriResultadoService } from '../../../../core/domains/salud/nutricion/resultados/services/resultado.service';
+import { NutriResultadoService } from '../../../../core/domains/salud/nutricion/evaluaciones/resultados/services/resultado.service';
 
 @Component({
   selector: 'app-estudiante-nutricion',

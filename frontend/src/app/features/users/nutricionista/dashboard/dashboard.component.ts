@@ -16,7 +16,7 @@ import { AuthService } from '../../../../core/auth/services/auth.service';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
 import { UsuarioService } from '../../../../core/domains/usuarios/central/services/usuario.service';
 // 👇 Importamos el servicio específico de SESIONES de Nutrición
-import { NutriSesionService } from '../../../../core/domains/salud/nutricion/sesiones/services/sesion.service';
+import { NutriSesionService } from '../../../../core/domains/salud/nutricion/evaluaciones/sesiones/services/sesion.service';
 
 @Component({
   selector: 'app-nutri-dashboard',

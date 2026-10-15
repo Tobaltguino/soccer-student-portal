@@ -24,9 +24,9 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 // Servicios de Dominio
-import { NutriTipoEvaluacionService } from '../../../../core/domains/salud/nutricion/tipos/services/tipo-evaluacion.service';
-import { NutriSesionService } from '../../../../core/domains/salud/nutricion/sesiones/services/sesion.service';
-import { NutriResultadoService } from '../../../../core/domains/salud/nutricion/resultados/services/resultado.service';
+import { NutriTipoEvaluacionService } from '../../../../core/domains/salud/nutricion/evaluaciones/tipos/services/tipo-evaluacion.service';
+import { NutriSesionService } from '../../../../core/domains/salud/nutricion/evaluaciones/sesiones/services/sesion.service';
+import { NutriResultadoService } from '../../../../core/domains/salud/nutricion/evaluaciones/resultados/services/resultado.service';
 import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
 import { UsuarioService } from '../../../../core/domains/usuarios/central/services/usuario.service';
 

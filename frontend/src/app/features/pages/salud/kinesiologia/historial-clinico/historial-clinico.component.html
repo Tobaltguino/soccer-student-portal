@@ -1,0 +1,166 @@
+<div class="pf-admin-wrapper fadein animation-duration-500">
+    <p-toast position="top-right"></p-toast>
+    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog> 
+
+    <!-- ========================================================================= -->
+    <!-- ENCABEZADO -->
+    <!-- ========================================================================= -->
+    <header class="pf-admin-header">
+        <div class="header-content">
+            <div>
+                <h1 class="pf-anton text-chalk m-0 text-3xl">
+                    {{ esEstudiante ? 'Mi Historial Clínico' : 'Registro de Lesiones y Antecedentes' }}
+                </h1>
+                <p class="pf-oswald text-teal mt-1">
+                    {{ esEstudiante ? 'Consulta el registro de tus eventos médicos, patologías, alergias y su estado de recuperación.' : 'Supervisión global de patologías, lesiones y eventos médicos de los estudiantes.' }}
+                </p>
+            </div>
+        </div>
+        <button *ngIf="esEstudiante" pButton icon="pi pi-sync" class="pf-btn-ghost" 
+                (click)="cargarMisLesiones()" [loading]="cargandoLesiones" pTooltip="Actualizar Datos" tooltipPosition="left"></button>
+    </header>
+
+    <!-- ========================================================================= -->
+    <!-- BUSCADOR DE PACIENTES (SOLO GESTIÓN) -->
+    <!-- ========================================================================= -->
+    <ng-container *ngIf="esGestion">
+        <div class="pf-admin-card mb-4 p-3">
+            <div class="filter-row">
+                <div class="filter-item flex-grow-1">
+                    <label class="pf-oswald text-steel mb-1"><i class="pi pi-search mr-1 text-teal"></i> Buscador Global de Pacientes</label>
+                    <p-select [options]="listaAlumnos" [(ngModel)]="alumnoSeleccionado" optionLabel="nombreCompleto"
+                              [filter]="true" filterBy="nombreCompleto" [showClear]="true" 
+                              [placeholder]="esAdmin ? 'Buscar paciente en toda la academia...' : 'Buscar paciente en mis grupos...'" 
+                              (onChange)="onAlumnoChange()"
+                              appendTo="body" styleClass="w-full">
+                    </p-select>
+                </div>
+            </div>
+        </div>
+
+        <!-- ESTADO VACÍO (SIN PACIENTE SELECCIONADO) -->
+        <div class="pf-admin-card text-center p-6 mt-4 fadein flex flex-column align-items-center justify-content-center" *ngIf="!alumnoSeleccionado">
+            <i class="pi pi-heart text-6xl text-steel mb-4"></i>
+            <h2 class="pf-anton text-chalk m-0 mt-3 text-2xl" style="letter-spacing: 1px;">Seleccione un paciente</h2>
+            <p class="pf-oswald text-steel mt-3 text-lg">Busque un alumno en la barra superior para ver o modificar su registro médico.</p>
+        </div>
+    </ng-container>
+
+    <!-- ========================================================================= -->
+    <!-- TABLA DE HISTORIAL CLÍNICO (COMPARTIDA) -->
+    <!-- ========================================================================= -->
+    <div *ngIf="(esGestion && alumnoSeleccionado) || esEstudiante" class="fadein animation-duration-300">
+        
+        <div *ngIf="esGestion" class="pf-admin-card p-4 mb-4 flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center gap-4 border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+            <div>
+                <h2 class="pf-anton text-chalk m-0 mb-2 text-2xl" style="letter-spacing: 0.5px;">Historial Clínico</h2>
+                <p class="pf-oswald text-steel m-0">Paciente: <span class="font-bold text-teal text-lg">{{alumnoSeleccionado.nombreCompleto}}</span></p>
+            </div>
+            <!-- SOLO STAFF (KINESIÓLOGO) PUEDE CREAR REGISTROS -->
+            <button *ngIf="esStaff" pButton label="Registrar Evento" icon="pi pi-plus" class="pf-btn-primary w-full md:w-auto" (click)="abrirNuevaLesion()"></button>
+        </div>
+
+        <div class="pf-admin-card table-responsive p-0 mt-4">
+            <p-table [value]="listaLesiones" [paginator]="true" [rows]="10" styleClass="p-datatable-sm pf-table w-full" [loading]="cargandoLesiones" responsiveLayout="stack" [breakpoint]="'768px'">
+                
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 15%">Fecha</th>
+                        <th style="width: 15%">Tipo</th>
+                        <th style="width: 40%">Diagnóstico / Detalle</th>
+                        <th class="text-center" style="width: 15%">Estado</th>
+                        <th *ngIf="esGestion" class="text-center" style="width: 15%">Acciones</th> 
+                    </tr>
+                </ng-template>
+                
+                <ng-template pTemplate="body" let-l>
+                    <tr>
+                        <td>
+                            <span class="p-column-title pf-oswald text-steel hidden-desktop">Fecha: </span>
+                            <span class="pf-anton text-chalk text-lg" style="letter-spacing: 0.5px;">{{ l.fecha_evento | date:'dd/MM/yyyy' }}</span>
+                        </td>
+                        <td class="font-bold">
+                            <span class="p-column-title pf-oswald text-steel hidden-desktop">Tipo: </span>
+                            <span class="text-teal font-bold"><i class="pi pi-bookmark mr-1"></i> {{ getTipoLabel(l.tipo) }}</span>
+                        </td>
+                        <td class="text-sm">
+                            <span class="p-column-title pf-oswald text-steel hidden-desktop">Diagnóstico: </span>
+                            <span *ngIf="l.diagnostico" class="text-chalk">{{ l.diagnostico }}</span>
+                            <span *ngIf="!l.diagnostico" class="text-steel italic">No especificado</span>
+
+                            <div *ngIf="l.observaciones" class="mt-2 text-xs text-steel">
+                                <strong class="text-teal pf-oswald tracking-wider">Obs:</strong> {{ l.observaciones }}
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="p-column-title pf-oswald text-steel hidden-desktop">Estado: </span>
+                            <p-tag [value]="getEstadoLabel(l.estado)" [severity]="getSeveridadEstado(l.estado)"></p-tag>
+                        </td>
+                        <td *ngIf="esGestion" class="text-center">
+                            <span class="p-column-title pf-oswald text-steel hidden-desktop">Acciones: </span>
+                            <div class="pf-table-actions justify-content-center">
+                                <!-- SOLO STAFF PUEDE EDITAR -->
+                                <button *ngIf="esStaff" pButton icon="pi pi-pencil" class="p-button-warning" (click)="abrirEditarLesion(l)" pTooltip="Editar Registro"></button>
+                                <!-- SOLO ADMIN PUEDE ELIMINAR -->
+                                <button *ngIf="esAdmin" pButton icon="pi pi-trash" class="p-button-danger" (click)="confirmarEliminarLesion(l)" pTooltip="Eliminar Registro"></button>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+                
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td [colspan]="esGestion ? 5 : 4" class="text-center p-6 text-steel">
+                            <i class="pi pi-heart text-5xl mb-3 text-steel"></i><br>
+                            <span class="pf-oswald text-lg">No hay lesiones, alergias ni patologías registradas en el historial médico.</span>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL NUEVO / EDITAR REGISTRO (SOLO STAFF) -->
+    <!-- ========================================================================= -->
+    <p-dialog *ngIf="esStaff" [(visible)]="mostrarDialogoLesion" [header]="lesionActual.id ? 'Editar Registro' : 'Nuevo Registro Médico'" [modal]="true" [style]="{width: '450px'}" styleClass="p-fluid pf-dialog" [draggable]="false" [resizable]="false">
+        
+        <div class="field mt-3 flex flex-column">
+            <label class="pf-oswald text-steel mb-2 block">Fecha del Evento <span class="text-red-500 font-bold ml-1">*</span></label>
+            <p-datepicker [(ngModel)]="lesionActual.fecha_evento" dateFormat="dd/mm/yy" [showIcon]="true" styleClass="w-full" appendTo="body" [disabled]="guardando"></p-datepicker>
+        </div>
+        
+        <div class="field mt-4 flex flex-column">
+            <label class="pf-oswald text-steel mb-2 block">Tipo de Registro <span class="text-red-500 font-bold ml-1">*</span></label>
+            <p-select [options]="opcionesTipoLesion" [(ngModel)]="lesionActual.tipo" optionLabel="label" optionValue="value" styleClass="w-full" appendTo="body" [filter]="false" [disabled]="guardando">
+                <ng-template let-option pTemplate="item">
+                    <span class="text-chalk">{{option.label}}</span>
+                </ng-template>
+            </p-select>
+        </div>
+
+        <div class="field mt-4 flex flex-column">
+            <label class="pf-oswald text-steel mb-2 block">Diagnóstico</label>
+            <textarea pTextarea [(ngModel)]="lesionActual.diagnostico" rows="2" class="w-full" placeholder="Ej: Esguince de tobillo grado II..." [disabled]="guardando"></textarea>
+        </div>
+
+        <div class="field mt-4 flex flex-column">
+            <label class="pf-oswald text-steel mb-2 block">Observaciones (Opcional)</label>
+            <textarea pTextarea [(ngModel)]="lesionActual.observaciones" rows="2" class="w-full" placeholder="Añadir contexto adicional, reposo, etc..." [disabled]="guardando"></textarea>
+        </div>
+
+        <div class="field mt-4 mb-4 flex flex-column">
+            <label class="pf-oswald text-steel mb-2 block">Estado Actual</label>
+            <p-select [options]="opcionesEstadoLesion" [(ngModel)]="lesionActual.estado" optionLabel="label" optionValue="value" styleClass="w-full" appendTo="body" [filter]="false" [disabled]="guardando">
+                <ng-template let-option pTemplate="item">
+                    <p-tag [value]="option.label" [severity]="getSeveridadEstado(option.value)"></p-tag>
+                </ng-template>
+            </p-select>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <button pButton label="Cancelar" icon="pi pi-times" class="pf-btn-ghost w-full sm:w-auto" (click)="mostrarDialogoLesion = false" [disabled]="guardando"></button>
+            <button pButton label="Guardar Registro" icon="pi pi-save" class="pf-btn-primary w-full sm:w-auto" (click)="guardarLesion()" [loading]="guardando"></button>
+        </ng-template>
+    </p-dialog>
+</div>
