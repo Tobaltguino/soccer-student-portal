@@ -241,7 +241,7 @@ export class EvaluacionesKineComponent implements OnInit {
       await this.cargarDatosGenerales();
     } catch (err: any) {
       let msg = 'Error al guardar la sesión';
-      if (err.error?.message) msg = Array.isArray(err.error.message) ? err.error.message.join(' · ') : err.error.message;
+      if (err?.message) msg = err.message;
       this.mostrarError(msg);
     } finally {
       this.guardando = false;
@@ -571,10 +571,14 @@ export class EvaluacionesKineComponent implements OnInit {
   // ==========================================
   // EXPORTAR EXCEL
   // ==========================================
-  descargarExcelPorSesion(sesion: any) {
+  async descargarExcelPorSesion(sesion: any) {
     if (!sesion || !sesion.id) return;
     this.messageService.add({ severity: 'info', summary: 'Exportando', detail: 'Generando matriz en Excel...' });
-    this.excelService.exportarResultadosKine(sesion.id);
+    try {
+      await this.excelService.exportarResultadosKine(sesion.id);
+    } catch (error: any) {
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: error?.message || 'No se pudo generar el Excel' });
+    }
   }
 
   // ==========================================

@@ -599,10 +599,14 @@ export class EvaluacionesComponent implements OnInit {
   }
 
   // --- EXPORTAR EXCEL ---
-  descargarExcelPorSesion(sesion: any) {
+  async descargarExcelPorSesion(sesion: any) {
     if (!sesion || !sesion.id) return;
     this.messageService.add({ severity: 'info', summary: 'Exportando', detail: 'Generando archivo Excel...' });
-    this.excelService.exportarResultadosAcademicos(sesion.id);
+    try {
+      await this.excelService.exportarResultadosAcademicos(sesion.id);
+    } catch (error: any) {
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: error?.message || 'No se pudo generar el Excel' });
+    }
   }
 
   // =========================================================

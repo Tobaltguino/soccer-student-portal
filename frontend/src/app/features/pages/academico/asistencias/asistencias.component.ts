@@ -204,12 +204,10 @@ export class AsistenciasComponent implements OnInit {
       return;
     }
 
-    // Asegúrate de que el ExcelExportService ahora use una librería de frontend (como 'xlsx') 
-    // en lugar de esperar el Buffer desde NestJS.
     try {
       await this.excelService.exportarAsistenciasMensuales(this.grupoSeleccionado, this.filtroMes, this.filtroAnio);
-    } catch (error) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo generar el Excel' });
+    } catch (error: any) {
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: error?.message || 'No se pudo generar el Excel' });
     }
   }
 

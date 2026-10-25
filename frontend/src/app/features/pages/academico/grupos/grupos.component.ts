@@ -86,7 +86,7 @@ export class AdministradorGruposComponent implements OnInit {
   }
 
   // --- EXPORTAR EXCEL ---
-  descargarExcel() {
+  async descargarExcel() {
     if (this.grupos.length === 0) {
       this.messageService.add({ severity: 'warn', summary: 'Sin datos', detail: 'No hay grupos para exportar.' });
       return;
@@ -96,7 +96,11 @@ export class AdministradorGruposComponent implements OnInit {
     this.cdr.detectChanges();
     
     // Exportamos (pasando false para no incluir los eliminados por defecto)
-    this.excelService.exportarGrupos(false);
+    try {
+      await this.excelService.exportarGrupos(false);
+    } catch (error: any) {
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: error?.message || 'No se pudo generar el Excel' });
+    }
   }
 
   // --- ABRIR DIÁLOGOS ---

@@ -197,7 +197,7 @@ export class MaterialComplementarioComponent implements OnInit {
       this.displayDialog = false;
       await this.cargarDatos();
     } catch (error: any) {
-      const mensaje = error.error?.message || 'Hubo un problema al procesar la guía.';
+      const mensaje = error?.message || 'Hubo un problema al procesar la guía.';
       this.messageService.add({ severity: 'error', summary: 'Error al guardar', detail: mensaje });
     } finally {
       this.subiendoArchivo = false;

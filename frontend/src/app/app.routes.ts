@@ -8,36 +8,18 @@ import { Rol } from './shared/enums/rol.enum';
 // --- BASE ---
 import { HomeComponent } from './features/home/home.component';
 import { LoginComponent } from './features/auth/login/login.component';
-import { UpdatePasswordComponent } from './features/auth/update-password/update-password.component';
-import { TerminosComponent } from './features/terminos/terminos.component';
 import { LayoutComponent } from './features/layout/layout.component'; 
 
-// ==========================================
-// IMPORTS: COMPONENTES UNIFICADOS
-// ==========================================
-import { DashboardComponent } from './features/pages/dashboard/dashboard.component';
-import { HorarioComponent } from './features/pages/academico/horario/horario.component';
-import { ClasesComponent } from './features/pages/academico/clases/clases.component';
-import { AsistenciasComponent } from './features/pages/academico/asistencias/asistencias.component';
-import { EvaluacionesComponent } from './features/pages/academico/evaluaciones/evaluaciones.component';
-import { MaterialComplementarioComponent } from './features/pages/academico/material-complementario/material-complementario.component';
-import { AdministradorGruposComponent } from './features/pages/academico/grupos/grupos.component';
-import { CuerpoTecnicoComponent } from './features/pages/academico/cuerpo-tecnico/cuerpo-tecnico.component';
-import { EvaluacionesKineComponent } from './features/pages/salud/kinesiologia/evaluaciones/evaluaciones-kine.component';
-import { HistorialClinicoComponent } from './features/pages/salud/kinesiologia/historial-clinico/historial-clinico.component';
-import { FichaEvolutivaComponent } from './features/pages/salud/kinesiologia/ficha-evolutiva/ficha-evolutiva.component';
-import { NutriEvaluacionComponent } from './features/pages/salud/nutricion/evaluaciones/nutri-evaluacion.component';
-import { VerEstudiantesComponent } from './features/pages/academico/ver-estudiantes/ver-estudiantes.component';
-import { UsuariosComponent } from './features/pages/administracion/usuarios/usuarios.component';
+// Las páginas se cargan bajo demanda (loadComponent): el bundle inicial solo trae
+// home, login y layout; cada pantalla se descarga la primera vez que se visita.
 // import { AdministradorPagosComponent } from './features/pages/administracion/pagos/pagos.component';
-import { WebComponent } from './features/pages/administracion/web/web.component';
 
 export const routes: Routes = [
     { path: '', component: HomeComponent, pathMatch: 'full' }, 
 
     { path: 'login', component: LoginComponent },
-    { path: 'update-password', component: UpdatePasswordComponent },
-    { path: 'terminos', component: TerminosComponent },
+    { path: 'update-password', loadComponent: () => import('./features/auth/update-password/update-password.component').then(m => m.UpdatePasswordComponent) },
+    { path: 'terminos', loadComponent: () => import('./features/terminos/terminos.component').then(m => m.TerminosComponent) },
 
     // ==========================================
     // RUTAS PRIVADAS (CENTRALIZADAS Y PROTEGIDAS POR ROL)
@@ -50,7 +32,7 @@ export const routes: Routes = [
             // Dashboard: Todos
             { 
                 path: 'inicio', 
-                component: DashboardComponent,
+                loadComponent: () => import('./features/pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
                 canActivate: [roleGuard],
                 data: { roles: [Rol.ADMINISTRADOR, Rol.KINESIOLOGO, Rol.PROFESOR, Rol.ESTUDIANTE, Rol.NUTRICIONISTA] }
             },
@@ -58,7 +40,7 @@ export const routes: Routes = [
             // Horario: Kine, Profe, Estudiante
             { 
                 path: 'horario', 
-                component: HorarioComponent,
+                loadComponent: () => import('./features/pages/academico/horario/horario.component').then(m => m.HorarioComponent),
                 canActivate: [roleGuard],
                 data: { roles: [Rol.KINESIOLOGO, Rol.PROFESOR, Rol.ESTUDIANTE] }
             },
@@ -66,7 +48,7 @@ export const routes: Routes = [
             // Clases: Admin, Kine, Profe, Estudiante
             { 
                 path: 'clases', 
-                component: ClasesComponent,
+                loadComponent: () => import('./features/pages/academico/clases/clases.component').then(m => m.ClasesComponent),
                 canActivate: [roleGuard],
                 data: { roles: [Rol.ADMINISTRADOR, Rol.KINESIOLOGO, Rol.PROFESOR, Rol.ESTUDIANTE] }
             },
@@ -74,7 +56,7 @@ export const routes: Routes = [
             // Asistencias: Admin, Kine, Profe, Estudiante
             { 
                 path: 'asistencias', 
-                component: AsistenciasComponent,
+                loadComponent: () => import('./features/pages/academico/asistencias/asistencias.component').then(m => m.AsistenciasComponent),
                 canActivate: [roleGuard],
                 data: { roles: [Rol.ADMINISTRADOR, Rol.KINESIOLOGO, Rol.PROFESOR, Rol.ESTUDIANTE] }
             },
@@ -82,7 +64,7 @@ export const routes: Routes = [
             // Evaluaciones Académicas/Deportivas: Admin, Kine, Profe, Estudiante
             { 
                 path: 'evaluaciones', 
-                component: EvaluacionesComponent,
+                loadComponent: () => import('./features/pages/academico/evaluaciones/evaluaciones.component').then(m => m.EvaluacionesComponent),
                 canActivate: [roleGuard],
                 data: { roles: [Rol.ADMINISTRADOR, Rol.KINESIOLOGO, Rol.PROFESOR, Rol.ESTUDIANTE] }
             },
@@ -90,7 +72,7 @@ export const routes: Routes = [
             // Material: Todos
             { 
                 path: 'material', 
-                component: MaterialComplementarioComponent,
+                loadComponent: () => import('./features/pages/academico/material-complementario/material-complementario.component').then(m => m.MaterialComplementarioComponent),
                 canActivate: [roleGuard],
                 data: { roles: [Rol.ADMINISTRADOR, Rol.KINESIOLOGO, Rol.PROFESOR, Rol.ESTUDIANTE, Rol.NUTRICIONISTA] }
             },
@@ -98,7 +80,7 @@ export const routes: Routes = [
             // Cuerpo Técnico: Estudiante
             { 
                 path: 'cuerpo-tecnico', 
-                component: CuerpoTecnicoComponent,
+                loadComponent: () => import('./features/pages/academico/cuerpo-tecnico/cuerpo-tecnico.component').then(m => m.CuerpoTecnicoComponent),
                 canActivate: [roleGuard],
                 data: { roles: [Rol.ESTUDIANTE] }
             },
@@ -106,7 +88,7 @@ export const routes: Routes = [
             // Estudiantes (Directorio): Profe, Kine
             { 
                 path: 'estudiantes', 
-                component: VerEstudiantesComponent,
+                loadComponent: () => import('./features/pages/academico/ver-estudiantes/ver-estudiantes.component').then(m => m.VerEstudiantesComponent),
                 canActivate: [roleGuard],
                 data: { roles: [Rol.PROFESOR, Rol.KINESIOLOGO] }
             },
@@ -114,7 +96,7 @@ export const routes: Routes = [
             // Evaluaciones Kine: Admin, Kine, Profe, Estudiante
             { 
                 path: 'evaluaciones-kine', 
-                component: EvaluacionesKineComponent,
+                loadComponent: () => import('./features/pages/salud/kinesiologia/evaluaciones/evaluaciones-kine.component').then(m => m.EvaluacionesKineComponent),
                 canActivate: [roleGuard],
                 data: { roles: [Rol.ADMINISTRADOR, Rol.KINESIOLOGO, Rol.PROFESOR, Rol.ESTUDIANTE] }
             },
@@ -122,7 +104,7 @@ export const routes: Routes = [
             // Historial Clínico: Admin, Kine, Profe, Estudiante
             { 
                 path: 'historial-clinico', 
-                component: HistorialClinicoComponent,
+                loadComponent: () => import('./features/pages/salud/kinesiologia/historial-clinico/historial-clinico.component').then(m => m.HistorialClinicoComponent),
                 canActivate: [roleGuard],
                 data: { roles: [Rol.ADMINISTRADOR, Rol.KINESIOLOGO, Rol.PROFESOR, Rol.ESTUDIANTE] }
             },
@@ -130,7 +112,7 @@ export const routes: Routes = [
             // Fichas Evolutivas: Admin, Kine, Profe, Estudiante
             { 
                 path: 'fichas-evolutivas', 
-                component: FichaEvolutivaComponent,
+                loadComponent: () => import('./features/pages/salud/kinesiologia/ficha-evolutiva/ficha-evolutiva.component').then(m => m.FichaEvolutivaComponent),
                 canActivate: [roleGuard],
                 data: { roles: [Rol.ADMINISTRADOR, Rol.KINESIOLOGO, Rol.PROFESOR, Rol.ESTUDIANTE] }
             },
@@ -138,7 +120,7 @@ export const routes: Routes = [
             // Evaluaciones Nutri: Todos
             { 
                 path: 'evaluaciones-nutri', 
-                component: NutriEvaluacionComponent,
+                loadComponent: () => import('./features/pages/salud/nutricion/evaluaciones/nutri-evaluacion.component').then(m => m.NutriEvaluacionComponent),
                 canActivate: [roleGuard],
                 data: { roles: [Rol.ADMINISTRADOR, Rol.KINESIOLOGO, Rol.PROFESOR, Rol.ESTUDIANTE, Rol.NUTRICIONISTA] }
             },
@@ -146,7 +128,7 @@ export const routes: Routes = [
             // Administración de Usuarios: Admin
             { 
                 path: 'usuarios', 
-                component: UsuariosComponent,
+                loadComponent: () => import('./features/pages/administracion/usuarios/usuarios.component').then(m => m.UsuariosComponent),
                 canActivate: [roleGuard],
                 data: { roles: [Rol.ADMINISTRADOR] }
             },
@@ -154,7 +136,7 @@ export const routes: Routes = [
             // Grupos: Admin
             { 
                 path: 'grupos', 
-                component: AdministradorGruposComponent,
+                loadComponent: () => import('./features/pages/academico/grupos/grupos.component').then(m => m.AdministradorGruposComponent),
                 canActivate: [roleGuard],
                 data: { roles: [Rol.ADMINISTRADOR] }
             },
@@ -172,7 +154,7 @@ export const routes: Routes = [
             // Configuración Web: Admin
             { 
                 path: 'configuracion', 
-                component: WebComponent,
+                loadComponent: () => import('./features/pages/administracion/web/web.component').then(m => m.WebComponent),
                 canActivate: [roleGuard],
                 data: { roles: [Rol.ADMINISTRADOR] }
             },

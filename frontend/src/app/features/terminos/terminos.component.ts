@@ -39,7 +39,6 @@ export class TerminosComponent implements OnInit {
       if (session?.user) {
         const perfil = await this.authService.obtenerPerfilUsuario(session.user.id);
         this.userRole = (perfil?.rol || '').toLowerCase();
-        console.log('Rol detectado en Términos:', this.userRole);
       } else {
         this.router.navigate(['/login']);
       }
@@ -79,7 +78,7 @@ export class TerminosComponent implements OnInit {
 
     } catch (err: any) {
       this.guardando = false;
-      const mensajeError = err.error?.message || err.message || 'No se pudo registrar la aceptación. Intente nuevamente.';
+      const mensajeError = err?.message || 'No se pudo registrar la aceptación. Intente nuevamente.';
       this.messageService.add({ severity: 'error', summary: 'Error de Servidor', detail: mensajeError });
       console.error('Error de BD:', err);
     }
