@@ -14,11 +14,12 @@ export class FichaEvolutivaService {
 
   /**
    * Crea una nueva ficha evolutiva.
-   * Asigna automáticamente el ID del usuario autenticado como kinesiologo_id.
+   * Usa el kinesiólogo elegido en el formulario (admin) o, si no viene, el usuario autenticado.
+   * RLS solo deja a un kinesiólogo crear fichas a su nombre.
    */
   async crearFicha(payload: CrearFichaPayload): Promise<FichaEvolutiva> {
-    const { data: authData } = await this.supabase.auth.getUser();
-    const kinesiologoId = authData?.user?.id;
+    const { data: sessionData } = await this.supabase.auth.getSession();
+    const kinesiologoId = payload.kinesiologoId ?? sessionData?.session?.user?.id;
 
     if (!kinesiologoId) throw new Error('Debes iniciar sesión para crear una ficha');
 
@@ -119,6 +120,7 @@ export class FichaEvolutivaService {
   async actualizarFicha(id: string, payload: ActualizarFichaPayload): Promise<FichaEvolutiva> {
     const updateData: Record<string, any> = {};
 
+    if (payload.kinesiologoId !== undefined) updateData['kinesiologo_id'] = payload.kinesiologoId;
     if (payload.fechaEvaluacion !== undefined) updateData['fecha_evaluacion'] = payload.fechaEvaluacion;
     if (payload.antecedentesPersonales !== undefined) updateData['antecedentes_personales'] = payload.antecedentesPersonales;
     if (payload.antecedentesRemotos !== undefined) updateData['antecedentes_remotos'] = payload.antecedentesRemotos;

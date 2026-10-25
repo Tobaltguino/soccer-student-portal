@@ -84,8 +84,12 @@ export class AuthService {
     return await this.supabaseService.client.auth.signInWithPassword({ email, password });
   }
 
-  async signOut() {
-    return await this.supabaseService.client.auth.signOut();
+  /**
+   * scope 'local' solo limpia la sesión de este navegador (útil cuando el servidor
+   * ya la invalidó, ej. tras cambiar la contraseña, y evita un 403 en consola).
+   */
+  async signOut(scope: 'global' | 'local' = 'global') {
+    return await this.supabaseService.client.auth.signOut({ scope });
   }
 
   async recuperarPassword(email: string) {

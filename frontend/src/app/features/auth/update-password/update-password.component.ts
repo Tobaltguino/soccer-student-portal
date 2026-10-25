@@ -73,8 +73,9 @@ export class UpdatePasswordComponent {
     this.messageService.add({ severity: 'success', summary: '¡Éxito!', detail: 'Tu contraseña ha sido actualizada.' });
 
     // Cerramos sesión por seguridad para forzar un inicio de sesión limpio con la nueva clave
-    // (además así el nuevo token ya no trae la marca debe_cambiar_password)
-    await this.authService.signOut();
+    // (además así el nuevo token ya no trae la marca debe_cambiar_password).
+    // 'local': al cambiar la clave el servidor ya invalidó la sesión.
+    await this.authService.signOut('local');
 
     setTimeout(() => {
       this.router.navigate(['/login']);

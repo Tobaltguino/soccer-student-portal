@@ -99,6 +99,8 @@ export interface FichaEvolutiva {
 
 export interface CrearFichaPayload {
   estudianteId: string;
+  kinesiologoId?: string; // Si no viene, se usa el usuario autenticado
+
   fechaEvaluacion: string;
   antecedentesPersonales?: AntecedentesPersonales;
   antecedentesRemotos?: AntecedentesRemotos;
