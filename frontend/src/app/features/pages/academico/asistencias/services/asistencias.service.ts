@@ -7,12 +7,14 @@ import {
   DetalleAsistenciaDiaria
 } from '../models/asistencia.interface';
 import { hoyChile } from '../../../../../shared/utils/fechas.util';
+import { StorageService, BUCKET_FOTOS_USUARIOS } from '../../../../../core/services/storage.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AsistenciaService {
   private supabase = inject(SupabaseService).client;
+  private storage = inject(StorageService);
 
   /**
    * Lista las asistencias de una clase específica (Admin, Profe, Kine)
@@ -145,6 +147,12 @@ export class AsistenciaService {
     const claseIds = clasesMes?.map((c) => c.id) || [];
     const totalClasesEnElMes = claseIds.length;
 
+    // Fotos en bucket privado: URLs firmadas en una sola petición
+    const firmarFoto = await this.storage.firmarUrls(
+      BUCKET_FOTOS_USUARIOS,
+      (alumnos || []).map((est: any) => (Array.isArray(est.usu_perfiles) ? est.usu_perfiles[0] : est.usu_perfiles)?.foto_url)
+    );
+
     if (totalClasesEnElMes === 0) {
       return (alumnos || []).map((est: any) => {
         const perfil = Array.isArray(est.usu_perfiles) ? est.usu_perfiles[0] : est.usu_perfiles;
@@ -153,7 +161,7 @@ export class AsistenciaService {
           nombre: perfil?.nombre || '',
           apellido: perfil?.apellido || '',
           rut: perfil?.rut || null,
-          foto_url: perfil?.foto_url || null,
+          foto_url: firmarFoto(perfil?.foto_url),
           total_clases: 0,
           total_presentes: 0,
           porcentaje: 0,
@@ -191,7 +199,7 @@ export class AsistenciaService {
         nombre: perfil?.nombre || '',
         apellido: perfil?.apellido || '',
         rut: perfil?.rut || null,
-        foto_url: perfil?.foto_url || null,
+        foto_url: firmarFoto(perfil?.foto_url),
         total_clases: totalClasesEnElMes,
         total_presentes: totalPresentes,
         porcentaje,

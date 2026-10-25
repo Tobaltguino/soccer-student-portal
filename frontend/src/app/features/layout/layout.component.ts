@@ -5,6 +5,7 @@ import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/rou
 // Servicio de Autenticación y Enums
 import { AuthService } from '../../core/auth/services/auth.service';
 import { Rol } from '../../shared/enums/rol.enum';
+import { StorageService, BUCKET_FOTOS_USUARIOS } from '../../core/services/storage.service';
 
 interface MenuItem {
   label: string;
@@ -27,6 +28,7 @@ interface MenuGroup {
 export class LayoutComponent implements OnInit {
   
   private authService = inject(AuthService);
+  private storage = inject(StorageService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
 
@@ -67,7 +69,8 @@ export class LayoutComponent implements OnInit {
       }
 
       this.userName = `${perfil.nombre || ''} ${perfil.apellido || ''}`.trim() || 'Usuario Academia';
-      this.userPhotoUrl = perfil.foto_url || null;
+      // Bucket privado: la URL guardada no abre directo, se firma
+      this.userPhotoUrl = await this.storage.firmarUrl(BUCKET_FOTOS_USUARIOS, perfil.foto_url);
       this.userInitial = this.userName.charAt(0).toUpperCase();
       this.userRole = perfil.rol || '';
 

@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from '../../../../../../core/supabase/supabase';
+import { StorageService, BUCKET_INFORMES_NUTRI } from '../../../../../../core/services/storage.service';
 import {
   NutriResultado,
   NutriResultadoConDetalle,
@@ -7,7 +8,7 @@ import {
   ActualizarNutriResultadoPayload
 } from '../models/resultado.interface';
 
-const BUCKET = 'nutri-informes';
+const BUCKET = BUCKET_INFORMES_NUTRI;
 const TIPOS_PERMITIDOS = ['application/pdf', 'image/png', 'image/jpeg'];
 const TAMANO_MAXIMO_BYTES = 10 * 1024 * 1024; // 10 MB
 
@@ -16,6 +17,7 @@ const TAMANO_MAXIMO_BYTES = 10 * 1024 * 1024; // 10 MB
 })
 export class NutriResultadoService {
   private supabase = inject(SupabaseService).client;
+  private storage = inject(StorageService);
 
   /**
    * Crea un nuevo resultado nutricional y sube su archivo adjunto si existe.
@@ -186,12 +188,16 @@ export class NutriResultadoService {
       (sesionesData ?? []).map((s: any) => [s.id, s])
     );
 
+    // Informes en bucket privado: URLs firmadas en una sola petición
+    const firmarArchivo = await this.storage.firmarUrls(BUCKET, resultados.map(r => r.archivo_url));
+
     return resultados.map(resultado => {
       const sesion = mapaSesiones.get(resultado.evaluacion_id);
       const tipoObj = Array.isArray(sesion?.tipo) ? sesion?.tipo[0] : sesion?.tipo;
 
       return {
         ...resultado,
+        archivo_url: firmarArchivo(resultado.archivo_url),
         evaluacion: {
           nombre: tipoObj?.nombre ?? 'Desconocido',
           fecha: sesion?.fecha ?? '',
@@ -229,11 +235,6 @@ export class NutriResultadoService {
   }
 
   private async borrarArchivo(url: string): Promise<void> {
-    const marcador = `/${BUCKET}/`;
-    const index = url.indexOf(marcador);
-    if (index === -1) return;
-    
-    const path = url.substring(index + marcador.length);
-    await this.supabase.storage.from(BUCKET).remove([path]);
+    await this.storage.borrar(BUCKET, url);
   }
 }

@@ -54,7 +54,7 @@
                 <h2 class="pf-anton text-chalk m-0 mb-2 text-2xl" style="letter-spacing: 0.5px;">Historial de Atenciones</h2>
                 <p *ngIf="esGestion" class="pf-oswald text-steel m-0">Paciente: <span class="font-bold text-teal text-lg">{{alumnoSeleccionado.nombreCompleto}}</span></p>
             </div>
-            <button *ngIf="esGestion" pButton label="Nueva Ficha" icon="pi pi-plus" class="pf-btn-primary w-full md:w-auto" (click)="abrirNuevaFicha()"></button>
+            <button *ngIf="puedeEditar" pButton label="Nueva Ficha" icon="pi pi-plus" class="pf-btn-primary w-full md:w-auto" (click)="abrirNuevaFicha()"></button>
         </div>
 
         <div class="pf-admin-card table-responsive p-0">
@@ -86,7 +86,7 @@
                             <span class="p-column-title pf-oswald text-steel hidden-desktop">Acciones: </span>
                             <div class="pf-table-actions justify-content-center">
                                 <button pButton icon="pi pi-eye" class="p-button-info" (click)="abrirVerFicha(h)" pTooltip="Ver Ficha"></button>
-                                <button *ngIf="esGestion" pButton icon="pi pi-pencil" class="p-button-warning" (click)="abrirEditarFicha(h)" pTooltip="Editar Ficha"></button>
+                                <button *ngIf="puedeEditar" pButton icon="pi pi-pencil" class="p-button-warning" (click)="abrirEditarFicha(h)" pTooltip="Editar Ficha"></button>
                             </div>
                         </td>
                     </tr>

@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from '../../../../../core/supabase/supabase';
 import { AsignacionStaff, AsignarStaffPayload, TipoStaff } from '../models/asignacion-staff.interface';
+import { StorageService, BUCKET_FOTOS_USUARIOS } from '../../../../../core/services/storage.service';
 
 // Mapeo interno para resolver dinámicamente la tabla y columna según el rol
 const CONFIG_STAFF: Record<TipoStaff, { tabla: string; columna: string }> = {
@@ -14,6 +15,7 @@ const CONFIG_STAFF: Record<TipoStaff, { tabla: string; columna: string }> = {
 })
 export class AsignacionStaffService {
   private supabase = inject(SupabaseService).client;
+  private storage = inject(StorageService);
 
   /**
    * Asigna un profesional a un grupo (Solo Administrador según RLS).
@@ -70,7 +72,13 @@ export class AsignacionStaffService {
       throw new Error(`No se pudo listar los ${tipo} del grupo: ${error.message}`);
     }
 
-    return (data ?? []).map((row: any) => this.normalizarAsignacion(row, columna));
+    const asignaciones = (data ?? []).map((row: any) => this.normalizarAsignacion(row, columna));
+
+    // Fotos en bucket privado: URLs firmadas en una sola petición
+    const firmarFoto = await this.storage.firmarUrls(BUCKET_FOTOS_USUARIOS, asignaciones.map(a => a.perfil?.foto_url));
+    asignaciones.forEach(a => { if (a.perfil) a.perfil.foto_url = firmarFoto(a.perfil.foto_url); });
+
+    return asignaciones;
   }
 
   /**

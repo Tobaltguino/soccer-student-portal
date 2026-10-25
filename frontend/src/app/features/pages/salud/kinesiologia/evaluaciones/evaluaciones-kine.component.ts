@@ -66,6 +66,7 @@ export class EvaluacionesKineComponent implements OnInit {
   esAdmin: boolean = false;
   esStaff: boolean = false; // Kinesiólogo
   esEstudiante: boolean = false;
+  esLector: boolean = false; // Profesor: solo ve sesiones y resultados de sus grupos
 
   // Colecciones Principales
   sesiones: any[] = [];
@@ -122,6 +123,7 @@ export class EvaluacionesKineComponent implements OnInit {
       this.esAdmin = this.rolActual === 'administrador';
       this.esEstudiante = this.rolActual === 'estudiante';
       this.esStaff = this.rolActual === 'kinesiologo';
+      this.esLector = this.rolActual === 'profesor';
 
       if (this.esEstudiante) {
         await this.cargarSesionesDelEstudiante();
@@ -152,7 +154,7 @@ export class EvaluacionesKineComponent implements OnInit {
       this.tiposEvaluacion = tiposRes || [];
       this.grupos = gruposRes || [];
 
-      if (this.esStaff && this.grupos.length === 0) {
+      if (!this.esAdmin && this.grupos.length === 0) {
         this.sesiones = [];
       } else {
         const grupoIds = this.esAdmin ? undefined : this.grupos.map(g => g.id);

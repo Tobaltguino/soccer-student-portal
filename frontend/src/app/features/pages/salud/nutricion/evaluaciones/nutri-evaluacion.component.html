@@ -5,7 +5,7 @@
     <!-- ========================================================================= -->
     <!-- VISTA GESTIÓN (ADMIN Y STAFF)                                             -->
     <!-- ========================================================================= -->
-    <ng-container *ngIf="esAdmin || esStaff">
+    <ng-container *ngIf="esAdmin || esStaff || esLector">
         <header class="pf-admin-header">
             <div class="header-content">
                 <div>
@@ -17,7 +17,7 @@
                 <button pButton icon="pi pi-sync" class="pf-btn-ghost" 
                         (click)="cargarDatosGestion()" [loading]="loading" pTooltip="Actualizar lista"></button>
                 <button *ngIf="esAdmin" pButton label="Configurar Tests" icon="pi pi-cog" class="pf-btn-ghost" (click)="abrirConfiguracionTipos()"></button>
-                <button pButton label="Nueva Sesión" icon="pi pi-plus" class="pf-btn-primary" (click)="abrirNuevo()"></button>
+                <button *ngIf="puedeEditar" pButton label="Nueva Sesión" icon="pi pi-plus" class="pf-btn-primary" (click)="abrirNuevo()"></button>
             </div>
         </header>
 
@@ -87,8 +87,9 @@
                         <td class="text-center">
                             <span class="p-column-title hidden-desktop pf-oswald text-steel">Acciones</span>
                             <div class="pf-table-actions justify-content-center">
-                                <button pButton icon="pi pi-pencil" class="p-button-warning" (click)="editarSesion(sesion)" pTooltip="Editar Logística"></button>
-                                <button pButton icon="pi pi-file-arrow-up" class="p-button-success" (click)="abrirCalificador(sesion)" pTooltip="Adjuntar Pautas"></button>
+                                <button *ngIf="puedeEditar" pButton icon="pi pi-pencil" class="p-button-warning" (click)="editarSesion(sesion)" pTooltip="Editar Logística"></button>
+                                <button *ngIf="puedeEditar" pButton icon="pi pi-file-arrow-up" class="p-button-success" (click)="abrirCalificador(sesion)" pTooltip="Adjuntar Pautas"></button>
+                                <button *ngIf="esLector" pButton icon="pi pi-eye" class="p-button-info" (click)="abrirCalificador(sesion)" pTooltip="Ver Resultados"></button>
                                 <button *ngIf="esAdmin" pButton icon="pi pi-trash" class="p-button-danger" (click)="eliminarSesion(sesion)" pTooltip="Eliminar Sesión"></button>
                             </div>
                         </td>
@@ -309,7 +310,7 @@
     </p-dialog>
 
     <!-- MODAL 3: CALIFICADOR / ADJUNTAR ARCHIVOS -->
-    <p-dialog [(visible)]="displayGradesDialog" header="Registro de Resultados" [modal]="true" [style]="{width: '95vw', maxWidth: '1000px'}" [maximizable]="true" styleClass="p-fluid pf-dialog" [draggable]="false" [resizable]="false" [closable]="!guardando">
+    <p-dialog [(visible)]="displayGradesDialog" [header]="esLector ? 'Resultados de la Evaluación' : 'Registro de Resultados'" [modal]="true" [style]="{width: '95vw', maxWidth: '1000px'}" [maximizable]="true" styleClass="p-fluid pf-dialog" [draggable]="false" [resizable]="false" [closable]="!guardando">
         <ng-template pTemplate="content">
             <div class="surface-hover p-4 border-round mb-4 flex justify-content-between align-items-center flex-wrap gap-2 mt-2 border-1 surface-border" style="border-color: var(--border-color) !important;">
                 <div class="flex flex-column">
@@ -327,8 +328,8 @@
                     <tr>
                         <th style="width: 25%">Estudiante</th>
                         <th style="width: 40%">Pauta / Archivo Adjunto</th>
-                        <th style="width: 25%">Observación (Opcional)</th>
-                        <th style="width: 10%" class="text-center">Limpiar</th>
+                        <th style="width: 25%">{{ esLector ? 'Observación' : 'Observación (Opcional)' }}</th>
+                        <th *ngIf="puedeEditar" style="width: 10%" class="text-center">Limpiar</th>
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="body" let-estudiante>
@@ -352,7 +353,7 @@
                                 </div>
                                 
                                 <div class="flex gap-2">
-                                    <button pButton type="button" label="Cambiar" icon="pi pi-sync" class="pf-btn-ghost w-full py-1 text-xs" (click)="fileInput.click()" [disabled]="guardando"></button>
+                                    <button *ngIf="puedeEditar" pButton type="button" label="Cambiar" icon="pi pi-sync" class="pf-btn-ghost w-full py-1 text-xs" (click)="fileInput.click()" [disabled]="guardando"></button>
                                     
                                     <a *ngIf="estudiante.archivo_url_previo && !estudiante.archivoSeleccionado" 
                                        [href]="estudiante.archivo_url_previo" target="_blank" 
@@ -364,13 +365,14 @@
                             </div>
 
                             <ng-template #noFile>
-                                <button pButton type="button" label="Adjuntar Pauta PDF" icon="pi pi-upload" class="pf-btn-ghost w-full border-dashed" (click)="fileInput.click()" [disabled]="guardando"></button>
+                                <button *ngIf="puedeEditar" pButton type="button" label="Adjuntar Pauta PDF" icon="pi pi-upload" class="pf-btn-ghost w-full border-dashed" (click)="fileInput.click()" [disabled]="guardando"></button>
+                                <span *ngIf="esLector" class="text-steel text-sm pf-oswald">Sin pauta adjunta</span>
                             </ng-template>
                         </td>
 
-                        <td><input pInputText [(ngModel)]="estudiante.observacion" placeholder="Ej: Bajar % grasa" class="w-full" [disabled]="guardando"></td>
-                        
-                        <td class="text-center">
+                        <td><input pInputText [(ngModel)]="estudiante.observacion" [placeholder]="esLector ? '' : 'Ej: Bajar % grasa'" class="w-full" [disabled]="guardando" [readonly]="esLector"></td>
+
+                        <td *ngIf="puedeEditar" class="text-center">
                             <button pButton icon="pi pi-eraser" class="p-button-rounded p-button-text p-button-danger p-0" style="width: 2rem; height: 2rem;" 
                                     (click)="limpiarFila(estudiante, fileInput)" pTooltip="Deshacer selección" [disabled]="guardando"></button>
                         </td>
@@ -384,10 +386,11 @@
         
         <ng-template pTemplate="footer">
             <div class="flex flex-column sm:flex-row justify-content-between align-items-center w-full gap-3 pt-3">
-                <small class="text-steel text-center sm:text-left pf-oswald"><i class="pi pi-info-circle mr-1 text-teal"></i>Se subirán los archivos de los estudiantes que hayas modificado.</small>
+                <small *ngIf="puedeEditar" class="text-steel text-center sm:text-left pf-oswald"><i class="pi pi-info-circle mr-1 text-teal"></i>Se subirán los archivos de los estudiantes que hayas modificado.</small>
+                <small *ngIf="esLector" class="text-steel text-center sm:text-left pf-oswald"><i class="pi pi-eye mr-1 text-teal"></i>Vista de solo lectura.</small>
                 <div class="flex gap-2 w-full sm:w-auto">
                     <button pButton label="Cerrar" icon="pi pi-times" class="pf-btn-ghost flex-1 sm:flex-none" (click)="displayGradesDialog = false" [disabled]="guardando"></button>
-                    <button pButton label="Subir y Guardar" icon="pi pi-cloud-upload" class="pf-btn-primary flex-1 sm:flex-none" (click)="guardarNotasFinales()" [loading]="guardando"></button>
+                    <button *ngIf="puedeEditar" pButton label="Subir y Guardar" icon="pi pi-cloud-upload" class="pf-btn-primary flex-1 sm:flex-none" (click)="guardarNotasFinales()" [loading]="guardando"></button>
                 </div>
             </div>
         </ng-template>
