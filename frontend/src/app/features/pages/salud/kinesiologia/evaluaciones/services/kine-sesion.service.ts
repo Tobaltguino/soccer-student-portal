@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from '../../../../../../core/supabase/supabase';
+import { AuthService } from '../../../../../../core/auth/services/auth.service';
 import {
   KineSesion,
   CrearKineSesionPayload,
@@ -14,6 +15,7 @@ import {
 })
 export class KineSesionService {
   private supabase = inject(SupabaseService).client;
+  private authService = inject(AuthService);
 
   /**
    * Crea una nueva sesión de evaluación kinesiológica para un grupo.
@@ -204,37 +206,17 @@ export class KineSesionService {
   // MÉTODOS PRIVADOS PARA CONTROL DE ACCESO
   // =========================================================================
   private async obtenerDatosYGruposPermitidos(): Promise<{ userId: string; rol: string; gruposPermitidos: number[] | null }> {
-    const { data: authData } = await this.supabase.auth.getUser();
-    const userId = authData?.user?.id;
-    
-    if (!userId) {
-      throw new Error('Debes iniciar sesión para realizar esta acción');
-    }
+    // Usuario, rol y grupos salen de la caché de AuthService (antes: 3 consultas por llamada)
+    const userId = await this.authService.obtenerUsuarioId();
+    const rol = await this.authService.obtenerRolActual();
 
-    const { data: perfil } = await this.supabase
-      .from('usu_perfiles')
-      .select('rol')
-      .eq('id_usuario', userId)
-      .maybeSingle();
-
-    const rol = (perfil?.rol || '').toLowerCase();
-    
     // El administrador tiene acceso a todos los grupos (null)
     if (rol === 'administrador') {
       return { userId, rol, gruposPermitidos: null };
     }
 
-    // Para el resto del staff, buscamos explícitamente sus grupos
-    const tabla = rol === 'profesor' ? 'aca_grupos_profesores' : 'aca_grupos_kinesiologos';
-    const columna = rol === 'profesor' ? 'profesor_id' : 'kinesiologo_id';
-
-    const { data: gruposData } = await this.supabase
-      .from(tabla)
-      .select('grupo_id')
-      .eq(columna, userId);
-
-    const gruposPermitidos = (gruposData ?? []).map((r: any) => r.grupo_id);
-
+    // Para el resto del staff, sus grupos asignados
+    const gruposPermitidos = await this.authService.obtenerGruposStaff();
     return { userId, rol, gruposPermitidos };
   }
 }

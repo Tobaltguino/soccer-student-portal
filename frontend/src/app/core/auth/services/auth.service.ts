@@ -43,12 +43,83 @@ export class AuthService {
     });
 
     this.supabaseService.client.auth.onAuthStateChange((_event, session) => {
+      // Otro usuario o sin sesión: el perfil y los grupos guardados ya no sirven
+      if (session?.user?.id !== this.cacheUserId) this.invalidarCache();
+
       this.authState.set({
         user: session?.user ?? null,
         session: session,
         isLoading: false
       });
     });
+  }
+
+  // =========================================================================
+  // CACHÉ DEL USUARIO ACTUAL (perfil, rol y grupos)
+  // Antes cada pantalla consultaba el perfil 3-5 veces (guard, layout,
+  // componente y cada service) y auth.getUser() iba al servidor cada vez.
+  // Se guarda por sesión; F5 o cambiar de usuario lo vuelve a cargar.
+  // =========================================================================
+  private cacheUserId: string | null = null;
+  private perfilCache: Promise<any | null> | null = null;
+  private gruposStaffCache: Promise<number[]> | null = null;
+
+  /** Limpia el perfil y los grupos guardados (ej. tras editar el propio perfil). */
+  invalidarCache(): void {
+    this.cacheUserId = null;
+    this.perfilCache = null;
+    this.gruposStaffCache = null;
+  }
+
+  private prepararCache(userId: string): void {
+    if (this.cacheUserId !== userId) {
+      this.invalidarCache();
+      this.cacheUserId = userId;
+    }
+  }
+
+  /** Id del usuario logueado, leído de la sesión local (sin ir al servidor como auth.getUser()). */
+  async obtenerUsuarioId(): Promise<string> {
+    await this.ready();
+    const userId = this.authState().session?.user?.id;
+    if (!userId) throw new Error('Debes iniciar sesión para realizar esta acción');
+    return userId;
+  }
+
+  /** Rol del usuario logueado en minúsculas ('' si no tiene perfil). */
+  async obtenerRolActual(): Promise<string> {
+    const perfil = await this.obtenerPerfilUsuario(await this.obtenerUsuarioId());
+    return (perfil?.rol || '').toLowerCase();
+  }
+
+  /**
+   * Grupos asignados al profesor / kinesiólogo / nutricionista logueado.
+   * Para otros roles devuelve []. (La seguridad real la sigue aplicando RLS.)
+   */
+  async obtenerGruposStaff(): Promise<number[]> {
+    const userId = await this.obtenerUsuarioId();
+    this.prepararCache(userId);
+
+    if (!this.gruposStaffCache) {
+      this.gruposStaffCache = (async () => {
+        const rol = await this.obtenerRolActual();
+        const config: Record<string, [string, string]> = {
+          profesor: ['aca_grupos_profesores', 'profesor_id'],
+          kinesiologo: ['aca_grupos_kinesiologos', 'kinesiologo_id'],
+          nutricionista: ['aca_grupos_nutricionistas', 'nutricionista_id']
+        };
+        if (!config[rol]) return [];
+
+        const [tabla, columna] = config[rol];
+        const { data, error } = await this.supabaseService.client.from(tabla).select('grupo_id').eq(columna, userId);
+        if (error) {
+          this.gruposStaffCache = null; // no guardar un error
+          throw new Error(`No se pudieron cargar tus grupos: ${error.message}`);
+        }
+        return (data ?? []).map((r: any) => r.grupo_id);
+      })();
+    }
+    return this.gruposStaffCache;
   }
 
   /**
@@ -64,20 +135,29 @@ export class AuthService {
   }
 
   /**
-   * Obtiene el perfil público del usuario desde la tabla de perfiles.
+   * Obtiene el perfil del usuario desde usu_perfiles. Se guarda en caché para el
+   * usuario logueado: varias llamadas simultáneas comparten una sola consulta.
    */
   async obtenerPerfilUsuario(userId: string) {
-    const { data, error } = await this.supabaseService.client
-      .from('usu_perfiles') // Verifica que el nombre coincida con tu tabla (ej: usu_perfiles o usuarios_perfiles)
-      .select('*')
-      .eq('id_usuario', userId)
-      .single();
+    this.prepararCache(userId);
 
-    if (error) {
-      console.error('Error al obtener el perfil de usuario:', error.message);
-      return null;
+    if (!this.perfilCache) {
+      this.perfilCache = (async () => {
+        const { data, error } = await this.supabaseService.client
+          .from('usu_perfiles')
+          .select('*')
+          .eq('id_usuario', userId)
+          .single();
+
+        if (error) {
+          console.error('Error al obtener el perfil de usuario:', error.message);
+          this.perfilCache = null; // no guardar un error: se reintenta en la próxima llamada
+          return null;
+        }
+        return data;
+      })();
     }
-    return data;
+    return this.perfilCache;
   }
 
   /**

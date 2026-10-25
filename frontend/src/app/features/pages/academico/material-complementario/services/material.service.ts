@@ -30,8 +30,8 @@ export class MaterialService {
   async crearMaterial(payload: CrearMaterialPayload, archivo: File): Promise<Material> {
     this.validarArchivo(archivo);
 
-    const { data: authData } = await this.supabase.auth.getUser();
-    const userId = authData?.user?.id;
+    const { data: authData } = await this.supabase.auth.getSession();
+    const userId = authData?.session?.user?.id;
 
     if (!userId) {
       throw new Error('Debes iniciar sesión para subir material complementario');

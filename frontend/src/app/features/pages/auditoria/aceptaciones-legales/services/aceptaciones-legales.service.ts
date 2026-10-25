@@ -32,8 +32,8 @@ export class AceptacionLegalService {
    * Consulta el registro de aceptación legal del usuario autenticado.
    */
   async obtenerMiAceptacion(): Promise<AceptacionLegal | null> {
-    const { data: authData } = await this.supabase.auth.getUser();
-    const usuarioId = authData?.user?.id;
+    const { data: authData } = await this.supabase.auth.getSession();
+    const usuarioId = authData?.session?.user?.id;
 
     if (!usuarioId) {
       throw new Error('Debes iniciar sesión');

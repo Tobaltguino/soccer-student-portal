@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from '../../../../../../core/supabase/supabase';
+import { AuthService } from '../../../../../../core/auth/services/auth.service';
 import {
   KineResultado,
   KineResultadoConDetalle,
@@ -13,6 +14,7 @@ import { CriterioPrioridad } from '../models/subevaluacion.interface';
 })
 export class KineResultadoService {
   private supabase = inject(SupabaseService).client;
+  private authService = inject(AuthService);
 
   /**
    * Registra un nuevo resultado validando la consistencia de lados y grupos.
@@ -94,8 +96,8 @@ export class KineResultadoService {
    * Lista los resultados del estudiante autenticado (solo de sesiones FINALIZADAS).
    */
   async listarMisResultados(): Promise<KineResultadoConDetalle[]> {
-    const { data: authData } = await this.supabase.auth.getUser();
-    const estudianteId = authData?.user?.id;
+    const { data: authData } = await this.supabase.auth.getSession();
+    const estudianteId = authData?.session?.user?.id;
 
     if (!estudianteId) throw new Error('Debes iniciar sesión');
 
@@ -265,19 +267,10 @@ export class KineResultadoService {
 
   // Helper de roles
   private async obtenerDatosYGruposPermitidos(): Promise<{ rol: string; gruposPermitidos: number[] | null }> {
-    const { data: authData } = await this.supabase.auth.getUser();
-    const userId = authData?.user?.id;
-    if (!userId) throw new Error('Debes iniciar sesión');
-
-    const { data: perfil } = await this.supabase.from('usu_perfiles').select('rol').eq('id_usuario', userId).maybeSingle();
-    const rol = (perfil?.rol || '').toLowerCase();
-    
+    // Rol y grupos salen de la caché de AuthService (antes: 3 consultas por cada resultado)
+    const rol = await this.authService.obtenerRolActual();
     if (rol === 'administrador') return { rol, gruposPermitidos: null };
 
-    const tabla = rol === 'profesor' ? 'aca_grupos_profesores' : 'aca_grupos_kinesiologos';
-    const columna = rol === 'profesor' ? 'profesor_id' : 'kinesiologo_id';
-    const { data } = await this.supabase.from(tabla).select('grupo_id').eq(columna, userId);
-
-    return { rol, gruposPermitidos: (data ?? []).map((r: any) => r.grupo_id) };
+    return { rol, gruposPermitidos: await this.authService.obtenerGruposStaff() };
   }
 }

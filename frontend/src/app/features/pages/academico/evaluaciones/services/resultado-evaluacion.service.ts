@@ -61,8 +61,8 @@ export class ResultadoEvaluacionService {
    * Lista los resultados del estudiante autenticado correspondientes a sesiones FINALIZADAS.
    */
   async listarMisResultados(): Promise<ResultadoConDetalle[]> {
-    const { data: authData } = await this.supabase.auth.getUser();
-    const estudianteId = authData?.user?.id;
+    const { data: authData } = await this.supabase.auth.getSession();
+    const estudianteId = authData?.session?.user?.id;
 
     if (!estudianteId) {
       throw new Error('Usuario no autenticado');

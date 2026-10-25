@@ -62,8 +62,8 @@ export class AsistenciaService {
    * RLS filtra automáticamente por estudiante_id = auth.uid()
    */
   async obtenerMisAsistencias(): Promise<Asistencia[]> {
-    const { data: authData } = await this.supabase.auth.getUser();
-    const userId = authData?.user?.id;
+    const { data: authData } = await this.supabase.auth.getSession();
+    const userId = authData?.session?.user?.id;
 
     if (!userId) {
       throw new Error('Usuario no autenticado');
