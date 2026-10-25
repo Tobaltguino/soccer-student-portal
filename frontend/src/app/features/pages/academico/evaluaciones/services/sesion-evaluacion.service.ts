@@ -63,6 +63,11 @@ export class SesionEvaluacionService {
       query = query.eq('grupo_id', filtros.grupoId);
     }
 
+    if (filtros.grupoIds) {
+      if (filtros.grupoIds.length === 0) return { registros: [], total: 0, pagina, limite };
+      query = query.in('grupo_id', filtros.grupoIds);
+    }
+
     if (filtros.desde) {
       query = query.gte('fecha', filtros.desde);
     }

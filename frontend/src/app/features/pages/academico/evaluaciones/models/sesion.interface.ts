@@ -26,6 +26,7 @@ export interface CambiarEstadoSesionPayload {
 
 export interface FiltrosSesiones {
   grupoId?: number;
+  grupoIds?: number[]; // Varios grupos en una sola consulta
   desde?: string;
   hasta?: string;
   incluirEliminadas?: boolean;

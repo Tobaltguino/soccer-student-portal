@@ -34,6 +34,11 @@ export class ClaseService {
       query = query.eq('grupo_id', filtros.grupoId);
     }
 
+    if (filtros.grupoIds) {
+      if (filtros.grupoIds.length === 0) return { registros: [], total: 0, pagina, limite };
+      query = query.in('grupo_id', filtros.grupoIds);
+    }
+
     if (filtros.lugar) {
       const lugarLimpio = filtros.lugar.replace(/[%_]/g, '');
       query = query.ilike('lugar', `%${lugarLimpio}%`);

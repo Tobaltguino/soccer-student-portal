@@ -193,15 +193,14 @@ export class EvaluacionesComponent implements OnInit {
           this.sesionesOriginales = [];
           this.grupos = tempGrupos;
         } else {
-          const peticionesSesiones = misGrupoIds.map(id => this.sesionService.listarSesiones({ grupoId: id, limite: 1000 }));
-          
-          const [tipos, ...sesionesGrupos] = await Promise.all([
+          // Una sola consulta para todos mis grupos (antes una por grupo)
+          const [tipos, sesionesRes] = await Promise.all([
             this.tipoEvalService.listarTiposEvaluacion(),
-            ...peticionesSesiones
+            this.sesionService.listarSesiones({ grupoIds: misGrupoIds, limite: 1000 })
           ]);
 
           this.tiposEvaluacion = tipos || [];
-          this.sesionesOriginales = sesionesGrupos.flatMap((res: any) => res.registros);
+          this.sesionesOriginales = sesionesRes.registros || [];
           this.grupos = tempGrupos;
         }
       }
@@ -577,27 +576,22 @@ export class EvaluacionesComponent implements OnInit {
     this.cdr.detectChanges();
     
     try {
-      const peticiones = notasValidas.map(e => {
-        const payload = {
-          sesionId: this.sesionSeleccionada.id,
+      // Todas las notas en una sola operación (antes: ~4 peticiones por alumno)
+      await this.resultadoService.guardarResultadosEnLote(
+        this.sesionSeleccionada.id,
+        notasValidas.map(e => ({
+          id: e.resultado_id ?? null,
           estudianteId: e.estudiante_id,
           valorNumerico: e.valor_numerico,
           observacion: e.observacion || ''
-        };
-  
-        if (e.resultado_id) {
-          return this.resultadoService.actualizarResultado(e.resultado_id, payload);
-        } else {
-          return this.resultadoService.crearResultado(payload);
-        }
-      });
+        }))
+      );
 
-      await Promise.all(peticiones);
       this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Resultados actualizados.' });
       this.displayGradesDialog = false;
-      await this.cargarDatosGestion(); 
-    } catch (error) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Fallo al guardar algunos resultados.' });
+      await this.cargarDatosGestion();
+    } catch (error: any) {
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: error?.message || 'Fallo al guardar los resultados.' });
     } finally {
       this.loading = false;
       this.cdr.detectChanges();

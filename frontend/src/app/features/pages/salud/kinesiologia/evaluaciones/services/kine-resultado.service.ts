@@ -9,6 +9,17 @@ import {
 } from '../models/resultado.interface';
 import { CriterioPrioridad } from '../models/subevaluacion.interface';
 
+/** Una celda del calificador (alumno × subevaluación). id = null → resultado nuevo. */
+export interface FilaResultadoKineLote {
+  id: number | null;
+  estudianteId: string;
+  subevaluacionId: number;
+  resultadoUnico: string | null;
+  resultadoIzquierdo: string | null;
+  resultadoDerecho: string | null;
+  observacion: string | null;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -71,6 +82,72 @@ export class KineResultadoService {
 
     const enriquecidos = await this.enriquecerResultadosEnLote([data as KineResultado]);
     return enriquecidos[0];
+  }
+
+  /**
+   * Guarda la matriz completa del calificador en 2 peticiones (insert de las nuevas +
+   * upsert por id de las existentes). Antes eran ~10 consultas por cada celda.
+   * Valida una sola vez el acceso a la sesión, el grupo de los alumnos nuevos y que
+   * cada resultado nuevo tenga los lados que exige su subevaluación.
+   */
+  async guardarResultadosEnLote(sesionId: string, filas: FilaResultadoKineLote[]): Promise<void> {
+    if (filas.length === 0) return;
+
+    const { gruposPermitidos } = await this.obtenerDatosYGruposPermitidos();
+    const sesion = await this.validarAccesoSesion(sesionId, gruposPermitidos);
+
+    const nuevas = filas.filter(f => f.id === null);
+    const existentes = filas.filter(f => f.id !== null);
+
+    if (nuevas.length > 0) {
+      const estudianteIds = [...new Set(nuevas.map(f => f.estudianteId))];
+      const subIds = [...new Set(nuevas.map(f => f.subevaluacionId))];
+
+      const [{ data: estudiantes, error: errEst }, { data: subevaluaciones, error: errSub }] = await Promise.all([
+        this.supabase.from('usu_estudiantes').select('id_usuario, grupo_id').in('id_usuario', estudianteIds),
+        this.supabase.from('kine_subevaluaciones').select('id, nombre, evalua_lados').in('id', subIds)
+      ]);
+      if (errEst) throw new Error(`No se pudieron validar los estudiantes: ${errEst.message}`);
+      if (errSub) throw new Error(`No se pudieron validar las subevaluaciones: ${errSub.message}`);
+
+      const grupoPorEstudiante = new Map((estudiantes ?? []).map((e: any) => [e.id_usuario, e.grupo_id]));
+      const subPorId = new Map((subevaluaciones ?? []).map((s: any) => [s.id, s]));
+
+      if (nuevas.some(f => grupoPorEstudiante.get(f.estudianteId) !== sesion.grupo_id)) {
+        throw new Error('Hay estudiantes que no pertenecen al grupo de esta sesión');
+      }
+
+      const incompletas = nuevas.filter(f => {
+        const sub = subPorId.get(f.subevaluacionId);
+        return sub?.evalua_lados ? (!f.resultadoIzquierdo || !f.resultadoDerecho) : !f.resultadoUnico;
+      });
+      if (incompletas.length > 0) {
+        const nombres = [...new Set(incompletas.map(f => subPorId.get(f.subevaluacionId)?.nombre ?? 'prueba'))];
+        throw new Error(`Faltan resultados en ${incompletas.length} celda(s) (${nombres.join(', ')}): las pruebas con lados requieren izquierdo y derecho, y el resto un resultado único.`);
+      }
+    }
+
+    const aFila = (f: FilaResultadoKineLote) => ({
+      sesion_id: sesionId,
+      estudiante_id: f.estudianteId,
+      subevaluacion_id: f.subevaluacionId,
+      resultado_unico: f.resultadoUnico,
+      resultado_izquierdo: f.resultadoIzquierdo,
+      resultado_derecho: f.resultadoDerecho,
+      observacion: f.observacion,
+    });
+
+    const [resInsert, resUpsert] = await Promise.all([
+      nuevas.length > 0
+        ? this.supabase.from('kine_evaluaciones_resultados').insert(nuevas.map(aFila))
+        : Promise.resolve({ error: null }),
+      existentes.length > 0
+        ? this.actualizarPorId('kine_evaluaciones_resultados', existentes.map(f => ({ id: f.id!, ...aFila(f) })))
+        : Promise.resolve({ error: null })
+    ]);
+
+    const error = resInsert.error || resUpsert.error;
+    if (error) throw new Error(`No se pudieron guardar los resultados: ${error.message}`);
   }
 
   /**
@@ -272,5 +349,19 @@ export class KineResultadoService {
     if (rol === 'administrador') return { rol, gruposPermitidos: null };
 
     return { rol, gruposPermitidos: await this.authService.obtenerGruposStaff() };
+  }
+
+  /**
+   * Actualiza varias filas existentes con un solo upsert por id. Si la columna id es
+   * GENERATED ALWAYS (Postgres no deja escribirla, error 428C9), cae a un update por fila.
+   */
+  private async actualizarPorId(tabla: string, filas: ({ id: number } & Record<string, any>)[]): Promise<{ error: any }> {
+    const { error } = await this.supabase.from(tabla).upsert(filas, { onConflict: 'id' });
+    if (error?.code !== '428C9') return { error };
+
+    const resultados = await Promise.all(
+      filas.map(({ id, ...campos }) => this.supabase.from(tabla).update(campos).eq('id', id))
+    );
+    return { error: resultados.find(r => r.error)?.error ?? null };
   }
 }

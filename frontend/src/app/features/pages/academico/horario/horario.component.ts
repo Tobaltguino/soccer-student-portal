@@ -109,13 +109,9 @@ export class HorarioComponent implements OnInit {
         const misGrupos = await this.grupoService.obtenerMisGrupos() || [];
         const mapaGrupos = new Map(misGrupos.map((g: any) => [g.id, g.nombre]));
 
-        // Peticiones directas de promesa
-        const peticionesClases = misGrupos.map((g: any) => 
-          this.claseService.listarClases({ grupoId: g.id, limite: 1000 })
-        );
-        
-        const respuestas = await Promise.all(peticionesClases);
-        clasesRaw = respuestas.flatMap((res: any) => res.registros || []).map((c: any) => ({
+        // Una sola consulta para todos mis grupos (antes una por grupo)
+        const respuesta = await this.claseService.listarClases({ grupoIds: misGrupos.map((g: any) => g.id), limite: 1000 });
+        clasesRaw = (respuesta.registros || []).map((c: any) => ({
           ...c,
           grupoNombre: mapaGrupos.get(c.grupo_id) || 'Desconocido'
         }));

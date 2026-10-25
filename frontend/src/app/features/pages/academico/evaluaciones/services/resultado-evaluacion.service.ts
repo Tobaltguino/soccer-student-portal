@@ -41,6 +41,45 @@ export class ResultadoEvaluacionService {
   }
 
   /**
+   * Guarda las notas de toda la sesión en 2 peticiones (insert de las nuevas + upsert por id
+   * de las existentes). Antes eran ~4 peticiones por alumno. RLS valida grupo y permisos.
+   */
+  async guardarResultadosEnLote(
+    sesionId: string,
+    filas: { id: number | null; estudianteId: string; valorNumerico: number | null; observacion: string }[]
+  ): Promise<void> {
+    if (filas.length === 0) return;
+
+    // valor_numerico es NOT NULL en la base: una observación sola no se puede guardar
+    const sinNota = filas.filter(f => f.valorNumerico === null || f.valorNumerico === undefined);
+    if (sinNota.length > 0) {
+      throw new Error(`${sinNota.length} alumno(s) tienen observación pero no nota. Ingresa la nota o borra la observación.`);
+    }
+
+    const aFila = (f: typeof filas[number]) => ({
+      sesion_id: sesionId,
+      estudiante_id: f.estudianteId,
+      valor_numerico: f.valorNumerico,
+      observacion: f.observacion || null,
+    });
+
+    const nuevas = filas.filter(f => f.id === null);
+    const existentes = filas.filter(f => f.id !== null);
+
+    const [resInsert, resUpsert] = await Promise.all([
+      nuevas.length > 0
+        ? this.supabase.from('aca_evaluaciones_resultados').insert(nuevas.map(aFila))
+        : Promise.resolve({ error: null }),
+      existentes.length > 0
+        ? this.actualizarPorId('aca_evaluaciones_resultados', existentes.map(f => ({ id: f.id!, ...aFila(f) })))
+        : Promise.resolve({ error: null })
+    ]);
+
+    const error = resInsert.error || resUpsert.error;
+    if (error) throw new Error(`No se pudieron guardar las notas: ${error.message}`);
+  }
+
+  /**
    * Lista todos los resultados asociados a una sesión específica (Admin, Profe, Kine).
    */
   async listarResultadosPorSesion(sesionId: string): Promise<ResultadoConDetalle[]> {
@@ -287,5 +326,19 @@ export class ResultadoEvaluacionService {
         }
       };
     });
+  }
+
+  /**
+   * Actualiza varias filas existentes con un solo upsert por id. Si la columna id es
+   * GENERATED ALWAYS (Postgres no deja escribirla, error 428C9), cae a un update por fila.
+   */
+  private async actualizarPorId(tabla: string, filas: ({ id: number } & Record<string, any>)[]): Promise<{ error: any }> {
+    const { error } = await this.supabase.from(tabla).upsert(filas, { onConflict: 'id' });
+    if (error?.code !== '428C9') return { error };
+
+    const resultados = await Promise.all(
+      filas.map(({ id, ...campos }) => this.supabase.from(tabla).update(campos).eq('id', id))
+    );
+    return { error: resultados.find(r => r.error)?.error ?? null };
   }
 }

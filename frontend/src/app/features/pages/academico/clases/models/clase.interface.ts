@@ -33,6 +33,7 @@ export interface ActualizarClasePayload extends Partial<CrearClasePayload> {}
 
 export interface FiltrosClase {
   grupoId?: number;
+  grupoIds?: number[]; // Varios grupos en una sola consulta
   desde?: string;
   hasta?: string;
   lugar?: string;
