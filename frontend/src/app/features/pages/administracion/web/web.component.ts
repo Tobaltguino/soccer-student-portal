@@ -142,10 +142,7 @@ export class WebComponent implements OnInit {
       await this.webConfigService.actualizarConfiguracion(payload);
       this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Configuración actualizada' });
     } catch (err: any) {
-      let errorDetalle = err.message || 'No se pudo actualizar la configuración';
-      if (err.error?.message) {
-        errorDetalle = Array.isArray(err.error.message) ? err.error.message.join(' · ') : err.error.message;
-      }
+      const errorDetalle = err?.message || 'No se pudo actualizar la configuración';
       this.messageService.add({ severity: 'error', summary: 'Error de Validación', detail: errorDetalle, life: 6000 });
     } finally {
       this.guardando = false;
@@ -228,7 +225,7 @@ export class WebComponent implements OnInit {
       this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Metodología guardada' });
     } catch (err: any) {
       let msg = err.message || 'Error al guardar';
-      if (err.error?.message) msg = Array.isArray(err.error.message) ? err.error.message.join(' · ') : err.error.message;
+      if (err?.message) msg = err.message;
       this.mostrarError(msg); 
     } finally {
       this.guardando = false; 
@@ -263,7 +260,7 @@ export class WebComponent implements OnInit {
       this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Categoría guardada' });
     } catch (err: any) {
       let msg = err.message || 'Error al guardar';
-      if (err.error?.message) msg = Array.isArray(err.error.message) ? err.error.message.join(' · ') : err.error.message;
+      if (err?.message) msg = err.message;
       this.mostrarError(msg); 
     } finally {
       this.guardando = false; 

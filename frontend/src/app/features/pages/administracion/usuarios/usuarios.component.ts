@@ -208,9 +208,13 @@ export class UsuariosComponent implements OnInit {
     }
   }
 
-  descargarExcel() {
+  async descargarExcel() {
     this.messageService.add({ severity: 'info', summary: 'Exportando', detail: 'Generando directorio completo...' });
-    this.excelService.exportarUsuarios({});
+    try {
+      await this.excelService.exportarUsuarios({});
+    } catch (error: any) {
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: error?.message || 'No se pudo generar el Excel' });
+    }
   }
 
   // --- LÓGICA DE FOTOS ---
@@ -413,9 +417,7 @@ export class UsuariosComponent implements OnInit {
   private mostrarErrorGuardado(err: any) {
     this.guardando = false;
     let errorDetalle = 'Error al procesar la solicitud';
-    if (err.error?.message) {
-      errorDetalle = Array.isArray(err.error.message) ? err.error.message.join(' · ') : err.error.message;
-    } else if (err.message) {
+    if (err?.message) {
       errorDetalle = err.message;
     }
     this.messageService.add({ severity: 'error', summary: 'Error de Validación', detail: errorDetalle, life: 6000 });
@@ -458,7 +460,7 @@ export class UsuariosComponent implements OnInit {
           this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Usuario borrado del sistema.' });
           await this.cargarDatos();
         } catch (err: any) {
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || err.message || 'No se puede eliminar.' });
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: err?.message || 'No se puede eliminar.' });
         }
       }
     });

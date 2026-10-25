@@ -325,7 +325,7 @@ export class ClasesComponent implements OnInit {
       this.displayForm = false;
       await this.aplicarFiltrosGestion();
     } catch (error: any) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: error.error?.message || 'Ocurrió un error al guardar la clase.' });
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: error?.message || 'Ocurrió un error al guardar la clase.' });
     } finally {
       this.saving = false;
     }
@@ -347,14 +347,14 @@ export class ClasesComponent implements OnInit {
           this.messageService.add({ severity: 'success', summary: 'Eliminada', detail: 'Clase eliminada exitosamente' });
           await this.aplicarFiltrosGestion();
         } catch (err: any) {
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'No se pudo eliminar la clase' });
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: err?.message || 'No se pudo eliminar la clase' });
         }
       }
     });
   }
 
   // --- EXPORTAR EXCEL (SOLO ADMIN) ---
-  descargarExcel() {
+  async descargarExcel() {
     if (this.clases.length === 0 && !this.filtroFecha && !this.filtroGrupoId) {
       this.messageService.add({ severity: 'warn', summary: 'Sin datos', detail: 'No hay clases para exportar con los filtros actuales.' });
       return;
@@ -375,14 +375,14 @@ export class ClasesComponent implements OnInit {
 
     try {
       this.messageService.add({ severity: 'info', summary: 'Exportando', detail: 'Generando archivo...' });
-      this.excelService.exportarClases({
+      await this.excelService.exportarClases({
         grupoId: this.filtroGrupoId || undefined,
         desde: fechaDesdeStr,
         hasta: fechaHastaStr,
         lugar: this.filtroLugar?.trim() || undefined
       });
-    } catch (error) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo exportar el archivo Excel' });
+    } catch (error: any) {
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: error?.message || 'No se pudo exportar el archivo Excel' });
     }
   }
 

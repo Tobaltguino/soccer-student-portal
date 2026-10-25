@@ -223,7 +223,7 @@ export class NutriEvaluacionComponent implements OnInit {
           this.mostrarExito('Test eliminado correctamente');
           this.tiposEvaluacion = await this.nutriTipoService.listarTiposEvaluacion() || [];
         } catch (err: any) {
-          if (err?.error?.message?.includes('violates foreign key') || err?.error?.statusCode === 500) {
+          if (err?.message?.includes('foreign key')) {
             this.mostrarError('No se puede eliminar porque ya hay sesiones usando este test.');
           } else {
             this.mostrarError('Hubo un error al eliminar el test');
@@ -297,7 +297,7 @@ export class NutriEvaluacionComponent implements OnInit {
       await this.cargarDatosGestion();
     } catch (err: any) {
       let msg = 'Error al procesar la sesión';
-      if (err.error?.message) msg = Array.isArray(err.error.message) ? err.error.message.join(' · ') : err.error.message;
+      if (err?.message) msg = err.message;
       this.mostrarError(msg);
     } finally {
       this.guardando = false;
