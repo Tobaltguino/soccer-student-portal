@@ -71,8 +71,8 @@ export class ClaseService {
    * como las históricas donde tenga asistencia registrada.
    */
   async obtenerMisClases(): Promise<Clase[]> {
-    const { data: authData } = await this.supabase.auth.getUser();
-    const estudianteId = authData?.user?.id;
+    const { data: authData } = await this.supabase.auth.getSession();
+    const estudianteId = authData?.session?.user?.id;
 
     if (!estudianteId) {
       throw new Error('Usuario no autenticado');
@@ -139,8 +139,8 @@ export class ClaseService {
     let profesorId = payload.profesorId ?? null;
 
     if (!profesorId) {
-      const { data: authData } = await this.supabase.auth.getUser();
-      profesorId = authData?.user?.id ?? null;
+      const { data: authData } = await this.supabase.auth.getSession();
+      profesorId = authData?.session?.user?.id ?? null;
     }
 
     const { data, error } = await this.supabase

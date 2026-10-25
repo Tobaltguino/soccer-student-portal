@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from '../../../../../../core/supabase/supabase';
+import { AuthService } from '../../../../../../core/auth/services/auth.service';
 import {
   HistorialClinico,
   CrearHistorialPayload,
@@ -11,6 +12,7 @@ import {
 })
 export class HistorialClinicoService {
   private supabase = inject(SupabaseService).client;
+  private authService = inject(AuthService);
 
   /**
    * Crea un nuevo registro en el historial clínico de un estudiante.
@@ -40,8 +42,8 @@ export class HistorialClinicoService {
    * Lista el historial clínico del estudiante autenticado.
    */
   async listarMiHistorial(): Promise<HistorialClinico[]> {
-    const { data: authData } = await this.supabase.auth.getUser();
-    const estudianteId = authData?.user?.id;
+    const { data: authData } = await this.supabase.auth.getSession();
+    const estudianteId = authData?.session?.user?.id;
 
     if (!estudianteId) throw new Error('Usuario no autenticado');
 
@@ -259,24 +261,12 @@ export class HistorialClinicoService {
   // MÉTODOS PRIVADOS
   // =========================================================================
   private async obtenerDatosAutenticacion(): Promise<{ userId: string; rol: string }> {
-    const { data: authData } = await this.supabase.auth.getUser();
-    const userId = authData?.user?.id;
-    if (!userId) throw new Error('Debes iniciar sesión');
-
-    const { data: perfil } = await this.supabase
-      .from('usu_perfiles')
-      .select('rol')
-      .eq('id_usuario', userId)
-      .maybeSingle();
-
-    return { userId, rol: (perfil?.rol || '').toLowerCase() };
+    // Usuario y rol salen de la caché de AuthService
+    const userId = await this.authService.obtenerUsuarioId();
+    return { userId, rol: await this.authService.obtenerRolActual() };
   }
 
-  private async obtenerIdsGruposAsignadosStaff(userId: string, rol: string): Promise<number[]> {
-    const tabla = rol === 'profesor' ? 'aca_grupos_profesores' : 'aca_grupos_kinesiologos';
-    const columna = rol === 'profesor' ? 'profesor_id' : 'kinesiologo_id';
-
-    const { data } = await this.supabase.from(tabla).select('grupo_id').eq(columna, userId);
-    return (data ?? []).map((r: any) => r.grupo_id);
+  private async obtenerIdsGruposAsignadosStaff(_userId: string, _rol: string): Promise<number[]> {
+    return this.authService.obtenerGruposStaff();
   }
 }

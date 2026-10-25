@@ -21,8 +21,8 @@ export class SesionEvaluacionService {
    * Registra automáticamente el usuario autenticado en 'creado_por'.
    */
   async crearSesion(payload: CrearSesionPayload): Promise<SesionEvaluacion> {
-    const { data: authData } = await this.supabase.auth.getUser();
-    const creadoPor = authData?.user?.id ?? null;
+    const { data: authData } = await this.supabase.auth.getSession();
+    const creadoPor = authData?.session?.user?.id ?? null;
 
     const { data, error } = await this.supabase
       .from('aca_evaluaciones_sesiones')

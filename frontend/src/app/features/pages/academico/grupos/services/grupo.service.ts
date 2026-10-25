@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from '../../../../../core/supabase/supabase';
+import { AuthService } from '../../../../../core/auth/services/auth.service';
 import {
   Grupo,
   CrearGrupoPayload,
@@ -11,6 +12,7 @@ import {
 })
 export class GrupoService {
   private supabase = inject(SupabaseService).client;
+  private authService = inject(AuthService);
 
   /**
    * Lista los grupos permitidos para el usuario actual.
@@ -19,25 +21,15 @@ export class GrupoService {
    * - Incluye el conteo de estudiantes inscritos (usu_estudiantes).
    */
   async listarGrupos(incluirEliminados: boolean = false): Promise<Grupo[]> {
-    const { data: authData } = await this.supabase.auth.getUser();
-    const userId = authData?.user?.id;
-
     let gruposAsignadosIds: number[] | null = null;
 
-    if (userId) {
-      const { data: perfil } = await this.supabase
-        .from('usu_perfiles')
-        .select('rol')
-        .eq('id_usuario', userId)
-        .maybeSingle();
+    // Rol y grupos salen de la caché de AuthService (antes: 3 consultas en cada pantalla)
+    const rol = await this.authService.obtenerRolActual();
 
-      const rol = (perfil?.rol || '').toLowerCase();
-
-      if (rol === 'profesor' || rol === 'kinesiologo' || rol === 'nutricionista') {
-        gruposAsignadosIds = await this.obtenerIdsGruposAsignadosStaff(userId, rol);
-        if (gruposAsignadosIds.length === 0) {
-          return [];
-        }
+    if (rol === 'profesor' || rol === 'kinesiologo' || rol === 'nutricionista') {
+      gruposAsignadosIds = await this.authService.obtenerGruposStaff();
+      if (gruposAsignadosIds.length === 0) {
+        return [];
       }
     }
 
@@ -170,33 +162,6 @@ export class GrupoService {
   // =========================================================================
   // MÉTODOS PRIVADOS AUXILIARES
   // =========================================================================
-  private async obtenerIdsGruposAsignadosStaff(userId: string, rol: string): Promise<number[]> {
-    if (rol === 'profesor') {
-      const { data } = await this.supabase
-        .from('aca_grupos_profesores')
-        .select('grupo_id')
-        .eq('profesor_id', userId);
-      return (data ?? []).map((r: any) => r.grupo_id);
-    }
-
-    if (rol === 'kinesiologo') {
-      const { data } = await this.supabase
-        .from('aca_grupos_kinesiologos')
-        .select('grupo_id')
-        .eq('kinesiologo_id', userId);
-      return (data ?? []).map((r: any) => r.grupo_id);
-    }
-
-    if (rol === 'nutricionista') {
-      const { data } = await this.supabase
-        .from('aca_grupos_nutricionistas')
-        .select('grupo_id')
-        .eq('nutricionista_id', userId);
-      return (data ?? []).map((r: any) => r.grupo_id);
-    }
-
-    return [];
-  }
 
   private mapearConteoAlumnos(grupoRaw: any): Grupo {
     const count = grupoRaw.estudiantes?.[0]?.count ?? 0;

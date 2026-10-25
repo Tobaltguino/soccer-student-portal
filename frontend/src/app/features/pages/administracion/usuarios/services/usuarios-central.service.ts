@@ -121,9 +121,9 @@ export class UsuarioCentralService {
   }
 
   async obtenerMiPerfil(): Promise<UsuarioPerfilCompleto> {
-    const { data: authData } = await this.supabase.auth.getUser();
-    if (!authData?.user) throw new Error('Usuario no autenticado');
-    return this.obtenerUsuarioPorId(authData.user.id);
+    const { data: authData } = await this.supabase.auth.getSession();
+    if (!authData?.session?.user) throw new Error('Usuario no autenticado');
+    return this.obtenerUsuarioPorId(authData.session!.user.id);
   }
 
   async obtenerUsuarioPorId(id: string): Promise<UsuarioPerfilCompleto> {

@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from '../../../../../../core/supabase/supabase';
+import { AuthService } from '../../../../../../core/auth/services/auth.service';
 import {
   NutriSesion,
   CrearNutriSesionPayload,
@@ -15,6 +16,7 @@ import {
 })
 export class NutriSesionService {
   private supabase = inject(SupabaseService).client;
+  private authService = inject(AuthService);
 
   /**
    * Crea una nueva sesión nutricional.
@@ -238,19 +240,8 @@ export class NutriSesionService {
   // HELPER PARA ROLES Y AUTENTICACIÓN
   // =========================================================================
   private async obtenerDatosAutenticacion(): Promise<{ userId: string; rol: string }> {
-    const { data: authData } = await this.supabase.auth.getUser();
-    const userId = authData?.user?.id;
-
-    if (!userId) {
-      throw new Error('Debes iniciar sesión para realizar esta acción');
-    }
-
-    const { data: perfil } = await this.supabase
-      .from('usu_perfiles')
-      .select('rol')
-      .eq('id_usuario', userId)
-      .maybeSingle();
-
-    return { userId, rol: (perfil?.rol || '').toLowerCase() };
+    // Usuario y rol salen de la caché de AuthService
+    const userId = await this.authService.obtenerUsuarioId();
+    return { userId, rol: await this.authService.obtenerRolActual() };
   }
 }

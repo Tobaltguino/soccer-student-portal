@@ -58,8 +58,8 @@ export class FichaEvolutivaService {
    * Lista el historial de fichas del estudiante autenticado.
    */
   async listarMisFichas(): Promise<FichaEvolutiva[]> {
-    const { data: authData } = await this.supabase.auth.getUser();
-    const estudianteId = authData?.user?.id;
+    const { data: authData } = await this.supabase.auth.getSession();
+    const estudianteId = authData?.session?.user?.id;
 
     if (!estudianteId) throw new Error('Usuario no autenticado');
 

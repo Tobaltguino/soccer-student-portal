@@ -71,8 +71,8 @@ export class NutriResultadoService {
    * Lista los resultados nutricionales del estudiante autenticado (solo de sesiones FINALIZADAS).
    */
   async listarMisResultados(): Promise<NutriResultadoConDetalle[]> {
-    const { data: authData } = await this.supabase.auth.getUser();
-    const estudianteId = authData?.user?.id;
+    const { data: authData } = await this.supabase.auth.getSession();
+    const estudianteId = authData?.session?.user?.id;
 
     if (!estudianteId) throw new Error('Usuario no autenticado');
 
