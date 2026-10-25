@@ -13,6 +13,7 @@ import {
 const BUCKET_FOTOS = 'usuarios-fotos';
 const TIPOS_IMAGEN_PERMITIDOS = ['image/png', 'image/jpeg', 'image/webp'];
 const TAMANO_MAXIMO_FOTO = 3 * 1024 * 1024; // 3 MB
+const LIMITE_MAXIMO_FILAS = 1000; // Máximo de filas que devuelve Supabase por petición
 
 @Injectable({
   providedIn: 'root'
@@ -30,7 +31,7 @@ export class UsuarioCentralService {
     });
 
     if (error || !data) {
-      throw new Error(`No se pudo crear el usuario: ${error?.message || 'Error en Edge Function'}`);
+      throw new Error(`No se pudo crear el usuario: ${await this.mensajeErrorFuncion(error)}`);
     }
 
     return this.obtenerUsuarioPorId(data.id_usuario);
@@ -41,22 +42,23 @@ export class UsuarioCentralService {
    */
   async listarUsuarios(filtros: FiltrosUsuarios = {}): Promise<PaginacionUsuarios> {
     const pagina = filtros.pagina ?? 1;
-    const limite = Math.min(filtros.limite ?? 20, 100);
+    // 1000 = máximo de filas por petición de Supabase (antes se cortaba en 100 sin avisar)
+    const limite = Math.min(filtros.limite ?? 20, LIMITE_MAXIMO_FILAS);
     const desde = (pagina - 1) * limite;
     const hasta = desde + limite - 1;
+
+    // Al filtrar estudiantes por grupo, el join debe ser !inner: si no, PostgREST solo
+    // filtra la relación anidada y devuelve igual a todos los estudiantes.
+    const filtraPorGrupo = filtros.rol === Rol.ESTUDIANTE && !!filtros.grupoIds?.length;
+    const relacionEstudiante = filtraPorGrupo ? 'usu_estudiantes!inner' : 'usu_estudiantes';
 
     // Con Supabase seleccionamos las relaciones dinámicamente
     let query = this.supabase
       .from('usu_perfiles')
       .select(`
         *,
-        datosEstudiante:usu_estudiantes(*),
+        datosEstudiante:${relacionEstudiante}(*),
         datosProfesor:usu_profesores(*)
-        /* 🔥 COMENTAMOS ESTO HASTA ARREGLAR LAS LLAVES FORÁNEAS EN SUPABASE 🔥
-        ,gruposProfesores:aca_grupos_profesores(grupo_id),
-        gruposKinesiologos:aca_grupos_kinesiologos(grupo_id),
-        gruposNutricionistas:aca_grupos_nutricionistas(grupo_id)
-        */
       `, { count: 'exact' })
       .order('nombre', { ascending: true })
       .range(desde, hasta);
@@ -71,8 +73,8 @@ export class UsuarioCentralService {
     }
 
     // Filtros específicos que requieren PostgREST inner joins
-    if (filtros.rol === Rol.ESTUDIANTE && filtros.grupoIds && filtros.grupoIds.length > 0) {
-      query = query.in('datosEstudiante.grupo_id', filtros.grupoIds);
+    if (filtraPorGrupo) {
+      query = query.in('datosEstudiante.grupo_id', filtros.grupoIds!);
     }
 
     const { data, error, count } = await query;
@@ -141,7 +143,7 @@ export class UsuarioCentralService {
     // ⚠️ Si cambian el email, debes llamar a una Edge Function por temas de seguridad de Auth Admin
     if (payload.email) {
       const { error } = await this.supabase.functions.invoke('admin-actualizar-email', { body: { id_usuario: id, email: payload.email } });
-      if (error) throw new Error(`No se pudo actualizar el email: ${error.message}`);
+      if (error) throw new Error(`No se pudo actualizar el email: ${await this.mensajeErrorFuncion(error)}`);
     }
 
     const camposBase: Record<string, any> = {};
@@ -192,7 +194,16 @@ export class UsuarioCentralService {
   async eliminarUsuario(id: string): Promise<void> {
     // ⚠️ Eliminar un usuario completo (Auth + Tablas) requiere la Admin API en una Edge Function
     const { error } = await this.supabase.functions.invoke('admin-eliminar-usuario', { body: { id_usuario: id } });
-    if (error) throw new Error(`No se pudo eliminar el usuario: ${error.message}`);
+    if (error) throw new Error(`No se pudo eliminar el usuario: ${await this.mensajeErrorFuncion(error)}`);
+  }
+
+  /**
+   * functions.invoke solo dice "non-2xx status code"; el motivo real viene
+   * en el cuerpo de la respuesta ({ error: '...' }) de la Edge Function.
+   */
+  private async mensajeErrorFuncion(error: any): Promise<string> {
+    const detalle = await error?.context?.json?.().catch(() => null);
+    return detalle?.error || error?.message || 'Error en Edge Function';
   }
 
   // =========================================================================
@@ -258,26 +269,31 @@ export class UsuarioCentralService {
 
     // 2. Buscamos los IDs de los profesionales asignados a ese grupo en las tablas intermedias
     const [profes, kines, nutris] = await Promise.all([
-      this.supabase.from('aca_grupos_profesores').select('usuario_id').eq('grupo_id', grupoId),
-      this.supabase.from('aca_grupos_kinesiologos').select('usuario_id').eq('grupo_id', grupoId),
-      this.supabase.from('aca_grupos_nutricionistas').select('usuario_id').eq('grupo_id', grupoId)
+      this.supabase.from('aca_grupos_profesores').select('profesor_id').eq('grupo_id', grupoId),
+      this.supabase.from('aca_grupos_kinesiologos').select('kinesiologo_id').eq('grupo_id', grupoId),
+      this.supabase.from('aca_grupos_nutricionistas').select('nutricionista_id').eq('grupo_id', grupoId)
     ]);
+
+    const errorAsignaciones = profes.error || kines.error || nutris.error;
+    if (errorAsignaciones) {
+      throw new Error(`Error al obtener el cuerpo técnico: ${errorAsignaciones.message}`);
+    }
 
     // Consolidamos todos los IDs encontrados
     const idsStaff = [
-      ...(profes.data || []).map(p => p.usuario_id),
-      ...(kines.data || []).map(k => k.usuario_id),
-      ...(nutris.data || []).map(n => n.usuario_id)
+      ...(profes.data || []).map(p => p.profesor_id),
+      ...(kines.data || []).map(k => k.kinesiologo_id),
+      ...(nutris.data || []).map(n => n.nutricionista_id)
     ];
 
     if (idsStaff.length === 0) return [];
 
-    // 3. Traemos los perfiles completos de esos profesionales
+    // 3. Traemos solo los datos que muestra la tarjeta (sin RUT, teléfono ni fecha de nacimiento)
     const { data: perfiles, error } = await this.supabase
       .from('usu_perfiles')
       .select(`
-        *,
-        datosProfesor:usu_profesores(*)
+        id_usuario, nombre, apellido, email, rol, foto_url,
+        datosProfesor:usu_profesores(tipo_profesor)
       `)
       .in('id_usuario', idsStaff)
       .eq('activo', true);

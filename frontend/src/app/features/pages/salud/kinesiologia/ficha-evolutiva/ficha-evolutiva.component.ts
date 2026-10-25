@@ -24,6 +24,7 @@ import { Rol } from '../../../../../shared/enums/rol.enum';
 // Servicios Locales (Feature-Based)
 import { UsuarioCentralService } from '../../../administracion/usuarios/services/usuarios-central.service';
 import { FichaEvolutivaService } from './services/ficha-evolutiva.service';
+import { CrearFichaPayload } from './models/ficha-evolutiva.interface';
 
 @Component({
   selector: 'app-ficha-evolutiva',
@@ -275,7 +276,7 @@ export class FichaEvolutivaComponent implements OnInit {
         this.listaArticulaciones = this.generarArticulacionesPorDefecto();
     }
 
-    this.listaFuerzas = fichaBd.fuerza || [];
+    this.listaFuerzas = fichaBd.fuerza_movimientos || [];
   }
 
   // --- MATRICES DINÁMICAS ---
@@ -305,7 +306,8 @@ export class FichaEvolutivaComponent implements OnInit {
     this.guardando = true;
     this.cdr.detectChanges();
 
-    const payload = {
+    // Tipado explícito: así un nombre de campo mal escrito (ej. "fuerza") no compila
+    const payload: Omit<CrearFichaPayload, 'estudianteId'> = {
       kinesiologoId: this.ficha.kinesiologoId,
       fechaEvaluacion: this.formatearFechaIso(this.ficha.fechaEvaluacion),
       diagnosticoMedico: this.ficha.diagnosticoMedico,
@@ -314,7 +316,7 @@ export class FichaEvolutivaComponent implements OnInit {
       inspeccionEstatica: this.ficha.inspeccionEstatica,
       inspeccionDinamica: this.ficha.inspeccionDinamica,
       rangoMovimiento: this.listaArticulaciones,
-      fuerza: this.listaFuerzas,
+      fuerzaMovimientos: this.listaFuerzas,
       postura: this.ficha.postura,
       sensibilidad: this.ficha.sensibilidad,
       marcha: this.ficha.marcha,

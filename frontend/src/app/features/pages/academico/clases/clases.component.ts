@@ -236,13 +236,13 @@ export class ClasesComponent implements OnInit {
     if (!this.claseSeleccionadaAsistencia || !this.claseSeleccionadaAsistencia.id) return;
 
     this.loadingAsistencia = true;
+    // El checkbox es binario: lo que se ve desmarcado se guarda como ausente
+    // (antes los alumnos no tocados quedaban "Pendiente" para siempre)
     const payload = {
-      asistencias: this.alumnosAsistencia
-        .filter(alumno => alumno.presente !== null) 
-        .map(alumno => ({
-          estudianteId: alumno.estudianteId,
-          presente: alumno.presente
-        }))
+      asistencias: this.alumnosAsistencia.map(alumno => ({
+        estudianteId: alumno.estudianteId,
+        presente: alumno.presente === true
+      }))
     };
 
     try {
@@ -251,7 +251,7 @@ export class ClasesComponent implements OnInit {
       this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Asistencia guardada correctamente' });
       this.displayAttendanceDialog = false;
     } catch (err: any) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'No se pudo guardar la asistencia' });
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message || 'No se pudo guardar la asistencia' });
     } finally {
       this.loadingAsistencia = false;
       this.cdr.detectChanges();

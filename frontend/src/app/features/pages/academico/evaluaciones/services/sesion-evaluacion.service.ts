@@ -49,7 +49,7 @@ export class SesionEvaluacionService {
    */
   async listarSesiones(filtros: FiltrosSesiones = {}): Promise<PaginacionSesiones> {
     const pagina = filtros.pagina ?? 1;
-    const limite = Math.min(filtros.limite ?? 20, 100);
+    const limite = Math.min(filtros.limite ?? 20, 1000); // 1000 = máximo de filas por petición en Supabase
     const desde = (pagina - 1) * limite;
     const hasta = desde + limite - 1;
 

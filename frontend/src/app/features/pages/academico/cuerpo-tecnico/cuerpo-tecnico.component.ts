@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 
 // PrimeNG
 import { ToastModule } from 'primeng/toast';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -16,8 +15,7 @@ import { UsuarioCentralService } from '../../administracion/usuarios/services/us
   standalone: true,
   imports: [
     CommonModule, 
-    ToastModule, 
-    ConfirmDialogModule, 
+    ToastModule,
     TagModule,
     ButtonModule
   ],

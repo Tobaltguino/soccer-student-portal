@@ -28,6 +28,19 @@ serve(async (req) => {
       throw new HttpError(400, 'La contraseña temporal debe tener al menos 6 caracteres')
     }
 
+    // Revisar duplicados antes de crear la cuenta (mensaje claro y sin crear/borrar en Auth)
+    const { data: existentes, error: existentesError } = await supabaseAdmin
+      .from('usu_perfiles')
+      .select('rut, email')
+      .or(`rut.eq."${dto.rut}",email.eq."${dto.email}"`)
+    if (existentesError) throw new Error(`No se pudo validar el usuario: ${existentesError.message}`)
+    if (existentes?.some((p) => p.rut === dto.rut)) {
+      throw new HttpError(409, `Ya existe un usuario con el RUT ${dto.rut} (puede estar desactivado)`)
+    }
+    if (existentes?.some((p) => p.email?.toLowerCase() === String(dto.email).toLowerCase())) {
+      throw new HttpError(409, `Ya existe un usuario con el email ${dto.email}`)
+    }
+
     // 4. Crear usuario en Supabase Auth
     // El rol NO va en user_metadata: el usuario puede editar su propio metadata.
     // app_metadata solo lo puede modificar el service role: obliga a cambiar la clave temporal.
