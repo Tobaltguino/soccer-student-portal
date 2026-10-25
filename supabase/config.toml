@@ -414,6 +414,8 @@ enabled = true
 
 [functions.admin-crear-usuario]
 enabled = true
+# verify_jwt = false para que el preflight CORS pase; la función valida el JWT y el rol admin
+# por su cuenta (ver functions/_shared/admin.ts).
 verify_jwt = false
 import_map = "./functions/admin-crear-usuario/deno.json"
 # Uncomment to specify a custom file path to the entrypoint.
@@ -422,3 +424,18 @@ entrypoint = "./functions/admin-crear-usuario/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/admin-crear-usuario/*.html" ]
+
+[functions.admin-eliminar-usuario]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/admin-eliminar-usuario/index.ts"
+
+[functions.admin-actualizar-email]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/admin-actualizar-email/index.ts"
+
+[functions.cambiar-password]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/cambiar-password/index.ts"

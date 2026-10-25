@@ -140,7 +140,8 @@ export class UsuarioCentralService {
   async actualizarUsuario(id: string, payload: ActualizarUsuarioPayload): Promise<UsuarioPerfilCompleto> {
     // ⚠️ Si cambian el email, debes llamar a una Edge Function por temas de seguridad de Auth Admin
     if (payload.email) {
-      await this.supabase.functions.invoke('admin-actualizar-email', { body: { id_usuario: id, email: payload.email } });
+      const { error } = await this.supabase.functions.invoke('admin-actualizar-email', { body: { id_usuario: id, email: payload.email } });
+      if (error) throw new Error(`No se pudo actualizar el email: ${error.message}`);
     }
 
     const camposBase: Record<string, any> = {};
@@ -152,27 +153,40 @@ export class UsuarioCentralService {
     if (payload.genero !== undefined) camposBase['genero'] = payload.genero;
 
     if (Object.keys(camposBase).length > 0) {
-      await this.supabase.from('usu_perfiles').update(camposBase).eq('id_usuario', id);
+      const { error } = await this.supabase.from('usu_perfiles').update(camposBase).eq('id_usuario', id);
+      if (error) throw new Error(`No se pudo actualizar el perfil: ${error.message}`);
     }
 
     // Actualizamos tabla de estudiante o profesor según corresponda en cascada
-    if (payload.peso !== undefined || payload.altura !== undefined || payload.grupoId !== undefined) {
-      await this.supabase.from('usu_estudiantes').update({
-        peso: payload.peso,
-        altura: payload.altura,
-        grupo_id: payload.grupoId
-      }).eq('id_usuario', id);
+    const camposEstudiante: Record<string, any> = {};
+    if (payload.peso !== undefined) camposEstudiante['peso'] = payload.peso;
+    if (payload.altura !== undefined) camposEstudiante['altura'] = payload.altura;
+    if (payload.grupoId !== undefined) camposEstudiante['grupo_id'] = payload.grupoId;
+    if (payload.posiciones !== undefined) camposEstudiante['posiciones'] = payload.posiciones;
+    if (payload.direccion !== undefined) camposEstudiante['direccion'] = payload.direccion;
+    if (payload.prevision !== undefined) camposEstudiante['prevision'] = payload.prevision;
+
+    if (Object.keys(camposEstudiante).length > 0) {
+      const { error } = await this.supabase.from('usu_estudiantes').update(camposEstudiante).eq('id_usuario', id);
+      if (error) throw new Error(`No se pudieron actualizar los datos del estudiante: ${error.message}`);
+    }
+
+    if (payload.tipoProfesor !== undefined) {
+      const { error } = await this.supabase.from('usu_profesores').update({ tipo_profesor: payload.tipoProfesor }).eq('id_usuario', id);
+      if (error) throw new Error(`No se pudieron actualizar los datos del profesor: ${error.message}`);
     }
 
     return this.obtenerUsuarioPorId(id);
   }
 
   async desactivarUsuario(id: string): Promise<void> {
-    await this.supabase.from('usu_perfiles').update({ activo: false }).eq('id_usuario', id);
+    const { error } = await this.supabase.from('usu_perfiles').update({ activo: false }).eq('id_usuario', id);
+    if (error) throw new Error(`No se pudo desactivar el usuario: ${error.message}`);
   }
 
   async reactivarUsuario(id: string): Promise<void> {
-    await this.supabase.from('usu_perfiles').update({ activo: true }).eq('id_usuario', id);
+    const { error } = await this.supabase.from('usu_perfiles').update({ activo: true }).eq('id_usuario', id);
+    if (error) throw new Error(`No se pudo reactivar el usuario: ${error.message}`);
   }
 
   async eliminarUsuario(id: string): Promise<void> {

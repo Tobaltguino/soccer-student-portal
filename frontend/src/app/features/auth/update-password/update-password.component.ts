@@ -31,13 +31,21 @@ export class UpdatePasswordComponent {
 
   loading = false;
 
+  // true cuando llega aquí obligado por usar la clave temporal (RUT)
+  esPrimerIngreso = this.authService.debeCambiarPassword();
+
   updateForm: FormGroup = this.fb.group({
-    nuevaPassword: ['', [Validators.required, Validators.minLength(6)]],
+    nuevaPassword: ['', [Validators.required, Validators.minLength(8)]],
     confirmarPassword: ['', [Validators.required]]
   });
 
   // Ya no necesitamos capturar el fragmento de la URL. Supabase lo procesa automáticamente.
-  
+
+  async ngOnInit() {
+    await this.authService.ready();
+    this.esPrimerIngreso = this.authService.debeCambiarPassword();
+  }
+
   async actualizarPassword() {
     if (this.updateForm.invalid) {
       this.updateForm.markAllAsTouched();
@@ -53,26 +61,29 @@ export class UpdatePasswordComponent {
 
     this.loading = true;
 
-    const { error } = await this.authService.updatePassword(nuevaPassword);
+    try {
+      await this.authService.cambiarPassword(nuevaPassword);
+    } catch (err: any) {
+      this.loading = false;
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message || 'No se pudo actualizar la contraseña. El enlace puede haber expirado.' });
+      return;
+    }
 
     this.loading = false;
+    this.messageService.add({ severity: 'success', summary: '¡Éxito!', detail: 'Tu contraseña ha sido actualizada.' });
 
-    if (error) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar la contraseña. El enlace puede haber expirado.' });
-      console.error(error.message);
-    } else {
-      this.messageService.add({ severity: 'success', summary: '¡Éxito!', detail: 'Tu contraseña ha sido actualizada.' });
-      
-      // Cerramos sesión por seguridad para forzar un inicio de sesión limpio con la nueva clave
-      await this.authService.signOut();
-      
-      setTimeout(() => {
-        this.router.navigate(['/login']);
-      }, 2000);
-    }
+    // Cerramos sesión por seguridad para forzar un inicio de sesión limpio con la nueva clave
+    // (además así el nuevo token ya no trae la marca debe_cambiar_password)
+    await this.authService.signOut();
+
+    setTimeout(() => {
+      this.router.navigate(['/login']);
+    }, 2000);
   }
 
-  irAlLogin() {
+  async irAlLogin() {
+    // Si estaba obligado a cambiar la clave, cerramos la sesión para no dejarla a medias
+    if (this.esPrimerIngreso) await this.authService.signOut();
     this.router.navigate(['/login']);
   }
 }
