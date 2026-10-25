@@ -58,29 +58,19 @@ export class LoginComponent {
       // 🔥 Limpiamos los puntos y pasamos a mayúscula la 'K' para que coincida exactamente con la BD
       const rutLimpio = rut.replace(/\./g, '').trim().toUpperCase();
 
-      // 1. Llamamos al servicio para obtener el correo real a través de la función RPC segura
-      const { data: correoReal, error: rpcError } = await this.authService.obtenerCorreoPorRut(rutLimpio);
+      // 1. Login en el servidor (Edge Function): el navegador nunca recibe el correo
+      const session = await this.authService.iniciarSesionConRut(rutLimpio, password);
 
-      if (rpcError || !correoReal) {
-        throw new Error('El RUT ingresado no está registrado en el sistema.');
-      }
-
-      // 2. Hacemos el login nativo con el correo real
-      const { data: loginData, error: loginError } = await this.authService.signIn(correoReal, password);
-
-      if (loginError) throw new Error('RUT o contraseña incorrectos.');
-
-      // 3. Si aún usa la clave temporal (RUT), debe cambiarla antes de entrar
-      if (this.authService.debeCambiarPassword(loginData.session)) {
+      // 2. Si aún usa la clave temporal (RUT), debe cambiarla antes de entrar
+      if (this.authService.debeCambiarPassword(session)) {
         this.router.navigate(['/update-password']);
         return;
       }
 
-      // 4. Redirigimos a la aplicación centralizada
+      // 3. Redirigimos a la aplicación centralizada
       this.redirigirPorRol();
-      
+
     } catch (err: any) {
-      console.error('Error en el login:', err.message);
       this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
     } finally {
       this.loading = false;
@@ -109,21 +99,11 @@ export class LoginComponent {
       // 🔥 Limpiamos el RUT igual que en el login
       const rutLimpio = this.rutRecuperacion.replace(/\./g, '').trim().toUpperCase();
 
-      // 1. Obtenemos el correo real
-      const { data: correoReal, error: rpcError } = await this.authService.obtenerCorreoPorRut(rutLimpio);
+      // El servidor busca el correo y envía las instrucciones; la respuesta es la
+      // misma exista o no el RUT
+      const mensaje = await this.authService.recuperarPasswordPorRut(rutLimpio);
 
-      if (rpcError || !correoReal) {
-        throw new Error('El RUT no está registrado en el sistema.');
-      }
-
-      // 2. Enviamos el correo de recuperación a ese email real
-      const { error } = await this.authService.recuperarPassword(correoReal);
-
-      if (error) {
-        throw new Error('No se pudo procesar la solicitud.');
-      } 
-      
-      this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Se han enviado las instrucciones a tu correo.' });
+      this.messageService.add({ severity: 'success', summary: 'Solicitud enviada', detail: mensaje });
       this.displayResetDialog = false;
 
     } catch (err: any) {

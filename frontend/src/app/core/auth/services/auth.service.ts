@@ -80,22 +80,12 @@ export class AuthService {
     return data;
   }
 
-  async signIn(email: string, password: string) {
-    return await this.supabaseService.client.auth.signInWithPassword({ email, password });
-  }
-
   /**
    * scope 'local' solo limpia la sesión de este navegador (útil cuando el servidor
    * ya la invalidó, ej. tras cambiar la contraseña, y evita un 403 en consola).
    */
   async signOut(scope: 'global' | 'local' = 'global') {
     return await this.supabaseService.client.auth.signOut({ scope });
-  }
-
-  async recuperarPassword(email: string) {
-    return await this.supabaseService.client.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/update-password`,
-    });
   }
 
   /**
@@ -108,17 +98,49 @@ export class AuthService {
     });
 
     if (error) {
-      // El cuerpo de la respuesta trae el mensaje de validación del servidor
-      const detalle = await error.context?.json?.().catch(() => null);
-      throw new Error(detalle?.error || 'No se pudo actualizar la contraseña.');
+      throw new Error(await this.mensajeErrorFuncion(error, 'No se pudo actualizar la contraseña.'));
     }
     if (data?.error) throw new Error(data.error);
   }
 
   /**
-   * Llama a la función segura (RPC) en Supabase para obtener el correo mediante el RUT.
+   * Login por RUT vía Edge Function: el servidor busca el correo y hace el login,
+   * así el navegador nunca ve el correo de nadie. Devuelve la sesión ya activa.
    */
-  async obtenerCorreoPorRut(rut: string) {
-    return await this.supabaseService.client.rpc('obtener_correo_por_rut', { p_rut: rut });
+  async iniciarSesionConRut(rut: string, password: string): Promise<Session> {
+    const { data, error } = await this.supabaseService.client.functions.invoke('auth-rut', {
+      body: { accion: 'login', rut, password }
+    });
+
+    if (error || !data?.access_token) {
+      throw new Error(await this.mensajeErrorFuncion(error, 'RUT o contraseña incorrectos.'));
+    }
+
+    const { data: sesionData, error: sesionError } = await this.supabaseService.client.auth.setSession({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token
+    });
+    if (sesionError || !sesionData.session) throw new Error('No se pudo iniciar la sesión.');
+
+    return sesionData.session;
+  }
+
+  /**
+   * Envía el correo de recuperación del RUT indicado. La respuesta es la misma
+   * exista o no el RUT (no revela quién está registrado).
+   */
+  async recuperarPasswordPorRut(rut: string): Promise<string> {
+    const { data, error } = await this.supabaseService.client.functions.invoke('auth-rut', {
+      body: { accion: 'recuperar', rut, redirectTo: `${window.location.origin}/update-password` }
+    });
+
+    if (error) throw new Error(await this.mensajeErrorFuncion(error, 'No se pudo procesar la solicitud.'));
+    return data?.mensaje || 'Si el RUT está registrado, enviamos las instrucciones a su correo.';
+  }
+
+  /** functions.invoke solo dice "non-2xx"; el motivo real viene en el cuerpo ({ error }). */
+  private async mensajeErrorFuncion(error: any, porDefecto: string): Promise<string> {
+    const detalle = await error?.context?.json?.().catch(() => null);
+    return detalle?.error || porDefecto;
   }
 }
