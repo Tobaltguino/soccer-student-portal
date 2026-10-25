@@ -1,7 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs'; // 🔥 IMPORTANTE: Importamos firstValueFrom
 
 // PrimeNG
 import { TableModule } from 'primeng/table';
@@ -20,18 +19,17 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { TextareaModule } from 'primeng/textarea';
 
 // Servicios Core
-import { AuthService } from '../../../../core/auth/auth.service';
+import { AuthService } from '../../../../core/auth/services/auth.service';
 import { ExcelExportService } from '../../../../core/services/excel-export.service';
 
 // Servicios de Dominio
-import { ClaseService } from '../../../../core/domains/academico/clases/services/clase.service';
-import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
-import { AsistenciaService } from '../../../../core/domains/academico/asistencias/services/asistencia.service';
-import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
+import { ClaseService } from './services/clases.service';
+import { GrupoService } from '../grupos/services/grupo.service';
+import { AsistenciaService } from '../asistencias/services/asistencias.service';
+import { UsuarioCentralService } from '../../administracion/usuarios/services/usuarios-central.service';
 
-// Interfaces
-import { Clase, CrearClasePayload, FiltrosClase } from '../../../../core/domains/academico/clases/models/clase.interface';
-import { Grupo } from '../../../../core/domains/academico/grupos/models/grupo.interface';
+// Enums
+import { Rol } from '../../../../shared/enums/rol.enum';
 
 @Component({
   selector: 'app-clases',
@@ -51,7 +49,7 @@ export class ClasesComponent implements OnInit {
   private claseService = inject(ClaseService);
   private grupoService = inject(GrupoService);
   private asistenciaService = inject(AsistenciaService);
-  private estudianteService = inject(EstudianteService);
+  private usuarioService = inject(UsuarioCentralService);
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
   private excelService = inject(ExcelExportService);
@@ -69,9 +67,9 @@ export class ClasesComponent implements OnInit {
   saving: boolean = false;
   
   // Datos
-  clases: Clase[] = [];
-  clasesOriginales: Clase[] = []; 
-  grupos: Grupo[] = [];
+  clases: any[] = [];
+  clasesOriginales: any[] = []; 
+  grupos: any[] = [];
   totalRegistros: number = 0;
 
   // Filtros
@@ -88,16 +86,16 @@ export class ClasesComponent implements OnInit {
 
   // Modales
   displayPlan: boolean = false;
-  selectedClase: Clase | null = null;
+  selectedClase: any = null;
 
   displayAttendanceDialog: boolean = false;
   loadingAsistencia: boolean = false;
   alumnosAsistencia: any[] = [];
-  claseSeleccionadaAsistencia: Clase | null = null;
+  claseSeleccionadaAsistencia: any = null;
 
   displayForm: boolean = false;
   isEditing: boolean = false;
-  claseForm: Partial<Clase> = this.getFormularioVacio();
+  claseForm: any = this.getFormularioVacio();
   vistaFormulario: string = 'logistica';
   opcionesVistaForm = [
     { label: 'Logística', value: 'logistica', icon: 'pi pi-calendar' },
@@ -128,7 +126,7 @@ export class ClasesComponent implements OnInit {
         await this.cargarClasesEstudiante();
       } else {
         await this.cargarGrupos();
-        if (this.esAdmin) {
+        if (this.esAdmin || this.esStaff) {
           await this.aplicarFiltrosGestion();
         } else {
           this.loading = false;
@@ -136,7 +134,7 @@ export class ClasesComponent implements OnInit {
         }
       }
     } catch (error) {
-      console.error('Error inicializando módulo de clases:', error);
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error inicializando el módulo de clases.' });
       this.loading = false;
       this.cdr.detectChanges();
     }
@@ -147,8 +145,8 @@ export class ClasesComponent implements OnInit {
   // =========================================================
   async cargarGrupos() {
     try {
-      // 🔥 Convertimos el Observable a Promesa
-      this.grupos = await firstValueFrom(this.grupoService.listarGrupos()) || [];
+      // 🔥 Llamada directa a la Promesa sin firstValueFrom
+      this.grupos = await this.grupoService.listarGrupos() || [];
     } catch (error) {
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los grupos' });
     }
@@ -158,7 +156,7 @@ export class ClasesComponent implements OnInit {
     this.loading = true;
     this.cdr.detectChanges();
 
-    const filtros: FiltrosClase = {
+    const filtros: any = {
       grupoId: this.filtroGrupoId || undefined,
       desde: this.filtroFecha ? this.formatearFecha(this.filtroFecha) : undefined,
       lugar: this.filtroLugar?.trim() || undefined,
@@ -166,8 +164,8 @@ export class ClasesComponent implements OnInit {
     };
 
     try {
-      // 🔥 Convertimos el Observable a Promesa
-      const response = await firstValueFrom(this.claseService.listarClases(filtros));
+      // 🔥 Llamada directa a la Promesa sin firstValueFrom
+      const response: any = await this.claseService.listarClases(filtros);
       this.clases = response.registros || [];
       this.totalRegistros = response.total || 0;
     } catch (err) {
@@ -192,7 +190,7 @@ export class ClasesComponent implements OnInit {
   }
 
   // --- ASISTENCIA ---
-  async verAsistencia(clase: Clase) {
+  async verAsistencia(clase: any) {
     this.claseSeleccionadaAsistencia = clase;
     this.displayAttendanceDialog = true;
     this.loadingAsistencia = true;
@@ -205,25 +203,25 @@ export class ClasesComponent implements OnInit {
     }
 
     try {
-      // 🔥 Convertimos ambos Observables a Promesas y las disparamos en paralelo
+      // 🔥 Promise.all ejecuta las promesas de los servicios en paralelo directamente
       const [estudiantes, asistenciasGuardadas] = await Promise.all([
-        firstValueFrom(this.estudianteService.listarEstudiantes({ grupoIds: [clase.grupo_id], limite: 1000, activo: true })),
-        firstValueFrom(this.asistenciaService.listarPorClase(clase.id))
+        this.usuarioService.listarUsuarios({ rol: Rol.ESTUDIANTE, grupoIds: [clase.grupo_id], limite: 1000, activo: true }),
+        this.asistenciaService.listarPorClase(clase.id)
       ]);
 
       const asistenciasMap = new Map();
       (asistenciasGuardadas || []).forEach((a: any) => asistenciasMap.set(a.estudiante_id, a.presente));
 
       this.alumnosAsistencia = (estudiantes.registros || []).map((est: any) => {
-        const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id;
-        const nombre = est.perfil ? est.perfil.nombre : est.nombre;
-        const apellido = est.perfil ? est.perfil.apellido : est.apellido;
+        const idUsuario = est.id_usuario || est.id;
+        const nombre = est.nombre;
+        const apellido = est.apellido;
 
         return {
           estudianteId: idUsuario,
           nombre: nombre,
           apellido: apellido,
-          presente: asistenciasMap.has(idUsuario) ? asistenciasMap.get(idUsuario) : false
+          presente: asistenciasMap.has(idUsuario) ? asistenciasMap.get(idUsuario) : null
         };
       });
     } catch (error) {
@@ -239,15 +237,17 @@ export class ClasesComponent implements OnInit {
 
     this.loadingAsistencia = true;
     const payload = {
-      asistencias: this.alumnosAsistencia.map(alumno => ({
-        estudianteId: alumno.estudianteId,
-        presente: alumno.presente
-      }))
+      asistencias: this.alumnosAsistencia
+        .filter(alumno => alumno.presente !== null) 
+        .map(alumno => ({
+          estudianteId: alumno.estudianteId,
+          presente: alumno.presente
+        }))
     };
 
     try {
-      // 🔥 Convertimos el Observable a Promesa
-      await firstValueFrom(this.asistenciaService.registrarLote(this.claseSeleccionadaAsistencia.id, payload));
+      // 🔥 Llamada directa a la Promesa
+      await this.asistenciaService.registrarLote(this.claseSeleccionadaAsistencia.id, payload);
       this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Asistencia guardada correctamente' });
       this.displayAttendanceDialog = false;
     } catch (err: any) {
@@ -258,10 +258,10 @@ export class ClasesComponent implements OnInit {
     }
   }
 
-  // --- FORMULARIO CREAR / EDITAR (SOLO STAFF) ---
+  // --- FORMULARIO CREAR / EDITAR (SOLO STAFF/ADMIN) ---
   abrirNuevaClase() {
     if (!this.filtroGrupoId) {
-      this.messageService.add({ severity: 'info', summary: 'Atención', detail: 'Seleccione un grupo en los filtros primero' });
+      this.messageService.add({ severity: 'info', summary: 'Atención', detail: 'Seleccione un grupo en los filtros primero para asignar la clase' });
       return;
     }
     this.isEditing = false;
@@ -274,14 +274,14 @@ export class ClasesComponent implements OnInit {
     this.displayForm = true;
   }
 
-  abrirEditarClase(clase: Clase) {
+  abrirEditarClase(clase: any) {
     this.isEditing = true;
     this.vistaFormulario = 'logistica';
     this.claseForm = { ...clase };
     
     if (this.claseForm.fecha) {
-      const [year, month, day] = (this.claseForm.fecha as string).split('-');
-      this.claseForm.fecha = new Date(Number(year), Number(month) - 1, Number(day)) as any;
+      const [year, month, day] = (this.claseForm.fecha as string).split('T')[0].split('-');
+      this.claseForm.fecha = new Date(Number(year), Number(month) - 1, Number(day));
     }
     this.displayForm = true;
   }
@@ -294,7 +294,7 @@ export class ClasesComponent implements OnInit {
       return;
     }
 
-    const fechaSeleccionada = this.claseForm.fecha as unknown as Date;
+    const fechaSeleccionada = this.claseForm.fecha as Date;
     if (isNaN(fechaSeleccionada.getTime())) {
       this.messageService.add({ severity: 'warn', summary: 'Fecha Inválida', detail: 'Ingrese una fecha válida.' });
       return;
@@ -302,7 +302,7 @@ export class ClasesComponent implements OnInit {
 
     this.saving = true;
 
-    const datosParaEnviar: CrearClasePayload = {
+    const datosParaEnviar: any = {
       grupoId: grupoIdFinal,
       fecha: this.formatearFecha(fechaSeleccionada),
       hora: this.claseForm.hora,
@@ -315,14 +315,15 @@ export class ClasesComponent implements OnInit {
 
     try {
       if (this.isEditing && this.claseForm.id) {
-        await firstValueFrom(this.claseService.actualizarClase(this.claseForm.id as number, datosParaEnviar));
+        // 🔥 Llamada directa a la Promesa
+        await this.claseService.actualizarClase(this.claseForm.id, datosParaEnviar);
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Clase actualizada correctamente.' });
       } else {
-        await firstValueFrom(this.claseService.crearClase(datosParaEnviar));
+        await this.claseService.crearClase(datosParaEnviar);
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Clase creada correctamente.' });
       }
       this.displayForm = false;
-      this.aplicarFiltrosGestion();
+      await this.aplicarFiltrosGestion();
     } catch (error: any) {
       this.messageService.add({ severity: 'error', summary: 'Error', detail: error.error?.message || 'Ocurrió un error al guardar la clase.' });
     } finally {
@@ -331,7 +332,6 @@ export class ClasesComponent implements OnInit {
   }
 
   // --- ELIMINAR (SOLO ADMIN) ---
-  // 🔥 FIX: id tipado como number
   eliminarClase(id: number) {
     this.confirmationService.confirm({
       message: '¿Estás seguro de eliminar esta clase y su asistencia? Esta acción no se puede deshacer.',
@@ -342,10 +342,10 @@ export class ClasesComponent implements OnInit {
       rejectLabel: 'Cancelar',
       accept: async () => {
         try {
-          // 🔥 Convertimos el Observable a Promesa
-          await firstValueFrom(this.claseService.eliminarClase(id));
+          // 🔥 Llamada directa a la Promesa
+          await this.claseService.eliminarClase(id);
           this.messageService.add({ severity: 'success', summary: 'Eliminada', detail: 'Clase eliminada exitosamente' });
-          this.aplicarFiltrosGestion();
+          await this.aplicarFiltrosGestion();
         } catch (err: any) {
           this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'No se pudo eliminar la clase' });
         }
@@ -374,6 +374,7 @@ export class ClasesComponent implements OnInit {
     }
 
     try {
+      this.messageService.add({ severity: 'info', summary: 'Exportando', detail: 'Generando archivo...' });
       this.excelService.exportarClases({
         grupoId: this.filtroGrupoId || undefined,
         desde: fechaDesdeStr,
@@ -389,7 +390,7 @@ export class ClasesComponent implements OnInit {
     return this.grupos.find(g => g.id === grupoId)?.nombre || `Grupo #${grupoId}`;
   }
 
-  private getFormularioVacio(): Partial<Clase> {
+  private getFormularioVacio(): any {
     return {
       grupo_id: undefined, fecha: undefined, hora: undefined, lugar: undefined,
       objetivo: undefined, calentamiento: undefined, parte_principal: undefined, vuelta_calma: undefined
@@ -402,9 +403,9 @@ export class ClasesComponent implements OnInit {
   async cargarClasesEstudiante() {
     this.loading = true;
     try {
-      // 🔥 Convertimos el Observable a Promesa
-      const clases = await firstValueFrom(this.claseService.obtenerMisClases()) || [];
-      this.clasesOriginales = [...clases].sort((a, b) => {
+      // 🔥 Llamada directa a la Promesa
+      const clases = await this.claseService.obtenerMisClases() || [];
+      this.clasesOriginales = [...clases].sort((a: any, b: any) => {
         const tiempoA = new Date(`${a.fecha}T${a.hora}`).getTime();
         const tiempoB = new Date(`${b.fecha}T${b.hora}`).getTime();
         return tiempoB - tiempoA;
@@ -456,9 +457,9 @@ export class ClasesComponent implements OnInit {
     this.aplicarFiltrosEstudiante();
   }
 
-  puedeVerPlanificacion(clase: Clase): boolean {
+  puedeVerPlanificacion(clase: any): boolean {
     if (!clase.fecha || !clase.hora) return false;
-    const tiempoClase = new Date(`${clase.fecha}T${clase.hora}`).getTime();
+    const tiempoClase = new Date(`${clase.fecha.substring(0, 10)}T${clase.hora}`).getTime();
     return tiempoClase <= new Date().getTime();
   }
 
@@ -477,7 +478,7 @@ export class ClasesComponent implements OnInit {
   // =========================================================
   // UTILIDADES COMPARTIDAS
   // =========================================================
-  verPlanificacion(clase: Clase) {
+  verPlanificacion(clase: any) {
     this.selectedClase = clase;
     this.displayPlan = true;
   }

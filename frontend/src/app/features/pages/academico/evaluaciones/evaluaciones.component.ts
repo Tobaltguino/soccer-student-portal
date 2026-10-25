@@ -1,7 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
 
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -19,18 +18,22 @@ import { TextareaModule } from 'primeng/textarea';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
-import { AuthService } from '../../../../core/auth/auth.service';
+// Servicios Core y Shared
+import { AuthService } from '../../../../core/auth/services/auth.service';
 import { ExcelExportService } from '../../../../core/services/excel-export.service';
 
-import { TipoEvaluacionService } from '../../../../core/domains/academico/evaluaciones/tipos/services/tipo-evaluacion.services';
-import { SesionEvaluacionService } from '../../../../core/domains/academico/evaluaciones/sesiones/services/sesion.service';
-import { ResultadoEvaluacionService } from '../../../../core/domains/academico/evaluaciones/resultados/services/resultado.service';
-import { RangoEvaluacionService } from '../../../../core/domains/academico/evaluaciones/rangos/services/rango.service';
-import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
-import { EstudianteService } from '../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
+// 🔥 IMPORTACIONES CORREGIDAS SEGÚN TU ÁRBOL DE CARPETAS 🔥
+import { TipoEvaluacionService } from './services/tipo-evaluacion.service';
+import { SesionEvaluacionService } from './services/sesion-evaluacion.service';
+import { ResultadoEvaluacionService } from './services/resultado-evaluacion.service';
+import { RangoEvaluacionService } from './services/rango-evaluacion.service';
+import { GrupoService } from '../grupos/services/grupo.service';
+import { UsuarioCentralService } from '../../administracion/usuarios/services/usuarios-central.service';
 
+// Enums
 import { EstadoSesion } from '../../../../shared/enums/estado-sesion.enum';
 import { Genero } from '../../../../shared/enums/genero.enum';
+import { Rol } from '../../../../shared/enums/rol.enum';
 
 @Component({
   selector: 'app-evaluaciones',
@@ -53,7 +56,7 @@ export class EvaluacionesComponent implements OnInit {
   private resultadoService = inject(ResultadoEvaluacionService);
   private rangoService = inject(RangoEvaluacionService);
   private grupoService = inject(GrupoService);
-  private estudianteService = inject(EstudianteService);
+  private usuarioService = inject(UsuarioCentralService);
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
   private excelService = inject(ExcelExportService);
@@ -108,8 +111,8 @@ export class EvaluacionesComponent implements OnInit {
   guardando: boolean = false; 
   displayTipoDialog: boolean = false;   
   displayGradesDialog: boolean = false; 
-  displayMainDialog: boolean = false; // Para sesiones
-  displayDetalle: boolean = false; // Estudiante
+  displayMainDialog: boolean = false; 
+  displayDetalle: boolean = false; 
   
   usarRangos: boolean = false;
   selectedEvalEstudiante: any = null;
@@ -171,28 +174,29 @@ export class EvaluacionesComponent implements OnInit {
 
     try {
       if (this.esAdmin) {
+        // 🔥 Las promesas se llaman de manera nativa sin firstValueFrom
         const [grupos, tipos, sesionesRes] = await Promise.all([
-          firstValueFrom(this.grupoService.listarGrupos()),
-          firstValueFrom(this.tipoEvalService.listarTiposEvaluacion()),
-          firstValueFrom(this.sesionService.listarSesiones({ limite: 1000 }))
+          this.grupoService.listarGrupos(),
+          this.tipoEvalService.listarTiposEvaluacion(),
+          this.sesionService.listarSesiones({ limite: 1000 })
         ]);
         this.grupos = grupos || [];
         this.tiposEvaluacion = tipos || [];
-        this.sesionesOriginales = sesionesRes?.registros || [];
+        this.sesionesOriginales = (sesionesRes as any)?.registros || [];
       } else if (this.esStaff) {
-        const gruposData = await firstValueFrom(this.grupoService.obtenerMisGrupos());
+        const gruposData = await this.grupoService.obtenerMisGrupos();
         const tempGrupos = gruposData || [];
         const misGrupoIds = tempGrupos.map((g: any) => g.id).filter((id: any) => id !== undefined) as number[];
 
         if (misGrupoIds.length === 0) {
-          this.tiposEvaluacion = await firstValueFrom(this.tipoEvalService.listarTiposEvaluacion()) || [];
+          this.tiposEvaluacion = await this.tipoEvalService.listarTiposEvaluacion() || [];
           this.sesionesOriginales = [];
           this.grupos = tempGrupos;
         } else {
-          const peticionesSesiones = misGrupoIds.map(id => firstValueFrom(this.sesionService.listarSesiones({ grupoId: id, limite: 1000 })));
+          const peticionesSesiones = misGrupoIds.map(id => this.sesionService.listarSesiones({ grupoId: id, limite: 1000 }));
           
           const [tipos, ...sesionesGrupos] = await Promise.all([
-            firstValueFrom(this.tipoEvalService.listarTiposEvaluacion()),
+            this.tipoEvalService.listarTiposEvaluacion(),
             ...peticionesSesiones
           ]);
 
@@ -259,7 +263,7 @@ export class EvaluacionesComponent implements OnInit {
     this.displayTipoDialog = true;
     
     try {
-      const rangos = await firstValueFrom(this.rangoService.listarRangosPorTipo(test.id));
+      const rangos = await this.rangoService.listarRangosPorTipo(test.id);
       this.rangosForm = rangos.sort((a: any, b: any) => a.edad_min - b.edad_min || a.valor_min - b.valor_min);
       this.rangosOriginalesCache = [...this.rangosForm];
       this.usarRangos = this.rangosForm.length > 0;
@@ -328,8 +332,8 @@ export class EvaluacionesComponent implements OnInit {
 
     try {
       const tipoGuardado: any = this.tipoForm.id 
-        ? await firstValueFrom(this.tipoEvalService.actualizarTipoEvaluacion(this.tipoForm.id, payloadTipo))
-        : await firstValueFrom(this.tipoEvalService.crearTipoEvaluacion(payloadTipo));
+        ? await this.tipoEvalService.actualizarTipoEvaluacion(this.tipoForm.id, payloadTipo)
+        : await this.tipoEvalService.crearTipoEvaluacion(payloadTipo);
 
       const testId = tipoGuardado.id;
       const peticionesRangos: Promise<any>[] = [];
@@ -337,7 +341,7 @@ export class EvaluacionesComponent implements OnInit {
       const idsActuales = this.rangosForm.map(r => r.id).filter(id => id);
       this.rangosOriginalesCache.forEach(rOriginal => {
         if (!idsActuales.includes(rOriginal.id)) {
-          peticionesRangos.push(firstValueFrom(this.rangoService.eliminarRango(rOriginal.id)));
+          peticionesRangos.push(this.rangoService.eliminarRango(rOriginal.id));
         }
       });
 
@@ -355,9 +359,9 @@ export class EvaluacionesComponent implements OnInit {
           };
 
           if (rango.id) {
-            peticionesRangos.push(firstValueFrom(this.rangoService.actualizarRango(rango.id, payloadRango)));
+            peticionesRangos.push(this.rangoService.actualizarRango(rango.id, payloadRango));
           } else {
-            peticionesRangos.push(firstValueFrom(this.rangoService.crearRango(payloadRango)));
+            peticionesRangos.push(this.rangoService.crearRango(payloadRango));
           }
         });
       }
@@ -385,7 +389,7 @@ export class EvaluacionesComponent implements OnInit {
       acceptButtonStyleClass: 'p-button-danger', 
       accept: async () => {
         try {
-          await firstValueFrom(this.tipoEvalService.eliminarTipoEvaluacion(id));
+          await this.tipoEvalService.eliminarTipoEvaluacion(id);
           this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Test eliminado' });
           if (this.tipoForm.id === id) this.displayTipoDialog = false;
           await this.cargarDatosGestion();
@@ -431,9 +435,9 @@ export class EvaluacionesComponent implements OnInit {
 
     try {
       if (this.evalLogistica.id) {
-        await firstValueFrom(this.sesionService.actualizarSesion(this.evalLogistica.id, payload));
+        await this.sesionService.actualizarSesion(this.evalLogistica.id, payload);
       } else {
-        await firstValueFrom(this.sesionService.crearSesion(payload));
+        await this.sesionService.crearSesion(payload);
       }
       this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Sesión guardada' });
       this.displayMainDialog = false;
@@ -452,7 +456,7 @@ export class EvaluacionesComponent implements OnInit {
           acceptButtonStyleClass: 'p-button-danger p-button-text',
           accept: async () => {
               try {
-                await firstValueFrom(this.sesionService.eliminarSesion(id));
+                await this.sesionService.eliminarSesion(id);
                 this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Sesión borrada' });
                 await this.cargarDatosGestion();
               } catch (error) {
@@ -477,17 +481,17 @@ export class EvaluacionesComponent implements OnInit {
 
     try {
       const [alumnos, resultados] = await Promise.all([
-        firstValueFrom(this.estudianteService.listarEstudiantes({ grupoIds: [grupoIdToFetch], limite: 1000, activo: true })),
-        firstValueFrom(this.resultadoService.listarResultadosPorSesion(sesion.id))
+        this.usuarioService.listarUsuarios({ rol: Rol.ESTUDIANTE, grupoIds: [grupoIdToFetch], limite: 1000, activo: true }),
+        this.resultadoService.listarResultadosPorSesion(sesion.id)
       ]);
 
       const estudiantesFinales: any[] = [];
       const idsProcesados = new Set<string>();
 
-      (alumnos.registros || []).forEach((est: any) => {
-        const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id;
-        const nombre = est.perfil ? est.perfil.nombre : est.nombre;
-        const apellido = est.perfil ? est.perfil.apellido : est.apellido;
+      ((alumnos as any).registros || []).forEach((est: any) => {
+        const idUsuario = est.id_usuario || est.id; // Tabla central manda id_usuario
+        const nombre = est.nombre;
+        const apellido = est.apellido;
 
         const notaExistente: any = (resultados || []).find((r: any) => r.estudianteId === idUsuario || r.estudiante_id === idUsuario);
         
@@ -542,7 +546,7 @@ export class EvaluacionesComponent implements OnInit {
         acceptButtonStyleClass: 'p-button-danger',
         accept: async () => {
           try {
-            await firstValueFrom(this.resultadoService.eliminarResultado(estudiante.resultado_id));
+            await this.resultadoService.eliminarResultado(estudiante.resultado_id);
             estudiante.resultado_id = null;
             estudiante.valor_numerico = null;
             estudiante.observacion = '';
@@ -582,9 +586,9 @@ export class EvaluacionesComponent implements OnInit {
         };
   
         if (e.resultado_id) {
-          return firstValueFrom(this.resultadoService.actualizarResultado(e.resultado_id, payload));
+          return this.resultadoService.actualizarResultado(e.resultado_id, payload);
         } else {
-          return firstValueFrom(this.resultadoService.crearResultado(payload));
+          return this.resultadoService.crearResultado(payload);
         }
       });
 
@@ -614,7 +618,7 @@ export class EvaluacionesComponent implements OnInit {
     this.loading = true;
     
     try {
-      const data = await firstValueFrom(this.resultadoService.listarMisResultados());
+      const data = await this.resultadoService.listarMisResultados();
       
       this.evaluacionesMisResultadosOriginales = (data || []).map((r: any) => {
           const evaluacion = r.evaluacion || {};

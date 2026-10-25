@@ -18,7 +18,7 @@ import { ProgressBarModule } from 'primeng/progressbar';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 // Servicios
-import { AuthService } from '../../../../core/auth/auth.service';
+import { AuthService } from '../../../../core/auth/services/auth.service';
 import { GrupoService } from '../grupos/services/grupo.service';
 import { AsistenciaService } from './services/asistencias.service';
 import { ClaseService } from '../clases/services/clases.service';

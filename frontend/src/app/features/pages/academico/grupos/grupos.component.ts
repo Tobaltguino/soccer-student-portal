@@ -1,7 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs'; // 🔥 IMPORTANTE: Importamos firstValueFrom
 
 // PrimeNG Imports
 import { TooltipModule } from 'primeng/tooltip';
@@ -15,8 +14,8 @@ import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmationService, MessageService } from 'primeng/api';
 
-// Servicio de Angular (Conectado a Supabase)
-import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
+// Servicio de Angular (Ruta corregida hacia el nuevo dominio)
+import { GrupoService } from './services/grupo.service';
 
 // Servicio de Excel
 import { ExcelExportService } from '../../../../core/services/excel-export.service';
@@ -69,8 +68,8 @@ export class AdministradorGruposComponent implements OnInit {
     this.cdr.detectChanges();
     
     try {
-      // 🔥 Convertimos a Promesa
-      const data = await firstValueFrom(this.grupoService.listarGrupos());
+      // 🔥 Llamada directa a la Promesa sin firstValueFrom
+      const data = await this.grupoService.listarGrupos();
       
       this.grupos = (data || []).map((g: any) => ({
           ...g,
@@ -132,10 +131,12 @@ export class AdministradorGruposComponent implements OnInit {
 
     try {
       if (this.grupoForm.id) {
-        await firstValueFrom(this.grupoService.actualizarGrupo(this.grupoForm.id, payload));
+        // 🔥 Llamada directa a la Promesa sin firstValueFrom
+        await this.grupoService.actualizarGrupo(this.grupoForm.id, payload);
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Grupo actualizado correctamente.' });
       } else {
-        await firstValueFrom(this.grupoService.crearGrupo(payload));
+        // 🔥 Llamada directa a la Promesa sin firstValueFrom
+        await this.grupoService.crearGrupo(payload);
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Grupo creado correctamente.' });
       }
       
@@ -160,7 +161,8 @@ export class AdministradorGruposComponent implements OnInit {
       acceptButtonStyleClass: 'p-button-danger p-button-text',
       accept: async () => {
         try {
-          await firstValueFrom(this.grupoService.eliminarGrupo(id));
+          // 🔥 Llamada directa a la Promesa sin firstValueFrom
+          await this.grupoService.eliminarGrupo(id);
           this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Grupo eliminado correctamente.' });
           await this.cargarGrupos();
         } catch (error) {

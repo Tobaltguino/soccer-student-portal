@@ -1,7 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
 
 // PrimeNG
 import { TableModule } from 'primeng/table';
@@ -17,11 +16,13 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
-// Servicios
-import { AuthService } from '../../../../../core/auth/auth.service';
-import { EstudianteService } from '../../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
-import { HistorialClinicoService } from './services/historial-clinico.service';
+// Core y Shared
+import { AuthService } from '../../../../../core/auth/services/auth.service';
 import { Rol } from '../../../../../shared/enums/rol.enum';
+
+// Servicios Locales (Feature-Based)
+import { UsuarioCentralService } from '../../../administracion/usuarios/services/usuarios-central.service';
+import { HistorialClinicoService } from './services/historial-clinico.service';
 
 @Component({
   selector: 'app-historial-clinico',
@@ -38,7 +39,7 @@ import { Rol } from '../../../../../shared/enums/rol.enum';
 export class HistorialClinicoComponent implements OnInit {
 
   private authService = inject(AuthService);
-  private estudianteService = inject(EstudianteService);
+  private usuarioService = inject(UsuarioCentralService);
   private historialClinicoService = inject(HistorialClinicoService);
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
@@ -115,15 +116,15 @@ export class HistorialClinicoComponent implements OnInit {
   // ==========================================
   async cargarAlumnos() {
     try {
-      // El backend resuelve qué estudiantes ver según el RLS de Kinesiologo vs Administrador
-      const response = await firstValueFrom(this.estudianteService.listarEstudiantes({ limite: 2000, activo: true }));
+      // Llamada directa a promesa usando el servicio central unificado
+      const response = await this.usuarioService.listarUsuarios({ rol: Rol.ESTUDIANTE, limite: 2000, activo: true });
       const alumnosRes = response?.registros || [];
 
       this.listaAlumnos = alumnosRes.map((est: any) => {
-        const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id || est.id;
-        const nombre = est.perfil ? est.perfil.nombre : est.nombre;
-        const apellido = est.perfil ? est.perfil.apellido : est.apellido;
-        const rut = est.perfil ? est.perfil.rut : est.rut;
+        const idUsuario = est.id_usuario || est.id; // Extraído directo de usu_perfiles
+        const nombre = est.nombre;
+        const apellido = est.apellido;
+        const rut = est.rut;
         return {
             id: idUsuario,
             nombreCompleto: `${nombre} ${apellido} (${rut || 'Sin RUT'})`,
@@ -149,7 +150,8 @@ export class HistorialClinicoComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      this.listaLesiones = await firstValueFrom(this.historialClinicoService.listarHistorialPorEstudiante(this.alumnoSeleccionado.id)) || [];
+      // 🔥 Promesa nativa
+      this.listaLesiones = await this.historialClinicoService.listarHistorialPorEstudiante(this.alumnoSeleccionado.id) || [];
     } catch (error) {
       this.mostrarError('Error al cargar el historial del paciente.');
     } finally {
@@ -168,7 +170,8 @@ export class HistorialClinicoComponent implements OnInit {
     try {
       const session = await this.authService.obtenerSesionActual();
       if (!session?.user?.id) return;
-      this.listaLesiones = await firstValueFrom(this.historialClinicoService.listarHistorialPorEstudiante(session.user.id)) || [];
+      // 🔥 Promesa nativa
+      this.listaLesiones = await this.historialClinicoService.listarHistorialPorEstudiante(session.user.id) || [];
     } catch (error) {
       this.mostrarError('Error al cargar tu historial médico.');
     } finally {
@@ -178,7 +181,7 @@ export class HistorialClinicoComponent implements OnInit {
   }
 
   // ==========================================
-  // GESTIÓN DEL FORMULARIO (SOLO KINESIÓLOGO)
+  // GESTIÓN DEL FORMULARIO (SOLO KINESIÓLOGO/ADMIN)
   // ==========================================
   abrirNuevaLesion() {
     if (!this.alumnoSeleccionado) return;
@@ -221,11 +224,13 @@ export class HistorialClinicoComponent implements OnInit {
 
     try {
       if (this.lesionActual.id) {
-        await firstValueFrom(this.historialClinicoService.actualizarHistorial(this.lesionActual.id, payload));
+        // 🔥 Promesa nativa
+        await this.historialClinicoService.actualizarHistorial(this.lesionActual.id, payload);
         this.mostrarExito('Registro actualizado correctamente.');
       } else {
         const payloadConEstudiante = { ...payload, estudianteId: this.alumnoSeleccionado.id };
-        await firstValueFrom(this.historialClinicoService.crearHistorial(payloadConEstudiante));
+        // 🔥 Promesa nativa
+        await this.historialClinicoService.crearHistorial(payloadConEstudiante);
         this.mostrarExito('Registro creado correctamente.');
       }
       this.mostrarDialogoLesion = false;
@@ -239,7 +244,7 @@ export class HistorialClinicoComponent implements OnInit {
   }
 
   // ==========================================
-  // ELIMINAR REGISTRO (SOLO ADMIN)
+  // ELIMINAR REGISTRO (SOLO ADMIN/STAFF)
   // ==========================================
   confirmarEliminarLesion(lesion: any) {
     this.confirmationService.confirm({
@@ -253,7 +258,8 @@ export class HistorialClinicoComponent implements OnInit {
         this.cargandoLesiones = true;
         this.cdr.detectChanges();
         try {
-          await firstValueFrom(this.historialClinicoService.eliminarHistorial(lesion.id));
+          // 🔥 Promesa nativa
+          await this.historialClinicoService.eliminarHistorial(lesion.id);
           this.mostrarExito('Registro médico eliminado exitosamente.');
           await this.onAlumnoChange();
         } catch (error) {

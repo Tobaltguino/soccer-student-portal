@@ -9,9 +9,7 @@ import { DialogModule } from 'primeng/dialog';
 import { MessageService } from 'primeng/api';
 
 // Servicios
-import { AuthService } from '../../../core/auth/auth.service';
-import { Rol } from '../../../shared/enums/rol.enum';
-import { IdleService } from '../../../core/services/idle.service';
+import { AuthService } from '../../../core/auth/services/auth.service';
 import { RutFormatDirective } from '../../../shared/directives/rut-format.directive';
 
 @Component({
@@ -30,7 +28,6 @@ export class LoginComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
   private messageService = inject(MessageService);
-  private idleService = inject(IdleService);
 
   loginForm: FormGroup = this.fb.group({
     rut: ['', [Validators.required, Validators.pattern(/^\d{1,3}(\.\d{3})*-[\dkK]$/i)]],
@@ -43,9 +40,6 @@ export class LoginComponent {
   displayResetDialog: boolean = false;
   rutRecuperacion: string = '';
   loadingReset: boolean = false;
-  
-  // Dominio interno para convertir el RUT en un correo válido para Supabase Auth
-  private readonly DOMINIO_APP = '@profutbol.cl';
 
   togglePassword() {
     this.showPassword = !this.showPassword;
@@ -54,67 +48,42 @@ export class LoginComponent {
   async ingresar() {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Por favor, completa todos los campos correctamente.' });
       return;
     }
 
     this.loading = true;
+    const { rut, password } = this.loginForm.value;
 
-    // Limpiamos el RUT y le agregamos el dominio para Supabase
-    let rutLimpio = this.loginForm.value.rut.replace(/\./g, '').trim();
-    const emailSupabase = `${rutLimpio}${this.DOMINIO_APP}`;
+    try {
+      // 🔥 Limpiamos los puntos y pasamos a mayúscula la 'K' para que coincida exactamente con la BD
+      const rutLimpio = rut.replace(/\./g, '').trim().toUpperCase();
 
-    const { data, error } = await this.authService.signIn(emailSupabase, this.loginForm.value.password);
+      // 1. Llamamos al servicio para obtener el correo real a través de la función RPC segura
+      const { data: correoReal, error: rpcError } = await this.authService.obtenerCorreoPorRut(rutLimpio);
 
-    this.loading = false;
-
-    if (error) {
-      this.messageService.add({ 
-        severity: 'error', 
-        summary: 'Acceso Denegado', 
-        detail: 'Credenciales incorrectas o usuario no encontrado.' 
-      });
-      console.error('Error en el login:', error.message);
-      return;
-    }
-
-    if (data.user) {
-      this.idleService.iniciarMonitoreo();
-      
-      // Supabase guarda metadatos personalizados en user_metadata
-      const metadata = data.user.user_metadata;
-      
-      if (metadata?.['necesitaAceptarTerminos']) {
-        this.router.navigate(['/terminos']);
-      } else {
-        this.redirectByRole(metadata?.['role'] || '');
+      if (rpcError || !correoReal) {
+        throw new Error('El RUT ingresado no está registrado en el sistema.');
       }
+
+      // 2. Hacemos el login nativo con el correo real
+      const { error: loginError } = await this.authService.signIn(correoReal, password);
+
+      if (loginError) throw new Error('RUT o contraseña incorrectos.');
+
+      // 3. Redirigimos a la aplicación centralizada
+      this.redirigirPorRol();
+      
+    } catch (err: any) {
+      console.error('Error en el login:', err.message);
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
+    } finally {
+      this.loading = false;
     }
   }
 
-  private redirectByRole(rol: string): void {
-    const rolNormalizado = rol ? rol.toLowerCase() : '';
-
-    switch (rolNormalizado) {
-      case Rol.ESTUDIANTE:
-        this.router.navigate(['/estudiante/inicio']); 
-        break;
-      case Rol.PROFESOR:
-        this.router.navigate(['/profesor/inicio']);
-        break;
-      case Rol.KINESIOLOGO:
-        this.router.navigate(['/kinesiologo/inicio']);
-        break;
-      case Rol.NUTRICIONISTA:
-        this.router.navigate(['/nutricionista/inicio']);
-        break;
-      case Rol.ADMINISTRADOR:
-        this.router.navigate(['/admin/inicio']);
-        break;
-      default:
-        console.warn('Rol no reconocido o faltante en user_metadata:', rol);
-        this.router.navigate(['/']);
-    }
+  // Como la arquitectura ahora es centralizada, todos van a la misma ruta base
+  private redirigirPorRol(): void {
+    this.router.navigate(['/inicio']);
   }
 
   abrirDialogoRecuperacion() {
@@ -130,18 +99,35 @@ export class LoginComponent {
 
     this.loadingReset = true;
     
-    const rutLimpio = this.rutRecuperacion.replace(/\./g, '').trim();
-    const emailSupabase = `${rutLimpio}${this.DOMINIO_APP}`;
-    
-    const { error } = await this.authService.recuperarPassword(emailSupabase);
+    try {
+      // 🔥 Limpiamos el RUT igual que en el login
+      const rutLimpio = this.rutRecuperacion.replace(/\./g, '').trim().toUpperCase();
 
-    this.loadingReset = false;
+      // 1. Obtenemos el correo real
+      const { data: correoReal, error: rpcError } = await this.authService.obtenerCorreoPorRut(rutLimpio);
 
-    if (error) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo procesar la solicitud.' });
-    } else {
+      if (rpcError || !correoReal) {
+        throw new Error('El RUT no está registrado en el sistema.');
+      }
+
+      // 2. Enviamos el correo de recuperación a ese email real
+      const { error } = await this.authService.recuperarPassword(correoReal);
+
+      if (error) {
+        throw new Error('No se pudo procesar la solicitud.');
+      } 
+      
       this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Se han enviado las instrucciones a tu correo.' });
       this.displayResetDialog = false;
+
+    } catch (err: any) {
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
+    } finally {
+      this.loadingReset = false;
     }
+  }
+
+  volverAlHome() {
+    this.router.navigate(['/']);
   }
 }

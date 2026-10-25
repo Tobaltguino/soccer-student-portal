@@ -51,10 +51,12 @@ export class UsuarioCentralService {
       .select(`
         *,
         datosEstudiante:usu_estudiantes(*),
-        datosProfesor:usu_profesores(*),
-        gruposProfesores:aca_grupos_profesores(grupo_id),
+        datosProfesor:usu_profesores(*)
+        /* 🔥 COMENTAMOS ESTO HASTA ARREGLAR LAS LLAVES FORÁNEAS EN SUPABASE 🔥
+        ,gruposProfesores:aca_grupos_profesores(grupo_id),
         gruposKinesiologos:aca_grupos_kinesiologos(grupo_id),
         gruposNutricionistas:aca_grupos_nutricionistas(grupo_id)
+        */
       `, { count: 'exact' })
       .order('nombre', { ascending: true })
       .range(desde, hasta);
@@ -227,5 +229,57 @@ export class UsuarioCentralService {
     if (index === -1) return;
     const path = url.substring(index + marcador.length);
     await this.supabase.storage.from(BUCKET_FOTOS).remove([path]);
+  }
+
+  /**
+   * Obtiene el cuerpo técnico (Profesores, Kinesiólogos, Nutricionistas)
+   * asignado al grupo del estudiante logueado.
+   */
+  async obtenerMiCuerpoTecnico(): Promise<UsuarioPerfilCompleto[]> {
+    // 1. Obtenemos el perfil del estudiante para saber su grupo
+    const miPerfil = await this.obtenerMiPerfil();
+    const grupoId = miPerfil.datosEstudiante?.grupo_id;
+
+    if (!grupoId) return []; // Si no tiene grupo asignado, retornamos vacío
+
+    // 2. Buscamos los IDs de los profesionales asignados a ese grupo en las tablas intermedias
+    const [profes, kines, nutris] = await Promise.all([
+      this.supabase.from('aca_grupos_profesores').select('usuario_id').eq('grupo_id', grupoId),
+      this.supabase.from('aca_grupos_kinesiologos').select('usuario_id').eq('grupo_id', grupoId),
+      this.supabase.from('aca_grupos_nutricionistas').select('usuario_id').eq('grupo_id', grupoId)
+    ]);
+
+    // Consolidamos todos los IDs encontrados
+    const idsStaff = [
+      ...(profes.data || []).map(p => p.usuario_id),
+      ...(kines.data || []).map(k => k.usuario_id),
+      ...(nutris.data || []).map(n => n.usuario_id)
+    ];
+
+    if (idsStaff.length === 0) return [];
+
+    // 3. Traemos los perfiles completos de esos profesionales
+    const { data: perfiles, error } = await this.supabase
+      .from('usu_perfiles')
+      .select(`
+        *,
+        datosProfesor:usu_profesores(*)
+      `)
+      .in('id_usuario', idsStaff)
+      .eq('activo', true);
+
+    if (error) {
+      throw new Error(`Error al obtener el cuerpo técnico: ${error.message}`);
+    }
+
+    // 4. Formateamos la respuesta para que el componente HTML lo lea directo
+    return (perfiles || []).map((u: any) => {
+      const datosProfesor = Array.isArray(u.datosProfesor) ? u.datosProfesor[0] : u.datosProfesor;
+      return {
+        ...u,
+        datosProfesor: datosProfesor || null,
+        tipo_profesor: datosProfesor?.tipo_profesor || null // Extraemos el tipo directo al root para el HTML
+      };
+    });
   }
 }

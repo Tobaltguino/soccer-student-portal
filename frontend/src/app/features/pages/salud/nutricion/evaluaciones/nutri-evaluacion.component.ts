@@ -1,11 +1,10 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core'; 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs'; // 🔥 IMPORTADO
 
-// Enum
+// Enums Compartidos
 import { EstadoSesion } from '../../../../../shared/enums/estado-sesion.enum';
-import { Rol } from '../../../administracion/usuarios/models/usuario-central.interface';
+import { Rol } from '../../../../../shared/enums/rol.enum';
 
 // PrimeNG Imports
 import { TableModule } from 'primeng/table';
@@ -22,16 +21,17 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
-// Servicios de Dominio
-import { AuthService } from '../../../../../core/auth/auth.service';
-import { NutriTipoEvaluacionService } from '../../../../../core/domains/salud/nutricion/evaluaciones/tipos/services/tipo-evaluacion.service';
-import { NutriSesionService } from '../../../../../core/domains/salud/nutricion/evaluaciones/sesiones/services/sesion.service';
-import { NutriResultadoService } from '../../../../../core/domains/salud/nutricion/evaluaciones/resultados/services/resultado.service';
-import { EstudianteService } from '../../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
-import { UsuarioService } from '../../../../../core/domains/usuarios/central/services/usuario.service';
+// Servicios de Core y Feature-Based
+import { AuthService } from '../../../../../core/auth/services/auth.service';
+import { UsuarioCentralService } from '../../../administracion/usuarios/services/usuarios-central.service';
+
+// Servicios Locales (Nutrición)
+import { NutriTipoEvaluacionService } from './services/nutri-tipo-evaluacion.service';
+import { NutriSesionService } from './services/nutri-sesion.service';
+import { NutriResultadoService } from './services/nutri-resultado.service';
 
 @Component({
-  selector: 'app-nutricion',
+  selector: 'app-nutri-evaluacion',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, DialogModule, ButtonModule, 
@@ -39,10 +39,10 @@ import { UsuarioService } from '../../../../../core/domains/usuarios/central/ser
     ConfirmDialogModule, RadioButtonModule, TooltipModule, ProgressSpinnerModule
   ],
   providers: [MessageService, ConfirmationService],
-  templateUrl: './nutricion.component.html',
-  styleUrls: ['./nutricion.component.scss']
+  templateUrl: './nutri-evaluacion.component.html',
+  styleUrls: ['./nutri-evaluacion.component.scss']
 })
-export class NutricionComponent implements OnInit {
+export class NutriEvaluacionComponent implements OnInit {
   
   readonly EstadoSesion = EstadoSesion;
 
@@ -50,8 +50,7 @@ export class NutricionComponent implements OnInit {
   private nutriTipoService = inject(NutriTipoEvaluacionService);
   private nutriSesionService = inject(NutriSesionService);
   private nutriResultadoService = inject(NutriResultadoService);
-  private estudianteService = inject(EstudianteService);
-  private usuarioService = inject(UsuarioService);
+  private usuarioService = inject(UsuarioCentralService);
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService); 
   private cdr = inject(ChangeDetectorRef);
@@ -136,21 +135,22 @@ export class NutricionComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
+      // 🔥 Promesas Nativas
       const [tiposRes, nutrisRes, sesionesRes] = await Promise.all([
-        firstValueFrom(this.nutriTipoService.listarTiposEvaluacion()),
-        firstValueFrom(this.usuarioService.listarUsuarios({ rol: Rol.NUTRICIONISTA, limite: 1000 })),
-        firstValueFrom(this.nutriSesionService.listarSesiones({ limite: 1000 }))
+        this.nutriTipoService.listarTiposEvaluacion(),
+        this.usuarioService.listarUsuarios({ rol: Rol.NUTRICIONISTA, limite: 1000 }),
+        this.nutriSesionService.listarSesiones({ limite: 1000 })
       ]);
 
       this.tiposEvaluacion = tiposRes || [];
       
-      this.nutricionistas = (nutrisRes.registros || []).map((n: any) => ({
+      this.nutricionistas = ((nutrisRes as any).registros || []).map((n: any) => ({
         ...n,
         id_usuario: n.id_usuario || n.id,
         nombreCompleto: `${n.nombre} ${n.apellido}`
       }));
       
-      const regs = sesionesRes?.registros || [];
+      const regs = (sesionesRes as any)?.registros || [];
       this.sesiones = regs.map((s: any) => {
         const tipoId = s.tipo_id || s.tipoId;
         const nutriId = s.nutricionista_id || s.nutricionistaId;
@@ -189,11 +189,11 @@ export class NutricionComponent implements OnInit {
     this.cdr.detectChanges();
     
     try {
-      await firstValueFrom(this.nutriTipoService.crearTipoEvaluacion(this.nuevoTipo));
+      await this.nutriTipoService.crearTipoEvaluacion(this.nuevoTipo);
       this.mostrarExito('Test agregado correctamente');
       this.nuevoTipo = { nombre: '', descripcion: '' };
       
-      this.tiposEvaluacion = await firstValueFrom(this.nutriTipoService.listarTiposEvaluacion()) || [];
+      this.tiposEvaluacion = await this.nutriTipoService.listarTiposEvaluacion() || [];
     } catch (error) {
       this.mostrarError('Error al guardar el tipo de test');
     } finally {
@@ -215,9 +215,9 @@ export class NutricionComponent implements OnInit {
         this.cdr.detectChanges();
         
         try {
-          await firstValueFrom(this.nutriTipoService.eliminarTipoEvaluacion(tipo.id));
+          await this.nutriTipoService.eliminarTipoEvaluacion(tipo.id);
           this.mostrarExito('Test eliminado correctamente');
-          this.tiposEvaluacion = await firstValueFrom(this.nutriTipoService.listarTiposEvaluacion()) || [];
+          this.tiposEvaluacion = await this.nutriTipoService.listarTiposEvaluacion() || [];
         } catch (err: any) {
           if (err?.error?.message?.includes('violates foreign key') || err?.error?.statusCode === 500) {
             this.mostrarError('No se puede eliminar porque ya hay sesiones usando este test.');
@@ -280,13 +280,13 @@ export class NutricionComponent implements OnInit {
 
     try {
       if (this.evalLogistica.id) {
-        await firstValueFrom(this.nutriSesionService.actualizarSesion(this.evalLogistica.id, payload));
+        await this.nutriSesionService.actualizarSesion(this.evalLogistica.id, payload);
         if (this.evalLogistica.estado) {
-          await firstValueFrom(this.nutriSesionService.cambiarEstado(this.evalLogistica.id, { estado: this.evalLogistica.estado }));
+          await this.nutriSesionService.cambiarEstado(this.evalLogistica.id, { estado: this.evalLogistica.estado });
         }
         this.mostrarExito('Sesión actualizada correctamente');
       } else {
-        await firstValueFrom(this.nutriSesionService.crearSesion(payload as any));
+        await this.nutriSesionService.crearSesion(payload as any);
         this.mostrarExito('Sesión creada correctamente');
       }
       this.displayMainDialog = false;
@@ -314,7 +314,7 @@ export class NutricionComponent implements OnInit {
         this.cdr.detectChanges();
         
         try {
-          await firstValueFrom(this.nutriSesionService.eliminarSesion(sesion.id));
+          await this.nutriSesionService.eliminarSesion(sesion.id);
           this.mostrarExito('Sesión eliminada correctamente');
           await this.cargarDatosGestion();
         } catch (error) {
@@ -336,17 +336,18 @@ export class NutricionComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
+      // 🔥 Promesas Nativas
       const [alumnosRes, resultadosPrevios] = await Promise.all([
-        firstValueFrom(this.estudianteService.listarEstudiantes({ limite: 2000, activo: true })),
-        firstValueFrom(this.nutriResultadoService.listarResultadosPorSesion(sesion.id))
+        this.usuarioService.listarUsuarios({ rol: Rol.ESTUDIANTE, limite: 2000, activo: true }),
+        this.nutriResultadoService.listarResultadosPorSesion(sesion.id)
       ]);
 
-      const alumnosBD = alumnosRes?.registros || [];
+      const alumnosBD = (alumnosRes as any)?.registros || [];
 
       this.estudiantes = alumnosBD.map((est: any) => {
-        const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id || est.id;
-        const nombre = est.perfil ? est.perfil.nombre : est.nombre;
-        const apellido = est.perfil ? est.perfil.apellido : est.apellido;
+        const idUsuario = est.id_usuario || est.id; // 🔥 Mapeo directo del servicio central
+        const nombre = est.nombre;
+        const apellido = est.apellido;
 
         const resultadoGuardado: any = (resultadosPrevios || []).find((r: any) => r.estudianteId === idUsuario || r.estudiante_id === idUsuario);
 
@@ -426,9 +427,9 @@ export class NutricionComponent implements OnInit {
         };
   
         if (est.resultado_id) {
-          return firstValueFrom(this.nutriResultadoService.actualizarResultado(est.resultado_id, payload, est.archivoSeleccionado));
+          return this.nutriResultadoService.actualizarResultado(est.resultado_id, payload, est.archivoSeleccionado);
         } else {
-          return firstValueFrom(this.nutriResultadoService.crearResultado(payload, est.archivoSeleccionado));
+          return this.nutriResultadoService.crearResultado(payload, est.archivoSeleccionado);
         }
       });
 
@@ -452,7 +453,7 @@ export class NutricionComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      const data = await firstValueFrom(this.nutriResultadoService.listarMisResultados());
+      const data = await this.nutriResultadoService.listarMisResultados();
       const rawData = data || [];
 
       this.misResultados = rawData.map((r: any) => {

@@ -1,7 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom, Observable } from 'rxjs'; // 🔥 IMPORTADO
 
 import { TableModule, Table } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -17,21 +16,24 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { TooltipModule } from 'primeng/tooltip';
 import { DatePickerModule } from 'primeng/datepicker'; 
 import { FileUploadModule } from 'primeng/fileupload'; 
-
 import { FilterService, ConfirmationService, MessageService } from 'primeng/api';
-import { HistorialClinicoService } from '../../../../core/domains/salud/kinesiologia/historial-clinico/services/historial-clinico.service';
+
+// Directivas y Core
 import { RutFormatDirective } from '../../../../shared/directives/rut-format.directive';
 import { RutValidator } from '../../../../shared/directives/rut-validator.directive';
-
-import { UsuarioService } from '../../../../core/domains/usuarios/central/services/usuario.service';
-import { CrearUsuarioPayload, ActualizarUsuarioPayload } from '../../../../core/domains/usuarios/central/models/usuario.interface'
-import { GrupoService } from '../../../../core/domains/academico/grupos/services/grupo.service';
-
-import { AsignacionStaffService } from '../../../../core/domains/academico/asignaciones-staff/services/asignacion-staff.service';
-import { TipoStaff } from '../../../../core/domains/academico/asignaciones-staff/models/asignacion-staff.interface';
-
 import { ExcelExportService } from '../../../../core/services/excel-export.service';
 
+// Servicios y Modelos Locales (Mismo módulo: usuarios)
+import { UsuarioCentralService } from './services/usuarios-central.service';
+import { CrearUsuarioPayload, ActualizarUsuarioPayload } from './models/usuario-central.interface';
+
+// Servicios de otros módulos (Feature-based)
+import { GrupoService } from '../../academico/grupos/services/grupo.service';
+import { AsignacionStaffService } from '../../academico/grupos/services/asignacion-staff.service';
+import { TipoStaff } from '../../academico/grupos/models/asignacion-staff.interface';
+import { HistorialClinicoService } from '../../salud/kinesiologia/historial-clinico/services/historial-clinico.service';
+
+// Enums Compartidos
 import { Rol } from '../../../../shared/enums/rol.enum';
 import { Posicion } from '../../../../shared/enums/posicion.enum';
 import { Genero } from '../../../../shared/enums/genero.enum';
@@ -52,7 +54,7 @@ import { Genero } from '../../../../shared/enums/genero.enum';
 export class UsuariosComponent implements OnInit {
   @ViewChild('dt') dt: Table | undefined;
 
-  private usuarioService = inject(UsuarioService);
+  private usuarioService = inject(UsuarioCentralService);
   private grupoService = inject(GrupoService);
   private historialClinicoService = inject(HistorialClinicoService);
   private asignacionStaffService = inject(AsignacionStaffService);
@@ -139,7 +141,7 @@ export class UsuariosComponent implements OnInit {
 
   async cargarMaestros() {
     try {
-      this.listaGrupos = await firstValueFrom(this.grupoService.listarGrupos()) || [];
+      this.listaGrupos = await this.grupoService.listarGrupos() || [];
     } catch (error) {
       this.messageService.add({ severity: 'error', summary: 'Aviso', detail: 'No se pudieron cargar los grupos' });
     }
@@ -174,10 +176,12 @@ export class UsuariosComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      const res = await firstValueFrom(this.usuarioService.listarUsuarios({ rol: this.vistaActual, limite: 200 }));
+      // Llamada nativa a la promesa
+      const res = await this.usuarioService.listarUsuarios({ rol: this.vistaActual, limite: 200 });
       
       this.dataList = res.registros.map(user => {
-        const gruposRelacion = user.grupos_asignados || user.grupos_profesores || user.grupos_kinesiologos || user.grupos_nutricionistas || [];
+        // 🔥 Solo necesitamos grupos_asignados porque el servicio ya hizo el trabajo sucio
+        const gruposRelacion = user.grupos_asignados || [];
         
         const idsGrupos = gruposRelacion
           .map((g: any) => Number(g.grupo_id || g.id || g))
@@ -329,17 +333,18 @@ export class UsuariosComponent implements OnInit {
       let mensajeExito: string;
 
       if (this.isEditing) {
-        await firstValueFrom(this.usuarioService.actualizarUsuario(this.userForm.id, payload as ActualizarUsuarioPayload));
+        // Llamada nativa a la promesa
+        await this.usuarioService.actualizarUsuario(this.userForm.id, payload as ActualizarUsuarioPayload);
         userId = this.userForm.id;
         mensajeExito = 'Usuario actualizado con éxito';
       } else {
         payload.passwordTemporal = rutLimpio.replace(/-/g, '');
-        const res: any = await firstValueFrom(this.usuarioService.crearUsuario(payload as CrearUsuarioPayload));
+        // Llamada nativa a la promesa
+        const res: any = await this.usuarioService.crearUsuario(payload as CrearUsuarioPayload);
         userId = res.id_usuario || res.id;
         mensajeExito = 'Usuario creado con éxito';
       }
 
-      // Procesar asignaciones de grupos y foto de perfil en flujo lineal
       const msgGrupos = await this.procesarGruposAsignados(userId);
       const msgFoto = await this.procesarFotoPerfil(userId);
 
@@ -362,11 +367,11 @@ export class UsuariosComponent implements OnInit {
     const peticiones: Promise<any>[] = [];
 
     gruposParaAgregar.forEach((grupoId: number) => {
-      peticiones.push(firstValueFrom(this.asignacionStaffService.asignarStaff(grupoId, tipoStaff, { usuarioId: userId })));
+      peticiones.push(this.asignacionStaffService.asignarStaff(grupoId, tipoStaff, { usuarioId: userId }));
     });
 
     gruposParaQuitar.forEach((grupoId: number) => {
-      peticiones.push(firstValueFrom(this.asignacionStaffService.desasignarStaff(grupoId, tipoStaff, userId)));
+      peticiones.push(this.asignacionStaffService.desasignarStaff(grupoId, tipoStaff, userId));
     });
 
     if (peticiones.length > 0) {
@@ -385,9 +390,9 @@ export class UsuariosComponent implements OnInit {
       if (this.archivoSeleccionado) {
         this.uploadingFoto = true;
         this.cdr.detectChanges();
-        await firstValueFrom(this.usuarioService.actualizarFoto(userId, this.archivoSeleccionado));
+        await this.usuarioService.actualizarFoto(userId, this.archivoSeleccionado);
       } else if (this.isEditing && !this.previewUrl) {
-        await firstValueFrom(this.usuarioService.eliminarFoto(userId));
+        await this.usuarioService.eliminarFoto(userId);
       }
       return '';
     } catch (error) {
@@ -409,6 +414,8 @@ export class UsuariosComponent implements OnInit {
     let errorDetalle = 'Error al procesar la solicitud';
     if (err.error?.message) {
       errorDetalle = Array.isArray(err.error.message) ? err.error.message.join(' · ') : err.error.message;
+    } else if (err.message) {
+      errorDetalle = err.message;
     }
     this.messageService.add({ severity: 'error', summary: 'Error de Validación', detail: errorDetalle, life: 6000 });
     this.cdr.detectChanges();
@@ -425,9 +432,9 @@ export class UsuariosComponent implements OnInit {
       accept: async () => {
         try {
           if (usuario.activo) {
-            await firstValueFrom(this.usuarioService.desactivarUsuario(usuario.id_usuario));
+            await this.usuarioService.desactivarUsuario(usuario.id_usuario);
           } else {
-            await firstValueFrom(this.usuarioService.reactivarUsuario(usuario.id_usuario));
+            await this.usuarioService.reactivarUsuario(usuario.id_usuario);
           }
           this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Estado actualizado.' });
           await this.cargarDatos();
@@ -446,11 +453,11 @@ export class UsuariosComponent implements OnInit {
       acceptLabel: 'Sí, eliminar', acceptButtonStyleClass: 'p-button-danger', rejectLabel: 'Cancelar',
       accept: async () => {
         try {
-          await firstValueFrom(this.usuarioService.eliminarUsuario(usuario.id_usuario));
+          await this.usuarioService.eliminarUsuario(usuario.id_usuario);
           this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Usuario borrado del sistema.' });
           await this.cargarDatos();
         } catch (err: any) {
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'No se puede eliminar.' });
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || err.message || 'No se puede eliminar.' });
         }
       }
     });
@@ -482,7 +489,7 @@ export class UsuariosComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      this.historialClinico = await firstValueFrom(this.historialClinicoService.listarHistorialPorEstudiante(estudiante.id_usuario)) || [];
+      this.historialClinico = await this.historialClinicoService.listarHistorialPorEstudiante(estudiante.id_usuario) || [];
     } catch (error) {
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el historial médico.' });
     } finally {

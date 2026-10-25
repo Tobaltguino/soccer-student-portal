@@ -1,7 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
 
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -18,13 +17,13 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
-// Servicios
-import { AuthService } from '../../../../../core/auth/auth.service';
-import { UsuarioService } from '../../../../../core/domains/usuarios/central/services/usuario.service';
-import { EstudianteService } from '../../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
-import { HistorialClinicoService } from '../historial-clinico/services/historial-clinico.service';
+// Core y Shared
+import { AuthService } from '../../../../../core/auth/services/auth.service';
+import { Rol } from '../../../../../shared/enums/rol.enum';
+
+// Servicios Locales (Feature-Based)
+import { UsuarioCentralService } from '../../../administracion/usuarios/services/usuarios-central.service';
 import { FichaEvolutivaService } from './services/ficha-evolutiva.service';
-import { Rol } from '../../../administracion/usuarios/models/usuario-central.interface';
 
 @Component({
   selector: 'app-ficha-evolutiva',
@@ -41,9 +40,7 @@ import { Rol } from '../../../administracion/usuarios/models/usuario-central.int
 export class FichaEvolutivaComponent implements OnInit {
 
   private authService = inject(AuthService);
-  private usuarioService = inject(UsuarioService);
-  private estudianteService = inject(EstudianteService);
-  private historialClinicoService = inject(HistorialClinicoService);
+  private usuarioService = inject(UsuarioCentralService);
   private fichaEvolutivaService = inject(FichaEvolutivaService);
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
@@ -78,7 +75,7 @@ export class FichaEvolutivaComponent implements OnInit {
   ];
 
   // Estructura de la Ficha
-  editandoId: number | null = null;
+  editandoId: string | null = null; // 🔥 Ajustado para que coincida con el servicio
   ficha: any = this.getFichaVacia();
 
   // Matrices dinámicas de la ficha
@@ -129,16 +126,17 @@ export class FichaEvolutivaComponent implements OnInit {
   // ==========================================
   async cargarMaestros() {
     try {
+      // 🔥 Llamadas a promesas nativas y en paralelo usando UsuarioCentralService
       const [alumnosRes, kinesiologosRes] = await Promise.all([
-        firstValueFrom(this.estudianteService.listarEstudiantes({ limite: 2000, activo: true })),
-        firstValueFrom(this.usuarioService.listarUsuarios({ rol: Rol.KINESIOLOGO, limite: 1000 }))
+        this.usuarioService.listarUsuarios({ rol: Rol.ESTUDIANTE, limite: 2000, activo: true }),
+        this.usuarioService.listarUsuarios({ rol: Rol.KINESIOLOGO, limite: 1000 })
       ]);
 
       this.listaAlumnos = (alumnosRes.registros || []).map((est: any) => {
-        const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id || est.id;
-        const nombre = est.perfil ? est.perfil.nombre : est.nombre;
-        const apellido = est.perfil ? est.perfil.apellido : est.apellido;
-        const rut = est.perfil ? est.perfil.rut : est.rut;
+        const idUsuario = est.id_usuario || est.id; // Extraído directo del perfil
+        const nombre = est.nombre;
+        const apellido = est.apellido;
+        const rut = est.rut;
         return {
             id: idUsuario,
             nombreCompleto: `${nombre} ${apellido} (${rut || 'Sin RUT'})`,
@@ -172,8 +170,8 @@ export class FichaEvolutivaComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      const historial = await firstValueFrom(this.fichaEvolutivaService.listarFichasPorEstudiante(this.alumnoSeleccionado.id));
-      this.historialFichas = historial || [];
+      // 🔥 Promesa nativa
+      this.historialFichas = await this.fichaEvolutivaService.listarFichasPorEstudiante(this.alumnoSeleccionado.id) || [];
     } catch (error) {
       this.mostrarError('Error al cargar el historial del paciente.');
     } finally {
@@ -190,9 +188,10 @@ export class FichaEvolutivaComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      const data = await firstValueFrom(this.fichaEvolutivaService.listarMisFichas());
+      // 🔥 Promesa nativa
+      const data = await this.fichaEvolutivaService.listarMisFichas();
       this.historialFichas = data || [];
-      this.historialFichas.sort((a, b) => new Date(b.fecha_evaluacion).getTime() - new Date(a.fecha_evaluacion).getTime());
+      this.historialFichas.sort((a: any, b: any) => new Date(b.fecha_evaluacion).getTime() - new Date(a.fecha_evaluacion).getTime());
     } catch (error) {
       this.mostrarError('Error al cargar tu historial de atenciones.');
     } finally {
@@ -326,11 +325,13 @@ export class FichaEvolutivaComponent implements OnInit {
 
     try {
       if (this.editandoId) {
-        await firstValueFrom(this.fichaEvolutivaService.actualizarFicha(this.editandoId, payload));
+        // 🔥 Promesa nativa
+        await this.fichaEvolutivaService.actualizarFicha(this.editandoId, payload);
         this.mostrarExito('Ficha actualizada correctamente');
       } else {
         const payloadConEstudiante = { ...payload, estudianteId: this.alumnoSeleccionado.id };
-        await firstValueFrom(this.fichaEvolutivaService.crearFicha(payloadConEstudiante));
+        // 🔥 Promesa nativa
+        await this.fichaEvolutivaService.crearFicha(payloadConEstudiante);
         this.mostrarExito('Ficha creada correctamente');
       }
 

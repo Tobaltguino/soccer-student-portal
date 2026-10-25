@@ -1,7 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
 
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -15,12 +14,15 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 import { TextareaModule } from 'primeng/textarea';
 import { TagModule } from 'primeng/tag';
 
-// AuthService
-import { AuthService } from '../../../../core/auth/auth.service';
+// AuthService (Ruta ajustada al Core)
+import { AuthService } from '../../../../core/auth/services/auth.service';
 
-import { MaterialService } from '../../../../core/domains/academico/material-complementario/services/material-complementario.service';
+// Servicios y Modelos Locales (Feature-based)
+import { MaterialService } from './services/material.service';
+import { Material, CrearMaterialPayload, ActualizarMaterialPayload } from './models/material.interface';
+
+// Enums Compartidos
 import { TipoMaterial } from '../../../../shared/enums/tipo-material.enum';
-import { Material, CrearMaterialPayload, ActualizarMaterialPayload } from '../../../../core/domains/academico/material-complementario/models/material.interface';
 
 @Component({
   selector: 'app-material-complementario',
@@ -109,7 +111,8 @@ export class MaterialComplementarioComponent implements OnInit {
     this.loading = true;
     
     try {
-      const response = await firstValueFrom(this.materialService.listarMaterial({ limite: 200 }));
+      // 🔥 Llamada a Promesa nativa
+      const response = await this.materialService.listarMaterial({ limite: 200 });
       this.guias = response.registros || [];
       this.aplicarFiltros();
     } catch (error) {
@@ -173,22 +176,22 @@ export class MaterialComplementarioComponent implements OnInit {
 
     try {
       if (this.nuevaGuia.id) {
-        // ACTUALIZAR
+        // ACTUALIZAR (🔥 Promesa nativa)
         const payload: ActualizarMaterialPayload = {
           titulo: this.nuevaGuia.titulo,
           descripcion: this.nuevaGuia.descripcion,
           tipoMaterial: this.nuevaGuia.tipo_material
         };
-        await firstValueFrom(this.materialService.actualizarMaterial(this.nuevaGuia.id, payload, this.archivoSeleccionado));
+        await this.materialService.actualizarMaterial(this.nuevaGuia.id, payload, this.archivoSeleccionado || undefined);
         this.messageService.add({ severity: 'success', summary: 'Actualizada', detail: 'La guía se modificó correctamente.' });
       } else {
-        // CREAR NUEVO
+        // CREAR NUEVO (🔥 Promesa nativa)
         const payload: CrearMaterialPayload = {
           titulo: this.nuevaGuia.titulo,
           descripcion: this.nuevaGuia.descripcion,
           tipoMaterial: this.nuevaGuia.tipo_material
         };
-        await firstValueFrom(this.materialService.crearMaterial(payload, this.archivoSeleccionado!));
+        await this.materialService.crearMaterial(payload, this.archivoSeleccionado!);
         this.messageService.add({ severity: 'success', summary: 'Publicada', detail: 'La guía se subió correctamente.' });
       }
       this.displayDialog = false;
@@ -212,7 +215,8 @@ export class MaterialComplementarioComponent implements OnInit {
       acceptButtonStyleClass: 'p-button-danger',
       accept: async () => {
         try {
-          await firstValueFrom(this.materialService.eliminarMaterial(id));
+          // 🔥 Promesa nativa
+          await this.materialService.eliminarMaterial(id);
           this.messageService.add({ severity: 'success', summary: 'Eliminada', detail: 'Guía borrada exitosamente.' });
           await this.cargarDatos();
         } catch (error) {

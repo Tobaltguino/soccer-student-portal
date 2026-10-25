@@ -1,7 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core'; 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
 
 // Enums compartidos
 import { EstadoSesion } from '../../../../../shared/enums/estado-sesion.enum';
@@ -22,13 +21,13 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
-// Servicios
-import { AuthService } from '../../../../../core/auth/auth.service';
+// Servicios de Core y Feature-Based
+import { AuthService } from '../../../../../core/auth/services/auth.service';
 import { ExcelExportService } from '../../../../../core/services/excel-export.service';
-import { EstudianteService } from '../../../../../core/domains/usuarios/estudiantes/services/estudiante.service';
+import { UsuarioCentralService } from '../../../administracion/usuarios/services/usuarios-central.service';
 import { GrupoService } from '../../../academico/grupos/services/grupo.service';
 
-// Servicios Kinesiología (Ajusta las rutas a tu arquitectura real)
+// Servicios Locales Kinesiología
 import { KineTipoEvaluacionService } from './services/kine-tipo-evaluacion.service';
 import { KineSubevaluacionService } from './services/kine-subevaluacion.service';
 import { KineSesionService } from './services/kine-sesion.service';
@@ -56,7 +55,7 @@ export class EvaluacionesKineComponent implements OnInit {
   private kineSesionService = inject(KineSesionService);
   private kineResultadoService = inject(KineResultadoService);
   private grupoService = inject(GrupoService);
-  private estudianteService = inject(EstudianteService);
+  private usuarioService = inject(UsuarioCentralService);
   private excelService = inject(ExcelExportService);
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService); 
@@ -144,22 +143,22 @@ export class EvaluacionesKineComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
+      // 🔥 Promesas Nativas
       const [tiposRes, gruposRes] = await Promise.all([
-        firstValueFrom(this.kineTipoService.listarTiposEvaluacion()),
-        this.esAdmin ? firstValueFrom(this.grupoService.listarGrupos()) : firstValueFrom(this.grupoService.obtenerMisGrupos())
+        this.kineTipoService.listarTiposEvaluacion(),
+        this.esAdmin ? this.grupoService.listarGrupos() : this.grupoService.obtenerMisGrupos()
       ]);
 
       this.tiposEvaluacion = tiposRes || [];
       this.grupos = gruposRes || [];
 
-      // Si es staff y no tiene grupos, vaciamos la lista de sesiones
       if (this.esStaff && this.grupos.length === 0) {
         this.sesiones = [];
       } else {
         const grupoIds = this.esAdmin ? undefined : this.grupos.map(g => g.id);
         const peticionesSesiones = (grupoIds && grupoIds.length > 0) 
-          ? Promise.all(grupoIds.map((id: number) => firstValueFrom(this.kineSesionService.listarSesiones({ grupoId: id, limite: 1000 }))))
-          : firstValueFrom(this.kineSesionService.listarSesiones({ limite: 1000 }));
+          ? Promise.all(grupoIds.map((id: number) => this.kineSesionService.listarSesiones({ grupoId: id, limite: 1000 })))
+          : this.kineSesionService.listarSesiones({ limite: 1000 });
 
         const sesionesResponse = await peticionesSesiones;
         
@@ -235,13 +234,14 @@ export class EvaluacionesKineComponent implements OnInit {
 
     try {
       if (this.evalLogistica.id) {
-        await firstValueFrom(this.kineSesionService.actualizarSesion(this.evalLogistica.id, payload));
+        // 🔥 Promesas Nativas
+        await this.kineSesionService.actualizarSesion(this.evalLogistica.id, payload);
         if (this.evalLogistica.estado) {
-          await firstValueFrom(this.kineSesionService.cambiarEstado(this.evalLogistica.id, { estado: this.evalLogistica.estado }));
+          await this.kineSesionService.cambiarEstado(this.evalLogistica.id, { estado: this.evalLogistica.estado });
         }
         this.mostrarExito('Sesión actualizada correctamente');
       } else {
-        await firstValueFrom(this.kineSesionService.crearSesion(payload as any));
+        await this.kineSesionService.crearSesion(payload as any);
         this.mostrarExito('Sesión creada correctamente');
       }
       this.displayMainDialog = false;
@@ -269,7 +269,7 @@ export class EvaluacionesKineComponent implements OnInit {
         this.cdr.detectChanges();
         
         try {
-          await firstValueFrom(this.kineSesionService.eliminarSesion(sesion.id));
+          await this.kineSesionService.eliminarSesion(sesion.id);
           this.mostrarExito('Sesión eliminada correctamente');
           await this.cargarDatosGenerales();
         } catch (error) {
@@ -295,18 +295,18 @@ export class EvaluacionesKineComponent implements OnInit {
 
     try {
       const [alumnosRes, subevaluaciones, resultadosPrevios] = await Promise.all([
-        firstValueFrom(this.estudianteService.listarEstudiantes({ grupoIds: [grupoIdToFetch], limite: 2000, activo: true })),
-        firstValueFrom(this.kineSubevaluacionService.listarSubevaluacionesPorTipo(tipoEvalId)),
-        firstValueFrom(this.kineResultadoService.listarResultadosPorSesion(sesion.id))
+        this.usuarioService.listarUsuarios({ rol: Rol.ESTUDIANTE, grupoIds: [grupoIdToFetch], limite: 2000, activo: true }),
+        this.kineSubevaluacionService.listarSubevaluacionesPorTipo(tipoEvalId),
+        this.kineResultadoService.listarResultadosPorSesion(sesion.id)
       ]);
 
-      const alumnosBD = alumnosRes?.registros || [];
+      const alumnosBD = (alumnosRes as any)?.registros || [];
 
       // Construir la matriz de alumnos y sus subevaluaciones
       this.estudiantesGrupo = alumnosBD.map((est: any) => {
-        const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id || est.id;
-        const nombre = est.perfil ? est.perfil.nombre : est.nombre;
-        const apellido = est.perfil ? est.perfil.apellido : est.apellido;
+        const idUsuario = est.id_usuario || est.id;
+        const nombre = est.nombre;
+        const apellido = est.apellido;
 
         // Filtrar resultados de este usuario
         const resultadosUsuario = (resultadosPrevios || []).filter((r: any) => r.estudiante_id === idUsuario || r.estudianteId === idUsuario);
@@ -424,14 +424,12 @@ export class EvaluacionesKineComponent implements OnInit {
               };
 
               if (esActualizacion) {
-                  // Si borró todo, y tenía nota, podríamos eliminar el resultado, pero la API permite actualizar a null
-                  peticiones.push(firstValueFrom(this.kineResultadoService.actualizarResultado(sub.resultado_id, payload)));
+                  peticiones.push(this.kineResultadoService.actualizarResultado(sub.resultado_id, payload));
               } else if (tieneDataNueva) {
-                  // Payload de creación requiere sesión y estudiante
                   payload.sesionId = this.evalLogistica.id;
                   payload.estudianteId = est.id;
                   payload.subevaluacionId = sub.subevaluacion_id;
-                  peticiones.push(firstValueFrom(this.kineResultadoService.crearResultado(payload)));
+                  peticiones.push(this.kineResultadoService.crearResultado(payload));
               }
           }
       });
@@ -466,10 +464,8 @@ export class EvaluacionesKineComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      // El backend intercepta el token y devuelve solo las de este alumno que estén FINALIZADAS
-      const res = await firstValueFrom(this.kineResultadoService.listarMisResultados());
+      const res = await this.kineResultadoService.listarMisResultados();
       
-      // Agrupar los resultados en "Sesiones" virtuales para la tabla
       const resultadosPlanos = res || [];
       const sesionesMap = new Map();
 
@@ -477,8 +473,8 @@ export class EvaluacionesKineComponent implements OnInit {
         if (!sesionesMap.has(r.sesion_id)) {
             sesionesMap.set(r.sesion_id, {
                 id: r.sesion_id,
-                fecha: r.created_at, // O idealmente la fecha de la sesión si viene en el join
-                tipo_evaluacion: { nombre: r.subevaluacion?.nombre.split(' - ')[0] || 'Evaluación' }, // Aproximación
+                fecha: r.created_at, 
+                tipo_evaluacion: { nombre: r.subevaluacion?.nombre.split(' - ')[0] || 'Evaluación' }, 
                 resultadosRAW: []
             });
         }
@@ -486,7 +482,6 @@ export class EvaluacionesKineComponent implements OnInit {
       });
 
       this.sesiones = Array.from(sesionesMap.values()).map(s => {
-          // Asumir la fecha del registro más antiguo como fecha de sesión
           const registroMasAntiguo = s.resultadosRAW.reduce((min: any, p: any) => new Date(p.created_at) < new Date(min.created_at) ? p : min, s.resultadosRAW[0]);
           s.fecha = registroMasAntiguo.created_at;
           return s;
@@ -512,7 +507,6 @@ export class EvaluacionesKineComponent implements OnInit {
 
     try {
       if (this.esEstudiante) {
-        // Formatear directo desde el mapa que hicimos en cargarSesionesDelEstudiante
         const resultadosAlumno = sesion.resultadosRAW.map((r: any) => ({
             nombre_parametro: r.subevaluacion?.nombre || 'Parámetro',
             resultado_unico: r.resultado_unico !== null ? r.resultado_unico : null,
@@ -531,21 +525,20 @@ export class EvaluacionesKineComponent implements OnInit {
         }];
         this.estudianteVistaSeleccionado = this.resultadosVista[0];
       } else {
-        // Admin o Visor de Staff: Cargar todo el grupo
         const grupoIdToFetch = sesion.grupo_id || sesion.grupoId;
         const tipoEvalId = sesion.tipo_evaluacion_id || sesion.tipoEvaluacionId;
 
         const [alumnosRes, subevaluaciones, resultadosPrevios] = await Promise.all([
-          firstValueFrom(this.estudianteService.listarEstudiantes({ grupoIds: [grupoIdToFetch], limite: 2000, activo: true })),
-          firstValueFrom(this.kineSubevaluacionService.listarSubevaluacionesPorTipo(tipoEvalId)),
-          firstValueFrom(this.kineResultadoService.listarResultadosPorSesion(sesion.id))
+          this.usuarioService.listarUsuarios({ rol: Rol.ESTUDIANTE, grupoIds: [grupoIdToFetch], limite: 2000, activo: true }),
+          this.kineSubevaluacionService.listarSubevaluacionesPorTipo(tipoEvalId),
+          this.kineResultadoService.listarResultadosPorSesion(sesion.id)
         ]);
 
-        const alumnosBD = alumnosRes?.registros || [];
+        const alumnosBD = (alumnosRes as any)?.registros || [];
         const resultadosValidos = (resultadosPrevios || []).filter((r: any) => r.resultado_unico !== null || r.resultado_izquierdo !== null || r.resultado_derecho !== null || r.observacion);
 
         this.resultadosVista = alumnosBD.map((est: any) => {
-            const idUsuario = est.perfil ? est.perfil.id_usuario : est.usuario_id || est.id;
+            const idUsuario = est.id_usuario || est.id;
             const resultadosUsuario = resultadosValidos.filter((r: any) => r.estudiante_id === idUsuario || r.estudianteId === idUsuario);
 
             const parametrosMapeados = subevaluaciones.map((sub: any) => {
@@ -563,8 +556,8 @@ export class EvaluacionesKineComponent implements OnInit {
 
             return {
                 id: idUsuario,
-                nombre: est.perfil?.nombre || est.nombre,
-                apellido: est.perfil?.apellido || est.apellido,
+                nombre: est.nombre,
+                apellido: est.apellido,
                 activoEnGrupo: true,
                 evaluaciones: parametrosMapeados
             };
@@ -589,7 +582,7 @@ export class EvaluacionesKineComponent implements OnInit {
   descargarExcelPorSesion(sesion: any) {
     if (!sesion || !sesion.id) return;
     this.messageService.add({ severity: 'info', summary: 'Exportando', detail: 'Generando matriz en Excel...' });
-    this.excelService.exportarResultadosKinesiologicos(sesion.id);
+    this.excelService.exportarResultadosKine(sesion.id);
   }
 
   // ==========================================
@@ -627,7 +620,7 @@ export class EvaluacionesKineComponent implements OnInit {
     }
   }
 
-  getSeverityPuntaje(valor: any, subId: number): string {
+  getSeverityPuntaje(valor: any, subId: number): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' {
     return valor ? 'info' : 'secondary';
   }
 

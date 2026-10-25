@@ -1,120 +1,150 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
+import { Injectable, inject } from '@angular/core';
+import * as XLSX from 'xlsx';
+
+// Servicios Feature-Based (Ajusta las rutas a tu estructura final)
+import { UsuarioCentralService } from '../../features/pages/administracion/usuarios/services/usuarios-central.service';
+import { GrupoService } from '../../features/pages/academico/grupos/services/grupo.service';
+import { ClaseService } from '../../features/pages/academico/clases/services/clases.service';
+import { KineResultadoService } from '../../features/pages/salud/kinesiologia/evaluaciones/services/kine-resultado.service';
+// import { AsistenciaService } from '../../features/pages/academico/asistencias/services/asistencia.service';
+// import { EvaluacionAcademicaService } from '../../features/pages/academico/evaluaciones/services/evaluacion.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ExcelExportService {
-  private apiUrl = environment.apiUrl; // ej: 'http://localhost:3000'
 
-  constructor(private http: HttpClient) {}
+  private usuarioService = inject(UsuarioCentralService);
+  private grupoService = inject(GrupoService);
+  private claseService = inject(ClaseService);
+  private kineResultadoService = inject(KineResultadoService);
+  // private asistenciaService = inject(AsistenciaService);
+  // private academicoResultadoService = inject(EvaluacionAcademicaService);
 
   /**
-   * Método mágico que toma el binario (Blob) y fuerza la descarga en el navegador
+   * Genera el archivo Excel en el navegador a partir de un arreglo JSON
    */
-  private descargarArchivo(blob: Blob, nombreArchivo: string) {
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = nombreArchivo;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+  private generarExcel(data: any[], nombreArchivo: string) {
+    if (!data || data.length === 0) {
+      console.warn('No hay datos para exportar a Excel');
+      return;
+    }
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Reporte');
+    
+    // Fuerza la descarga en el navegador
+    XLSX.writeFile(workbook, `${nombreArchivo}.xlsx`);
   }
 
   // ==========================================
   // 1. EXPORTAR USUARIOS
   // ==========================================
-  exportarUsuarios(filtros: any = {}) {
-    let params = new HttpParams();
-    // Agregamos los filtros a la URL si existen
-    if (filtros.rol) params = params.set('rol', filtros.rol);
-    if (filtros.busqueda) params = params.set('busqueda', filtros.busqueda);
-    if (filtros.activo !== undefined) params = params.set('activo', filtros.activo);
-
-    this.http.get(`${this.apiUrl}/usuarios/exportar/excel`, { 
-      params, 
-      responseType: 'blob' // ¡ESTO ES VITAL!
-    }).subscribe({
-      next: (blob) => this.descargarArchivo(blob, 'usuarios_profutbol.xlsx'),
-      error: (err) => console.error('Error descargando usuarios', err)
-    });
+  async exportarUsuarios(filtros: any = {}) {
+    try {
+      const res = await this.usuarioService.listarUsuarios(filtros);
+      const data = (res?.registros || []).map((u: any) => ({
+        ID: u.id_usuario || u.id,
+        RUT: u.rut || 'Sin RUT',
+        Nombres: u.nombre,
+        Apellidos: u.apellido,
+        Rol: (u.rol || '').toUpperCase(),
+        Estado: u.activo ? 'Activo' : 'Inactivo',
+        'Fecha Registro': new Date(u.created_at).toLocaleDateString()
+      }));
+      this.generarExcel(data, 'usuarios_profutbol');
+    } catch (error) {
+      console.error('Error exportando usuarios', error);
+    }
   }
 
   // ==========================================
   // 2. EXPORTAR ASISTENCIAS (REPORTE MENSUAL)
   // ==========================================
-  exportarAsistenciasMensuales(grupoId: number, mes: number, anio: number) {
-    let params = new HttpParams()
-      .set('grupoId', grupoId.toString())
-      .set('mes', mes.toString())
-      .set('anio', anio.toString());
-
-    this.http.get(`${this.apiUrl}/reportes/mensual/exportar/excel`, { 
-      params, 
-      responseType: 'blob' 
-    }).subscribe({
-      next: (blob) => this.descargarArchivo(blob, `asistencias_${mes}_${anio}.xlsx`),
-      error: (err) => console.error('Error descargando asistencias', err)
-    });
+  async exportarAsistenciasMensuales(grupoId: number, mes: number, anio: number) {
+    try {
+      // Reemplaza con la llamada a tu AsistenciaService
+      // const res = await this.asistenciaService.obtenerReporteMensual(grupoId, mes, anio);
+      // const data = res.map(...);
+      // this.generarExcel(data, `asistencias_${mes}_${anio}`);
+      console.warn('Método de asistencias pendiente de conexión al servicio');
+    } catch (error) {
+      console.error('Error exportando asistencias', error);
+    }
   }
 
   // ==========================================
   // 3. EXPORTAR GRUPOS
   // ==========================================
-  exportarGrupos(incluirEliminados: boolean = false) {
-    let params = new HttpParams().set('incluirEliminados', incluirEliminados.toString());
-
-    this.http.get(`${this.apiUrl}/grupos/exportar/excel`, { 
-      params, 
-      responseType: 'blob' 
-    }).subscribe({
-      next: (blob) => this.descargarArchivo(blob, 'grupos_profutbol.xlsx'),
-      error: (err) => console.error('Error descargando grupos', err)
-    });
+  async exportarGrupos(incluirEliminados: boolean = false) {
+    try {
+      const res = await this.grupoService.listarGrupos(); 
+      const data = (res || []).map((g: any) => ({
+        ID: g.id,
+        Nombre: g.nombre,
+        Categoría: g.categoria || 'Sin Categoría',
+        Profesor: g.profesor?.nombre ? `${g.profesor.nombre} ${g.profesor.apellido}` : 'Sin asignar',
+        'Total Alumnos': g.estudiantes?.[0]?.count || 0
+      }));
+      this.generarExcel(data, 'grupos_profutbol');
+    } catch (error) {
+      console.error('Error exportando grupos', error);
+    }
   }
 
   // ==========================================
   // 4. EXPORTAR CLASES
   // ==========================================
-  exportarClases(filtros: any = {}) {
-    let params = new HttpParams();
-    if (filtros.grupoId) params = params.set('grupoId', filtros.grupoId);
-    if (filtros.desde) params = params.set('desde', filtros.desde);
-    if (filtros.hasta) params = params.set('hasta', filtros.hasta);
-
-    this.http.get(`${this.apiUrl}/clases/exportar/excel`, { 
-      params, 
-      responseType: 'blob' 
-    }).subscribe({
-      next: (blob) => this.descargarArchivo(blob, 'clases_profutbol.xlsx'),
-      error: (err) => console.error('Error descargando clases', err)
-    });
+  async exportarClases(filtros: any = {}) {
+    try {
+      const res = await this.claseService.listarClases(filtros);
+      const data = (res?.registros || []).map((c: any) => ({
+        ID: c.id,
+        Fecha: c.fecha,
+        Hora: c.hora,
+        Grupo: c.grupo?.nombre || 'Sin Grupo',
+        Profesor: c.profesor?.nombre ? `${c.profesor.nombre} ${c.profesor.apellido}` : 'Sin asignar',
+        Estado: c.estado
+      }));
+      this.generarExcel(data, 'clases_profutbol');
+    } catch (error) {
+      console.error('Error exportando clases', error);
+    }
   }
 
   // ==========================================
   // 5. EXPORTAR RESULTADOS ACADÉMICOS
   // ==========================================
-  exportarResultadosAcademicos(sesionId: string) {
-    this.http.get(`${this.apiUrl}/evaluaciones-sesiones/${sesionId}/resultados/exportar/excel`, { 
-      responseType: 'blob' 
-    }).subscribe({
-      next: (blob) => this.descargarArchivo(blob, `resultados_sesion_${sesionId.substring(0,6)}.xlsx`),
-      error: (err) => console.error('Error descargando resultados académicos', err)
-    });
+  async exportarResultadosAcademicos(sesionId: string) {
+    try {
+      // Reemplaza con la llamada a tu EvaluacionAcademicaService
+      // const res = await this.academicoResultadoService.listarResultadosPorSesion(sesionId);
+      // const data = res.map(...);
+      // this.generarExcel(data, `resultados_sesion_${sesionId.substring(0,6)}`);
+      console.warn('Método académico pendiente de conexión al servicio');
+    } catch (error) {
+      console.error('Error exportando resultados académicos', error);
+    }
   }
 
   // ==========================================
   // 6. EXPORTAR RESULTADOS KINESIOLOGÍA
   // ==========================================
-  exportarResultadosKine(sesionId: string) {
-    this.http.get(`${this.apiUrl}/kine-evaluaciones-sesiones/${sesionId}/resultados/exportar/excel`, { 
-      responseType: 'blob' 
-    }).subscribe({
-      next: (blob) => this.descargarArchivo(blob, `kine_resultados_${sesionId.substring(0,6)}.xlsx`),
-      error: (err) => console.error('Error descargando resultados kine', err)
-    });
+  async exportarResultadosKine(sesionId: string) {
+    try {
+      const res = await this.kineResultadoService.listarResultadosPorSesion(sesionId);
+      const data = (res || []).map((r: any) => ({
+        Estudiante: `${r.alumno?.nombre || ''} ${r.alumno?.apellido || ''}`.trim(),
+        Parámetro: r.subevaluacion?.nombre || 'General',
+        'Resultado Único': r.resultado_unico !== null ? r.resultado_unico : '-',
+        'Resultado Izquierdo': r.resultado_izquierdo !== null ? r.resultado_izquierdo : '-',
+        'Resultado Derecho': r.resultado_derecho !== null ? r.resultado_derecho : '-',
+        Rango: r.rango || 'Sin especificar',
+        Observaciones: r.observacion || ''
+      }));
+      this.generarExcel(data, `kine_resultados_${sesionId.substring(0,6)}`);
+    } catch (error) {
+      console.error('Error exportando resultados kine', error);
+    }
   }
 }

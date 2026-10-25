@@ -1,15 +1,15 @@
 import { Injectable, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
-import { fromEvent, merge, Subscription, timer, Subject, firstValueFrom } from 'rxjs';
+import { fromEvent, merge, Subscription, timer, Subject } from 'rxjs';
 import { switchMap, startWith } from 'rxjs/operators';
-import { AuthService } from '../auth/services/auth.service';
+import { AuthService } from '../auth/services/auth.service'; // Ajusta la ruta a tu auth.service real
 
 @Injectable({
   providedIn: 'root'
 })
 export class IdleService {
   
-  private timeoutMilliseconds = 15 * 60 * 1000; 
+  private timeoutMilliseconds = 15 * 60 * 1000; // 15 minutos
 
   private idleSubscription: Subscription | null = null;
   public onIdleTimeout = new Subject<boolean>();
@@ -71,10 +71,10 @@ export class IdleService {
 
   private async verificarSesionAlDespertar() {
     try {
-      // Validamos con NestJS si el token sigue vivo
-      const res = await firstValueFrom(this.authService.me());
+      // 🔥 Validamos con Supabase si la sesión sigue activa de forma nativa
+      const session = await this.authService.obtenerSesionActual();
       
-      if (!res) {
+      if (!session) {
         this.ngZone.run(() => this.cerrarSesionPorInactividad());
       }
     } catch (error) {
@@ -99,15 +99,15 @@ export class IdleService {
     this.onIdleTimeout.next(true);
 
     try {
-      if (this.authService.logout) {
-        await firstValueFrom(this.authService.logout());
+      // 🔥 Llamada nativa a signOut sin firstValueFrom
+      if (this.authService.signOut) {
+        await this.authService.signOut();
       }
     } catch (error) {
-      console.warn('Error al cerrar sesión en el backend, forzando limpieza local.', error);
+      console.warn('Error al cerrar sesión en Supabase, forzando limpieza local.', error);
     } finally {
-      // 🔥 MEJORA: Solo borramos lo relacionado a la sesión, no todo el localStorage
-      localStorage.removeItem('supabase.auth.token'); // Ajusta este nombre según la llave real que use tu proyecto
-      localStorage.removeItem('access_token');
+      // Supabase normalmente limpia sus propias keys, pero por seguridad limpiamos storage
+      localStorage.clear(); 
       sessionStorage.clear(); 
       
       this.router.navigate(['/login']);
