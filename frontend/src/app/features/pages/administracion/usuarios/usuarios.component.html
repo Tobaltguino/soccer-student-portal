@@ -1,6 +1,6 @@
 <div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
-    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
+    <p-confirmDialog [style]="{width: '450px', maxWidth: '95vw'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
 
     <header class="pf-admin-header">
         <div class="header-content">
@@ -9,7 +9,7 @@
                 <p class="pf-oswald text-teal mt-1">Administra los roles y perfiles de la academia.</p>
             </div>
         </div>
-        <div class="flex gap-2 w-full md:w-auto mt-3 md:mt-0">
+        <div class="header-actions">
             <button pButton pRipple icon="pi pi-file-excel" class="p-button-success flex-1 md:flex-none justify-content-center" label="Exportar" (click)="descargarExcel()" pTooltip="Descargar directorio completo" tooltipPosition="bottom"></button>
             <button pButton label="Nuevo Usuario" icon="pi pi-plus" class="pf-btn-primary flex-1 md:flex-none justify-content-center" (click)="abrirNuevo()"></button>
         </div>
@@ -129,7 +129,7 @@
                     <td>
                         <span class="p-column-title pf-oswald text-steel hidden-desktop">Usuario:</span>
                         <div class="text-right sm:text-left">
-                            <div class="pf-anton text-chalk" style="font-size: 15px; letter-spacing: 0.5px;">{{ item.nombre }} {{ item.apellido }}</div>
+                            <div class="pf-cell-title">{{ item.nombre }} {{ item.apellido }}</div>
                             <div class="text-xs text-steel mt-1 justify-content-end sm:justify-content-start flex align-items-center"><i class="pi pi-id-card mr-1"></i> {{ item.rut || 'Sin RUT' }}</div>
                         </div>
                     </td>
@@ -202,7 +202,7 @@
             <div class="flex flex-column align-items-center mb-2">
                 <div class="sponsor-preview-container" style="width: 100px !important; height: 100px !important; border-radius: 50%;">
                     <img *ngIf="previewUrl" [src]="previewUrl" alt="Preview" class="pf-img-preview" style="border-radius: 50%;">
-                    <i *ngIf="!previewUrl" class="pi pi-user text-steel" style="font-size: 2.5rem;"></i>
+                    <i *ngIf="!previewUrl" class="pi pi-user text-steel pf-icon-xl"></i>
                 </div>
                 <div class="flex gap-2 mt-2">
                     <p-fileUpload mode="basic" chooseLabel="Subir Foto" [auto]="true" accept="image/png,image/jpeg,image/webp" 
@@ -219,22 +219,22 @@
             </div>
             
             <div class="formgrid grid">
-                <div class="pf-field-group col-6">
+                <div class="pf-field-group col-12 md:col-6">
                     <label class="pf-oswald"><i class="pi pi-user mr-2 text-teal"></i>Nombre <span class="text-pink-500 font-bold">*</span></label>
                     <input pInputText [(ngModel)]="userForm.nombre" [disabled]="guardando" />
                 </div>
-                <div class="pf-field-group col-6">
+                <div class="pf-field-group col-12 md:col-6">
                     <label class="pf-oswald"><i class="pi pi-user mr-2 text-teal"></i>Apellido <span class="text-pink-500 font-bold">*</span></label>
                     <input pInputText [(ngModel)]="userForm.apellido" [disabled]="guardando" />
                 </div>
             </div>
             
             <div class="formgrid grid">
-                <div class="pf-field-group col-6">
+                <div class="pf-field-group col-12 md:col-6">
                     <label class="pf-oswald"><i class="pi pi-id-card mr-2 text-teal"></i>RUT <span class="text-pink-500 font-bold">*</span></label>
                     <input pInputText appRutFormat [(ngModel)]="userForm.rut" placeholder="12.345.678-9"/>
                 </div>
-                <div class="pf-field-group col-6">
+                <div class="pf-field-group col-12 md:col-6">
                     <label class="pf-oswald"><i class="pi pi-venus-mars mr-2 text-teal"></i>Género <span class="text-pink-500 font-bold">*</span></label>
                     <p-select [options]="opcionesGenero" [(ngModel)]="userForm.genero" optionLabel="label" optionValue="value" placeholder="Seleccione" styleClass="w-full" appendTo="body" [disabled]="guardando"></p-select>
                 </div>
@@ -245,7 +245,7 @@
                 <p-datepicker [(ngModel)]="userForm.fecha_nacimiento" [showIcon]="true" appendTo="body" dateFormat="dd/mm/yy" [maxDate]="maxDate" placeholder="Selecciona fecha" [disabled]="guardando"></p-datepicker>
             </div>
             
-            <div class="pf-field-group bg-blue-50 p-3 border-round border-1 border-blue-200" *ngIf="!isEditing" style="background: rgba(15, 140, 130, 0.1) !important; border-color: var(--pf-teal) !important;">
+            <div class="pf-field-group pf-info-box" *ngIf="!isEditing">
                 <span class="text-teal text-sm font-medium pf-oswald">
                     <i class="pi pi-info-circle mr-1"></i> La contraseña inicial se generará automáticamente usando el RUT del usuario (sin puntos ni guiones).
                 </span>
@@ -262,8 +262,8 @@
                     <p-multiSelect [options]="listaPosiciones" [(ngModel)]="userForm.posicionesIds" optionLabel="nombre" optionValue="id" placeholder="Seleccionar" display="chip" appendTo="body" [filter]="false" [disabled]="guardando"></p-multiSelect>
                 </div>
 
-                <div class="border-top-1 border-300 my-3 pt-3" style="border-color: var(--border-color) !important;">
-                    <span class="text-sm font-bold text-teal uppercase tracking-wider mb-3 block pf-oswald">Datos Médicos y Contacto</span>
+                <div class="border-top-1 border-300 my-3 pt-3 pf-border">
+                    <span class="pf-section-title">Datos Médicos y Contacto</span>
                     
                     <div class="pf-field-group">
                         <label class="pf-oswald"><i class="pi pi-home mr-2 text-teal"></i>Dirección</label>
@@ -276,11 +276,11 @@
                     </div>
 
                     <div class="formgrid grid">
-                        <div class="pf-field-group col-6">
+                        <div class="pf-field-group col-12 md:col-6">
                             <label class="pf-oswald"><i class="pi pi-sort-numeric-up mr-2 text-teal"></i>Peso (kg)</label>
                             <p-inputNumber [(ngModel)]="userForm.peso" mode="decimal" [minFractionDigits]="1" [maxFractionDigits]="2" placeholder="Ej: 75.5" styleClass="w-full" [disabled]="guardando"></p-inputNumber>
                         </div>
-                        <div class="pf-field-group col-6">
+                        <div class="pf-field-group col-12 md:col-6">
                             <label class="pf-oswald"><i class="pi pi-arrows-v mr-2 text-teal"></i>Altura (m)</label>
                             <p-inputNumber [(ngModel)]="userForm.altura" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" placeholder="Ej: 1.75" styleClass="w-full" [disabled]="guardando"></p-inputNumber>
                         </div>
@@ -297,12 +297,12 @@
             </ng-container>
 
             <ng-container *ngIf="esVistaStaff()">
-                <div class="border-top-1 border-300 my-3 pt-3" style="border-color: var(--border-color) !important;">
-                    <span class="text-sm font-bold text-teal uppercase tracking-wider mb-3 block pf-oswald">Alcance y Visibilidad</span>
+                <div class="border-top-1 border-300 my-3 pt-3 pf-border">
+                    <span class="pf-section-title">Alcance y Visibilidad</span>
                     <div class="pf-field-group">
                         <label class="pf-oswald"><i class="pi pi-users mr-2 text-teal"></i>Grupos Asignados</label> 
                         <p-multiSelect [options]="listaGrupos" [(ngModel)]="userForm.gruposIds" optionLabel="nombre" optionValue="id" placeholder="Asignar grupos" display="chip" appendTo="body" [filter]="false" [disabled]="guardando"></p-multiSelect>
-                        <small class="text-steel italic mt-1 block">El profesional solo podrá ver y gestionar la información de los alumnos que pertenezcan a los grupos seleccionados aquí.</small>
+                        <small class="text-steel font-italic mt-1 block">El profesional solo podrá ver y gestionar la información de los alumnos que pertenezcan a los grupos seleccionados aquí.</small>
                     </div>
                 </div>
             </ng-container>
@@ -319,50 +319,50 @@
     <p-dialog [(visible)]="displayFicha" header="Ficha del Jugador" [modal]="true" [style]="{width: '90vw', maxWidth: '650px'}" styleClass="pf-dialog p-fluid" [draggable]="false" [resizable]="false">
         <div *ngIf="selectedEstudianteFicha" class="flex flex-column pt-3 animation-fade-in">
 
-            <div class="flex flex-column align-items-center mb-4 pb-4 border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+            <div class="flex flex-column align-items-center mb-4 pb-4 border-bottom-1 surface-border pf-border">
                 <img [src]="selectedEstudianteFicha.foto_url || 'assets/images/default-user.png'" 
-                     alt="Avatar" class="w-6rem h-6rem border-circle shadow-4 mb-3 object-cover border-2" style="border-color: var(--pf-teal);">
-                <h2 class="m-0 text-chalk pf-anton text-2xl text-center" style="letter-spacing: 0.5px;">{{selectedEstudianteFicha.nombre}} {{selectedEstudianteFicha.apellido}}</h2>
+                     alt="Avatar" class="w-6rem h-6rem border-circle shadow-4 mb-3 object-cover border-2 pf-border-teal">
+                <h2 class="m-0 text-chalk pf-anton text-2xl text-center pf-tracking">{{selectedEstudianteFicha.nombre}} {{selectedEstudianteFicha.apellido}}</h2>
                 <div class="flex align-items-center gap-2 mt-2">
                     <span class="text-steel font-medium text-sm"><i class="pi pi-id-card mr-1 text-teal"></i> {{selectedEstudianteFicha.rut || 'Sin RUT'}}</span>
                     <p-tag [value]="getGrupoNombre(selectedEstudianteFicha.grupo_id)" severity="info" styleClass="text-xs font-bold"></p-tag>
                 </div>
             </div>
 
-            <div class="p-3 font-bold text-chalk pf-oswald text-lg border-bottom-1 surface-border mb-3" style="background: var(--bg-main); border-color: var(--border-color) !important;">
+            <div class="p-3 font-bold text-chalk pf-oswald text-lg border-bottom-1 surface-border mb-3 pf-bg-main pf-border">
                 <i class="pi pi-user mr-2 text-teal"></i> Datos Generales
             </div>
             
-            <div class="grid grid-nogutter border-1 surface-border border-round overflow-hidden mb-4" style="border-color: var(--border-color) !important; background: var(--input-bg);">
-                <div class="col-12 md:col-6 flex border-bottom-1 md:border-bottom-none md:border-right-1 surface-border" style="border-color: var(--border-color) !important;">
-                    <div class="w-5 p-3 font-bold text-steel pf-oswald flex align-items-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">F. Nacimiento</div>
+            <div class="grid grid-nogutter border-1 surface-border border-round overflow-hidden mb-4 pf-border pf-bg-input">
+                <div class="col-12 md:col-6 flex border-bottom-1 md:border-bottom-none md:border-right-1 surface-border pf-border">
+                    <div class="w-5 p-3 font-bold text-steel pf-oswald flex align-items-center border-right-1 surface-border pf-bg-hover pf-border">F. Nacimiento</div>
                     <div class="w-7 p-3 text-chalk font-bold flex align-items-center">{{ selectedEstudianteFicha.fecha_nacimiento ? (selectedEstudianteFicha.fecha_nacimiento | date:'dd/MM/yyyy') : '--/--/----' }}</div>
                 </div>
                 <div class="col-12 md:col-6 flex">
-                    <div class="w-5 p-3 font-bold text-steel pf-oswald flex align-items-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Email</div>
+                    <div class="w-5 p-3 font-bold text-steel pf-oswald flex align-items-center border-right-1 surface-border pf-bg-hover pf-border">Email</div>
                     <div class="w-7 p-3 text-chalk font-bold flex align-items-center overflow-hidden text-overflow-ellipsis white-space-nowrap">{{ selectedEstudianteFicha.email || 'No registrado' }}</div>
                 </div>
                 
-                <div class="col-12 flex border-top-1 border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
-                    <div class="w-4 md:w-2 p-3 font-bold text-steel pf-oswald flex align-items-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Dirección</div>
+                <div class="col-12 flex border-top-1 border-bottom-1 surface-border pf-border">
+                    <div class="w-4 md:w-2 p-3 font-bold text-steel pf-oswald flex align-items-center border-right-1 surface-border pf-bg-hover pf-border">Dirección</div>
                     <div class="w-8 md:w-10 p-3 text-chalk font-bold flex align-items-center">{{ selectedEstudianteFicha.direccion || 'No registrada' }}</div>
                 </div>
 
-                <div class="col-12 md:col-4 flex border-bottom-1 md:border-bottom-none md:border-right-1 surface-border" style="border-color: var(--border-color) !important;">
-                    <div class="w-6 p-3 font-bold text-steel pf-oswald flex align-items-center justify-content-center text-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Previsión</div>
+                <div class="col-12 md:col-4 flex border-bottom-1 md:border-bottom-none md:border-right-1 surface-border pf-border">
+                    <div class="w-6 p-3 font-bold text-steel pf-oswald flex align-items-center justify-content-center text-center border-right-1 surface-border pf-bg-hover pf-border">Previsión</div>
                     <div class="w-6 p-3 text-chalk font-bold flex align-items-center justify-content-center text-center">{{ selectedEstudianteFicha.prevision || '-' }}</div>
                 </div>
-                <div class="col-6 md:col-4 flex border-right-1 surface-border" style="border-color: var(--border-color) !important;">
-                    <div class="w-6 p-3 font-bold text-steel pf-oswald flex align-items-center justify-content-center text-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Peso</div>
+                <div class="col-6 md:col-4 flex border-right-1 surface-border pf-border">
+                    <div class="w-6 p-3 font-bold text-steel pf-oswald flex align-items-center justify-content-center text-center border-right-1 surface-border pf-bg-hover pf-border">Peso</div>
                     <div class="w-6 p-3 text-chalk font-bold flex align-items-center justify-content-center text-center">{{ selectedEstudianteFicha.peso ? selectedEstudianteFicha.peso + ' kg' : '-' }}</div>
                 </div>
                 <div class="col-6 md:col-4 flex">
-                    <div class="w-6 p-3 font-bold text-steel pf-oswald flex align-items-center justify-content-center text-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Altura</div>
+                    <div class="w-6 p-3 font-bold text-steel pf-oswald flex align-items-center justify-content-center text-center border-right-1 surface-border pf-bg-hover pf-border">Altura</div>
                     <div class="w-6 p-3 text-chalk font-bold flex align-items-center justify-content-center text-center">{{ selectedEstudianteFicha.altura ? selectedEstudianteFicha.altura + ' m' : '-' }}</div>
                 </div>
             </div>
 
-            <div class="p-3 font-bold text-red-400 pf-oswald text-lg border-bottom-1 surface-border mb-3 mt-2" style="background: var(--bg-main); border-color: var(--border-color) !important;">
+            <div class="p-3 font-bold text-red-400 pf-oswald text-lg border-bottom-1 surface-border mb-3 mt-2 pf-bg-main pf-border">
                 <i class="pi pi-heart mr-2"></i> Historial Médico
             </div>
 
@@ -393,7 +393,7 @@
                 <ng-template pTemplate="emptymessage">
                     <tr>
                         <td colspan="4" class="text-center p-5 text-steel">
-                            <i class="pi pi-check-circle text-4xl mb-3 text-lime block"></i>
+                            <i class="pi pi-check-circle text-lime block mb-3 text-4xl"></i>
                             <span class="pf-oswald text-lg">El estudiante no registra eventos médicos.</span>
                         </td>
                     </tr>

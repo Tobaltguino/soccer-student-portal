@@ -19,7 +19,7 @@
     </header>
 
     <!-- CALENDARIO -->
-    <div class="pf-admin-card p-3 md:p-4 mb-4" style="min-height: 70vh; background: var(--bg-main);">
+    <div class="pf-admin-card p-3 md:p-4 mb-4" style="min-height: 70vh;">
         <!-- Muestra un loader encima del calendario si está cargando -->
         <div *ngIf="loading" class="flex justify-content-center align-items-center h-full w-full py-6">
             <div class="pf-spinner"></div>
@@ -38,18 +38,18 @@
         <div *ngIf="claseSeleccionada" class="animation-fade-in pt-3">
             
             <!-- FECHA Y HORA -->
-            <div class="flex flex-column gap-2 mb-4 pb-3 border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+            <div class="flex flex-column gap-2 mb-4 pb-3 border-bottom-1 surface-border pf-border">
                 <div class="flex justify-content-between align-items-start">
                     <div class="flex flex-column gap-2">
                         <div class="flex align-items-center gap-2">
                             <span class="pf-oswald text-steel" style="font-size: 0.85rem; width: 45px;">FECHA</span>
                             <i class="pi pi-calendar text-teal text-lg"></i>
-                            <span class="pf-anton text-chalk text-xl" style="letter-spacing: 0.5px;">{{ claseSeleccionada.fecha | date:'dd/MM/yyyy' }}</span>
+                            <span class="pf-anton text-chalk text-xl pf-tracking">{{ claseSeleccionada.fecha | date:'dd/MM/yyyy' }}</span>
                         </div>
                         <div class="flex align-items-center gap-2">
                             <span class="pf-oswald text-steel" style="font-size: 0.85rem; width: 45px;">HORA</span>
                             <i class="pi pi-clock text-teal text-lg"></i>
-                            <span class="pf-anton text-chalk text-xl" style="letter-spacing: 0.5px;">{{ claseSeleccionada.hora ? (claseSeleccionada.hora | slice:0:5) : '--:--' }}</span>
+                            <span class="pf-anton text-chalk text-xl pf-tracking">{{ claseSeleccionada.hora ? (claseSeleccionada.hora | slice:0:5) : '--:--' }}</span>
                         </div>
                     </div>
                     <!-- CATEGORÍA (Solo Staff) -->
@@ -63,7 +63,7 @@
             <!-- LUGAR -->
             <div class="mb-4">
                 <label class="pf-oswald text-steel block mb-1 text-sm"><i class="pi pi-map-marker text-teal mr-1"></i> LUGAR</label>
-                <div class="p-3 border-round border-1 surface-border text-chalk text-lg font-bold" style="background: var(--input-bg); border-color: var(--border-color) !important;">
+                <div class="p-3 border-round border-1 surface-border text-chalk text-lg font-bold pf-bg-input pf-border">
                     {{ claseSeleccionada.lugar || 'Cancha Principal' }}
                 </div>
             </div>
@@ -71,7 +71,7 @@
             <!-- OBJETIVO -->
             <div class="mb-4">
                 <label class="pf-oswald text-steel block mb-1 text-sm"><i class="pi pi-bullseye text-lime mr-1"></i> OBJETIVO PRINCIPAL</label>
-                <div class="p-3 border-round border-1 surface-border text-chalk text-lg font-bold" style="background: var(--input-bg); border-color: var(--border-color) !important;" [ngClass]="{'italic text-steel': !claseSeleccionada.objetivo || claseSeleccionada.objetivo === 'EMPTY'}">
+                <div class="p-3 border-round border-1 surface-border text-chalk text-lg font-bold pf-bg-input pf-border" [ngClass]="{'italic text-steel': !claseSeleccionada.objetivo || claseSeleccionada.objetivo === 'EMPTY'}">
                     {{ (claseSeleccionada.objetivo && claseSeleccionada.objetivo !== 'EMPTY') ? claseSeleccionada.objetivo : 'Sin objetivo definido' }}
                 </div>
             </div>
@@ -80,24 +80,24 @@
             <div *ngIf="puedeVerPlanificacion(claseSeleccionada)" class="animation-fade-in">
                 <div class="mb-4" *ngIf="claseSeleccionada.calentamiento && claseSeleccionada.calentamiento !== 'EMPTY'">
                     <label class="pf-oswald text-steel block mb-1 text-sm"><span class="mr-1">🔥</span> CALENTAMIENTO</label>
-                    <div class="p-3 border-round border-1 surface-border text-chalk text-sm" style="background: var(--input-bg); border-color: var(--border-color) !important; white-space: pre-wrap;">{{ claseSeleccionada.calentamiento }}</div>
+                    <div class="p-3 border-round border-1 surface-border text-chalk text-sm pf-bg-input pf-border pf-prewrap">{{ claseSeleccionada.calentamiento }}</div>
                 </div>
                  
                 <div class="mb-4" *ngIf="(claseSeleccionada.partePrincipal || claseSeleccionada.parte_principal) && (claseSeleccionada.partePrincipal || claseSeleccionada.parte_principal) !== 'EMPTY'">
                     <label class="pf-oswald text-steel block mb-1 text-sm"><span class="mr-1">⚽</span> PARTE PRINCIPAL</label>
-                    <div class="p-3 border-round border-1 surface-border text-chalk text-sm" style="background: var(--input-bg); border-color: var(--border-color) !important; white-space: pre-wrap;">{{ claseSeleccionada.partePrincipal || claseSeleccionada.parte_principal }}</div>
+                    <div class="p-3 border-round border-1 surface-border text-chalk text-sm pf-bg-input pf-border pf-prewrap">{{ claseSeleccionada.partePrincipal || claseSeleccionada.parte_principal }}</div>
                 </div>
 
                 <div class="mb-4" *ngIf="(claseSeleccionada.vueltaCalma || claseSeleccionada.vuelta_calma) && (claseSeleccionada.vueltaCalma || claseSeleccionada.vuelta_calma) !== 'EMPTY'">
                     <label class="pf-oswald text-steel block mb-1 text-sm"><span class="mr-1">❄️</span> VUELTA A LA CALMA</label>
-                    <div class="p-3 border-round border-1 surface-border text-chalk text-sm" style="background: var(--input-bg); border-color: var(--border-color) !important; white-space: pre-wrap;">{{ claseSeleccionada.vueltaCalma || claseSeleccionada.vuelta_calma }}</div>
+                    <div class="p-3 border-round border-1 surface-border text-chalk text-sm pf-bg-input pf-border pf-prewrap">{{ claseSeleccionada.vueltaCalma || claseSeleccionada.vuelta_calma }}</div>
                 </div>
             </div>
 
             <!-- VISTA BLOQUEADA PARA ESTUDIANTES -->
-            <div *ngIf="!puedeVerPlanificacion(claseSeleccionada)" class="text-center p-4 mt-4 border-round border-1 surface-border animation-fade-in" style="background: transparent; border-color: var(--border-color) !important;">
+            <div *ngIf="!puedeVerPlanificacion(claseSeleccionada)" class="text-center p-4 mt-4 border-round border-1 surface-border animation-fade-in pf-bg-none pf-border">
                 <i class="pi pi-lock text-4xl mb-3 text-steel block"></i>
-                <span class="text-sm pf-oswald text-steel" style="letter-spacing: 0.05em;">La planificación detallada estará disponible a la hora del entrenamiento.</span>
+                <span class="text-sm pf-oswald text-steel pf-tracking-label">La planificación detallada estará disponible a la hora del entrenamiento.</span>
             </div>
             
         </div>

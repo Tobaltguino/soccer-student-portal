@@ -1,6 +1,6 @@
 <div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
-    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
+    <p-confirmDialog [style]="{width: '450px', maxWidth: '95vw'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
 
     <!-- ========================================================================= -->
     <!-- 1. VISTA DE GESTIÓN (ADMINISTRADOR / STAFF)                               -->
@@ -13,7 +13,7 @@
                     <p class="pf-oswald text-teal mt-1">Supervisión administrativa de entrenamientos y asistencia.</p>
                 </div>
             </div>
-            <div class="header-actions flex gap-2">
+            <div class="header-actions">
                 <button pButton icon="pi pi-sync" class="pf-btn-ghost" 
                         (click)="aplicarFiltrosGestion()" [loading]="loading" pTooltip="Actualizar"></button>
                 
@@ -72,7 +72,7 @@
                         <td>
                             <span class="p-column-title pf-oswald text-steel hidden-desktop">Fecha / Hora:</span>
                             <div class="flex flex-column gap-1">
-                                <span class="pf-anton text-chalk text-lg" style="letter-spacing: 0.5px;">{{ item.fecha | date: 'dd/MM/yyyy' }}</span>
+                                <span class="pf-anton text-chalk text-lg pf-tracking">{{ item.fecha | date: 'dd/MM/yyyy' }}</span>
                                 <span class="text-steel text-sm font-bold"><i class="pi pi-clock mr-1 text-teal"></i>{{ item.hora | slice:0:5 }}</span>
                             </div>
                         </td>
@@ -125,8 +125,10 @@
                     <p class="pf-oswald text-teal mt-1">Calendario de entrenamientos y planificación técnica.</p>
                 </div>
             </div>
-            <button pButton icon="pi pi-sync" class="pf-btn-ghost" 
-                    (click)="cargarClasesEstudiante()" [loading]="loading" pTooltip="Actualizar Datos" tooltipPosition="left"></button>
+            <div class="header-actions">
+                <button pButton icon="pi pi-sync" class="pf-btn-ghost" 
+                        (click)="cargarClasesEstudiante()" [loading]="loading" pTooltip="Actualizar Datos" tooltipPosition="left"></button>
+            </div>
         </header>
 
         <!-- BARRA DE FILTROS ESTUDIANTE -->
@@ -175,7 +177,7 @@
                         <td>
                             <span class="p-column-title pf-oswald text-steel hidden-desktop">Fecha / Hora:</span>
                             <div class="flex flex-column gap-1">
-                                <span class="pf-anton text-chalk text-lg" style="letter-spacing: 0.5px;">{{ clase.fecha | date:'dd/MM/yyyy' }}</span>
+                                <span class="pf-anton text-chalk text-lg pf-tracking">{{ clase.fecha | date:'dd/MM/yyyy' }}</span>
                                 <span class="text-steel text-sm font-bold"><i class="pi pi-clock mr-1 text-teal"></i>{{ clase.hora | slice:0:5 }} hrs</span>
                             </div>
                         </td>
@@ -251,21 +253,21 @@
         <div *ngIf="selectedClase" class="animation-fade-in pt-3">
             <div class="mb-4">
                 <label class="pf-oswald text-steel block mb-2 text-sm"><i class="pi pi-bullseye text-lime mr-2"></i> Objetivo Principal</label>
-                <div class="p-3 border-round border-1 surface-border text-chalk italic" style="background: var(--input-bg); border-color: var(--border-color) !important;">
+                <div class="p-3 border-round border-1 surface-border text-chalk font-italic pf-bg-input pf-border">
                     {{ selectedClase.objetivo || 'Sin objetivo definido' }}
                 </div>
             </div>
             <div class="mb-4" *ngIf="selectedClase.calentamiento">
                 <label class="pf-oswald text-steel block mb-2 text-sm"><span class="mr-2">🔥</span> Calentamiento</label>
-                <div class="p-3 border-round border-1 surface-border text-chalk text-sm" style="background: var(--input-bg); border-color: var(--border-color) !important; white-space: pre-wrap;">{{ selectedClase.calentamiento }}</div>
+                <div class="p-3 border-round border-1 surface-border text-chalk text-sm pf-bg-input pf-border pf-prewrap">{{ selectedClase.calentamiento }}</div>
             </div>
             <div class="mb-4" *ngIf="selectedClase.parte_principal">
                 <label class="pf-oswald text-steel block mb-2 text-sm"><span class="mr-2">⚽</span> Parte Principal</label>
-                <div class="p-3 border-round border-1 surface-border text-chalk text-sm" style="background: var(--input-bg); border-color: var(--border-color) !important; white-space: pre-wrap;">{{ selectedClase.parte_principal }}</div>
+                <div class="p-3 border-round border-1 surface-border text-chalk text-sm pf-bg-input pf-border pf-prewrap">{{ selectedClase.parte_principal }}</div>
             </div>
             <div class="mb-4" *ngIf="selectedClase.vuelta_calma">
                 <label class="pf-oswald text-steel block mb-2 text-sm"><span class="mr-2">❄️</span> Vuelta a la Calma</label>
-                <div class="p-3 border-round border-1 surface-border text-chalk text-sm" style="background: var(--input-bg); border-color: var(--border-color) !important; white-space: pre-wrap;">{{ selectedClase.vuelta_calma }}</div>
+                <div class="p-3 border-round border-1 surface-border text-chalk text-sm pf-bg-input pf-border pf-prewrap">{{ selectedClase.vuelta_calma }}</div>
             </div>
         </div>
         <ng-template pTemplate="footer">
@@ -282,7 +284,7 @@
                 <p-selectButton [options]="opcionesVistaForm" [(ngModel)]="vistaFormulario" optionLabel="label" optionValue="value">
                     <ng-template let-item pTemplate="item">
                         <i [class]="item.icon" class="mr-2"></i>
-                        <span class="pf-oswald" style="letter-spacing: 0.05em;">{{item.label}}</span>
+                        <span class="pf-oswald pf-tracking-label">{{item.label}}</span>
                     </ng-template>
                 </p-selectButton>
             </div>

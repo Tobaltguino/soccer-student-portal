@@ -1,26 +1,28 @@
-<div class="main-content fadein animation-duration-500">
+<div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
-    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
+    <p-confirmDialog [style]="{width: '450px', maxWidth: '95vw'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
   
     <!-- HEADER DINÁMICO -->
-    <header class="top-bar">
-        <div class="welcome-text">
-            <!-- Títulos dinámicos según rol -->
-            <h1 class="pf-anton text-chalk" *ngIf="esAdmin">Panel de Control</h1>
-            <h1 class="pf-anton text-chalk" *ngIf="esProfesor">Panel Técnico</h1>
-            <h1 class="pf-anton text-chalk" *ngIf="esNutricionista">Panel de Nutrición</h1>
-            <h1 class="pf-anton text-chalk" *ngIf="esKinesiologo">Panel Médico</h1>
-            <h1 class="pf-anton text-chalk" *ngIf="esEstudiante">Mi Panel</h1>
+    <header class="pf-admin-header">
+        <div class="header-content">
+            <div>
+                <!-- Títulos dinámicos según rol -->
+                <h1 class="pf-anton text-chalk m-0 text-3xl" *ngIf="esAdmin">Panel de Control</h1>
+                <h1 class="pf-anton text-chalk m-0 text-3xl" *ngIf="esProfesor">Panel Técnico</h1>
+                <h1 class="pf-anton text-chalk m-0 text-3xl" *ngIf="esNutricionista">Panel de Nutrición</h1>
+                <h1 class="pf-anton text-chalk m-0 text-3xl" *ngIf="esKinesiologo">Panel Médico</h1>
+                <h1 class="pf-anton text-chalk m-0 text-3xl" *ngIf="esEstudiante">Mi Panel</h1>
 
-            <!-- Subtítulos -->
-            <p class="pf-oswald text-teal" *ngIf="esAdmin">Gestión integral de la academia y salud deportiva.</p>
-            <p class="pf-oswald text-teal" *ngIf="esProfesor">Supervisión de grupos y planificación de hoy.</p>
-            <p class="pf-oswald text-teal" *ngIf="esNutricionista">Resumen global de estudiantes y recordatorios.</p>
-            <p class="pf-oswald text-teal" *ngIf="esKinesiologo">Resumen clínico y planificación deportiva del día.</p>
-            <p class="pf-oswald text-teal" *ngIf="esEstudiante">Gestión de tu rendimiento y actividades en Pro Fútbol.</p>
+                <!-- Subtítulos -->
+                <p class="pf-oswald text-teal mt-1" *ngIf="esAdmin">Gestión integral de la academia y salud deportiva.</p>
+                <p class="pf-oswald text-teal mt-1" *ngIf="esProfesor">Supervisión de grupos y planificación de hoy.</p>
+                <p class="pf-oswald text-teal mt-1" *ngIf="esNutricionista">Resumen global de estudiantes y recordatorios.</p>
+                <p class="pf-oswald text-teal mt-1" *ngIf="esKinesiologo">Resumen clínico y planificación deportiva del día.</p>
+                <p class="pf-oswald text-teal mt-1" *ngIf="esEstudiante">Gestión de tu rendimiento y actividades en Pro Fútbol.</p>
+            </div>
         </div>
-  
-        <div class="header-tools">
+
+        <div class="header-actions">
             <div class="status-indicator pf-oswald" (click)="refrescar()" title="Refrescar Datos" [class.pointer-events-none]="loading">
                 <span class="status-dot" [ngClass]="apiStatus"></span>
                 <span class="status-text">{{ apiStatus === 'online' ? 'SERVIDOR ONLINE' : (apiStatus === 'checking' ? 'CONECTANDO...' : 'SERVIDOR OFFLINE') }}</span>
@@ -46,36 +48,36 @@
         <!-- TARJETAS PROFESOR                              -->
         <!-- ============================================== -->
         <ng-container *ngIf="esProfesor">
-            <div class="pf-card pf-card-blue"><div class="card-content"><span class="card-label pf-oswald">Grupos a Cargo</span><div class="card-value-wrapper"><h3 class="card-value pf-anton" style="font-size: 2.5rem;">{{ misGrupos }}</h3><div class="card-icon icon-blue"><i class="pi pi-users"></i></div></div><p class="card-subtext pf-oswald text-chalk mt-2"><i class="pi pi-info-circle text-blue-500 mr-1"></i> {{ totalAlumnos }} alumnos totales</p></div></div>
-            <div class="pf-card pf-card-lime"><div class="card-content"><span class="card-label pf-oswald">Clases de Hoy</span><div class="card-value-wrapper"><h3 class="card-value pf-anton" style="font-size: 2.5rem;">{{ clasesHoy.length }}</h3><div class="card-icon icon-lime"><i class="pi pi-calendar"></i></div></div><p class="card-subtext pf-oswald positive mt-2" *ngIf="proximaClase"><i class="pi pi-clock mr-1"></i> Próx: {{ proximaClase.grupos?.nombre || 'Clase' }} ({{ (proximaClase.hora_inicio || proximaClase.hora) | slice:0:5 }} hrs)</p><p class="card-subtext pf-oswald text-steel mt-2" *ngIf="!proximaClase">No hay actividades programadas</p></div></div>
-            <div class="pf-card pf-card-purple"><div class="card-content"><span class="card-label pf-oswald">Última Evaluación</span><div class="card-value-wrapper"><h3 class="card-value pf-anton" style="font-size: 2.5rem;" *ngIf="ultimaEvaluacion">{{ ultimaEvaluacion.totalResultados || 0 }}</h3><h3 class="card-value pf-anton" style="font-size: 1.8rem;" *ngIf="!ultimaEvaluacion">Sin registros</h3><div class="card-icon icon-purple"><i class="pi pi-chart-bar"></i></div></div><p class="card-subtext pf-oswald alert-purple mt-2" *ngIf="ultimaEvaluacion" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Test: {{ ultimaEvaluacion.tipoEvaluacion }}</p><p class="card-subtext pf-oswald text-steel mt-2" *ngIf="!ultimaEvaluacion">Pendiente de evaluación</p></div></div>
+            <div class="pf-card pf-card-blue"><div class="card-content"><span class="card-label pf-oswald">Grupos a Cargo</span><div class="card-value-wrapper"><h3 class="card-value pf-anton pf-icon-xl">{{ misGrupos }}</h3><div class="card-icon icon-blue"><i class="pi pi-users"></i></div></div><p class="card-subtext pf-oswald text-chalk mt-2"><i class="pi pi-info-circle text-blue-500 mr-1"></i> {{ totalAlumnos }} alumnos totales</p></div></div>
+            <div class="pf-card pf-card-lime"><div class="card-content"><span class="card-label pf-oswald">Clases de Hoy</span><div class="card-value-wrapper"><h3 class="card-value pf-anton pf-icon-xl">{{ clasesHoy.length }}</h3><div class="card-icon icon-lime"><i class="pi pi-calendar"></i></div></div><p class="card-subtext pf-oswald positive mt-2" *ngIf="proximaClase"><i class="pi pi-clock mr-1"></i> Próx: {{ proximaClase.grupos?.nombre || 'Clase' }} ({{ (proximaClase.hora_inicio || proximaClase.hora) | slice:0:5 }} hrs)</p><p class="card-subtext pf-oswald text-steel mt-2" *ngIf="!proximaClase">No hay actividades programadas</p></div></div>
+            <div class="pf-card pf-card-purple"><div class="card-content"><span class="card-label pf-oswald">Última Evaluación</span><div class="card-value-wrapper"><h3 class="card-value pf-anton pf-icon-xl" *ngIf="ultimaEvaluacion">{{ ultimaEvaluacion.totalResultados || 0 }}</h3><h3 class="card-value pf-anton pf-icon-lg" *ngIf="!ultimaEvaluacion">Sin registros</h3><div class="card-icon icon-purple"><i class="pi pi-chart-bar"></i></div></div><p class="card-subtext pf-oswald alert-purple mt-2 pf-nowrap" *ngIf="ultimaEvaluacion" style="overflow: hidden; text-overflow: ellipsis;">Test: {{ ultimaEvaluacion.tipoEvaluacion }}</p><p class="card-subtext pf-oswald text-steel mt-2" *ngIf="!ultimaEvaluacion">Pendiente de evaluación</p></div></div>
         </ng-container>
 
         <!-- ============================================== -->
         <!-- TARJETAS NUTRICIONISTA                         -->
         <!-- ============================================== -->
         <ng-container *ngIf="esNutricionista">
-            <div class="pf-card pf-card-blue"><div class="card-content"><span class="card-label pf-oswald">Total Estudiantes</span><div class="card-value-wrapper"><h3 class="card-value pf-anton" style="font-size: 2.5rem;">{{ totalEstudiantes }}</h3><div class="card-icon icon-blue"><i class="pi pi-users"></i></div></div><p class="card-subtext pf-oswald text-blue-500 mt-2"><i class="pi pi-chart-line mr-1"></i> Base de datos actualizada</p></div></div>
-            <div class="pf-card pf-card-lime"><div class="card-content"><span class="card-label pf-oswald">Última Evaluación Finalizada</span><div class="card-value-wrapper"><h3 class="card-value pf-anton" *ngIf="ultimaEvaluacion" style="font-size: 1.8rem; text-transform: capitalize;">{{ ultimaEvaluacion.tipoEvaluacion || (ultimaEvaluacion.fecha | date:'dd/MM/yyyy') }}</h3><h3 class="card-value pf-anton" style="font-size: 1.8rem;" *ngIf="!ultimaEvaluacion">Sin registros</h3><div class="card-icon icon-lime"><i class="pi pi-calendar-plus"></i></div></div><p class="card-subtext pf-oswald positive mt-2" *ngIf="ultimaEvaluacion"><i class="pi pi-calendar mr-1"></i> Registrada el {{ ultimaEvaluacion.fecha | date:'dd/MM/yyyy' }}</p><p class="card-subtext pf-oswald text-steel mt-2" *ngIf="!ultimaEvaluacion">No hay evaluaciones completadas</p></div></div>
+            <div class="pf-card pf-card-blue"><div class="card-content"><span class="card-label pf-oswald">Total Estudiantes</span><div class="card-value-wrapper"><h3 class="card-value pf-anton pf-icon-xl">{{ totalEstudiantes }}</h3><div class="card-icon icon-blue"><i class="pi pi-users"></i></div></div><p class="card-subtext pf-oswald text-blue-500 mt-2"><i class="pi pi-chart-line mr-1"></i> Base de datos actualizada</p></div></div>
+            <div class="pf-card pf-card-lime"><div class="card-content"><span class="card-label pf-oswald">Última Evaluación Finalizada</span><div class="card-value-wrapper"><h3 class="card-value pf-anton pf-icon-lg" *ngIf="ultimaEvaluacion" style="text-transform: capitalize;">{{ ultimaEvaluacion.tipoEvaluacion || (ultimaEvaluacion.fecha | date:'dd/MM/yyyy') }}</h3><h3 class="card-value pf-anton pf-icon-lg" *ngIf="!ultimaEvaluacion">Sin registros</h3><div class="card-icon icon-lime"><i class="pi pi-calendar-plus"></i></div></div><p class="card-subtext pf-oswald positive mt-2" *ngIf="ultimaEvaluacion"><i class="pi pi-calendar mr-1"></i> Registrada el {{ ultimaEvaluacion.fecha | date:'dd/MM/yyyy' }}</p><p class="card-subtext pf-oswald text-steel mt-2" *ngIf="!ultimaEvaluacion">No hay evaluaciones completadas</p></div></div>
         </ng-container>
 
         <!-- ============================================== -->
         <!-- TARJETAS KINESIÓLOGO                           -->
         <!-- ============================================== -->
         <ng-container *ngIf="esKinesiologo">
-            <div class="pf-card pf-card-blue"><div class="card-content"><span class="card-label pf-oswald">Categorías Asignadas</span><div class="card-value-wrapper"><h3 class="card-value pf-anton" style="font-size: 2.5rem;">{{ misGrupos }}</h3><div class="card-icon icon-blue"><i class="pi pi-users"></i></div></div><p class="card-subtext pf-oswald text-blue-500 mt-2"><i class="pi pi-info-circle mr-1"></i> {{ totalAlumnos }} pacientes totales</p></div></div>
-            <div class="pf-card pf-card-lime"><div class="card-content"><span class="card-label pf-oswald">Entrenamientos de Hoy</span><div class="card-value-wrapper"><h3 class="card-value pf-anton" style="font-size: 2.5rem;">{{ clasesHoy.length }}</h3><div class="card-icon icon-lime"><i class="pi pi-calendar"></i></div></div><p class="card-subtext pf-oswald positive mt-2" *ngIf="proximaClase"><i class="pi pi-clock mr-1"></i> Próx: {{ proximaClase.grupos?.nombre || 'Clase' }} ({{ (proximaClase.hora_inicio || proximaClase.hora) | slice:0:5 }})</p><p class="card-subtext pf-oswald text-steel mt-2" *ngIf="!proximaClase">Sin actividad física hoy</p></div></div>
-            <div class="pf-card pf-card-orange"><div class="card-content"><span class="card-label pf-oswald">Pacientes Agudos</span><div class="card-value-wrapper"><h3 class="card-value pf-anton" style="font-size: 2.5rem;">{{ pacientesEnTratamiento }}</h3><div class="card-icon icon-orange"><i class="pi pi-exclamation-triangle"></i></div></div><p class="card-subtext pf-oswald alert-orange mt-2">En Tratamiento Activo</p></div></div>
-            <div class="pf-card pf-card-purple"><div class="card-content"><span class="card-label pf-oswald">Pacientes en Seguimiento</span><div class="card-value-wrapper"><h3 class="card-value pf-anton" style="font-size: 2.5rem;">{{ pacientesEnObservacion + pacientesEnReintegro }}</h3><div class="card-icon icon-purple"><i class="pi pi-heart-fill"></i></div></div><p class="card-subtext pf-oswald alert-purple mt-2">Observación y Reintegro</p></div></div>
+            <div class="pf-card pf-card-blue"><div class="card-content"><span class="card-label pf-oswald">Categorías Asignadas</span><div class="card-value-wrapper"><h3 class="card-value pf-anton pf-icon-xl">{{ misGrupos }}</h3><div class="card-icon icon-blue"><i class="pi pi-users"></i></div></div><p class="card-subtext pf-oswald text-blue-500 mt-2"><i class="pi pi-info-circle mr-1"></i> {{ totalAlumnos }} pacientes totales</p></div></div>
+            <div class="pf-card pf-card-lime"><div class="card-content"><span class="card-label pf-oswald">Entrenamientos de Hoy</span><div class="card-value-wrapper"><h3 class="card-value pf-anton pf-icon-xl">{{ clasesHoy.length }}</h3><div class="card-icon icon-lime"><i class="pi pi-calendar"></i></div></div><p class="card-subtext pf-oswald positive mt-2" *ngIf="proximaClase"><i class="pi pi-clock mr-1"></i> Próx: {{ proximaClase.grupos?.nombre || 'Clase' }} ({{ (proximaClase.hora_inicio || proximaClase.hora) | slice:0:5 }})</p><p class="card-subtext pf-oswald text-steel mt-2" *ngIf="!proximaClase">Sin actividad física hoy</p></div></div>
+            <div class="pf-card pf-card-orange"><div class="card-content"><span class="card-label pf-oswald">Pacientes Agudos</span><div class="card-value-wrapper"><h3 class="card-value pf-anton pf-icon-xl">{{ pacientesEnTratamiento }}</h3><div class="card-icon icon-orange"><i class="pi pi-exclamation-triangle"></i></div></div><p class="card-subtext pf-oswald alert-orange mt-2">En Tratamiento Activo</p></div></div>
+            <div class="pf-card pf-card-purple"><div class="card-content"><span class="card-label pf-oswald">Pacientes en Seguimiento</span><div class="card-value-wrapper"><h3 class="card-value pf-anton pf-icon-xl">{{ pacientesEnObservacion + pacientesEnReintegro }}</h3><div class="card-icon icon-purple"><i class="pi pi-heart-fill"></i></div></div><p class="card-subtext pf-oswald alert-purple mt-2">Observación y Reintegro</p></div></div>
         </ng-container>
 
         <!-- ============================================== -->
         <!-- TARJETAS ESTUDIANTE                            -->
         <!-- ============================================== -->
         <ng-container *ngIf="esEstudiante">
-            <div class="pf-card pf-card-blue"><div class="card-content"><span class="card-label pf-oswald">Siguiente Clase</span><div class="card-value-wrapper"><h3 class="card-value pf-anton" style="font-size: 1.8rem; text-transform: capitalize;" *ngIf="proximaClase">{{ fechaFormateada }}</h3><h3 class="card-value pf-anton" style="font-size: 1.8rem;" *ngIf="!proximaClase">Sin clases</h3><div class="card-icon icon-blue"><i class="pi pi-calendar"></i></div></div><p class="card-subtext pf-oswald text-chalk mt-2" *ngIf="proximaClase"><i class="pi pi-clock text-blue-500 mr-1"></i> Próx: {{ (proximaClase.hora_inicio || proximaClase.hora) | slice:0:5 }} hrs</p><p class="card-subtext pf-oswald text-steel" *ngIf="proximaClase"><i class="pi pi-map-marker text-blue-500 mr-1"></i> {{ proximaClase.lugar || 'Cancha Principal' }}</p><p class="card-subtext pf-oswald text-steel mt-2" *ngIf="!proximaClase">No hay actividades programadas</p></div></div>
+            <div class="pf-card pf-card-blue"><div class="card-content"><span class="card-label pf-oswald">Siguiente Clase</span><div class="card-value-wrapper"><h3 class="card-value pf-anton pf-icon-lg" style="text-transform: capitalize;" *ngIf="proximaClase">{{ fechaFormateada }}</h3><h3 class="card-value pf-anton pf-icon-lg" *ngIf="!proximaClase">Sin clases</h3><div class="card-icon icon-blue"><i class="pi pi-calendar"></i></div></div><p class="card-subtext pf-oswald text-chalk mt-2" *ngIf="proximaClase"><i class="pi pi-clock text-blue-500 mr-1"></i> Próx: {{ (proximaClase.hora_inicio || proximaClase.hora) | slice:0:5 }} hrs</p><p class="card-subtext pf-oswald text-steel" *ngIf="proximaClase"><i class="pi pi-map-marker text-blue-500 mr-1"></i> {{ proximaClase.lugar || 'Cancha Principal' }}</p><p class="card-subtext pf-oswald text-steel mt-2" *ngIf="!proximaClase">No hay actividades programadas</p></div></div>
             <div class="pf-card pf-card-lime"><div class="card-content"><span class="card-label pf-oswald">Asistencia Anual</span><div class="card-value-wrapper"><h3 class="card-value pf-anton">{{ asistenciaAnual }}%</h3><div class="card-icon icon-lime"><i class="pi pi-check-circle"></i></div></div><p class="card-subtext pf-oswald positive mt-2"><i class="pi pi-chart-line mr-1"></i> {{ asistenciaAnual >= 80 ? 'Ritmo excelente' : 'Sigue constante' }}</p></div></div>
-            <div class="pf-card pf-card-purple"><div class="card-content"><span class="card-label pf-oswald">Último Rendimiento</span><div class="card-value-wrapper"><h3 class="card-value pf-anton" *ngIf="ultimaEvaluacion">{{ ultimaEvaluacion.resultado || ultimaEvaluacion.valor }} <small style="font-size: 1rem; opacity: 0.7;">{{ ultimaEvaluacion.unidad || '' }}</small></h3><h3 class="card-value pf-anton" style="font-size: 1.8rem;" *ngIf="!ultimaEvaluacion">Sin registros</h3><div class="card-icon icon-purple"><i class="pi pi-chart-bar"></i></div></div><p class="card-subtext pf-oswald alert-purple mt-2" *ngIf="ultimaEvaluacion">Nivel: {{ ultimaEvaluacion.nivel || 'Registrado' }}</p><p class="card-subtext pf-oswald text-steel" *ngIf="ultimaEvaluacion">Test: {{ ultimaEvaluacion.test_nombre || ultimaEvaluacion.tipo_evaluacion?.nombre }}</p><p class="card-subtext pf-oswald text-steel mt-2" *ngIf="!ultimaEvaluacion">Pendiente de evaluación</p></div></div>
+            <div class="pf-card pf-card-purple"><div class="card-content"><span class="card-label pf-oswald">Último Rendimiento</span><div class="card-value-wrapper"><h3 class="card-value pf-anton" *ngIf="ultimaEvaluacion">{{ ultimaEvaluacion.resultado || ultimaEvaluacion.valor }} <small style="font-size: 1rem; opacity: 0.7;">{{ ultimaEvaluacion.unidad || '' }}</small></h3><h3 class="card-value pf-anton pf-icon-lg" *ngIf="!ultimaEvaluacion">Sin registros</h3><div class="card-icon icon-purple"><i class="pi pi-chart-bar"></i></div></div><p class="card-subtext pf-oswald alert-purple mt-2" *ngIf="ultimaEvaluacion">Nivel: {{ ultimaEvaluacion.nivel || 'Registrado' }}</p><p class="card-subtext pf-oswald text-steel" *ngIf="ultimaEvaluacion">Test: {{ ultimaEvaluacion.test_nombre || ultimaEvaluacion.tipo_evaluacion?.nombre }}</p><p class="card-subtext pf-oswald text-steel mt-2" *ngIf="!ultimaEvaluacion">Pendiente de evaluación</p></div></div>
         </ng-container>
     </div>
   
@@ -113,13 +115,13 @@
                             <span *ngIf="est.diasRestantes === 1">MAÑANA</span>
                             <span *ngIf="est.diasRestantes > 1">EN {{ est.diasRestantes }} DÍAS</span>
                         </span>
-                        <small class="text-teal pf-oswald mt-1" style="font-size: 10px; letter-spacing: 0.05em;">CUMPLIRÁ {{ est.nuevaEdad }} AÑOS</small>
+                        <small class="text-teal pf-oswald mt-1 pf-tracking-label" style="font-size: 10px;">CUMPLIRÁ {{ est.nuevaEdad }} AÑOS</small>
                     </div>
                 </div>
 
                 <div *ngIf="cumpleanosList.length === 0 && !loading" class="empty-state">
                     <i class="pi pi-calendar-times text-steel mb-3"></i>
-                    <p class="pf-oswald text-steel" style="letter-spacing: 0.05em;">NO HAY CUMPLEAÑOS PRÓXIMAMENTE.</p>
+                    <p class="pf-oswald text-steel pf-tracking-label">NO HAY CUMPLEAÑOS PRÓXIMAMENTE.</p>
                 </div>
             </ng-container>
 
@@ -135,13 +137,13 @@
                     </div>
                     <div class="flex flex-column align-items-end">
                         <span class="pf-badge badge-normal">PROGRAMADO</span>
-                        <small class="text-teal pf-oswald mt-1" style="font-size: 10px; letter-spacing: 0.05em;">PRO FÚTBOL</small>
+                        <small class="text-teal pf-oswald mt-1 pf-tracking-label" style="font-size: 10px;">PRO FÚTBOL</small>
                     </div>
                 </div>
         
                 <div *ngIf="proximosEventos.length === 0 && !loading" class="empty-state">
                     <i class="pi pi-bolt text-steel mb-3"></i>
-                    <p class="pf-oswald text-steel" style="letter-spacing: 0.05em;">NO HAY EVENTOS PRÓXIMAMENTE.</p>
+                    <p class="pf-oswald text-steel pf-tracking-label">NO HAY EVENTOS PRÓXIMAMENTE.</p>
                 </div>
             </ng-container>
   

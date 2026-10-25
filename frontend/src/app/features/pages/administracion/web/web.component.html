@@ -1,6 +1,6 @@
 <div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
-    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
+    <p-confirmDialog [style]="{width: '450px', maxWidth: '95vw'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
 
     <!-- ENCABEZADO -->
     <header class="pf-admin-header">
@@ -31,10 +31,10 @@
                     <div class="grid">
                         
                         <!-- Columna Izquierda: Hero & Contacto -->
-                        <div class="col-12 md:col-6 pr-md-4">
+                        <div class="col-12 md:col-6 md:pr-4">
                             <div class="pf-section-title">
                                 <h3 class="pf-anton text-chalk text-xl">Portada (Hero)</h3>
-                                <div class="border-top-1 surface-border my-2 mb-4" style="border-color: var(--border-color) !important;"></div>
+                                <div class="border-top-1 surface-border my-2 mb-4 pf-border"></div>
                             </div>
                             
                             <div class="pf-field-group mb-3">
@@ -49,15 +49,15 @@
 
                             <div class="pf-section-title mt-5">
                                 <h3 class="pf-anton text-chalk text-xl">Contacto Oficial</h3>
-                                <div class="border-top-1 surface-border my-2 mb-4" style="border-color: var(--border-color) !important;"></div>
+                                <div class="border-top-1 surface-border my-2 mb-4 pf-border"></div>
                             </div>
 
                             <div class="formgrid grid">
-                                <div class="col-6 pf-field-group mb-3">
+                                <div class="col-12 md:col-6 pf-field-group mb-3">
                                     <label class="pf-oswald text-steel">Teléfono</label>
                                     <input pInputText [(ngModel)]="config.telefono" placeholder="+56 9..." [disabled]="guardando" />
                                 </div>
-                                <div class="col-6 pf-field-group mb-3">
+                                <div class="col-12 md:col-6 pf-field-group mb-3">
                                     <label class="pf-oswald text-steel">Correo Electrónico</label>
                                     <input pInputText [(ngModel)]="config.correo" placeholder="correo@ejemplo.com" [disabled]="guardando" />
                                 </div>
@@ -70,10 +70,10 @@
                         </div>
 
                         <!-- Columna Derecha: Redes Sociales -->
-                        <div class="col-12 md:col-6 pl-md-4">
+                        <div class="col-12 md:col-6 md:pl-4">
                             <div class="pf-section-title">
                                 <h3 class="pf-anton text-chalk text-xl">Redes Sociales</h3>
-                                <div class="border-top-1 surface-border my-2 mb-4" style="border-color: var(--border-color) !important;"></div>
+                                <div class="border-top-1 surface-border my-2 mb-4 pf-border"></div>
                             </div>
 
                             <div class="pf-social-box mb-4">
@@ -101,7 +101,7 @@
 
                     </div>
 
-                    <div class="flex justify-content-end mt-5 pt-3 border-top-1 surface-border" style="border-color: var(--border-color) !important;">
+                    <div class="flex justify-content-end mt-5 pt-3 border-top-1 surface-border pf-border">
                         <button pButton label="Guardar Configuración General" icon="pi pi-save" (click)="guardarConfigGeneral()" [loading]="guardando" class="pf-btn-primary"></button>
                     </div>
                 </p-tabpanel>
@@ -124,7 +124,7 @@
                         <ng-template pTemplate="body" let-item>
                             <tr>
                                 <td class="text-center"><i class="pi {{item.icono}} text-2xl text-teal"></i></td>
-                                <td class="pf-anton text-chalk text-lg" style="letter-spacing: 1px;">{{item.titulo}}</td>
+                                <td class="pf-anton text-chalk text-lg pf-tracking-wide">{{item.titulo}}</td>
                                 <td class="text-steel">{{item.descripcion}}</td>
                                 <td>
                                     <div class="pf-table-actions">
@@ -161,7 +161,7 @@
                                         <i class="pi {{item.icono}} {{item.colorTexto || item.color_texto}} text-xl"></i>
                                     </div>
                                 </td>
-                                <td class="pf-anton text-chalk text-lg" style="letter-spacing: 1px;">{{item.titulo}}</td>
+                                <td class="pf-anton text-chalk text-lg pf-tracking-wide">{{item.titulo}}</td>
                                 <td class="text-steel">{{item.descripcion}}</td>
                                 <td>
                                     <div class="pf-table-actions">
@@ -197,7 +197,7 @@
                                     <img [src]="item.imagenUrl || item.imagen_url || 'assets/images/default-sponsor.png'" 
                                          alt="Logo" class="pf-img-invert" style="width: 50px; height: 50px; object-fit: contain;">
                                 </td>
-                                <td class="pf-anton text-chalk text-lg" style="letter-spacing: 1px;">{{item.nombre}}</td>
+                                <td class="pf-anton text-chalk text-lg pf-tracking-wide">{{item.nombre}}</td>
                                 <td class="text-steel">{{item.descripcion}}</td>
                                 <td>
                                     <div class="pf-table-actions">
@@ -233,7 +233,7 @@
                                     <img [src]="item.imagenUrl || item.imagen_url || 'assets/images/default-sponsor.png'" 
                                          alt="Logo" class="pf-img-invert" style="width: 50px; height: 50px; object-fit: contain;">
                                 </td>
-                                <td class="pf-anton text-chalk text-lg" style="letter-spacing: 1px;">{{item.nombre}}</td>
+                                <td class="pf-anton text-chalk text-lg pf-tracking-wide">{{item.nombre}}</td>
                                 <td>
                                     <a *ngIf="item.instagramUrl || item.instagram_url" [href]="item.instagramUrl || item.instagram_url" target="_blank" class="pf-social-link text-teal no-underline font-bold">
                                         <i class="pi pi-instagram mr-1"></i> Ver Instagram
@@ -259,7 +259,7 @@
 
     <!-- MODALES DE FORMULARIO -->
     <!-- (Modal: Metodología) -->
-    <p-dialog [(visible)]="displayDialogMetodologia" [header]="isEditing ? 'Editar Metodología' : 'Nueva Metodología'" [modal]="true" styleClass="p-fluid pf-dialog" [style]="{width: '450px'}" [closable]="!guardando">
+    <p-dialog [(visible)]="displayDialogMetodologia" [header]="isEditing ? 'Editar Metodología' : 'Nueva Metodología'" [modal]="true" styleClass="p-fluid pf-dialog" [style]="{width: '450px', maxWidth: '95vw'}" [closable]="!guardando">
         <div class="pf-field-group mt-3">
             <label class="pf-oswald">Icono Visual <span class="text-pink-500 font-bold">*</span></label>
             <p-select [options]="listaIconos" [(ngModel)]="itemForm.icono" optionLabel="label" optionValue="value" placeholder="Selecciona un icono" appendTo="body" styleClass="w-full" [disabled]="guardando">
@@ -292,7 +292,7 @@
     </p-dialog>
 
     <!-- (Modal: Programa/Categoría) -->
-    <p-dialog [(visible)]="displayDialogPrograma" [header]="isEditing ? 'Editar Categoría' : 'Nueva Categoría'" [modal]="true" styleClass="p-fluid pf-dialog" [style]="{width: '450px'}" [closable]="!guardando">
+    <p-dialog [(visible)]="displayDialogPrograma" [header]="isEditing ? 'Editar Categoría' : 'Nueva Categoría'" [modal]="true" styleClass="p-fluid pf-dialog" [style]="{width: '450px', maxWidth: '95vw'}" [closable]="!guardando">
         <div class="formgrid grid mt-3">
             <div class="col-12 pf-field-group">
                 <label class="pf-oswald">Título <span class="text-pink-500 font-bold">*</span></label>
@@ -315,11 +315,11 @@
                     </ng-template>
                 </p-select>
             </div>
-            <div class="col-6 pf-field-group">
+            <div class="col-12 md:col-6 pf-field-group">
                 <label class="pf-oswald">Fondo (Tailwind)</label>
                 <input pInputText [(ngModel)]="itemForm.colorFondo" placeholder="Ej: bg-blue-900" [disabled]="guardando" />
             </div>
-            <div class="col-6 pf-field-group">
+            <div class="col-12 md:col-6 pf-field-group">
                 <label class="pf-oswald">Texto (Tailwind)</label>
                 <input pInputText [(ngModel)]="itemForm.colorTexto" placeholder="Ej: text-blue-300" [disabled]="guardando" />
             </div>
@@ -335,7 +335,7 @@
     </p-dialog>
 
     <!-- (Modal: Alianza) -->
-    <p-dialog [(visible)]="displayDialogAlianza" [header]="isEditing ? 'Editar Alianza' : 'Nueva Alianza'" [modal]="true" styleClass="p-fluid pf-dialog" [style]="{width: '450px'}" [closable]="!guardando">
+    <p-dialog [(visible)]="displayDialogAlianza" [header]="isEditing ? 'Editar Alianza' : 'Nueva Alianza'" [modal]="true" styleClass="p-fluid pf-dialog" [style]="{width: '450px', maxWidth: '95vw'}" [closable]="!guardando">
         <div class="pf-field-group flex flex-column mt-3">
             <label class="text-center pf-oswald mb-2">Logo de la Alianza</label>
             <div class="sponsor-preview-container text-center mb-3">
@@ -359,7 +359,7 @@
     </p-dialog>
 
     <!-- (Modal: Auspiciador) -->
-    <p-dialog [(visible)]="displayDialogAuspiciador" [header]="isEditing ? 'Editar Auspiciador' : 'Nuevo Auspiciador'" [modal]="true" styleClass="p-fluid pf-dialog" [style]="{width: '450px'}" [closable]="!guardando">
+    <p-dialog [(visible)]="displayDialogAuspiciador" [header]="isEditing ? 'Editar Auspiciador' : 'Nuevo Auspiciador'" [modal]="true" styleClass="p-fluid pf-dialog" [style]="{width: '450px', maxWidth: '95vw'}" [closable]="!guardando">
         <div class="pf-field-group flex flex-column mt-3">
             <label class="text-center pf-oswald mb-2">Logo del Auspiciador</label>
             <div class="sponsor-preview-container text-center mb-3">

@@ -1,6 +1,6 @@
 <div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
-    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog> 
+    <p-confirmDialog [style]="{width: '450px', maxWidth: '95vw'}" styleClass="pf-confirm-dialog"></p-confirmDialog> 
 
     <!-- ========================================================================= -->
     <!-- ENCABEZADO -->
@@ -16,8 +16,10 @@
                 </p>
             </div>
         </div>
-        <button *ngIf="esEstudiante" pButton icon="pi pi-sync" class="pf-btn-ghost" 
-                (click)="cargarMisLesiones()" [loading]="cargandoLesiones" pTooltip="Actualizar Datos" tooltipPosition="left"></button>
+        <div class="header-actions">
+            <button *ngIf="esEstudiante" pButton icon="pi pi-sync" class="pf-btn-ghost" 
+                    (click)="cargarMisLesiones()" [loading]="cargandoLesiones" pTooltip="Actualizar Datos" tooltipPosition="left"></button>
+        </div>
     </header>
 
     <!-- ========================================================================= -->
@@ -41,7 +43,7 @@
         <!-- ESTADO VACÍO (SIN PACIENTE SELECCIONADO) -->
         <div class="pf-admin-card text-center p-6 mt-4 fadein flex flex-column align-items-center justify-content-center" *ngIf="!alumnoSeleccionado">
             <i class="pi pi-heart text-6xl text-steel mb-4"></i>
-            <h2 class="pf-anton text-chalk m-0 mt-3 text-2xl" style="letter-spacing: 1px;">Seleccione un paciente</h2>
+            <h2 class="pf-anton text-chalk m-0 mt-3 text-2xl pf-tracking-wide">Seleccione un paciente</h2>
             <p class="pf-oswald text-steel mt-3 text-lg">Busque un alumno en la barra superior para ver o modificar su registro médico.</p>
         </div>
     </ng-container>
@@ -51,9 +53,9 @@
     <!-- ========================================================================= -->
     <div *ngIf="(esGestion && alumnoSeleccionado) || esEstudiante" class="fadein animation-duration-300">
         
-        <div *ngIf="esGestion" class="pf-admin-card p-4 mb-4 flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center gap-4 border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+        <div *ngIf="esGestion" class="pf-admin-card p-4 mb-4 flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center gap-4 border-bottom-1 surface-border pf-border">
             <div>
-                <h2 class="pf-anton text-chalk m-0 mb-2 text-2xl" style="letter-spacing: 0.5px;">Historial Clínico</h2>
+                <h2 class="pf-anton text-chalk m-0 mb-2 text-2xl pf-tracking">Historial Clínico</h2>
                 <p class="pf-oswald text-steel m-0">Paciente: <span class="font-bold text-teal text-lg">{{alumnoSeleccionado.nombreCompleto}}</span></p>
             </div>
             <!-- SOLO STAFF (KINESIÓLOGO) PUEDE CREAR REGISTROS -->
@@ -77,7 +79,7 @@
                     <tr>
                         <td>
                             <span class="p-column-title pf-oswald text-steel hidden-desktop">Fecha: </span>
-                            <span class="pf-anton text-chalk text-lg" style="letter-spacing: 0.5px;">{{ l.fecha_evento | date:'dd/MM/yyyy' }}</span>
+                            <span class="pf-anton text-chalk text-lg pf-tracking">{{ l.fecha_evento | date:'dd/MM/yyyy' }}</span>
                         </td>
                         <td class="font-bold">
                             <span class="p-column-title pf-oswald text-steel hidden-desktop">Tipo: </span>
@@ -86,7 +88,7 @@
                         <td class="text-sm">
                             <span class="p-column-title pf-oswald text-steel hidden-desktop">Diagnóstico: </span>
                             <span *ngIf="l.diagnostico" class="text-chalk">{{ l.diagnostico }}</span>
-                            <span *ngIf="!l.diagnostico" class="text-steel italic">No especificado</span>
+                            <span *ngIf="!l.diagnostico" class="text-steel font-italic">No especificado</span>
 
                             <div *ngIf="l.observaciones" class="mt-2 text-xs text-steel">
                                 <strong class="text-teal pf-oswald tracking-wider">Obs:</strong> {{ l.observaciones }}
@@ -110,8 +112,8 @@
                 
                 <ng-template pTemplate="emptymessage">
                     <tr>
-                        <td [attr.colspan]="puedeEditar ? 5 : 4" class="text-center p-6 text-steel">
-                            <i class="pi pi-heart text-5xl mb-3 text-steel"></i><br>
+                        <td [attr.colspan]="puedeEditar ? 5 : 4" class="text-center p-5 text-steel">
+                            <i class="pi pi-heart block mb-3 text-4xl"></i>
                             <span class="pf-oswald text-lg">No hay lesiones, alergias ni patologías registradas en el historial médico.</span>
                         </td>
                     </tr>
@@ -123,7 +125,7 @@
     <!-- ========================================================================= -->
     <!-- MODAL NUEVO / EDITAR REGISTRO (SOLO STAFF) -->
     <!-- ========================================================================= -->
-    <p-dialog *ngIf="esStaff" [(visible)]="mostrarDialogoLesion" [header]="lesionActual.id ? 'Editar Registro' : 'Nuevo Registro Médico'" [modal]="true" [style]="{width: '450px'}" styleClass="p-fluid pf-dialog" [draggable]="false" [resizable]="false">
+    <p-dialog *ngIf="esStaff" [(visible)]="mostrarDialogoLesion" [header]="lesionActual.id ? 'Editar Registro' : 'Nuevo Registro Médico'" [modal]="true" [style]="{width: '450px', maxWidth: '95vw'}" styleClass="p-fluid pf-dialog" [draggable]="false" [resizable]="false">
         
         <div class="field mt-3 flex flex-column">
             <label class="pf-oswald text-steel mb-2 block">Fecha del Evento <span class="text-red-500 font-bold ml-1">*</span></label>

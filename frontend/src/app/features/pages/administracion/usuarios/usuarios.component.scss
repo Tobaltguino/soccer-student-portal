@@ -1,0 +1,5 @@
+/* Estilos propios de Usuarios (el resto viene de styles.scss y _componentes.scss) */
+
+.fecha-nac-container { display: flex; flex-direction: column; gap: 2px; }
+.fecha-nac-text { font-size: 0.9rem; }
+.edad-text { font-family: var(--pf-font-label); letter-spacing: 0.03em; }

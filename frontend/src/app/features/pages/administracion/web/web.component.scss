@@ -1,0 +1,17 @@
+/* Estilos recuperados (se perdieron en la reestructuración de carpetas) */
+
+.pf-social-box {
+  background: var(--hover-bg);
+  border: 1px solid var(--border-color);
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.pf-social-link {
+  color: var(--pf-teal);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
+
+  &:hover { color: var(--pf-lime); text-decoration: underline; }
+}
