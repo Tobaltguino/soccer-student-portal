@@ -9,6 +9,7 @@ import {
   FilaExcelResultadoSesion
 } from '../models/resultado.interface';
 import { RangoEvaluacion } from '../models/rango.interface';
+import { calcularEdad } from '../../../../../shared/utils/fechas.util';
 
 @Injectable({
   providedIn: 'root'
@@ -189,26 +190,32 @@ export class ResultadoEvaluacionService {
     const sesionIds = [...new Set(resultados.map((r) => r.sesion_id))];
     const estudianteIds = [...new Set(resultados.map((r) => r.estudiante_id))];
 
-    // 1. Traer las sesiones involucradas con su tipo de evaluación
-    const { data: sesionesData } = await this.supabase
-      .from('aca_evaluaciones_sesiones')
-      .select(`
-        id,
-        fecha,
-        tipo_evaluacion_id,
-        tipo_evaluacion:aca_tipo_evaluacion ( nombre, unidad_medida, descripcion )
-      `)
-      .in('id', sesionIds);
+    // 1 y 2. Sesiones (con su tipo de evaluación) y perfiles de los estudiantes, en paralelo
+    const [
+      { data: sesionesData, error: sesionesError },
+      { data: perfilesData, error: perfilesError }
+    ] = await Promise.all([
+      this.supabase
+        .from('aca_evaluaciones_sesiones')
+        .select(`
+          id,
+          fecha,
+          tipo_evaluacion_id,
+          tipo_evaluacion:aca_tipo_evaluacion ( nombre, unidad_medida, descripcion )
+        `)
+        .in('id', sesionIds),
+      this.supabase
+        .from('usu_perfiles')
+        .select('id_usuario, fecha_nacimiento, genero')
+        .in('id_usuario', estudianteIds)
+    ]);
+
+    if (sesionesError) throw new Error(`No se pudieron cargar las sesiones: ${sesionesError.message}`);
+    if (perfilesError) throw new Error(`No se pudieron cargar los perfiles: ${perfilesError.message}`);
 
     const mapaSesiones = new Map<string, any>(
       (sesionesData ?? []).map((s: any) => [s.id, s])
     );
-
-    // 2. Traer los perfiles de los estudiantes involucrados (fecha_nacimiento y genero)
-    const { data: perfilesData } = await this.supabase
-      .from('usu_perfiles')
-      .select('id_usuario, fecha_nacimiento, genero')
-      .in('id_usuario', estudianteIds);
 
     const mapaPerfiles = new Map<string, { fecha_nacimiento: string | null; genero: string | null }>(
       (perfilesData ?? []).map((p: any) => [p.id_usuario, p])
@@ -243,14 +250,16 @@ export class ResultadoEvaluacionService {
       let edadEvaluacion: number | null = null;
       let rango: { nombreEtiqueta: string; colorSugerido: string | null } | null = null;
 
-      if (perfil?.fecha_nacimiento) {
-        edadEvaluacion = this.calcularEdad(perfil.fecha_nacimiento);
+      // Edad que tenía el alumno el día de la sesión (no la de hoy), así el rango no
+      // cambia cuando cumple años después.
+      edadEvaluacion = calcularEdad(perfil?.fecha_nacimiento, sesion?.fecha || undefined);
 
-        if (perfil.genero && sesion?.tipo_evaluacion_id) {
+      if (edadEvaluacion !== null) {
+        if (perfil?.genero && sesion?.tipo_evaluacion_id) {
           const rangoEncontrado = listaRangos.find(
             (rg) =>
               rg.tipo_evaluacion_id === sesion.tipo_evaluacion_id &&
-              rg.genero === perfil.genero &&
+              rg.genero === perfil!.genero &&
               rg.edad_min <= edadEvaluacion! &&
               rg.edad_max >= edadEvaluacion! &&
               Number(rg.valor_min) <= Number(resultado.valor_numerico) &&
@@ -278,18 +287,5 @@ export class ResultadoEvaluacionService {
         }
       };
     });
-  }
-
-  private calcularEdad(fechaNacimiento: string): number {
-    const hoy = new Date();
-    const nacimiento = new Date(fechaNacimiento);
-    let edad = hoy.getFullYear() - nacimiento.getFullYear();
-    const mes = hoy.getMonth() - nacimiento.getMonth();
-
-    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
-      edad--;
-    }
-
-    return edad;
   }
 }

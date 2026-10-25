@@ -6,6 +6,7 @@ import {
   ReporteAsistenciaMensual,
   DetalleAsistenciaDiaria
 } from '../models/asistencia.interface';
+import { hoyChile } from '../../../../../shared/utils/fechas.util';
 
 @Injectable({
   providedIn: 'root'
@@ -105,33 +106,37 @@ export class AsistenciaService {
     mes: number,
     anio: number
   ): Promise<ReporteAsistenciaMensual[]> {
-    // 1. Obtener los alumnos activos del grupo uniendo usu_estudiantes con usu_perfiles
-    const { data: alumnos, error: errorAlumnos } = await this.supabase
-      .from('usu_estudiantes')
-      .select(`
-        id_usuario,
-        usu_perfiles!inner(nombre, apellido, rut, foto_url, activo)
-      `)
-      .eq('grupo_id', grupoId)
-      .eq('usu_perfiles.activo', true);
+    // 1. Rango de fechas del mes. Solo cuentan las clases hasta hoy: las futuras
+    //    aún no tienen asistencia y bajaban el porcentaje a mitad de mes.
+    const { primerDia, ultimoDia } = this.rangoDelMes(mes, anio);
+    const hoy = hoyChile();
+    const hasta = ultimoDia < hoy ? ultimoDia : hoy;
+
+    // 2 y 3. Alumnos activos del grupo y clases (no eliminadas) del mes, en paralelo
+    const [
+      { data: alumnos, error: errorAlumnos },
+      { data: clasesMes, error: errorClases }
+    ] = await Promise.all([
+      this.supabase
+        .from('usu_estudiantes')
+        .select(`
+          id_usuario,
+          usu_perfiles!inner(nombre, apellido, rut, foto_url, activo)
+        `)
+        .eq('grupo_id', grupoId)
+        .eq('usu_perfiles.activo', true),
+      this.supabase
+        .from('aca_clases')
+        .select('id')
+        .eq('grupo_id', grupoId)
+        .is('eliminado_at', null)
+        .gte('fecha', primerDia)
+        .lte('fecha', hasta)
+    ]);
 
     if (errorAlumnos) {
       throw new Error(`Error al obtener estudiantes: ${errorAlumnos.message}`);
     }
-
-    // 2. Calcular rango de fechas del mes solicitado
-    const mesStr = ('0' + mes).slice(-2);
-    const primerDia = `${anio}-${mesStr}-01`;
-    const ultimoDiaNum = new Date(anio, mes, 0).getDate();
-    const ultimoDia = `${anio}-${mesStr}-${ultimoDiaNum}`;
-
-    // 3. Obtener las clases de ese grupo en el mes específico
-    const { data: clasesMes, error: errorClases } = await this.supabase
-      .from('aca_clases')
-      .select('id')
-      .eq('grupo_id', grupoId)
-      .gte('fecha', primerDia)
-      .lte('fecha', ultimoDia);
 
     if (errorClases) {
       throw new Error(`Error al obtener clases: ${errorClases.message}`);
@@ -167,11 +172,18 @@ export class AsistenciaService {
       throw new Error(`Error al obtener asistencias: ${errorAsistencias.message}`);
     }
 
-    // 5. Cruzar datos y calcular porcentajes
+    // 5. Contar presentes por alumno una sola vez (antes se recorría la lista completa por cada alumno)
+    const presentesPorAlumno = new Map<string, number>();
+    for (const a of asistencias ?? []) {
+      if (a.presente === true) {
+        presentesPorAlumno.set(a.estudiante_id, (presentesPorAlumno.get(a.estudiante_id) ?? 0) + 1);
+      }
+    }
+
+    // 6. Cruzar datos y calcular porcentajes
     return (alumnos || []).map((est: any) => {
       const perfil = Array.isArray(est.usu_perfiles) ? est.usu_perfiles[0] : est.usu_perfiles;
-      const registrosAlumno = asistencias?.filter((a) => a.estudiante_id === est.id_usuario) || [];
-      const totalPresentes = registrosAlumno.filter((a) => a.presente === true).length;
+      const totalPresentes = presentesPorAlumno.get(est.id_usuario) ?? 0;
       const porcentaje = Math.round((totalPresentes / totalClasesEnElMes) * 100);
 
       return {
@@ -196,18 +208,16 @@ export class AsistenciaService {
     mes: number,
     anio: number
   ): Promise<DetalleAsistenciaDiaria[]> {
-    const mesStr = ('0' + mes).slice(-2);
-    const primerDia = `${anio}-${mesStr}-01`;
-    const ultimoDiaNum = new Date(anio, mes, 0).getDate();
-    const ultimoDia = `${anio}-${mesStr}-${ultimoDiaNum}`;
+    const { primerDia, ultimoDia } = this.rangoDelMes(mes, anio);
 
     const { data, error } = await this.supabase
       .from('aca_asistencias')
       .select(`
         presente,
-        aca_clases!inner(fecha, hora, lugar, grupo_id)
+        aca_clases!inner(fecha, hora, lugar, grupo_id, eliminado_at)
       `)
       .eq('estudiante_id', estudianteId)
+      .is('aca_clases.eliminado_at', null)
       .gte('aca_clases.fecha', primerDia)
       .lte('aca_clases.fecha', ultimoDia)
       .order('aca_clases(fecha)', { ascending: false });
@@ -225,5 +235,15 @@ export class AsistenciaService {
         lugar: clase?.lugar || null
       };
     });
+  }
+
+  /** Primer y último día del mes como 'YYYY-MM-DD' (con ceros, para comparar como texto). */
+  private rangoDelMes(mes: number, anio: number): { primerDia: string; ultimoDia: string } {
+    const mesStr = ('0' + mes).slice(-2);
+    const ultimoDiaNum = new Date(anio, mes, 0).getDate();
+    return {
+      primerDia: `${anio}-${mesStr}-01`,
+      ultimoDia: `${anio}-${mesStr}-${('0' + ultimoDiaNum).slice(-2)}`
+    };
   }
 }
