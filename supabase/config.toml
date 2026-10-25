@@ -439,3 +439,8 @@ entrypoint = "./functions/admin-actualizar-email/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/cambiar-password/index.ts"
+[functions.auth-rut]
+enabled = true
+# Se llama sin sesión (login). No usa service role para el login en sí.
+verify_jwt = false
+entrypoint = "./functions/auth-rut/index.ts"
