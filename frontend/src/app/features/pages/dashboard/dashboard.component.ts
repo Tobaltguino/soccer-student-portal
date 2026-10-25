@@ -15,6 +15,7 @@ import { GrupoService } from '../academico/grupos/services/grupo.service';
 
 // Enums
 import { Rol } from '../administracion/usuarios/models/usuario-central.interface';
+import { hoyChile, horaActualChile } from '../../../shared/utils/fechas.util';
 
 @Component({
   selector: 'app-dashboard',
@@ -98,6 +99,16 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  private ordenarPorHora(clases: any[]): any[] {
+    return [...clases].sort((a, b) => (a.hora || '').localeCompare(b.hora || ''));
+  }
+
+  /** Primera clase de hoy que aún no comienza (listarClases ordena por fecha, no por hora). */
+  private siguienteClaseDeHoy(clasesOrdenadas: any[]): any | null {
+    const ahora = horaActualChile();
+    return clasesOrdenadas.find(c => (c.hora || '') >= ahora) ?? null;
+  }
+
   async refrescar() {
     if (this.apiStatus === 'offline') return;
     
@@ -106,7 +117,8 @@ export class DashboardComponent implements OnInit {
     this.cdr.detectChanges();
 
     try {
-      const hoy = new Date().toISOString().split('T')[0];
+      // Fecha de Chile: toISOString() da la UTC, que después de las ~21h ya es mañana
+      const hoy = hoyChile();
 
       // ==========================================
       // LÓGICA PARA ADMINISTRADOR
@@ -118,8 +130,8 @@ export class DashboardComponent implements OnInit {
         ]);
 
         this.totalEstudiantes = usuariosRes.total || 0;
-        this.clasesHoy = clasesRes.registros || [];
-        this.proximaClase = this.clasesHoy.length > 0 ? this.clasesHoy[0] : null;
+        this.clasesHoy = this.ordenarPorHora(clasesRes.registros || []);
+        this.proximaClase = this.siguienteClaseDeHoy(this.clasesHoy);
 
         // Aquí puedes agregar la llamada a HistorialClinicoService si la necesitas para los lesionados
         this.pacientesEnTratamiento = 0; 
@@ -138,8 +150,8 @@ export class DashboardComponent implements OnInit {
         }, 0);
 
         const clasesRes = await this.claseService.listarClases({ desde: hoy, hasta: hoy, limite: 50 });
-        this.clasesHoy = clasesRes.registros || [];
-        this.proximaClase = this.clasesHoy.length > 0 ? this.clasesHoy[0] : null;
+        this.clasesHoy = this.ordenarPorHora(clasesRes.registros || []);
+        this.proximaClase = this.siguienteClaseDeHoy(this.clasesHoy);
       }
 
       // ==========================================

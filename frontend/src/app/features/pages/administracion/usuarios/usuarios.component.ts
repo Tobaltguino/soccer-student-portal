@@ -37,6 +37,7 @@ import { HistorialClinicoService } from '../../salud/kinesiologia/historial-clin
 import { Rol } from '../../../../shared/enums/rol.enum';
 import { Posicion } from '../../../../shared/enums/posicion.enum';
 import { Genero } from '../../../../shared/enums/genero.enum';
+import { calcularEdad } from '../../../../shared/utils/fechas.util';
 
 @Component({
   selector: 'app-usuarios',
@@ -473,12 +474,7 @@ export class UsuariosComponent implements OnInit {
   }
 
   calcularEdad(fecha: any): number | null {
-    if (!fecha) return null;
-    const born = new Date(fecha);
-    const today = new Date();
-    let age = today.getFullYear() - born.getFullYear();
-    if (today.getMonth() < born.getMonth() || (today.getMonth() === born.getMonth() && today.getDate() < born.getDate())) age--;
-    return age;
+    return calcularEdad(fecha);
   }
 
   async abrirFicha(estudiante: any) {

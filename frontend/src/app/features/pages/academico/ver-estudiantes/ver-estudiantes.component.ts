@@ -23,6 +23,7 @@ import { Rol } from '../../../../shared/enums/rol.enum';
 import { UsuarioCentralService } from '../../administracion/usuarios/services/usuarios-central.service';
 import { GrupoService } from '../grupos/services/grupo.service';
 import { HistorialClinicoService } from '../../salud/kinesiologia/historial-clinico/services/historial-clinico.service';
+import { calcularEdad } from '../../../../shared/utils/fechas.util';
 
 @Component({
   selector: 'app-ver-estudiantes',
@@ -210,14 +211,7 @@ export class VerEstudiantesComponent implements OnInit {
   }
 
   calcularEdad(fecha: any): number | null {
-    if (!fecha) return null;
-    const born = new Date(fecha);
-    const today = new Date();
-    let age = today.getFullYear() - born.getFullYear();
-    if (today.getMonth() < born.getMonth() || (today.getMonth() === born.getMonth() && today.getDate() < born.getDate())) {
-      age--;
-    }
-    return age;
+    return calcularEdad(fecha);
   }
 
   formatEstadoSalud(estado: string): string {
