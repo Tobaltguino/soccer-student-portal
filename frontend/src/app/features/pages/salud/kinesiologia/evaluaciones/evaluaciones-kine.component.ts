@@ -31,7 +31,7 @@ import { GrupoService } from '../../../academico/grupos/services/grupo.service';
 import { KineTipoEvaluacionService } from './services/kine-tipo-evaluacion.service';
 import { KineSubevaluacionService } from './services/kine-subevaluacion.service';
 import { KineSesionService } from './services/kine-sesion.service';
-import { KineResultadoService } from './services/kine-resultado.service';
+import { KineResultadoService, FilaResultadoKineLote } from './services/kine-resultado.service';
 
 @Component({
   selector: 'app-evaluaciones-kine',
@@ -157,19 +157,10 @@ export class EvaluacionesKineComponent implements OnInit {
       if (!this.esAdmin && this.grupos.length === 0) {
         this.sesiones = [];
       } else {
-        const grupoIds = this.esAdmin ? undefined : this.grupos.map(g => g.id);
-        const peticionesSesiones = (grupoIds && grupoIds.length > 0) 
-          ? Promise.all(grupoIds.map((id: number) => this.kineSesionService.listarSesiones({ grupoId: id, limite: 1000 })))
-          : this.kineSesionService.listarSesiones({ limite: 1000 });
-
-        const sesionesResponse = await peticionesSesiones;
-        
-        let regs: any[] = [];
-        if (Array.isArray(sesionesResponse)) {
-            regs = sesionesResponse.flatMap(res => res.registros || []);
-        } else {
-            regs = (sesionesResponse as any).registros || [];
-        }
+        // Una sola consulta: sin grupoId el service ya filtra con .in('grupo_id', misGrupos)
+        // (antes era una consulta por cada grupo)
+        const sesionesResponse = await this.kineSesionService.listarSesiones({ limite: 1000 });
+        const regs: any[] = sesionesResponse.registros || [];
 
         this.sesiones = regs.map((s: any) => ({
           ...s,
@@ -410,7 +401,12 @@ export class EvaluacionesKineComponent implements OnInit {
     this.guardando = true;
     this.cdr.detectChanges();
 
-    const peticiones: Promise<any>[] = [];
+    // Una fila por celda con datos nuevos o ya guardada. Los valores vacíos van como null,
+    // así "limpiar" una celda guardada sí se guarda (antes undefined la dejaba igual).
+    const aTexto = (valor: any): string | null =>
+      valor === null || valor === undefined || valor === '' ? null : valor.toString();
+
+    const filas: FilaResultadoKineLote[] = [];
 
     this.estudiantesGrupo.forEach(est => {
       est.evaluaciones.forEach((sub: any) => {
@@ -418,26 +414,20 @@ export class EvaluacionesKineComponent implements OnInit {
           const esActualizacion = sub.resultado_id !== null;
 
           if (tieneDataNueva || esActualizacion) {
-              const payload: any = {
-                  resultadoUnico: sub.resultado_unico?.toString(),
-                  resultadoIzquierdo: sub.resultado_izquierdo?.toString(),
-                  resultadoDerecho: sub.resultado_derecho?.toString(),
+              filas.push({
+                  id: esActualizacion ? sub.resultado_id : null,
+                  estudianteId: est.id,
+                  subevaluacionId: sub.subevaluacion_id,
+                  resultadoUnico: aTexto(sub.resultado_unico),
+                  resultadoIzquierdo: aTexto(sub.resultado_izquierdo),
+                  resultadoDerecho: aTexto(sub.resultado_derecho),
                   observacion: sub.observacion || ''
-              };
-
-              if (esActualizacion) {
-                  peticiones.push(this.kineResultadoService.actualizarResultado(sub.resultado_id, payload));
-              } else if (tieneDataNueva) {
-                  payload.sesionId = this.evalLogistica.id;
-                  payload.estudianteId = est.id;
-                  payload.subevaluacionId = sub.subevaluacion_id;
-                  peticiones.push(this.kineResultadoService.crearResultado(payload));
-              }
+              });
           }
       });
     });
 
-    if (peticiones.length === 0) {
+    if (filas.length === 0) {
       this.mostrarExito('No se detectaron cambios, todo está guardado.');
       this.guardando = false;
       this.displayGradesDialog = false;
@@ -447,11 +437,11 @@ export class EvaluacionesKineComponent implements OnInit {
     this.messageService.add({ severity: 'info', summary: 'Guardando', detail: `Procesando matriz de resultados...` });
 
     try {
-      await Promise.all(peticiones);
+      await this.kineResultadoService.guardarResultadosEnLote(this.evalLogistica.id, filas);
       this.mostrarExito('Todos los resultados se guardaron y sincronizaron correctamente.');
       this.displayGradesDialog = false;
-    } catch (error) {
-      this.mostrarError('Ocurrió un error al guardar la matriz. Es posible que algunas subevaluaciones queden incompletas.');
+    } catch (error: any) {
+      this.mostrarError(error?.message || 'Ocurrió un error al guardar la matriz.');
     } finally {
       this.guardando = false;
       this.cdr.detectChanges();
