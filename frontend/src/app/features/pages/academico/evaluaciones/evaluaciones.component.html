@@ -1,6 +1,6 @@
 <div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
-    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
+    <p-confirmDialog [style]="{width: '450px', maxWidth: '95vw'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
 
     <!-- ========================================================================= -->
     <!-- VISTA GESTIÓN (ADMIN Y STAFF)                                             -->
@@ -13,7 +13,7 @@
                     <p class="pf-oswald text-teal mt-1">Supervisión de pruebas físicas y evolución técnica.</p>
                 </div>
             </div>
-            <div class="flex gap-2">
+            <div class="header-actions">
                 <button pButton icon="pi pi-sync" class="pf-btn-ghost" 
                         (click)="cargarDatosGestion()" [loading]="loading" pTooltip="Actualizar lista"></button>
                 
@@ -84,7 +84,7 @@
                     <tr>
                         <td>
                             <span class="p-column-title pf-oswald text-steel hidden-desktop">Fecha:</span>
-                            <span class="pf-anton text-chalk text-lg" style="letter-spacing: 0.5px;">{{ sesion.fecha | date:'dd/MM/yyyy' }}</span>
+                            <span class="pf-anton text-chalk text-lg pf-tracking">{{ sesion.fecha | date:'dd/MM/yyyy' }}</span>
                         </td>
                         <td>
                             <span class="p-column-title pf-oswald text-steel hidden-desktop">Grupo:</span>
@@ -184,7 +184,7 @@
                     <tr>
                         <td>
                             <span class="p-column-title pf-oswald text-steel hidden-desktop">Fecha</span>
-                            <div class="font-bold text-chalk text-right md:text-left text-lg pf-anton" style="letter-spacing: 0.5px;">{{ eval.fecha | date:'dd/MM/yyyy' }}</div>
+                            <div class="font-bold text-chalk text-right md:text-left text-lg pf-anton pf-tracking">{{ eval.fecha | date:'dd/MM/yyyy' }}</div>
                         </td>
                         <td>
                             <span class="p-column-title pf-oswald text-steel hidden-desktop">Prueba Evaluada</span>
@@ -198,7 +198,7 @@
                         <td class="text-center">
                             <span class="p-column-title pf-oswald text-steel hidden-desktop">Resultado</span>
                             <div class="flex align-items-baseline justify-content-end md:justify-content-center">
-                                <span class="text-xl font-bold text-chalk pf-anton" style="letter-spacing: 1px;">{{ eval.resultado }}</span>
+                                <span class="text-xl font-bold text-chalk pf-anton pf-tracking-wide">{{ eval.resultado }}</span>
                                 &nbsp; <small class="text-steel font-medium">{{ eval.unidad }}</small>
                             </div>
                         </td>
@@ -217,8 +217,8 @@
 
                 <ng-template pTemplate="emptymessage">
                     <tr>
-                        <td colspan="5" class="text-center p-6 text-steel">
-                            <i class="pi pi-chart-line text-steel mb-3 block" style="font-size: 4rem"></i>
+                        <td colspan="5" class="text-center p-5 text-steel">
+                            <i class="pi pi-chart-line block mb-3 text-4xl"></i>
                             <span class="pf-oswald text-lg">No hay evaluaciones registradas en el periodo seleccionado.</span>
                         </td>
                     </tr>
@@ -236,7 +236,7 @@
     <p-dialog *ngIf="esAdmin" [(visible)]="displayTipoDialog" header="Configuración Maestra de Tests" [modal]="true" [style]="{width: '95vw', maxWidth: '1000px'}" [draggable]="false" [resizable]="false" styleClass="p-fluid pf-dialog" [closable]="!guardando">
         <ng-template pTemplate="content">
             <div class="grid pt-2 m-0">
-             <div class="col-12 md:col-5 border-right-1 surface-border pr-0 md:pr-4" style="border-color: var(--border-color) !important;">
+             <div class="col-12 md:col-5 border-right-1 surface-border pr-0 md:pr-4 pf-border">
                  <div class="flex justify-content-between align-items-center mb-3">
                      <h3 class="pf-anton m-0 text-xl" [ngClass]="tipoForm.id ? 'text-teal' : 'text-chalk'">
                          <i [class]="tipoForm.id ? 'pi pi-pencil mr-2' : 'pi pi-plus-circle mr-2'"></i> 
@@ -246,11 +246,11 @@
                  </div>
                  
                  <div class="formgrid grid">
-                     <div class="pf-field-group col-8">
+                     <div class="pf-field-group col-12 md:col-8">
                          <label class="pf-oswald">Nombre de Prueba <span class="text-pink-500 font-bold">*</span></label>
                          <input pInputText [(ngModel)]="tipoForm.nombre" placeholder="Ej: Salto Largo" [disabled]="guardando">
                      </div>
-                     <div class="pf-field-group col-4">
+                     <div class="pf-field-group col-12 md:col-4">
                          <label class="pf-oswald">Unidad <span class="text-pink-500 font-bold">*</span></label>
                          <input pInputText [(ngModel)]="tipoForm.unidad_medida" placeholder="cm, seg" [disabled]="guardando">
                      </div>
@@ -260,7 +260,7 @@
                      </div>
                  </div>
                  
-                 <div class="flex align-items-center mt-3 mb-3 pb-3 border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                 <div class="flex align-items-center mt-3 mb-3 pb-3 border-bottom-1 surface-border pf-border">
                       <p-checkbox [(ngModel)]="usarRangos" [binary]="true" inputId="chkRangos" [disabled]="guardando"></p-checkbox>
                       <label for="chkRangos" class="ml-2 pf-oswald text-steel cursor-pointer">Definir Rangos de Evaluación</label>
                  </div>
@@ -322,11 +322,11 @@
                                     <td class="text-center" style="width: 40px;">
                                          <i [class]="r.genero === 'Masculino' ? 'pi pi-mars text-blue-400' : 'pi pi-venus text-pink-400'" [pTooltip]="r.genero"></i>
                                      </td>
-                                     <td class="font-bold text-teal py-2" style="width: 120px; white-space: nowrap;">
+                                     <td class="font-bold text-teal py-2 pf-nowrap" style="width: 120px;">
                                          {{r.edad_min || r.edadMin}} a {{r.edad_max || r.edadMax}} años
                                      </td>
                                      <td class="font-bold py-2 text-chalk">{{r.nombre_etiqueta || r.nombreEtiqueta}}</td>
-                                     <td class="py-2 text-center text-steel" style="white-space: nowrap;">
+                                     <td class="py-2 text-center text-steel pf-nowrap">
                                          {{r.valor_min || r.valorMin}} - {{r.valor_max || r.valorMax}}
                                      </td>
                                      <td class="py-2 text-center" style="width: 50px;">
@@ -441,10 +441,10 @@
     <!-- MODAL INFORME DE RESULTADOS / REGISTRO DE NOTAS (Admin & Staff) -->
     <p-dialog *ngIf="esAdmin || esStaff" [(visible)]="displayGradesDialog" [header]="esAdmin ? 'Informe de Resultados' : 'Registro de Resultados'" [modal]="true" [style]="{width: '95vw', maxWidth: '1000px'}" [maximizable]="true" styleClass="p-fluid pf-dialog" [draggable]="false" [resizable]="false">
         <ng-template pTemplate="content">
-            <div class="surface-hover p-4 border-round mb-4 flex justify-content-between align-items-center flex-wrap gap-3 mt-2 border-1 surface-border" style="border-color: var(--border-color) !important;">
+            <div class="surface-hover p-4 border-round mb-4 flex justify-content-between align-items-center flex-wrap gap-3 mt-2 border-1 surface-border pf-border">
                 <div class="flex flex-column">
                     <span class="pf-oswald text-steel text-sm tracking-wider">Evaluación Seleccionada</span>
-                    <span class="pf-anton text-chalk text-2xl mt-1" style="letter-spacing: 0.5px;">{{sesionSeleccionada?.tipoEvaluacionResuelto?.nombre}}</span>
+                    <span class="pf-anton text-chalk text-2xl mt-1 pf-tracking">{{sesionSeleccionada?.tipoEvaluacionResuelto?.nombre}}</span>
                 </div>
                 <div class="flex flex-column sm:align-items-end">
                     <span class="pf-oswald text-steel text-sm tracking-wider mb-2">Grupo Evaluado</span>
@@ -477,14 +477,14 @@
                             </ng-container>
                             <ng-container *ngIf="esAdmin">
                                 <span *ngIf="estudiante.valor_numerico !== null" class="font-bold text-xl text-teal pf-anton">{{estudiante.valor_numerico}}</span>
-                                <span *ngIf="estudiante.valor_numerico === null" class="text-steel italic text-sm">Sin registrar</span>
+                                <span *ngIf="estudiante.valor_numerico === null" class="text-steel font-italic text-sm">Sin registrar</span>
                             </ng-container>
                         </td>
                         
                         <td class="text-center">
                             <span class="p-column-title hidden-desktop pf-oswald text-steel">Rango</span>
                             <p-tag *ngIf="estudiante.rango" [value]="estudiante.rango.nombreEtiqueta || estudiante.rango.etiqueta" [style]="{'background-color': estudiante.rango.colorSugerido || estudiante.rango.color}" styleClass="pf-rango-tag"></p-tag>
-                            <span *ngIf="!estudiante.rango" class="text-steel italic text-sm">-</span>
+                            <span *ngIf="!estudiante.rango" class="text-steel font-italic text-sm">-</span>
                         </td>
                         
                         <td>
@@ -494,7 +494,7 @@
                             </ng-container>
                             <ng-container *ngIf="esAdmin">
                                 <span *ngIf="estudiante.observacion" class="text-chalk text-sm">{{ estudiante.observacion }}</span>
-                                <span *ngIf="!estudiante.observacion" class="text-steel italic text-sm">-</span>
+                                <span *ngIf="!estudiante.observacion" class="text-steel font-italic text-sm">-</span>
                             </ng-container>
                         </td>
                         
@@ -516,7 +516,7 @@
         
         <ng-template pTemplate="footer">
             <div class="flex flex-column sm:flex-row justify-content-between align-items-center w-full gap-3 mt-3">
-                <small *ngIf="esStaff" class="text-steel pf-oswald" style="letter-spacing: 0.5px;"><i class="pi pi-info-circle mr-1 text-teal"></i> Se guardarán solo los registros modificados.</small>
+                <small *ngIf="esStaff" class="text-steel pf-oswald pf-tracking"><i class="pi pi-info-circle mr-1 text-teal"></i> Se guardarán solo los registros modificados.</small>
                 <div class="flex gap-2 w-full sm:w-auto" [ngClass]="{'justify-content-end w-full': esAdmin}">
                     <button pButton label="Cerrar" icon="pi pi-times" class="pf-btn-ghost w-full sm:w-auto justify-content-center" (click)="displayGradesDialog = false"></button>
                     <button *ngIf="esAdmin" pButton label="Exportar a Excel" icon="pi pi-file-excel" class="p-button-success w-full sm:w-auto justify-content-center" (click)="descargarExcelPorSesion(sesionSeleccionada)"></button>
@@ -530,10 +530,10 @@
     <p-dialog *ngIf="esEstudiante" [(visible)]="displayDetalle" header="Detalle de Evaluación" 
               [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" [draggable]="false" [resizable]="false" styleClass="p-fluid pf-dialog">
         <div *ngIf="selectedEvalEstudiante" class="animation-fade-in pb-2 mt-3">
-            <div class="flex justify-content-between align-items-center mb-4 pb-3 border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+            <div class="flex justify-content-between align-items-center mb-4 pb-3 border-bottom-1 surface-border pf-border">
                 <div class="flex flex-column gap-1">
                     <span class="pf-oswald text-steel" style="font-size: 0.75rem;">Prueba Seleccionada</span>
-                    <span class="pf-anton text-chalk text-xl" style="letter-spacing: 0.5px;">{{selectedEvalEstudiante.test_nombre}}</span>
+                    <span class="pf-anton text-chalk text-xl pf-tracking">{{selectedEvalEstudiante.test_nombre}}</span>
                 </div>
                 <div class="flex flex-column gap-1 text-right" *ngIf="selectedEvalEstudiante.edad_evaluacion > 0">
                     <span class="pf-oswald text-steel" style="font-size: 0.75rem;">Edad al rendir</span>
@@ -543,14 +543,14 @@
 
             <div class="mb-4" *ngIf="selectedEvalEstudiante.test_descripcion">
                 <label class="pf-oswald text-steel block mb-2"><i class="pi pi-book text-blue-500 mr-2"></i> Descripción de la Prueba</label>
-                <div class="p-3 border-round border-1 surface-border text-chalk text-sm" style="background: var(--input-bg); border-color: var(--border-color) !important;">
+                <div class="p-3 border-round border-1 surface-border text-chalk text-sm pf-bg-input pf-border">
                     {{ selectedEvalEstudiante.test_descripcion }}
                 </div>
             </div>
 
             <div class="mb-2">
                 <label class="pf-oswald text-steel block mb-2"><i class="pi pi-comment text-teal mr-2"></i> Observaciones del Entrenador</label>
-                <div class="p-3 border-round border-1 surface-border text-chalk text-sm" style="background: var(--input-bg); border-color: var(--border-color) !important;" [ngClass]="{'text-steel italic': !selectedEvalEstudiante.observacion}">
+                <div class="p-3 border-round border-1 surface-border text-chalk text-sm pf-bg-input pf-border" [ngClass]="{'text-steel italic': !selectedEvalEstudiante.observacion}">
                     {{ selectedEvalEstudiante.observacion || 'Sin observaciones registradas para esta sesión.' }}
                 </div>
             </div>

@@ -23,7 +23,7 @@
     <!-- ESTADO DE ERROR -->
     <div *ngIf="errorMessage && !loading" class="p-4 border-round mb-4 border-1 surface-border flex align-items-center" style="background: rgba(255, 92, 92, 0.1); border-color: var(--neon-red) !important; color: var(--neon-red);">
         <i class="pi pi-exclamation-circle mr-3 text-2xl"></i> 
-        <span class="pf-oswald text-lg" style="letter-spacing: 0.05em;">{{ errorMessage }}</span>
+        <span class="pf-oswald text-lg pf-tracking-label">{{ errorMessage }}</span>
     </div>
 
     <!-- GRID DE PROFESORES -->
@@ -37,13 +37,13 @@
                 <!-- AVATAR -->
                 <div class="flex-shrink-0">
                     <img *ngIf="prof['foto_url']" [src]="prof['foto_url']" 
-                         class="border-circle border-2" 
-                         style="width: 70px; height: 70px; object-fit: cover; border-color: var(--border-color);" 
+                         class="border-circle border-2 pf-border" 
+                         style="width: 70px; height: 70px; object-fit: cover;" 
                          alt="Foto de {{prof.nombre}}">
                     
                     <div *ngIf="!prof['foto_url']" 
-                         class="flex align-items-center justify-content-center border-circle border-2 pf-anton text-3xl" 
-                         style="width: 70px; height: 70px; background: rgba(59, 130, 246, 0.1); color: var(--neon-blue); border-color: var(--border-color); letter-spacing: 1px;">
+                         class="flex align-items-center justify-content-center border-circle border-2 pf-anton text-3xl pf-border pf-tracking-wide" 
+                         style="width: 70px; height: 70px; background: rgba(59, 130, 246, 0.1); color: var(--neon-blue);">
                         {{ prof.nombre.charAt(0) }}{{ prof.apellido.charAt(0) }}
                     </div>
                 </div>
@@ -70,7 +70,7 @@
     </div>
 
     <!-- ESTADO VACÍO -->
-    <div *ngIf="profesores.length === 0 && !loading && !errorMessage" class="text-center p-6 border-round border-1 surface-border mt-4" style="background: transparent; border-color: var(--border-color) !important;">
+    <div *ngIf="profesores.length === 0 && !loading && !errorMessage" class="text-center p-6 border-round border-1 surface-border mt-4 pf-bg-none pf-border">
         <i class="pi pi-users text-steel mb-3" style="font-size: 3.5rem;"></i>
         <p class="pf-oswald text-chalk text-xl m-0">Sin asignaciones</p>
         <span class="text-steel text-sm pf-oswald">No se encontraron profesores ni especialistas asignados a tu grupo.</span>

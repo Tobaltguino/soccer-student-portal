@@ -1,6 +1,6 @@
 <div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
-    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
+    <p-confirmDialog [style]="{width: '450px', maxWidth: '95vw'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
 
     <!-- ENCABEZADO -->
     <header class="pf-admin-header">
@@ -10,7 +10,9 @@
                 <p class="pf-oswald text-teal mt-1">Guías de estudio y material de apoyo {{ !esEstudiante && !esAdmin ? 'para tu especialidad.' : 'para los estudiantes.' }}</p>
             </div>
         </div>
-        <button *ngIf="puedeSubir" pButton label="Subir Guía" icon="pi pi-upload" class="pf-btn-primary" (click)="abrirNuevo()"></button>
+        <div class="header-actions">
+            <button *ngIf="puedeSubir" pButton label="Subir Guía" icon="pi pi-upload" class="pf-btn-primary" (click)="abrirNuevo()"></button>
+        </div>
     </header>
 
     <!-- BARRA DE FILTROS (Solo visible para Admin o Estudiante) -->
@@ -47,7 +49,7 @@
                 <tr>
                     <td>
                         <span class="p-column-title pf-oswald text-steel hidden-desktop">Título:</span>
-                        <span class="pf-anton text-chalk text-lg" style="letter-spacing: 0.5px;">{{guia.titulo}}</span>
+                        <span class="pf-anton text-chalk text-lg pf-tracking">{{guia.titulo}}</span>
                     </td>
                     <td>
                         <span class="p-column-title pf-oswald text-steel hidden-desktop">Descripción:</span>
@@ -78,8 +80,8 @@
 
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="5" class="text-center p-6 text-steel">
-                        <i class="pi pi-folder-open block mb-3 text-5xl"></i>
+                    <td colspan="5" class="text-center p-5 text-steel">
+                        <i class="pi pi-folder-open block mb-3 text-4xl"></i>
                         <span class="pf-oswald text-lg">No hay guías de estudio disponibles en esta categoría.</span>
                     </td>
                 </tr>
@@ -110,7 +112,7 @@
                 <label class="pf-oswald">Archivo <span class="text-pink-500 font-bold">{{ nuevaGuia.id ? '(Opcional)' : '*' }}</span></label>
                 
                 <!-- Archivo Actual Visualizado -->
-                <div *ngIf="nuevaGuia.id && nuevaGuia.archivo_url && !archivoSeleccionado" class="flex flex-column mb-3 border-1 border-round-lg p-3" style="background: var(--input-bg); border-color: var(--border-color);">
+                <div *ngIf="nuevaGuia.id && nuevaGuia.archivo_url && !archivoSeleccionado" class="flex flex-column mb-3 border-1 border-round-lg p-3 pf-bg-input pf-border">
                     <div class="flex align-items-center justify-content-between w-full">
                         <div class="flex align-items-center">
                             <i class="pi pi-file-pdf text-3xl text-red-500 mr-3"></i>
@@ -124,8 +126,8 @@
                 </div>
 
                 <!-- CAJA DE UPLOAD -->
-                <div class="pf-file-upload-container text-center cursor-pointer flex flex-column align-items-center justify-content-center p-4 border-round" 
-                     style="border: 2px dashed var(--border-color); background-color: var(--input-bg); transition: all 0.2s ease;"
+                <div class="pf-file-upload-container text-center cursor-pointer flex flex-column align-items-center justify-content-center p-4 border-round pf-bg-input" 
+                     style="border: 2px dashed var(--border-color); transition: all 0.2s ease;"
                      (click)="fileInput.click()" 
                      [class.opacity-50]="subiendoArchivo"
                      [class.pointer-events-none]="subiendoArchivo"

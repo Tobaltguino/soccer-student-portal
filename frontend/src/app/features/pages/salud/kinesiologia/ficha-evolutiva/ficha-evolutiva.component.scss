@@ -1,0 +1,63 @@
+/* Estilos recuperados (se perdieron en la reestructuración de carpetas).
+   La tabla "hoja kinésica" (kine-table, kine-header...) está en styles.scss. */
+
+/* Pestañas Antecedentes / Evaluación Clínica */
+.custom-tabs-container {
+  display: inline-flex;
+  background-color: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 4px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.custom-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  &:hover:not(:disabled) { background-color: var(--hover-bg); color: var(--text-main); }
+  &.active { background-color: var(--pf-teal); color: #ffffff; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+  &:disabled { opacity: 0.7; cursor: not-allowed; }
+}
+
+/* En celular, las tablas de la ficha se convierten en bloques apilados */
+@media (max-width: 768px) {
+  .table-stack, .table-stack tbody, .table-stack th, .table-stack td, .table-stack tr {
+    display: block !important;
+    width: 100% !important;
+  }
+  .table-stack thead { display: none !important; }
+  .table-stack tr {
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: var(--bg-card) !important;
+  }
+  .table-stack td { border: none !important; }
+  .table-stack td.kine-label-cell-fixed,
+  .table-stack td.kine-label-cell,
+  .table-stack td.kine-subheader {
+    background-color: var(--input-bg) !important;
+    padding: 0.8rem 1rem !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    text-align: left !important;
+    font-size: 0.85rem !important;
+    font-weight: 700;
+    color: var(--pf-teal);
+  }
+  .table-stack .kine-input,
+  .table-stack textarea.kine-input { padding: 1rem !important; min-height: 80px; font-size: 1rem !important; }
+}

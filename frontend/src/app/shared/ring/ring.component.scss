@@ -10,7 +10,7 @@
 
 .pf-ring__value {
   font-family: var(--pf-font-mono);
-  fill: var(--pf-chalk);
+  fill: var(--text-main);
   font-weight: 600;
 }
 
@@ -19,7 +19,7 @@
   font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--pf-steel);
+  color: var(--text-muted);
   max-width: 110px;
   line-height: 1.3;
 }

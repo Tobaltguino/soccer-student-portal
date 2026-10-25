@@ -1,6 +1,6 @@
 <div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
-    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
+    <p-confirmDialog [style]="{width: '450px', maxWidth: '95vw'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
 
     <!-- ========================================================================= -->
     <!-- VISTA GESTIÓN (ADMIN Y STAFF)                                             -->
@@ -13,7 +13,7 @@
                     <p class="pf-oswald text-teal mt-1">Gestión global de pautas alimenticias y mediciones de la academia.</p>
                 </div>
             </div>
-            <div class="flex gap-2">
+            <div class="header-actions">
                 <button pButton icon="pi pi-sync" class="pf-btn-ghost" 
                         (click)="cargarDatosGestion()" [loading]="loading" pTooltip="Actualizar lista"></button>
                 <button *ngIf="esAdmin" pButton label="Configurar Tests" icon="pi pi-cog" class="pf-btn-ghost" (click)="abrirConfiguracionTipos()"></button>
@@ -73,7 +73,7 @@
                     <tr>
                         <td>
                             <span class="p-column-title hidden-desktop pf-oswald text-steel">Fecha</span>
-                            <span class="pf-anton text-chalk text-lg" style="letter-spacing: 0.5px;">{{ sesion.fecha | date:'dd/MM/yyyy' }}</span>
+                            <span class="pf-anton text-chalk text-lg pf-tracking">{{ sesion.fecha | date:'dd/MM/yyyy' }}</span>
                         </td>
                         <td>
                             <span class="p-column-title hidden-desktop pf-oswald text-steel">Evaluación</span>
@@ -167,7 +167,7 @@
                     <tr>
                         <td>
                             <span class="p-column-title hidden-desktop pf-oswald text-steel">Fecha</span>
-                            <span class="font-bold text-chalk pf-anton text-lg" style="letter-spacing: 0.5px;">{{ resultado.fecha | date:'dd/MM/yyyy' }}</span>
+                            <span class="font-bold text-chalk pf-anton text-lg pf-tracking">{{ resultado.fecha | date:'dd/MM/yyyy' }}</span>
                         </td>
                         <td>
                             <span class="p-column-title hidden-desktop pf-oswald text-steel">Tipo de Evaluación</span>
@@ -176,18 +176,18 @@
                         <td>
                             <span class="p-column-title hidden-desktop pf-oswald text-steel">Observación Médica</span>
                             <span *ngIf="resultado.observacion" class="text-steel text-sm" style="line-height: 1.5;">{{ resultado.observacion }}</span>
-                            <span *ngIf="!resultado.observacion" class="text-steel italic text-sm">Sin observaciones adicionales.</span>
+                            <span *ngIf="!resultado.observacion" class="text-steel font-italic text-sm">Sin observaciones adicionales.</span>
                         </td>
                         <td class="text-center">
                             <span class="p-column-title hidden-desktop pf-oswald text-steel">Documento</span>
                             <div class="pf-table-actions justify-content-center">
                                 <div *ngIf="resultado.archivo_url; else noFile" class="w-full flex justify-content-center">
                                     <a [href]="resultado.archivo_url" target="_blank" class="no-underline">
-                                        <button pButton label="Descargar PDF" icon="pi pi-download" class="p-button-outlined p-button-info p-button-sm font-bold" style="white-space: nowrap;"></button>
+                                        <button pButton label="Descargar PDF" icon="pi pi-download" class="p-button-outlined p-button-info p-button-sm font-bold pf-nowrap"></button>
                                     </a>
                                 </div>
                                 <ng-template #noFile>
-                                    <span class="text-steel italic text-sm flex align-items-center justify-content-center"><i class="pi pi-times-circle mr-2 text-teal"></i> No adjunto</span>
+                                    <span class="text-steel font-italic text-sm flex align-items-center justify-content-center"><i class="pi pi-times-circle mr-2 text-teal"></i> No adjunto</span>
                                 </ng-template>
                             </div>
                         </td>
@@ -196,8 +196,8 @@
                 
                 <ng-template pTemplate="emptymessage">
                     <tr>
-                        <td colspan="4" class="text-center p-6 text-steel">
-                            <i class="pi pi-folder-open text-steel mb-3 block" style="font-size: 3.5rem"></i>
+                        <td colspan="4" class="text-center p-5 text-steel">
+                            <i class="pi pi-folder-open block mb-3 text-4xl"></i>
                             <span class="pf-oswald text-lg">No tienes evaluaciones nutricionales registradas o finalizadas aún.</span>
                         </td>
                     </tr>
@@ -213,7 +213,7 @@
     <!-- MODAL 1: CONFIGURAR TIPOS DE EVALUACIÓN (Solo Admin) -->
     <p-dialog *ngIf="esAdmin" [(visible)]="displayTiposDialog" header="Configurar Tipos de Evaluación" [modal]="true" [style]="{width: '600px', maxWidth: '90vw'}" styleClass="p-fluid pf-dialog" [closable]="!guardando" [draggable]="false" [resizable]="false">
         <ng-template pTemplate="content">
-            <div class="p-3 border-round mb-4 mt-2" style="background-color: rgba(15, 140, 130, 0.1); border: 1px solid var(--pf-teal);">
+            <div class="pf-info-box mb-4 mt-2">
                 <h4 class="m-0 mb-3 pf-oswald text-teal"><i class="pi pi-plus mr-2"></i>Agregar Nuevo Test</h4>
                 
                 <div class="pf-field-group mt-2">
@@ -243,7 +243,7 @@
                 <ng-template pTemplate="body" let-tipo>
                     <tr>
                         <td><span class="font-bold text-chalk">{{ tipo.nombre }}</span></td>
-                        <td class="text-steel italic text-sm">{{ tipo.descripcion || 'Sin descripción' }}</td>
+                        <td class="text-steel font-italic text-sm">{{ tipo.descripcion || 'Sin descripción' }}</td>
                         <td class="text-center">
                             <div class="pf-table-actions justify-content-center">
                                 <button pButton icon="pi pi-trash" class="p-button-danger" 
@@ -257,7 +257,7 @@
     </p-dialog>
 
     <!-- MODAL 2: NUEVA/EDITAR SESIÓN (LOGÍSTICA) -->
-    <p-dialog [(visible)]="displayMainDialog" [header]="evalLogistica.id ? 'Editar Sesión' : 'Nueva Sesión'" [modal]="true" [style]="{width: '450px'}" styleClass="p-fluid pf-dialog" [closable]="!guardando" [draggable]="false" [resizable]="false">
+    <p-dialog [(visible)]="displayMainDialog" [header]="evalLogistica.id ? 'Editar Sesión' : 'Nueva Sesión'" [modal]="true" [style]="{width: '450px', maxWidth: '95vw'}" styleClass="p-fluid pf-dialog" [closable]="!guardando" [draggable]="false" [resizable]="false">
         <ng-template pTemplate="content">
             <div class="field mt-3 mb-4">
                 <label class="pf-oswald text-steel mb-2 block">Fecha <span class="text-red-500 font-bold ml-1">*</span></label>
@@ -312,10 +312,10 @@
     <!-- MODAL 3: CALIFICADOR / ADJUNTAR ARCHIVOS -->
     <p-dialog [(visible)]="displayGradesDialog" [header]="esLector ? 'Resultados de la Evaluación' : 'Registro de Resultados'" [modal]="true" [style]="{width: '95vw', maxWidth: '1000px'}" [maximizable]="true" styleClass="p-fluid pf-dialog" [draggable]="false" [resizable]="false" [closable]="!guardando">
         <ng-template pTemplate="content">
-            <div class="surface-hover p-4 border-round mb-4 flex justify-content-between align-items-center flex-wrap gap-2 mt-2 border-1 surface-border" style="border-color: var(--border-color) !important;">
+            <div class="surface-hover p-4 border-round mb-4 flex justify-content-between align-items-center flex-wrap gap-2 mt-2 border-1 surface-border pf-border">
                 <div class="flex flex-column">
                     <span class="pf-oswald text-steel text-sm tracking-wider">Evaluación Seleccionada</span>
-                    <span class="text-2xl pf-anton text-chalk mt-1" style="letter-spacing: 0.5px;">{{evalLogistica.tipoObj?.nombre}}</span>
+                    <span class="text-2xl pf-anton text-chalk mt-1 pf-tracking">{{evalLogistica.tipoObj?.nombre}}</span>
                 </div>
                 <div class="flex flex-column sm:align-items-end">
                     <span class="pf-oswald text-steel text-sm tracking-wider mb-2">Total Estudiantes</span>
@@ -335,7 +335,7 @@
                 <ng-template pTemplate="body" let-estudiante>
                     <tr>
                         <td>
-                            <span class="pf-anton text-chalk text-sm block" style="letter-spacing: 0.5px;">{{estudiante.apellido}}</span>
+                            <span class="pf-anton text-chalk text-sm block pf-tracking">{{estudiante.apellido}}</span>
                             <span class="pf-oswald text-steel text-xs">{{estudiante.nombre}}</span>
                         </td>
                         
@@ -344,7 +344,7 @@
                             <input type="file" #fileInput hidden accept="application/pdf, .pdf" (change)="onFileSelected($event, estudiante)" [disabled]="guardando">
                             
                             <div *ngIf="estudiante.archivoSeleccionado || estudiante.archivo_url_previo; else noFile" class="flex flex-column gap-2">
-                                <div class="flex align-items-center gap-2 border-1 p-2 border-round overflow-hidden" style="background-color: var(--bg-main); border-color: var(--border-color) !important;">
+                                <div class="flex align-items-center gap-2 border-1 p-2 border-round overflow-hidden pf-border" style="background-color: var(--bg-main);">
                                     <i class="pi pi-file-pdf text-red-500 text-xl"></i>
                                     <span class="text-sm text-chalk font-medium white-space-nowrap overflow-hidden text-overflow-ellipsis" 
                                           [title]="estudiante.archivoSeleccionado?.name || estudiante.nombre_archivo_previo">
@@ -357,8 +357,8 @@
                                     
                                     <a *ngIf="estudiante.archivo_url_previo && !estudiante.archivoSeleccionado" 
                                        [href]="estudiante.archivo_url_previo" target="_blank" 
-                                       class="p-button p-component p-button-info flex align-items-center justify-content-center p-0" 
-                                       style="width: 40px; background-color: var(--pf-teal); border-color: var(--pf-teal);" pTooltip="Ver PDF guardado">
+                                       class="p-button p-component p-button-info flex align-items-center justify-content-center p-0 pf-border-teal" 
+                                       style="width: 40px; background-color: var(--pf-teal);" pTooltip="Ver PDF guardado">
                                         <i class="pi pi-external-link text-white"></i>
                                     </a>
                                 </div>

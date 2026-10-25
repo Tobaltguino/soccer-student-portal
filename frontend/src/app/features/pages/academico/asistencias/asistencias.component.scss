@@ -1,0 +1,47 @@
+/* Estilos recuperados (se perdieron en la reestructuración de carpetas) */
+
+/* Perfil del estudiante en la tabla */
+.estudiante-profile-text { display: flex; flex-direction: column; overflow: hidden; }
+.est-nombre { font-size: 1rem; line-height: 1.2; white-space: normal; word-break: break-word; }
+.est-rut { font-size: 0.75rem; display: flex; align-items: center; white-space: nowrap; }
+
+/* Historial mensual del alumno (diálogo) */
+.historial-scroll-area { max-height: 400px; overflow-y: auto; padding-right: 8px; }
+
+.historial-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background-color: var(--table-header-bg);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.historial-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background-color: var(--input-bg);
+  border: 1px solid var(--border-color);
+  transition: background-color 0.2s, border-color 0.2s;
+  font-size: 0.85rem;
+
+  &:hover { background-color: var(--hover-bg); border-color: var(--pf-teal); }
+}
+
+.col-fecha { flex: 0 0 100px; }
+.col-lugar { flex: 1; display: flex; align-items: center; padding: 0 10px; min-width: 0; }
+.col-estado { flex: 0 0 110px; }
+
+@media (max-width: 480px) {
+  .historial-header { display: none; }
+  .historial-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .col-lugar { padding: 0; }
+  .col-estado { flex: none; width: 100%; text-align: left; }
+}

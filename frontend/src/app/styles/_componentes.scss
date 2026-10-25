@@ -1,0 +1,211 @@
+/* ==========================================================
+   COMPONENTES Y UTILIDADES COMUNES
+   Reemplazan los style="..." que se repetían en las plantillas
+   para que todas las pantallas se vean como Usuarios (modelo).
+
+   Las utilidades llevan !important porque sustituyen estilos en
+   línea, que ganan a cualquier clase: así el resultado es idéntico.
+   ========================================================== */
+
+/* ---------- Bordes y fondos (paneles, celdas, recuadros) ---------- */
+.pf-border      { border-color: var(--border-color) !important; }
+.pf-border-teal { border-color: var(--pf-teal) !important; }
+
+.pf-bg-main  { background: var(--bg-main) !important; }
+.pf-bg-card  { background: var(--bg-card) !important; }
+.pf-bg-input { background: var(--input-bg) !important; }
+.pf-bg-hover { background: var(--hover-bg) !important; }
+.pf-bg-none  { background: transparent !important; }
+
+/* ---------- Tipografía ---------- */
+.pf-tracking       { letter-spacing: 0.5px !important; }   /* títulos Anton */
+.pf-tracking-wide  { letter-spacing: 1px !important; }
+.pf-tracking-label { letter-spacing: 0.05em !important; }  /* etiquetas Oswald */
+.pf-prewrap        { white-space: pre-wrap !important; }   /* textos largos con saltos de línea */
+.pf-nowrap         { white-space: nowrap !important; }
+
+/* ---------- Íconos grandes (estados vacíos, avatares sin foto) ---------- */
+.pf-icon-lg  { font-size: 1.8rem !important; }
+.pf-icon-xl  { font-size: 2.5rem !important; }
+.pf-icon-xxl { font-size: 3rem !important; }
+
+/* ---------- Capas ---------- */
+.pf-z1 { z-index: 1 !important; }
+
+/* ==========================================================
+   PATRONES DE PANTALLA (tomados de Usuarios)
+   ========================================================== */
+
+/* Botones de acción a la derecha de la cabecera (como en Usuarios).
+   En celular ocupan todo el ancho y se reparten en partes iguales. */
+.pf-admin-header .header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .pf-admin-header .header-actions { width: 100%; }
+  .pf-admin-header .header-actions > button {
+    flex: 1 1 0;
+    width: auto;
+    justify-content: center;
+  }
+}
+
+/* Nombre principal dentro de una celda de tabla (ej: "Juan Pérez") */
+.pf-cell-title {
+  font-family: var(--pf-font-display);
+  text-transform: uppercase;
+  color: var(--text-main);
+  font-size: 15px;
+  letter-spacing: 0.5px;
+}
+
+/* Título de sección dentro de diálogos y fichas ("Datos Generales", ...) */
+.pf-section-title {
+  display: block;
+  font-family: var(--pf-font-label);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--pf-teal);
+  margin-bottom: 0.75rem;
+}
+
+/* Separador entre bloques de un formulario */
+.pf-divider {
+  border-top: 1px solid var(--border-color);
+  margin: 1rem 0;
+  padding-top: 1rem;
+}
+
+/* Recuadro informativo (ej: aviso de contraseña inicial) */
+.pf-info-box {
+  background: rgba(15, 140, 130, 0.1);
+  border: 1px solid var(--pf-teal);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  color: var(--pf-teal);
+  font-family: var(--pf-font-label);
+  font-size: 0.875rem;
+}
+
+/* Estado vacío dentro de una tarjeta o tabla */
+.pf-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.5rem;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+
+  > i { font-size: 2.5rem; margin-bottom: 0.5rem; }
+
+  .pf-empty-title {
+    font-family: var(--pf-font-label);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 1.125rem;
+    color: var(--text-main);
+  }
+}
+
+/* ==========================================================
+   ESTILOS RECUPERADOS
+   Se perdieron en la reestructuración de carpetas (commit 4ef7d78:
+   los .scss de cada pantalla se crearon vacíos). Aquí van los que
+   usan varias pantallas; los propios de una pantalla, en su .scss.
+   ========================================================== */
+
+/* Título + subtítulo de la cabecera */
+.header-content { display: flex; align-items: center; gap: 0.75rem; }
+
+/* Campo de formulario: etiqueta arriba, control abajo */
+.pf-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+
+  label { color: var(--text-main); font-size: 12px; }
+}
+
+/* Tablas: scroll horizontal en vez de desbordar la tarjeta */
+.table-responsive { overflow-x: auto; }
+
+/* Selector de vista (ej: Estudiantes / Profesores en Usuarios) */
+.view-selector-container { margin-bottom: 1rem; }
+.selector-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 280px;
+
+  @media (max-width: 768px) { max-width: 100%; }
+}
+.icon-box {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--pf-teal);
+  font-size: 1.15rem;
+}
+
+.filter-bar { margin-bottom: 1.5rem; }
+
+/* Textos */
+.tracking-wider { letter-spacing: 0.05em; }
+.text-truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.object-cover { object-fit: cover; }
+
+/* Emails largos: que bajen de línea en vez de romper la tabla */
+.break-email {
+  display: inline-block !important;
+  max-width: 220px;
+  white-space: normal !important;
+  word-break: break-all !important;
+  overflow-wrap: break-word !important;
+}
+
+/* Solo visible en celular / descripción secundaria en celular */
+.visible-mobile { display: none; }
+.mobile-desc { font-size: 13px; color: var(--text-muted); margin-top: 4px; font-style: italic; }
+
+@media (max-width: 768px) {
+  .visible-mobile { display: block !important; }
+}
+
+/* Tablas compactas dentro de diálogos (configuración de tests, rangos) */
+.custom-compact-table,
+.custom-grades-table {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.custom-compact-table .p-datatable-tbody > tr > td {
+  padding: 0.5rem !important;
+  font-size: 0.8rem !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  background-color: var(--input-bg) !important;
+}
+
+.custom-grades-table .p-datatable-tbody > tr > td {
+  background-color: var(--input-bg) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.custom-grades-table .p-inputnumber,
+.custom-grades-table .p-inputnumber-input { width: 100% !important; }

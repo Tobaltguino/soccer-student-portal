@@ -94,7 +94,7 @@
                     <td>
                         <span class="p-column-title pf-oswald text-steel hidden-desktop">Jugador:</span>
                         <div class="text-right sm:text-left">
-                            <div class="pf-anton text-chalk" style="font-size: 15px; letter-spacing: 0.5px;">
+                            <div class="pf-cell-title">
                                 {{ item.nombre }} {{ item.apellido }}
                                 <i *ngIf="!item.activo" class="pi pi-lock text-red-500 ml-1" pTooltip="Inactivo"></i>
                             </div>
@@ -108,7 +108,7 @@
                             <span class="text-chalk font-bold">{{ item.fecha_nacimiento | date:'dd/MM/yyyy' }}</span>
                             <span class="text-xs text-teal mt-1 pf-oswald tracking-wider"><i class="pi pi-calendar mr-1"></i> {{ calcularEdad(item.fecha_nacimiento) }} años</span>
                         </div>
-                        <span *ngIf="!item.fecha_nacimiento" class="text-steel italic">-</span>
+                        <span *ngIf="!item.fecha_nacimiento" class="text-steel font-italic">-</span>
                     </td>
 
                     <td>
@@ -120,7 +120,7 @@
                         <span class="p-column-title font-bold text-steel pf-oswald hidden-desktop">Posiciones</span>
                         <div class="flex gap-1 flex-wrap justify-content-end sm:justify-content-start">
                             <p-tag *ngFor="let p of item.posiciones" [value]="p | uppercase" severity="warn" styleClass="text-xs"></p-tag>
-                            <span *ngIf="!item.posiciones?.length" class="text-steel text-xs italic">N/A</span>
+                            <span *ngIf="!item.posiciones?.length" class="text-steel text-xs font-italic">N/A</span>
                         </div>
                     </td>
 
@@ -142,8 +142,8 @@
             </ng-template>
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="7" class="text-center p-6 text-steel">
-                        <i class="pi pi-users text-steel mb-3 block" style="font-size: 3rem"></i>
+                    <td colspan="7" class="text-center p-5 text-steel">
+                        <i class="pi pi-users block mb-3 text-4xl"></i>
                         <span class="pf-oswald text-lg">No se encontraron estudiantes registrados en tus grupos.</span>
                     </td>
                 </tr>
@@ -156,48 +156,48 @@
         <div *ngIf="selectedEstudiante" class="flex flex-column pt-3 animation-fade-in">
 
             <!-- Cabecera del Estudiante -->
-            <div class="flex flex-column align-items-center mb-4 pb-4 border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">                
+            <div class="flex flex-column align-items-center mb-4 pb-4 border-bottom-1 surface-border pf-border">                
                 <img [src]="selectedEstudiante.foto_url || 'assets/images/default-user.png'" 
-                     alt="Avatar" class="avatar-img-xl shadow-4 mb-3 border-2" 
-                     style="border-color: var(--pf-teal);"
+                     alt="Avatar" class="avatar-img-xl shadow-4 mb-3 border-2 pf-border-teal" 
+                    
                      [class.pf-img-invert]="!selectedEstudiante.foto_url">
                 
-                <h2 class="m-0 text-chalk pf-anton text-2xl text-center" style="letter-spacing: 0.5px;">{{selectedEstudiante.nombre}} {{selectedEstudiante.apellido}}</h2>
+                <h2 class="m-0 text-chalk pf-anton text-2xl text-center pf-tracking">{{selectedEstudiante.nombre}} {{selectedEstudiante.apellido}}</h2>
                 <div class="flex align-items-center gap-2 mt-2">
                     <span class="text-steel font-medium text-sm"><i class="pi pi-id-card mr-1 text-teal"></i> {{selectedEstudiante.rut || 'Sin RUT'}}</span>
                     <p-tag [value]="getGrupoNombre(selectedEstudiante.grupo_id)" severity="info" styleClass="text-xs font-bold"></p-tag>
                 </div>
             </div>
 
-            <div class="p-3 font-bold text-chalk pf-oswald text-lg border-bottom-1 surface-border mb-3" style="background: var(--bg-main); border-color: var(--border-color) !important;">
+            <div class="p-3 font-bold text-chalk pf-oswald text-lg border-bottom-1 surface-border mb-3 pf-bg-main pf-border">
                 <i class="pi pi-user mr-2 text-teal"></i> Datos Generales
             </div>
             
-            <div class="grid grid-nogutter border-1 surface-border border-round overflow-hidden mb-4" style="border-color: var(--border-color) !important; background: var(--input-bg);">
-                <div class="col-12 md:col-6 flex border-bottom-1 md:border-bottom-none md:border-right-1 surface-border" style="border-color: var(--border-color) !important;">
-                    <div class="w-5 p-3 font-bold text-steel pf-oswald flex align-items-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">F. Nacimiento</div>
+            <div class="grid grid-nogutter border-1 surface-border border-round overflow-hidden mb-4 pf-border pf-bg-input">
+                <div class="col-12 md:col-6 flex border-bottom-1 md:border-bottom-none md:border-right-1 surface-border pf-border">
+                    <div class="w-5 p-3 font-bold text-steel pf-oswald flex align-items-center border-right-1 surface-border pf-bg-hover pf-border">F. Nacimiento</div>
                     <div class="w-7 p-3 text-chalk font-bold flex align-items-center">{{ selectedEstudiante.fecha_nacimiento ? (selectedEstudiante.fecha_nacimiento | date:'dd/MM/yyyy') : '--/--/----' }}</div>
                 </div>
                 <div class="col-12 md:col-6 flex">
-                    <div class="w-5 p-3 font-bold text-steel pf-oswald flex align-items-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Email</div>
+                    <div class="w-5 p-3 font-bold text-steel pf-oswald flex align-items-center border-right-1 surface-border pf-bg-hover pf-border">Email</div>
                     <div class="w-7 p-3 text-chalk font-bold flex align-items-center overflow-hidden text-overflow-ellipsis white-space-nowrap">{{ selectedEstudiante.email || 'No registrado' }}</div>
                 </div>
                 
-                <div class="col-12 flex border-top-1 border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
-                    <div class="w-4 md:w-2 p-3 font-bold text-steel pf-oswald flex align-items-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Dirección</div>
+                <div class="col-12 flex border-top-1 border-bottom-1 surface-border pf-border">
+                    <div class="w-4 md:w-2 p-3 font-bold text-steel pf-oswald flex align-items-center border-right-1 surface-border pf-bg-hover pf-border">Dirección</div>
                     <div class="w-8 md:w-10 p-3 text-chalk font-bold flex align-items-center">{{ selectedEstudiante.direccion || 'No registrada' }}</div>
                 </div>
 
-                <div class="col-12 md:col-4 flex border-bottom-1 md:border-bottom-none md:border-right-1 surface-border" style="border-color: var(--border-color) !important;">
-                    <div class="w-6 p-3 font-bold text-steel pf-oswald flex align-items-center justify-content-center text-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Previsión</div>
+                <div class="col-12 md:col-4 flex border-bottom-1 md:border-bottom-none md:border-right-1 surface-border pf-border">
+                    <div class="w-6 p-3 font-bold text-steel pf-oswald flex align-items-center justify-content-center text-center border-right-1 surface-border pf-bg-hover pf-border">Previsión</div>
                     <div class="w-6 p-3 text-chalk font-bold flex align-items-center justify-content-center text-center">{{ selectedEstudiante.prevision || '-' }}</div>
                 </div>
-                <div class="col-6 md:col-4 flex border-right-1 surface-border" style="border-color: var(--border-color) !important;">
-                    <div class="w-6 p-3 font-bold text-steel pf-oswald flex align-items-center justify-content-center text-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Peso</div>
+                <div class="col-6 md:col-4 flex border-right-1 surface-border pf-border">
+                    <div class="w-6 p-3 font-bold text-steel pf-oswald flex align-items-center justify-content-center text-center border-right-1 surface-border pf-bg-hover pf-border">Peso</div>
                     <div class="w-6 p-3 text-chalk font-bold flex align-items-center justify-content-center text-center">{{ selectedEstudiante.peso ? selectedEstudiante.peso + ' kg' : '-' }}</div>
                 </div>
                 <div class="col-6 md:col-4 flex">
-                    <div class="w-6 p-3 font-bold text-steel pf-oswald flex align-items-center justify-content-center text-center border-right-1 surface-border" style="background: var(--hover-bg); border-color: var(--border-color) !important;">Altura</div>
+                    <div class="w-6 p-3 font-bold text-steel pf-oswald flex align-items-center justify-content-center text-center border-right-1 surface-border pf-bg-hover pf-border">Altura</div>
                     <div class="w-6 p-3 text-chalk font-bold flex align-items-center justify-content-center text-center">{{ selectedEstudiante.altura ? selectedEstudiante.altura + ' m' : '-' }}</div>
                 </div>
             </div>
@@ -206,11 +206,11 @@
             
             <!-- A. PROFESOR: Resumen rápido de Salud General -->
             <ng-container *ngIf="esProfesor">
-                <div class="p-3 font-bold text-chalk pf-oswald text-lg border-bottom-1 surface-border mb-3 mt-2" style="background: var(--bg-main); border-color: var(--border-color) !important;">
+                <div class="p-3 font-bold text-chalk pf-oswald text-lg border-bottom-1 surface-border mb-3 mt-2 pf-bg-main pf-border">
                     <i class="pi pi-heart mr-2 text-teal"></i> Estado de Salud General
                 </div>
 
-                <div class="text-center p-4 border-1 border-round surface-border" style="border-color: var(--border-color) !important; background: var(--input-bg);">
+                <div class="text-center p-4 border-1 border-round surface-border pf-border pf-bg-input">
                     <div *ngIf="loadingHistorial" class="text-steel pf-oswald">
                         <i class="pi pi-spin pi-spinner mr-2"></i> Consultando...
                     </div>
@@ -227,7 +227,7 @@
 
             <!-- B. KINESIÓLOGO: Detalle completo del Historial -->
             <ng-container *ngIf="esKinesiologo">
-                <div class="p-3 font-bold text-red-400 pf-oswald text-lg border-bottom-1 surface-border mb-3 mt-2" style="background: var(--bg-main); border-color: var(--border-color) !important;">
+                <div class="p-3 font-bold text-red-400 pf-oswald text-lg border-bottom-1 surface-border mb-3 mt-2 pf-bg-main pf-border">
                     <i class="pi pi-heart mr-2"></i> Resumen de Historial Médico
                 </div>
 
@@ -254,7 +254,7 @@
                         <ng-template pTemplate="emptymessage">
                             <tr>
                                 <td colspan="4" class="text-center p-5 text-steel">
-                                    <i class="pi pi-check-circle text-4xl mb-3 text-lime block"></i>
+                                    <i class="pi pi-check-circle text-lime block mb-3 text-4xl"></i>
                                     <span class="pf-oswald text-lg">El paciente no registra eventos médicos.</span>
                                 </td>
                             </tr>

@@ -1,6 +1,6 @@
 <div class="pf-admin-wrapper fadein animation-duration-500">
     <p-toast position="top-right"></p-toast>
-    <p-confirmDialog [style]="{width: '450px'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
+    <p-confirmDialog [style]="{width: '450px', maxWidth: '95vw'}" styleClass="pf-confirm-dialog"></p-confirmDialog>
 
     <!-- ========================================================================= -->
     <!-- ENCABEZADO -->
@@ -16,8 +16,10 @@
                 </p>
             </div>
         </div>
-        <button *ngIf="esEstudiante && !modoFormulario" pButton icon="pi pi-sync" class="pf-btn-ghost" 
-                (click)="cargarMisDatos()" [loading]="cargandoHistorial" pTooltip="Actualizar Datos" tooltipPosition="left"></button>
+        <div class="header-actions">
+            <button *ngIf="esEstudiante && !modoFormulario" pButton icon="pi pi-sync" class="pf-btn-ghost" 
+                    (click)="cargarMisDatos()" [loading]="cargandoHistorial" pTooltip="Actualizar Datos" tooltipPosition="left"></button>
+        </div>
     </header>
 
     <!-- ========================================================================= -->
@@ -40,7 +42,7 @@
     <!-- ESTADO VACÍO (SIN PACIENTE SELECCIONADO - GESTIÓN) -->
     <div class="pf-admin-card text-center p-6 mt-4 fadein" *ngIf="esGestion && !alumnoSeleccionado && !modoFormulario">
         <i class="pi pi-users text-6xl text-steel mb-4"></i>
-        <h2 class="pf-anton text-chalk m-0 mt-3 text-2xl" style="letter-spacing: 1px;">Seleccione un paciente</h2>
+        <h2 class="pf-anton text-chalk m-0 mt-3 text-2xl pf-tracking-wide">Seleccione un paciente</h2>
         <p class="pf-oswald text-steel mt-3 text-lg">Utilice el buscador superior para comenzar a registrar.</p>
     </div>
 
@@ -49,9 +51,9 @@
     <!-- ========================================================================= -->
     <div *ngIf="(esGestion && alumnoSeleccionado && !modoFormulario) || (esEstudiante && !modoFormulario)" class="fadein animation-duration-300">
         
-        <div class="pf-admin-card p-4 mb-4 flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center gap-4 border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+        <div class="pf-admin-card p-4 mb-4 flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center gap-4 border-bottom-1 surface-border pf-border">
             <div>
-                <h2 class="pf-anton text-chalk m-0 mb-2 text-2xl" style="letter-spacing: 0.5px;">Historial de Atenciones</h2>
+                <h2 class="pf-anton text-chalk m-0 mb-2 text-2xl pf-tracking">Historial de Atenciones</h2>
                 <p *ngIf="esGestion" class="pf-oswald text-steel m-0">Paciente: <span class="font-bold text-teal text-lg">{{alumnoSeleccionado.nombreCompleto}}</span></p>
             </div>
             <button *ngIf="puedeEditar" pButton label="Nueva Ficha" icon="pi pi-plus" class="pf-btn-primary w-full md:w-auto" (click)="abrirNuevaFicha()"></button>
@@ -71,12 +73,12 @@
                     <tr>
                         <td>
                             <span class="p-column-title pf-oswald text-steel hidden-desktop">Fecha: </span>
-                            <span class="pf-anton text-chalk text-lg" style="letter-spacing: 0.5px;">{{ h.fecha_evaluacion | date:'dd/MM/yyyy' }}</span>
+                            <span class="pf-anton text-chalk text-lg pf-tracking">{{ h.fecha_evaluacion | date:'dd/MM/yyyy' }}</span>
                         </td>
                         <td>
                             <span class="p-column-title pf-oswald text-steel hidden-desktop">Profesional: </span>
                             <span class="text-chalk font-bold" *ngIf="h.kinesiologo?.nombre">{{ h.kinesiologo.nombre }} {{ h.kinesiologo.apellido }}</span>
-                            <span class="text-steel italic" *ngIf="!h.kinesiologo?.nombre">No registrado</span>
+                            <span class="text-steel font-italic" *ngIf="!h.kinesiologo?.nombre">No registrado</span>
                         </td>
                         <td>
                             <span class="p-column-title pf-oswald text-steel hidden-desktop">Diagnóstico: </span>
@@ -93,8 +95,8 @@
                 </ng-template>
                 <ng-template pTemplate="emptymessage">
                     <tr>
-                        <td colspan="4" class="text-center p-6 text-steel">
-                            <i class="pi pi-inbox text-5xl mb-3 text-steel"></i><br>
+                        <td colspan="4" class="text-center p-5 text-steel">
+                            <i class="pi pi-inbox block mb-3 text-4xl"></i>
                             <span class="pf-oswald text-lg">No hay fichas registradas.</span>
                         </td>
                     </tr>
@@ -109,10 +111,10 @@
     <div class="pf-admin-card mt-3 fadein animation-duration-300 p-4" *ngIf="modoFormulario">
         
         <!-- CABECERA DE LA FICHA -->
-        <div class="flex flex-column lg:flex-row justify-content-between align-items-start lg:align-items-center gap-4 mb-4 border-bottom-1 surface-border pb-4" style="border-color: var(--border-color) !important;">
+        <div class="flex flex-column lg:flex-row justify-content-between align-items-start lg:align-items-center gap-4 mb-4 border-bottom-1 surface-border pb-4 pf-border">
             
             <div class="flex-1">
-                <h2 class="m-0 pf-anton text-chalk text-2xl mb-2" style="letter-spacing: 0.5px;" [ngClass]="{'text-lime': !modoSoloLectura}">
+                <h2 class="m-0 pf-anton text-chalk text-2xl mb-2 pf-tracking" [ngClass]="{'text-lime': !modoSoloLectura}">
                     <i class="pi pi-file mr-2 text-teal"></i>{{ modoSoloLectura ? 'Detalle de la Ficha' : (editandoId ? 'Editando Ficha' : 'Nueva Ficha') }}
                 </h2>
                 <p class="pf-oswald text-steel m-0 text-lg" *ngIf="esGestion">Paciente: <span class="font-bold text-teal">{{alumnoSeleccionado.nombreCompleto}}</span></p>
@@ -249,7 +251,7 @@
                                 <td class="p-0 w-4"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.inspeccionEstatica.sagitalIzq" rows="1" [autoResize]="true" [readonly]="modoSoloLectura"></textarea></td>
                             </tr>
                             
-                            <tr><td colspan="4" class="kine-subheader border-top-1 surface-border" style="border-color: var(--border-color) !important;">Dinámica</td></tr>
+                            <tr><td colspan="4" class="kine-subheader border-top-1 surface-border pf-border">Dinámica</td></tr>
                             <tr>
                                 <td class="kine-label-cell-fixed w-3">Disfunción:</td>
                                 <td colspan="3" class="p-0"><textarea pTextarea class="kine-input" [(ngModel)]="ficha.inspeccionDinamica.disfuncion" rows="1" [autoResize]="true" [readonly]="modoSoloLectura"></textarea></td>
@@ -275,7 +277,7 @@
                     <table class="kine-table text-center table-stack">
                         <thead>
                             <tr>
-                                <th colspan="5" class="kine-header border-none border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">
+                                <th colspan="5" class="kine-header border-none border-bottom-1 surface-border pf-border">
                                     <div class="flex justify-content-between align-items-center">
                                         <span>2. Rango de movimiento</span>
                                     </div>
@@ -293,7 +295,7 @@
                         </thead>
                         <tbody>
                             <tr *ngFor="let art of listaArticulaciones">
-                                <td class="font-bold text-teal text-xs" style="background-color: var(--input-bg);">{{art.nombre}}</td>
+                                <td class="font-bold text-teal text-xs pf-bg-input">{{art.nombre}}</td>
                                 <td class="p-0"><p-select [options]="opcionesROM" [(ngModel)]="art.derPasivo" appendTo="body" styleClass="w-full border-none shadow-none bg-transparent text-center" [disabled]="modoSoloLectura"></p-select></td>
                                 <td class="p-0"><p-select [options]="opcionesROM" [(ngModel)]="art.derActivo" appendTo="body" styleClass="w-full border-none shadow-none bg-transparent text-center" [disabled]="modoSoloLectura"></p-select></td>
                                 <td class="p-0"><p-select [options]="opcionesROM" [(ngModel)]="art.izqPasivo" appendTo="body" styleClass="w-full border-none shadow-none bg-transparent text-center" [disabled]="modoSoloLectura"></p-select></td>
@@ -326,7 +328,7 @@
                             <tr *ngFor="let f of listaFuerzas; let i = index">
                                 <td class="p-0"><textarea pTextarea [(ngModel)]="f.movimiento" class="kine-input" rows="1" [autoResize]="true" [readonly]="modoSoloLectura"></textarea></td>
                                 <td class="p-0"><textarea pTextarea [(ngModel)]="f.escala" class="kine-input text-center" rows="1" [autoResize]="true" [readonly]="modoSoloLectura"></textarea></td>
-                                <td *ngIf="!modoSoloLectura" class="text-center p-3 sm:p-0" style="background-color: var(--input-bg);">
+                                <td *ngIf="!modoSoloLectura" class="text-center p-3 sm:p-0 pf-bg-input">
                                     <i class="pi pi-trash text-pink-500 cursor-pointer text-xl sm:text-base" (click)="eliminarFuerza(i)"></i>
                                 </td>
                             </tr>
@@ -351,13 +353,13 @@
                 <div class="kine-table-wrapper mb-4">
                     <table class="kine-table text-center table-stack">
                         <thead>
-                            <tr><th colspan="5" class="kine-header border-none border-bottom-1 surface-border" style="border-color: var(--border-color) !important;">5. Evaluación sensibilidad (Dermatomas / Raíz nerviosa)</th></tr>
+                            <tr><th colspan="5" class="kine-header border-none border-bottom-1 surface-border pf-border">5. Evaluación sensibilidad (Dermatomas / Raíz nerviosa)</th></tr>
                             <tr>
-                                <th class="kine-label-cell w-20">Anestesia</th>
-                                <th class="kine-label-cell w-20">Hipoestesia</th>
-                                <th class="kine-label-cell w-20">Disestesia</th>
-                                <th class="kine-label-cell w-20">Hiperestesia</th>
-                                <th class="kine-label-cell w-20">Parestesia</th>
+                                <th class="kine-label-cell w-5rem">Anestesia</th>
+                                <th class="kine-label-cell w-5rem">Hipoestesia</th>
+                                <th class="kine-label-cell w-5rem">Disestesia</th>
+                                <th class="kine-label-cell w-5rem">Hiperestesia</th>
+                                <th class="kine-label-cell w-5rem">Parestesia</th>
                             </tr>
                         </thead>
                         <tbody>
