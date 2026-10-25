@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { Session } from '@supabase/supabase-js';
 import { SupabaseService } from '../../supabase/supabase';
 import { AuthState, UserProfile } from '../models/auth.interface';
 
@@ -13,8 +14,23 @@ export class AuthService {
     isLoading: true
   });
 
+  // Se resuelve cuando la sesión guardada ya fue restaurada (evita falsos "no logueado" al hacer F5)
+  private readonly inicializado: Promise<void>;
+
   constructor(private supabaseService: SupabaseService) {
-    this.initializeAuth();
+    this.inicializado = this.initializeAuth();
+  }
+
+  ready(): Promise<void> {
+    return this.inicializado;
+  }
+
+  /**
+   * true si el usuario aún usa la clave temporal (RUT) y debe cambiarla.
+   * La marca vive en app_metadata, que el usuario no puede editar por su cuenta.
+   */
+  debeCambiarPassword(session: Session | null = this.authState().session): boolean {
+    return session?.user?.app_metadata?.['debe_cambiar_password'] === true;
   }
 
   private async initializeAuth() {
@@ -78,10 +94,21 @@ export class AuthService {
     });
   }
 
-  async updatePassword(newPassword: string) {
-    return await this.supabaseService.client.auth.updateUser({
-      password: newPassword
+  /**
+   * Cambia la clave vía Edge Function: además quita la marca debe_cambiar_password
+   * y rechaza usar el RUT como contraseña.
+   */
+  async cambiarPassword(nuevaPassword: string): Promise<void> {
+    const { data, error } = await this.supabaseService.client.functions.invoke('cambiar-password', {
+      body: { password: nuevaPassword }
     });
+
+    if (error) {
+      // El cuerpo de la respuesta trae el mensaje de validación del servidor
+      const detalle = await error.context?.json?.().catch(() => null);
+      throw new Error(detalle?.error || 'No se pudo actualizar la contraseña.');
+    }
+    if (data?.error) throw new Error(data.error);
   }
 
   /**

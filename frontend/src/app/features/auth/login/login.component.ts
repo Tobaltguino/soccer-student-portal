@@ -66,11 +66,17 @@ export class LoginComponent {
       }
 
       // 2. Hacemos el login nativo con el correo real
-      const { error: loginError } = await this.authService.signIn(correoReal, password);
+      const { data: loginData, error: loginError } = await this.authService.signIn(correoReal, password);
 
       if (loginError) throw new Error('RUT o contraseña incorrectos.');
 
-      // 3. Redirigimos a la aplicación centralizada
+      // 3. Si aún usa la clave temporal (RUT), debe cambiarla antes de entrar
+      if (this.authService.debeCambiarPassword(loginData.session)) {
+        this.router.navigate(['/update-password']);
+        return;
+      }
+
+      // 4. Redirigimos a la aplicación centralizada
       this.redirigirPorRol();
       
     } catch (err: any) {
