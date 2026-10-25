@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from '../../../../../core/supabase/supabase';
+import { StorageService, BUCKET_FOTOS_USUARIOS } from '../../../../../core/services/storage.service';
 import {
   UsuarioPerfil,
   UsuarioPerfilCompleto,
@@ -10,7 +11,7 @@ import {
   Rol
 } from '../models/usuario-central.interface';
 
-const BUCKET_FOTOS = 'usuarios-fotos';
+const BUCKET_FOTOS = BUCKET_FOTOS_USUARIOS;
 const TIPOS_IMAGEN_PERMITIDOS = ['image/png', 'image/jpeg', 'image/webp'];
 const TAMANO_MAXIMO_FOTO = 3 * 1024 * 1024; // 3 MB
 const LIMITE_MAXIMO_FILAS = 1000; // Máximo de filas que devuelve Supabase por petición
@@ -20,6 +21,7 @@ const LIMITE_MAXIMO_FILAS = 1000; // Máximo de filas que devuelve Supabase por 
 })
 export class UsuarioCentralService {
   private supabase = inject(SupabaseService).client;
+  private storage = inject(StorageService);
 
   /**
    * Llama a una Supabase Edge Function para crear el usuario de forma segura con la Admin API
@@ -106,6 +108,10 @@ export class UsuarioCentralService {
       };
     });
 
+    // Bucket privado: cambiamos la URL guardada por una firmada (una sola petición para todas)
+    const firmarFoto = await this.storage.firmarUrls(BUCKET_FOTOS, registros.map((u: any) => u.foto_url));
+    registros.forEach((u: any) => u.foto_url = firmarFoto(u.foto_url));
+
     return {
       registros,
       total: count ?? 0,
@@ -135,8 +141,9 @@ export class UsuarioCentralService {
 
     const datosEstudiante = Array.isArray(data.datosEstudiante) ? data.datosEstudiante[0] : data.datosEstudiante;
     const datosProfesor = Array.isArray(data.datosProfesor) ? data.datosProfesor[0] : data.datosProfesor;
+    const foto_url = await this.storage.firmarUrl(BUCKET_FOTOS, data.foto_url);
 
-    return { ...data, datosEstudiante, datosProfesor };
+    return { ...data, foto_url, datosEstudiante, datosProfesor };
   }
 
   async actualizarUsuario(id: string, payload: ActualizarUsuarioPayload): Promise<UsuarioPerfilCompleto> {
@@ -215,20 +222,28 @@ export class UsuarioCentralService {
 
     const fotoUrl = await this.subirFoto(foto, id);
 
-    if (perfilActual.foto_url) {
-      await this.borrarFoto(perfilActual.foto_url);
+    // Primero guardamos la nueva en el perfil; la vieja se borra solo si eso funcionó
+    const { error } = await this.supabase.from('usu_perfiles').update({ foto_url: fotoUrl }).eq('id_usuario', id);
+    if (error) {
+      await this.storage.borrar(BUCKET_FOTOS, fotoUrl);
+      throw new Error(`No se pudo guardar la foto: ${error.message}`);
     }
 
-    await this.supabase.from('usu_perfiles').update({ foto_url: fotoUrl }).eq('id_usuario', id);
-    return { fotoUrl };
+    if (perfilActual.foto_url) {
+      await this.storage.borrar(BUCKET_FOTOS, perfilActual.foto_url);
+    }
+
+    return { fotoUrl: (await this.storage.firmarUrl(BUCKET_FOTOS, fotoUrl)) ?? fotoUrl };
   }
 
   async eliminarFoto(id: string): Promise<void> {
     const perfilActual = await this.obtenerUsuarioPorId(id);
+    const { error } = await this.supabase.from('usu_perfiles').update({ foto_url: null }).eq('id_usuario', id);
+    if (error) throw new Error(`No se pudo quitar la foto: ${error.message}`);
+
     if (perfilActual.foto_url) {
-      await this.borrarFoto(perfilActual.foto_url);
+      await this.storage.borrar(BUCKET_FOTOS, perfilActual.foto_url);
     }
-    await this.supabase.from('usu_perfiles').update({ foto_url: null }).eq('id_usuario', id);
   }
 
   private validarImagen(archivo: File): void {
@@ -246,14 +261,6 @@ export class UsuarioCentralService {
 
     const { data } = this.supabase.storage.from(BUCKET_FOTOS).getPublicUrl(nombreArchivo);
     return data.publicUrl;
-  }
-
-  private async borrarFoto(url: string): Promise<void> {
-    const marcador = `/${BUCKET_FOTOS}/`;
-    const index = url.indexOf(marcador);
-    if (index === -1) return;
-    const path = url.substring(index + marcador.length);
-    await this.supabase.storage.from(BUCKET_FOTOS).remove([path]);
   }
 
   /**
@@ -303,10 +310,13 @@ export class UsuarioCentralService {
     }
 
     // 4. Formateamos la respuesta para que el componente HTML lo lea directo
+    const firmarFoto = await this.storage.firmarUrls(BUCKET_FOTOS, (perfiles || []).map((u: any) => u.foto_url));
+
     return (perfiles || []).map((u: any) => {
       const datosProfesor = Array.isArray(u.datosProfesor) ? u.datosProfesor[0] : u.datosProfesor;
       return {
         ...u,
+        foto_url: firmarFoto(u.foto_url),
         datosProfesor: datosProfesor || null,
         tipo_profesor: datosProfesor?.tipo_profesor || null // Extraemos el tipo directo al root para el HTML
       };

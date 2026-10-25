@@ -60,6 +60,8 @@ export class NutriEvaluacionComponent implements OnInit {
   esAdmin: boolean = false;
   esStaff: boolean = false; // Nutricionista
   esEstudiante: boolean = false;
+  esLector: boolean = false; // Profesor o Kinesiólogo: solo ven resultados de sus grupos (RLS limita los datos)
+  puedeEditar: boolean = false; // Admin o Nutricionista
 
   // Datos Gestión
   sesiones: any[] = [];
@@ -114,6 +116,8 @@ export class NutriEvaluacionComponent implements OnInit {
       this.esAdmin = this.rolActual === 'administrador';
       this.esEstudiante = this.rolActual === 'estudiante';
       this.esStaff = this.rolActual === 'nutricionista';
+      this.esLector = this.rolActual === 'profesor' || this.rolActual === 'kinesiologo';
+      this.puedeEditar = this.esAdmin || this.esStaff;
 
       if (this.esEstudiante) {
         await this.cargarResultadosEstudiante();
@@ -363,7 +367,8 @@ export class NutriEvaluacionComponent implements OnInit {
         };
 
         if (nuevoEst.archivo_url_previo) {
-          const urlParts = nuevoEst.archivo_url_previo.split('/');
+          // split('?'): la URL firmada trae ?token=… al final
+          const urlParts = nuevoEst.archivo_url_previo.split('?')[0].split('/');
           const rawName = decodeURIComponent(urlParts[urlParts.length - 1]);
           const underscoreIndex = rawName.indexOf('_');
           nuevoEst.nombre_archivo_previo = underscoreIndex !== -1 ? rawName.substring(underscoreIndex + 1) : rawName;
@@ -462,7 +467,8 @@ export class NutriEvaluacionComponent implements OnInit {
         let nombreLimpio = 'Documento PDF';
         
         if (archivoUrl) {
-          const urlParts = archivoUrl.split('/');
+          // split('?'): la URL firmada trae ?token=… al final
+          const urlParts = archivoUrl.split('?')[0].split('/');
           const rawName = decodeURIComponent(urlParts[urlParts.length - 1]);
           const underscoreIndex = rawName.indexOf('_');
           nombreLimpio = underscoreIndex !== -1 ? rawName.substring(underscoreIndex + 1) : rawName;

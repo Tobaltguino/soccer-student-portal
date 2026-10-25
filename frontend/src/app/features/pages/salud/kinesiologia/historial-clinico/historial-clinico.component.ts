@@ -50,7 +50,9 @@ export class HistorialClinicoComponent implements OnInit {
   esAdmin: boolean = false;
   esStaff: boolean = false; // Kinesiólogo
   esEstudiante: boolean = false;
-  esGestion: boolean = false; // Admin o Kine
+  esLector: boolean = false; // Profesor: solo lectura de sus grupos (RLS limita los datos)
+  esGestion: boolean = false; // Admin, Kine o Profesor (vista de búsqueda por alumno)
+  puedeEditar: boolean = false; // Admin o Kine
 
   // Listas
   listaAlumnos: any[] = [];
@@ -97,7 +99,9 @@ export class HistorialClinicoComponent implements OnInit {
       this.esAdmin = this.rolActual === 'administrador';
       this.esEstudiante = this.rolActual === 'estudiante';
       this.esStaff = this.rolActual === 'kinesiologo';
-      this.esGestion = this.esAdmin || this.esStaff;
+      this.esLector = this.rolActual === 'profesor';
+      this.puedeEditar = this.esAdmin || this.esStaff;
+      this.esGestion = this.puedeEditar || this.esLector;
 
       if (this.esEstudiante) {
         await this.cargarMisLesiones();

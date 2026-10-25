@@ -69,7 +69,7 @@
                         <th style="width: 15%">Tipo</th>
                         <th style="width: 40%">Diagnóstico / Detalle</th>
                         <th class="text-center" style="width: 15%">Estado</th>
-                        <th *ngIf="esGestion" class="text-center" style="width: 15%">Acciones</th> 
+                        <th *ngIf="puedeEditar" class="text-center" style="width: 15%">Acciones</th> 
                     </tr>
                 </ng-template>
                 
@@ -96,7 +96,7 @@
                             <span class="p-column-title pf-oswald text-steel hidden-desktop">Estado: </span>
                             <p-tag [value]="getEstadoLabel(l.estado)" [severity]="getSeveridadEstado(l.estado)"></p-tag>
                         </td>
-                        <td *ngIf="esGestion" class="text-center">
+                        <td *ngIf="puedeEditar" class="text-center">
                             <span class="p-column-title pf-oswald text-steel hidden-desktop">Acciones: </span>
                             <div class="pf-table-actions justify-content-center">
                                 <!-- SOLO STAFF PUEDE EDITAR -->
@@ -110,7 +110,7 @@
                 
                 <ng-template pTemplate="emptymessage">
                     <tr>
-                        <td [attr.colspan]="esGestion ? 5 : 4" class="text-center p-6 text-steel">
+                        <td [attr.colspan]="puedeEditar ? 5 : 4" class="text-center p-6 text-steel">
                             <i class="pi pi-heart text-5xl mb-3 text-steel"></i><br>
                             <span class="pf-oswald text-lg">No hay lesiones, alergias ni patologías registradas en el historial médico.</span>
                         </td>
