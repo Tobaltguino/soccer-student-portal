@@ -40,7 +40,7 @@ export class FichaEvolutivaService {
         sensibilidad: payload.sensibilidad ?? null,
         marcha: payload.marcha ?? null,
         coordinacion: payload.coordinacion ?? null,
-        balance_romberg: payload.balanceRomberg ?? null,
+        balance_romberg: this.aNumero(payload.balanceRomberg),
         observacion: payload.observacion ?? null,
         no_evaluable: payload.noEvaluable ?? null,
       })
@@ -67,15 +67,12 @@ export class FichaEvolutivaService {
   }
 
   /**
-   * Lista el historial de fichas de un estudiante e incluye el nombre del evaluador en una sola consulta.
+   * Lista el historial de fichas de un estudiante con el nombre del evaluador.
    */
   async listarFichasPorEstudiante(estudianteId: string): Promise<FichaEvolutiva[]> {
     const { data, error } = await this.supabase
       .from('kine_fichas_evolutivas')
-      .select(`
-        *,
-        kinesiologo:usu_perfiles!kinesiologo_id ( nombre, apellido )
-      `)
+      .select('*')
       .eq('estudiante_id', estudianteId)
       .is('eliminado_at', null)
       .order('fecha_evaluacion', { ascending: false });
@@ -84,10 +81,7 @@ export class FichaEvolutivaService {
       throw new Error(`No se pudo listar las fichas: ${error.message}`);
     }
 
-    return (data ?? []).map((row: any) => ({
-      ...row,
-      kinesiologo: Array.isArray(row.kinesiologo) ? row.kinesiologo[0] : row.kinesiologo
-    }));
+    return this.agregarNombreKinesiologo((data ?? []) as FichaEvolutiva[]);
   }
 
   /**
@@ -96,10 +90,7 @@ export class FichaEvolutivaService {
   async obtenerFichaPorId(id: string): Promise<FichaEvolutiva> {
     const { data, error } = await this.supabase
       .from('kine_fichas_evolutivas')
-      .select(`
-        *,
-        kinesiologo:usu_perfiles!kinesiologo_id ( nombre, apellido )
-      `)
+      .select('*')
       .eq('id', id)
       .is('eliminado_at', null)
       .single();
@@ -108,10 +99,26 @@ export class FichaEvolutivaService {
       throw new Error('Ficha no encontrada');
     }
 
-    return {
-      ...data,
-      kinesiologo: Array.isArray(data.kinesiologo) ? data.kinesiologo[0] : data.kinesiologo
-    } as FichaEvolutiva;
+    const [ficha] = await this.agregarNombreKinesiologo([data as FichaEvolutiva]);
+    return ficha;
+  }
+
+  /**
+   * Agrega nombre y apellido del kinesiólogo con una sola consulta a usu_perfiles.
+   * (kinesiologo_id apunta a usu_kinesiologos, no a usu_perfiles, así que no se
+   * puede pedir como relación anidada: Supabase respondía 400.)
+   */
+  private async agregarNombreKinesiologo(fichas: FichaEvolutiva[]): Promise<FichaEvolutiva[]> {
+    const ids = [...new Set(fichas.map(f => f.kinesiologo_id).filter(Boolean))];
+    if (ids.length === 0) return fichas;
+
+    const { data: perfiles } = await this.supabase
+      .from('usu_perfiles')
+      .select('id_usuario, nombre, apellido')
+      .in('id_usuario', ids);
+
+    const porId = new Map((perfiles ?? []).map((p: any) => [p.id_usuario, { nombre: p.nombre, apellido: p.apellido }]));
+    return fichas.map(f => ({ ...f, kinesiologo: porId.get(f.kinesiologo_id) ?? null }));
   }
 
   /**
@@ -133,7 +140,7 @@ export class FichaEvolutivaService {
     if (payload.sensibilidad !== undefined) updateData['sensibilidad'] = payload.sensibilidad;
     if (payload.marcha !== undefined) updateData['marcha'] = payload.marcha;
     if (payload.coordinacion !== undefined) updateData['coordinacion'] = payload.coordinacion;
-    if (payload.balanceRomberg !== undefined) updateData['balance_romberg'] = payload.balanceRomberg;
+    if (payload.balanceRomberg !== undefined) updateData['balance_romberg'] = this.aNumero(payload.balanceRomberg);
     if (payload.observacion !== undefined) updateData['observacion'] = payload.observacion;
     if (payload.noEvaluable !== undefined) updateData['no_evaluable'] = payload.noEvaluable;
 
@@ -185,5 +192,12 @@ export class FichaEvolutivaService {
     }
 
     return data as FichaEvolutiva;
+  }
+
+  /** Campo numérico del formulario: vacío ('' o null) -> null; si no, número. */
+  private aNumero(valor: unknown): number | null {
+    if (valor === '' || valor === null || valor === undefined) return null;
+    const n = Number(valor);
+    return Number.isFinite(n) ? n : null;
   }
 }

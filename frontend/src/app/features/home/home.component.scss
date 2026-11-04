@@ -1,17 +1,15 @@
+@use '../../styles/tema-oscuro' as tema;
+
+/* La página de inicio es SIEMPRE oscura, aunque el usuario haya elegido modo claro en el panel */
 :host {
   display: block;
   background: var(--bg-main);
+  @include tema.tema-oscuro-fijo;
 }
 
 .cursor-pointer { cursor: pointer; }
 .pf-mono { font-family: var(--pf-font-mono, 'JetBrains Mono', monospace); }
 
-/* 🔥 Lógica para intercambiar logos (Claro/Oscuro) 🔥 */
-.logo-light { display: none; }
-:host-context(body.light-mode) {
-  .logo-light { display: block !important; }
-  .logo-dark { display: none !important; }
-}
 
 .pf-container {
   max-width: 1180px;

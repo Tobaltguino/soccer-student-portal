@@ -68,17 +68,19 @@ export class HistorialClinicoComponent implements OnInit {
   lesionActual: any = this.getLesionVacia();
 
   // Enums manuales para filtros visuales
+  // Deben coincidir con los CHECK de kine_historial_clinico en la base
+  // (antes "ENFERMEDAD" y "CRONICO" no existían y guardar fallaba con 400)
   opcionesTipoLesion = [
     { label: 'Lesión', value: 'LESION' },
-    { label: 'Enfermedad', value: 'ENFERMEDAD' },
+    { label: 'Patología / Enfermedad', value: 'PATOLOGIA' },
     { label: 'Alergia', value: 'ALERGIA' }
   ];
 
   opcionesEstadoLesion = [
     { label: 'En Observación', value: 'EN_OBSERVACION' },
-    { label: 'Recuperado', value: 'RECUPERADO' },
+    { label: 'En Tratamiento', value: 'EN_TRATAMIENTO' },
     { label: 'En Reintegro Deportivo', value: 'EN_REINTEGRO_DEPORTIVO' },
-    { label: 'Crónico', value: 'CRONICO' }
+    { label: 'Recuperado', value: 'RECUPERADO' }
   ];
 
   async ngOnInit() {
@@ -239,8 +241,8 @@ export class HistorialClinicoComponent implements OnInit {
       }
       this.mostrarDialogoLesion = false;
       await this.onAlumnoChange(); // Recargar lesiones
-    } catch (error) {
-      this.mostrarError('No se pudo guardar el registro médico.');
+    } catch (error: any) {
+      this.mostrarError(error?.message || 'No se pudo guardar el registro médico.');
     } finally {
       this.guardando = false;
       this.cdr.detectChanges();

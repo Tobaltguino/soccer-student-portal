@@ -1,4 +1,10 @@
-:host { display: block; }
+@use '../../../styles/tema-oscuro' as tema;
+
+/* Siempre en modo oscuro, aunque el usuario haya elegido modo claro en el panel */
+:host {
+  display: block;
+  @include tema.tema-oscuro-fijo;
+}
 
 /* Utilidades básicas */
 .cursor-pointer { cursor: pointer; }
@@ -32,10 +38,6 @@
 
 /* 🔥 Lógica para intercambiar logos 🔥 */
 .logo-light { display: none; } /* Oculto por defecto (modo oscuro) */
-:host-context(body.light-mode) {
-  .logo-light { display: block; }
-  .logo-dark { display: none; }
-}
 
 .pf-login__brand {
   display: flex; align-items: center; gap: 10px; position: relative; color: var(--text-main);
