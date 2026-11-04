@@ -1,0 +1,36 @@
+/* ==========================================================
+   TEMA OSCURO FIJO
+   Para páginas públicas que siempre se ven oscuras (Inicio, Login,
+   Cambiar contraseña), aunque el usuario haya elegido modo claro en
+   el panel (body.light-mode). Se usa dentro de :host, así solo
+   afecta a esa página.
+
+   Uso:  @use '../../styles/tema-oscuro' as tema;
+         :host { @include tema.tema-oscuro-fijo; }
+   ========================================================== */
+
+@mixin tema-oscuro-fijo {
+  --bg-main: #0a0f0e;
+  --bg-card: #111816;
+  --text-main: #eaf2f0;
+  --text-muted: #7c8b88;
+  --border-color: rgba(234, 242, 240, 0.08);
+  --input-bg: #060908;
+  --input-border: rgba(234, 242, 240, 0.08);
+  --hover-bg: rgba(234, 242, 240, 0.03);
+  --table-header-bg: #0d1412;
+  --logo-filter: grayscale(1) invert(1) brightness(1.5);
+  --pf-lime: #c6ff3d;
+
+  /* Alias y puente PrimeFlex recalculados con los valores oscuros */
+  --text-chalk: var(--text-main);
+  --text-steel: var(--text-muted);
+  --surface-card: var(--bg-card);
+  --surface-border: var(--border-color);
+  --surface-hover: var(--hover-bg);
+
+  color: var(--text-main);
+
+  /* Siempre el logo blanco: se oculta la versión para fondo claro */
+  .logo-light { display: none !important; }
+}

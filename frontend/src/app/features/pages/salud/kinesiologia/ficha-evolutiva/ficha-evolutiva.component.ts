@@ -343,8 +343,8 @@ export class FichaEvolutivaComponent implements OnInit {
 
       this.volverAlHistorial();
       await this.onAlumnoChange(); // Recargar historial del alumno activo
-    } catch (error) {
-      this.mostrarError('Ocurrió un error al guardar la ficha clínica.');
+    } catch (error: any) {
+      this.mostrarError(error?.message || 'Ocurrió un error al guardar la ficha clínica.');
     } finally {
       this.guardando = false;
       this.cdr.detectChanges();

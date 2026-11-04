@@ -224,7 +224,7 @@ export class VerEstudiantesComponent implements OnInit {
     if (estado === 'RECUPERADO') return 'success';
     if (estado === 'EN_OBSERVACION') return 'warn';
     if (estado === 'EN_REINTEGRO_DEPORTIVO') return 'info';
-    if (estado === 'CRONICO' || estado === 'LESIONADO') return 'danger';
+    if (estado === 'EN_TRATAMIENTO') return 'danger';
     return 'success'; 
   }
 
