@@ -1535,6 +1535,48 @@ a.fc-col-header-cell-cushion,
     cursor: not-allowed !important;
 }
 
+/* Lista de asistencia: toda la fila marca/desmarca al alumno */
+.pf-asistencia-table .pf-asistencia-fila {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* En celular se mantiene como lista (no tarjetas) y con recuadros más grandes */
+@media (max-width: 768px) {
+    .pf-asistencia-table .p-datatable-table-container {
+        max-height: 60vh !important;
+    }
+    .pf-table.pf-asistencia-table .p-datatable-thead {
+        display: table-header-group !important;
+    }
+    .pf-table.pf-asistencia-table .p-datatable-tbody > tr {
+        display: table-row !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+    .pf-table.pf-asistencia-table .p-datatable-tbody > tr > td {
+        display: table-cell !important;
+        width: auto !important;
+        padding: 0.85rem 0.75rem !important;
+        border: none !important;
+        border-bottom: 1px solid var(--border-color) !important;
+        text-align: left !important;
+        vertical-align: middle !important;
+    }
+    .pf-table.pf-asistencia-table .p-datatable-tbody > tr > td:last-child {
+        text-align: center !important;
+        padding-top: 0.85rem !important;
+    }
+    .pf-asistencia-table .p-checkbox,
+    .pf-asistencia-table .p-checkbox .p-checkbox-box {
+        width: 30px !important;
+        height: 30px !important;
+    }
+}
+
 /* ==========================================================
    🔥 22. FIX PRIMENG V21: AVATAR (CUADRADO/CIRCULAR PERFECTO) 🔥
    ========================================================== */

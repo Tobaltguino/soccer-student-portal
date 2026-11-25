@@ -219,7 +219,7 @@
     <p-dialog [(visible)]="displayAttendanceDialog" [header]="'Asistencia: ' + (claseSeleccionadaAsistencia?.fecha | date: 'dd/MM/yyyy')" 
               [modal]="true" [style]="{width: '90vw', maxWidth: '450px'}" styleClass="p-fluid pf-dialog" [draggable]="false" [resizable]="false">
         <ng-template pTemplate="content">
-            <p-table [value]="alumnosAsistencia" [loading]="loadingAsistencia" scrollable="true" scrollHeight="300px" styleClass="p-datatable-sm pf-table w-full">
+            <p-table [value]="alumnosAsistencia" [loading]="loadingAsistencia" scrollable="true" scrollHeight="300px" styleClass="p-datatable-sm pf-table pf-asistencia-table w-full">
                 <ng-template pTemplate="header">
                     <tr>
                         <th>Estudiante</th>
@@ -227,10 +227,12 @@
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="body" let-alumno>
-                    <tr>
+                    <tr [class.pf-asistencia-fila]="!esAdmin" (click)="!esAdmin && (alumno.presente = !alumno.presente)">
                         <td class="text-sm font-bold text-chalk">{{ alumno.nombre }} {{ alumno.apellido }}</td>
                         <td class="text-center">
-                            <p-checkbox [(ngModel)]="alumno.presente" [binary]="true" [disabled]="esAdmin"></p-checkbox>
+                            <!-- stopPropagation: el clic en el recuadro no debe volver a alternar la fila -->
+                            <p-checkbox [(ngModel)]="alumno.presente" [binary]="true" [disabled]="esAdmin"
+                                        (click)="$event.stopPropagation()"></p-checkbox>
                         </td>
                     </tr>
                 </ng-template>
