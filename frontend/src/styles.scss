@@ -217,6 +217,9 @@ body {
   padding: 0 0 1.5rem 0 !important;
   margin: 0 !important;
   list-style: none !important;
+  /* PrimeNG (sin tema) pone border-style: solid con ancho/color de variables que
+     no existen: el navegador usa 3px y el color del texto (marco blanco) */
+  border: none !important;
   border-bottom: 1px solid var(--border-color) !important;
   background: transparent !important;
 }
@@ -246,6 +249,13 @@ body {
   box-shadow: 0 4px 15px rgba(15, 140, 130, 0.3) !important;
 }
 .p-tabpanels { padding: 2rem 0 0 0 !important; background: transparent !important; }
+/* Pestañas dentro de una tarjeta sin padding (pf-admin-card p-0): margen interno propio */
+.pf-admin-card.p-0 .p-tablist-tab-list { padding: 1.25rem 1.5rem 1.25rem 1.5rem !important; }
+.pf-admin-card.p-0 .p-tabpanels { padding: 1.5rem !important; }
+@media (max-width: 768px) {
+  .pf-admin-card.p-0 .p-tablist-tab-list { padding: 1rem !important; }
+  .pf-admin-card.p-0 .p-tabpanels { padding: 1rem !important; }
+}
 
 .pf-table .p-datatable-wrapper { border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; }
 .pf-table .p-datatable-thead > tr > th {
@@ -938,8 +948,9 @@ p-datepicker {
         flex-direction: column;
         align-items: stretch;
     }
+    /* !important: gana a anchos fijos de PrimeFlex (w-10rem, w-12rem) que también lo usan */
     .filter-item, .filter-item-btn {
-        width: 100%;
+        width: 100% !important;
     }
 }
 

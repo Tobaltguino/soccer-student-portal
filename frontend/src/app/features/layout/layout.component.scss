@@ -11,7 +11,10 @@
     --sidebar-bg: var(--bg-card); 
     
     display: block;
+    /* dvh = alto visible real; en celular 100vh incluye la barra del navegador
+       y deja "Cerrar sesión" escondido debajo. 100vh queda de respaldo. */
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
 }
 
@@ -26,7 +29,8 @@
 .layout-container {
     display: flex;
     height: 100vh;
-    background-color: var(--bg-main); 
+    height: 100dvh;
+    background-color: var(--bg-main);
     color: var(--text-main); 
     transition: all 0.3s ease;
 }
@@ -96,7 +100,9 @@
 .toggle-btn:hover { color: var(--pf-lime); background: rgba(198, 255, 61, 0.1); border-color: rgba(198, 255, 61, 0.2); }
 
 /* MENU */
-.menu { flex: 1; padding: 1rem 0; overflow-y: auto; overflow-x: hidden; }
+/* min-height: 0 deja que el menú se achique y haga scroll, sin empujar el pie */
+.menu { flex: 1; min-height: 0; padding: 1rem 0; overflow-y: auto; overflow-x: hidden; }
+.sidebar-footer { flex-shrink: 0; }
 
 /* Etiquetas de sección */
 .menu-label {
@@ -218,7 +224,7 @@
 
     /* SIDEBAR MÓVIL */
     .sidebar {
-        position: fixed; top: 0; left: -100%; height: 100vh;
+        position: fixed; top: 0; bottom: 0; left: -100%; height: 100vh; height: 100dvh;
         width: 260px !important; box-shadow: 4px 0 20px rgba(0,0,0,0.5);
         transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         z-index: 1000;
