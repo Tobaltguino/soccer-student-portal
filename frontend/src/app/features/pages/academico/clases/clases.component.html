@@ -87,8 +87,8 @@
                         <td class="text-center">
                             <span class="p-column-title pf-oswald text-steel hidden-desktop">Acciones:</span>
                             <div class="pf-table-actions">
-                                <button pButton icon="pi pi-check-square" [ngClass]="esAdmin ? 'p-button-info' : 'p-button-success'"
-                                        (click)="verAsistencia(item)" [pTooltip]="esAdmin ? 'Ver Asistencia' : 'Pasar Asistencia'"></button>
+                                <button pButton icon="pi pi-check-square" [ngClass]="puedePasarAsistencia ? 'p-button-success' : 'p-button-info'"
+                                        (click)="verAsistencia(item)" [pTooltip]="puedePasarAsistencia ? 'Pasar Asistencia' : 'Ver Asistencia'"></button>
                                 
                                 <button pButton icon="pi pi-eye" class="p-button-info"
                                         (click)="verPlanificacion(item)" pTooltip="Ver Detalles"></button>
@@ -227,11 +227,11 @@
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="body" let-alumno>
-                    <tr [class.pf-asistencia-fila]="!esAdmin" (click)="!esAdmin && (alumno.presente = !alumno.presente)">
+                    <tr [class.pf-asistencia-fila]="puedePasarAsistencia" (click)="puedePasarAsistencia && (alumno.presente = !alumno.presente)">
                         <td class="text-sm font-bold text-chalk">{{ alumno.nombre }} {{ alumno.apellido }}</td>
                         <td class="text-center">
                             <!-- stopPropagation: el clic en el recuadro no debe volver a alternar la fila -->
-                            <p-checkbox [(ngModel)]="alumno.presente" [binary]="true" [disabled]="esAdmin"
+                            <p-checkbox [(ngModel)]="alumno.presente" [binary]="true" [disabled]="!puedePasarAsistencia"
                                         (click)="$event.stopPropagation()"></p-checkbox>
                         </td>
                     </tr>
@@ -242,8 +242,8 @@
             </p-table>
         </ng-template>
         <ng-template pTemplate="footer">
-            <button *ngIf="esAdmin" pButton label="Cerrar" icon="pi pi-times" class="pf-btn-ghost w-full justify-content-center" (click)="displayAttendanceDialog = false"></button>
-            <ng-container *ngIf="esStaff">
+            <button *ngIf="!puedePasarAsistencia" pButton label="Cerrar" icon="pi pi-times" class="pf-btn-ghost w-full justify-content-center" (click)="displayAttendanceDialog = false"></button>
+            <ng-container *ngIf="puedePasarAsistencia">
                 <button pButton label="Cancelar" icon="pi pi-times" class="pf-btn-ghost" (click)="displayAttendanceDialog = false"></button>
                 <button pButton label="Guardar" icon="pi pi-check" class="pf-btn-primary" (click)="guardarAsistencia()" [loading]="loadingAsistencia" [disabled]="alumnosAsistencia.length === 0"></button>
             </ng-container>

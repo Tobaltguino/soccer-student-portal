@@ -58,6 +58,7 @@ export class ClasesComponent implements OnInit {
   // Control de Roles
   rolActual: string = '';
   esAdmin: boolean = false;
+  puedePasarAsistencia: boolean = false;
   esStaff: boolean = false; 
   esEstudiante: boolean = false;
   esVistaGestion: boolean = false; 
@@ -121,6 +122,8 @@ export class ClasesComponent implements OnInit {
       this.esEstudiante = this.rolActual === 'estudiante';
       this.esStaff = this.rolActual === 'profesor' || this.rolActual === 'kinesiologo';
       this.esVistaGestion = this.esAdmin || this.esStaff;
+      // El kinesiólogo solo ve la asistencia (RLS solo deja escribir a admin y profesor)
+      this.puedePasarAsistencia = this.esAdmin || this.rolActual === 'profesor';
 
       if (this.esEstudiante) {
         await this.cargarClasesEstudiante();
