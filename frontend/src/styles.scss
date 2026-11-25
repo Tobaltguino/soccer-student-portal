@@ -1518,8 +1518,9 @@ a.fc-col-header-cell-cushion,
     border-color: var(--pf-teal) !important;
 }
 
-.p-checkbox-box.p-highlight,
-.p-checkbox-box[data-p-highlight="true"] {
+/* En PrimeNG v21 el estado marcado va en el host (.p-checkbox), no en la caja */
+.p-checkbox.p-checkbox-checked .p-checkbox-box,
+.p-checkbox[data-p-checked="true"] .p-checkbox-box {
     background: var(--pf-teal) !important;
     border-color: var(--pf-teal) !important;
 }

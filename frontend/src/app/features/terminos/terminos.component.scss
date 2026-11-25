@@ -127,16 +127,17 @@
     transition: all 0.2s;
   }
   
-  .p-checkbox:not(.p-checkbox-disabled) .p-checkbox-box:hover {
+  .p-checkbox:not(.p-disabled) .p-checkbox-box:hover {
     border-color: var(--pf-teal, #0f8c82);
   }
-  
-  .p-checkbox .p-checkbox-box.p-highlight {
-    background: var(--pf-lime, #c6ff3d);
-    border-color: var(--pf-lime, #c6ff3d);
+
+  .p-checkbox.p-checkbox-checked .p-checkbox-box {
+    background: var(--pf-lime, #c6ff3d) !important;
+    border-color: var(--pf-lime, #c6ff3d) !important;
   }
-  
-  .p-checkbox .p-checkbox-box.p-highlight .p-checkbox-icon {
+
+  .p-checkbox.p-checkbox-checked .p-checkbox-icon {
+    color: var(--pf-black, #0a0f0e) !important;
     color: var(--pf-black, #0a0f0e);
     font-size: 12px;
     font-weight: bold;
